@@ -17,10 +17,10 @@ use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\StateException;
+use Magento\Framework\Api\SearchCriteria\CollectionProcessorInterface;
 
 /**
- * Class PostRepository
- * @package Magefan\Blog\Model
+ * Class PostRepository model
  */
 class PostRepository implements PostRepositoryInterface
 {
@@ -28,18 +28,26 @@ class PostRepository implements PostRepositoryInterface
      * @var PostFactory
      */
     private $postFactory;
+
     /**
      * @var PostResourceModel
      */
     private $postResourceModel;
+
     /**
      * @var CollectionFactory
      */
     private $collectionFactory;
+
     /**
      * @var SearchResultsFactory
      */
     private $searchResultsFactory;
+
+    /**
+     * @var CollectionProcessorInterface
+     */
+    private $collectionProcessor;
 
     /**
      * PostRepository constructor.
@@ -47,17 +55,30 @@ class PostRepository implements PostRepositoryInterface
      * @param PostResourceModel $postResourceModel
      * @param CollectionFactory $collectionFactory
      * @param SearchResultsFactory $searchResultsFactory
+     * @param CollectionProcessorInterface|null $collectionProcessor
      */
     public function __construct(
         PostFactory $postFactory,
         PostResourceModel $postResourceModel,
         CollectionFactory $collectionFactory,
-        SearchResultsFactory $searchResultsFactory
+        SearchResultsFactory $searchResultsFactory,
+        CollectionProcessorInterface $collectionProcessor = null
     ) {
         $this->postFactory = $postFactory;
         $this->postResourceModel = $postResourceModel;
         $this->collectionFactory = $collectionFactory;
         $this->searchResultsFactory = $searchResultsFactory;
+        $this->collectionProcessor = $collectionProcessor ?: \Magento\Framework\App\ObjectManager::getInstance()->get(
+            \Magento\Framework\Api\SearchCriteria\CollectionProcessorInterface::class
+        );
+    }
+
+    /**
+     * @return PostFactory
+     */
+    public function getFactory()
+    {
+        return $this->postFactory;
     }
 
     /**
@@ -146,12 +167,7 @@ class PostRepository implements PostRepositoryInterface
         /** @var \Magefan\Blog\Model\ResourceModel\Post\Collection $collection */
         $collection = $this->collectionFactory->create();
 
-        foreach ($searchCriteria->getFilterGroups() as $filterGroup) {
-            foreach ($filterGroup->getFilters() as $filter) {
-                $condition = $filter->getConditionType() ? $filter->getConditionType() : 'eq';
-                $collection->addFieldToFilter($filter->getField(), [$condition => $filter->getValue()]);
-            }
-        }
+        $this->collectionProcessor->process($searchCriteria, $collection);
 
         /** @var \Magento\Framework\Api\searchResultsInterface $searchResult */
         $searchResult = $this->searchResultsFactory->create();

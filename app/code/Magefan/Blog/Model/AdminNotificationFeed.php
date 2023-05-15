@@ -63,7 +63,19 @@ class AdminNotificationFeed extends \Magento\AdminNotification\Model\Feed
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
-        parent::__construct($context, $registry, $backendConfig, $inboxFactory, $curlFactory, $deploymentConfig, $productMetadata, $urlBuilder, $resource, $resourceCollection, $data);
+        parent::__construct(
+            $context,
+            $registry,
+            $backendConfig,
+            $inboxFactory,
+            $curlFactory,
+            $deploymentConfig,
+            $productMetadata,
+            $urlBuilder,
+            $resource,
+            $resourceCollection,
+            $data
+        );
         $this->_backendAuthSession  = $backendAuthSession;
         $this->_moduleList = $moduleList;
         $this->_moduleManager = $moduleManager;
@@ -76,7 +88,7 @@ class AdminNotificationFeed extends \Magento\AdminNotification\Model\Feed
      */
     public function getFeedUrl()
     {
-        if (is_null($this->_feedUrl)) {
+        if (null === $this->_feedUrl) {
             $this->_feedUrl = 'https://mage'.'fan'
             .'.c'.'om/community/notifications'.'/'.'feed/';
         }

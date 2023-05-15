@@ -80,6 +80,13 @@ class Page extends \Magento\Framework\App\Helper\AbstractHelper
         /** @var \Magento\Framework\View\Result\Page $resultPage */
         $resultPage = $this->resultPageFactory->create();
 
+        // dispatch event
+        $this->_eventManager->dispatch('magefan_blog_page_render_before', [
+            'action' => $action,
+            'page' => $page,
+            'result_page' => $resultPage,
+        ]);
+
         if ($inRange
             && $page->getCustomLayout()
             && $page->getCustomLayout() != 'empty'
@@ -94,7 +101,7 @@ class Page extends \Magento\Framework\App\Helper\AbstractHelper
 
         $fullActionName = $action->getRequest()->getFullActionName();
         $resultPage->addHandle($fullActionName);
-        $resultPage->addPageLayoutHandles(['id' => $page->getIdentifier()]);
+        $resultPage->addPageLayoutHandles(['id' => str_replace('/', '_', (string)$page->getIdentifier())]);
 
         $this->_eventManager->dispatch(
             $fullActionName . '_render',

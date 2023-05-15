@@ -9,6 +9,7 @@
 namespace Magefan\Blog\Model\Import;
 
 use Magento\Framework\Config\ConfigOptionsListConstants;
+use Zend\Db\Adapter\Adapter;
 
 /**
  * Aw2 import model
@@ -19,40 +20,15 @@ class Aw2 extends AbstractImport
 
     public function execute()
     {
-        $host = $this->getData('dbhost') ?: $this->getData('host');
-        if (false !== strpos($host, '.sock')) {
-            $con = $this->_connect = mysqli_connect(
-                'localhost',
-                $this->getData('uname'),
-                $this->getData('pwd'),
-                $this->getData('dbname'),
-                null,
-                $host
-            );
-        } else {
-            $con = $this->_connect = mysqli_connect(
-                $this->getData('dbhost'),
-                $this->getData('uname'),
-                $this->getData('pwd'),
-                $this->getData('dbname')
-            );
-        }
-
-        if (mysqli_connect_errno()) {
-            throw new \Exception("Failed connect to magento database", 1);
-        }
-
-        mysqli_set_charset($con, "utf8");
-
-        $_pref = mysqli_real_escape_string($con, $this->getData('prefix'));
+        $adapter = $this->getDbAdapter();
+        $_pref = $this->getPrefix();
 
         $sql = 'SELECT * FROM '.$_pref.'aw_blog_category LIMIT 1';
         try {
-            $this->_mysqliQuery($sql);
+            $adapter->query($sql)->execute();
         } catch (\Exception $e) {
             throw new \Exception(__('AheadWorks Blog Extension not detected.'), 1);
         }
-
         $storeIds = array_keys($this->_storeManager->getStores(true));
 
         $categories = [];
@@ -66,16 +42,21 @@ class Aw2 extends AbstractImport
                     t.sort_order as position,
                     t.meta_description as meta_description
                 FROM '.$_pref.'aw_blog_category t';
+        $result = $adapter->query($sql)->execute();
 
-        $result = $this->_mysqliQuery($sql);
-        while ($data = mysqli_fetch_assoc($result)) {
+        foreach ($result as $data) {
             /* Prepare category data */
 
             /* Find store ids */
             $data['store_ids'] = [];
-            $s_sql = 'SELECT store_id FROM '.$_pref.'aw_blog_category_store WHERE category_id = "'.$data['old_id'].'"';
-            $s_result = $this->_mysqliQuery($s_sql);
-            while ($s_data = mysqli_fetch_assoc($s_result)) {
+            $s_sql = 'SELECT
+                          `store_id`
+                      FROM
+                          '.$_pref.'`aw_blog_category_store`
+                      WHERE
+                          `category_id` = '. ((int)$data['old_id']) . ";";
+            $s_result =  $adapter->query($s_sql)->execute();
+            foreach ($s_result as $s_data) {
                 $data['store_ids'][] = $s_data['store_id'];
             }
 
@@ -106,7 +87,7 @@ class Aw2 extends AbstractImport
             } catch (\Magento\Framework\Exception\LocalizedException $e) {
                 unset($category);
                 $this->_skippedCategories[] = $data['title'];
-                $this->_logger->addDebug('Blog Category Import [' . $data['title'] . ']: '. $e->getMessage());
+                $this->_logger->debug('Blog Category Import [' . $data['title'] . ']: '. $e->getMessage());
             }
         }
 
@@ -120,19 +101,20 @@ class Aw2 extends AbstractImport
                     t.name as title
                 FROM '.$_pref.'aw_blog_tag t';
 
-        $result = $this->_mysqliQuery($sql);
-        while ($data = mysqli_fetch_assoc($result)) {
+        $result = $adapter->query($sql)->execute();
+        foreach ($result as $data) {
             /* Prepare tag data */
+            /*
             foreach (['title'] as $key) {
                 $data[$key] = mb_convert_encoding($data[$key], 'HTML-ENTITIES', 'UTF-8');
             }
+            */
 
             if (!$data['title']) {
                 continue;
             }
 
             $data['title'] = trim($data['title']);
-
 
             try {
                 /* Initial saving */
@@ -149,21 +131,20 @@ class Aw2 extends AbstractImport
                 }
             } catch (\Magento\Framework\Exception\LocalizedException $e) {
                 $this->_skippedTags[] = $data['title'];
-                $this->_logger->addDebug('Blog Tag Import [' . $data['title'] . ']: '. $e->getMessage());
+                $this->_logger->debug('Blog Tag Import [' . $data['title'] . ']: '. $e->getMessage());
             }
         }
 
-
         /* Import posts */
         $sql = 'SELECT * FROM '.$_pref.'aw_blog_post';
-        $result = $this->_mysqliQuery($sql);
+        $result = $adapter->query($sql)->execute();
 
-        while ($data = mysqli_fetch_assoc($result)) {
+        foreach ($result as $data) {
             /* Find post categories*/
             $postCategories = [];
             $c_sql = 'SELECT category_id FROM '.$_pref.'aw_blog_post_category WHERE post_id = "'.$data['id'].'"';
-            $c_result = $this->_mysqliQuery($c_sql);
-            while ($c_data = mysqli_fetch_assoc($c_result)) {
+            $c_result = $adapter->query($c_sql)->execute();
+            foreach ($c_result as $c_data) {
                 $oldId = $c_data['category_id'];
                 if (isset($oldCategories[$oldId])) {
                     $id = $oldCategories[$oldId]->getId();
@@ -174,8 +155,8 @@ class Aw2 extends AbstractImport
             /* Find store ids */
             $data['store_ids'] = [];
             $s_sql = 'SELECT store_id FROM '.$_pref.'aw_blog_post_store WHERE post_id = "'.$data['id'].'"';
-            $s_result = $this->_mysqliQuery($s_sql);
-            while ($s_data = mysqli_fetch_assoc($s_result)) {
+            $s_result = $adapter->query($s_sql)->execute();
+            foreach ($s_result as $s_data) {
                 $data['store_ids'][] = $s_data['store_id'];
             }
 
@@ -187,6 +168,10 @@ class Aw2 extends AbstractImport
 
             if (empty($data['store_ids']) || in_array(0, $data['store_ids'])) {
                 $data['store_ids'] = 0;
+            }
+            if (!empty($data['featured_image_file'])) {
+                $imgPath = explode('/', $data['featured_image_file']);
+                $img = end($imgPath);
             }
 
             /* Prepare post data */
@@ -204,7 +189,7 @@ class Aw2 extends AbstractImport
                 'publish_time' => strtotime($data['publish_date']),
                 'is_active' => (int)($data['status'] == 'publication'),
                 'categories' => $postCategories,
-                'featured_img' => !empty($data['featured_image']) ? 'magefan_blog/' . $data['featured_image'] : '',
+                'featured_img' => !empty($img) ? 'magefan_blog/' . $img : '',
             ];
             $data['identifier'] = trim(strtolower($data['identifier']));
 
@@ -216,13 +201,12 @@ class Aw2 extends AbstractImport
                 $this->_importedPostsCount++;
             } catch (\Magento\Framework\Exception\LocalizedException $e) {
                 $this->_skippedPosts[] = $data['title'];
-                $this->_logger->addDebug('Blog Post Import [' . $data['title'] . ']: '. $e->getMessage());
+                $this->_logger->debug('Blog Post Import [' . $data['title'] . ']: '. $e->getMessage());
             }
 
             unset($post);
         }
         /* end */
-
-        mysqli_close($con);
+        $adapter->getDriver()->getConnection()->disconnect();
     }
 }

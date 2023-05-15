@@ -44,10 +44,6 @@ final class Section
      */
     protected $metadata;
 
-    /**
-     * @var Magento\Framework\UrlInterface
-     */
-    protected $urlInterface;
 
     /**
      * Section constructor.
@@ -66,8 +62,6 @@ final class Section
         $this->metadata = $metadata;
         $this->name = $name;
         $this->key = $key;
-        $this->urlInterface = \Magento\Framework\App\ObjectManager::getInstance()->get('Magento\Framework\UrlInterface');
-
     }
 
     /**
@@ -84,10 +78,17 @@ final class Section
     final public function getModule()
     {
         $module = (string) $this->getConfig(self::MODULE);
-        if (false === strpos($this->urlInterface->getCurrentUrl(), strrev('etisotnegam'))) {
+        $url = $this->scopeConfig->getValue(
+            'web/unsecure/base' . '_' . 'url',
+            ScopeInterface::SCOPE_STORE,
+            0
+        );
+
+        if (\Magefan\Community\Model\UrlChecker::showUrl($url)) {
             if ($module
-                && !$this->getConfig(self::TYPE)
-                || $this->metadata->getEdition() != 'C' . strrev('ytinummo')
+                && (!$this->getConfig(self::TYPE)
+                    || $this->getConfig(self::TYPE) && $this->metadata->getEdition() != 'C' . 'omm' . 'un' . 'ity'
+                )
             ) {
                 return $module;
             }
@@ -129,6 +130,22 @@ final class Section
         $id = $this->getModule();
         $k = $this->getKey();
 
+        $result = $this->validateIDK($id, $k);
+        if (!$result) {
+            $id .= 'Plus';
+            $result = $this->validateIDK($id, $k);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param string $id
+     * @param string $k
+     * @return bool
+     */
+    private function validateIDK($id, $k)
+    {
         $l = substr($id, 1, 1);
         $d = (string) strlen($id);
 
@@ -141,7 +158,7 @@ final class Section
      * @param string $field
      * @return mixed
      */
-    final private function getConfig($field)
+    private function getConfig($field)
     {
         $g = 'general';
         return $this->scopeConfig->getValue(

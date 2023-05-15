@@ -32,11 +32,14 @@ Blog,Blog
 "Nothing to import.","Nichts zu importieren."
 "Can not make import.","Import nicht möglich."
 "Something went wrong: ","Etwas ist schiefgelaufen: "
+"Please enter your name and email","Please enter your name and email"
 "Blog Import from WordPress","Blog-Import von WordPress"
+"Comment text is too short.","Comment text is too short."
 "Please select","Bitte auswählen"
 "Use Facebook Comments","Facebook-Kommentare verwenden"
 "Use Disqus Comments","Disqus-Kommentare verwenden"
 "Use Google Comments","Google-Kommentare verwenden"
+"Featured Blog Posts","Featured Blog Posts"
 "Yes (With auto trigger)","Ja (mit automatischem Trigger)"
 "Yes (Without auto trigger)","Ja (ohne automatischen Trigger)"
 "Parameter %1 is required","Parameter %1 ist erforderlich"
@@ -52,13 +55,17 @@ Blog,Blog
 Posted:,Verfasst:
 Categories:,Kategorien:
 Tags:,Tags:
+"Read more >","Read more >"
 Author:,Autor:
 "We can't find posts matching the selection.","Wir können keine Posts finden, die der Auswahl entsprechen."
+"Read more","Read more"
 "Read more &#187;","Mehr lesen &#187;"
 "See more","Mehr anzeigen"
 "Read %1","%1 lesen"
 "&larr; Previous","&larr; Zurück"
+"Previous","Zurück"
 "Next &rarr;","Weiter &rarr;"
+"Next","Weiter"
 "Related Posts","Verwandte Posts"
 Archive,Archiv
 "Archive %s","%s archivieren"
@@ -73,6 +80,7 @@ Tags,Tags
 "Display Related Posts","Verwandte Posts anzeigen"
 "Number of Posts","Anzahl der Posts"
 "Display Related Products","Verwandte Produkte anzeigen"
+"Related Products","Unsere Empfehlungen"
 "Number of Products","Anzahl der Products"
 Comments,Kommentare
 "Number of Comments","Anzahl der Kommentare"
@@ -179,7 +187,7 @@ Published,Veröffentlicht
 "Sign in to add a reply...","Anmelden, um eine Antwort hinzuzufügen..."
 "Full Name","Vollständiger Name"
 "Load more comments","Mehr Kommentare laden"
-"Login to submit comment","Einloggen, um den Kommentar abzusenden",
+"Login to submit comment","Einloggen, um den Kommentar abzusenden"
 "You cannot post comment. Blog post is not longer exist.","Sie können keinen Kommentar hinterlassen. Der Blogpost existiert nicht mehr."
 "You cannot reply to this comment. Comment is not longer exist.","Sie können auf diesen Kommentar nicht antworten. Der Kommentar existiert nicht mehr."
 "You cannot reply to this comment.","Sie können auf diesen Kommentar nicht antworten"

@@ -10,12 +10,24 @@ namespace Magefan\Blog\Model;
 
 use Magefan\Blog\Api\AuthorInterface;
 use Magento\Framework\Model\AbstractModel;
+use Magefan\Blog\Api\ShortContentExtractorInterface;
 
 /**
  * Blog author model
  */
 class Author extends AbstractModel implements AuthorInterface
 {
+
+    /**
+     * @var string
+     */
+    protected $controllerName;
+
+    /**
+     * @var ShortContentExtractorInterface
+     */
+    protected $shortContentExtractor;
+
     /**
      * Initialize dependencies.
      *
@@ -51,6 +63,16 @@ class Author extends AbstractModel implements AuthorInterface
     {
         $this->_init(\Magefan\Blog\Model\ResourceModel\Author::class);
         $this->_collectionName = \Magefan\Blog\Model\ResourceModel\Author\Collection::class;
+        $this->controllerName = URL::CONTROLLER_AUTHOR;
+    }
+
+    /**
+     * Retrieve if is visible on store
+     * @return bool
+     */
+    public function isVisibleOnStore(int $storeId): bool
+    {
+        return $this->getIsActive();
     }
 
     /**
@@ -83,13 +105,15 @@ class Author extends AbstractModel implements AuthorInterface
     public function getMetaDescription()
     {
         $desc = $this->getData('meta_description');
+
         if (!$desc) {
-            $desc = $this->getData('content');
+            $desc = $this->getShortContentExtractor()->execute($this->getData('content'));
+            $desc = str_replace(['<p>', '</p>'], [' ', ''], $desc);
         }
 
         $desc = strip_tags($desc);
-        if (mb_strlen($desc) > 300) {
-            $desc = mb_substr($desc, 0, 300);
+        if (mb_strlen($desc) > 200) {
+            $desc = mb_substr($desc, 0, 200);
         }
 
         return trim($desc);
@@ -154,5 +178,68 @@ class Author extends AbstractModel implements AuthorInterface
     public function getName($separator = ' ')
     {
         return $this->getFirstname() . $separator . $this->getLastname();
+    }
+
+    /**
+     * @deprecated use getDynamicData method in graphQL data provider
+     * Prepare all additional data
+     * @return array
+     */
+    public function getDynamicData()
+    {
+        $data = $this->getData();
+
+        $keys = [
+            'meta_description',
+            'meta_title',
+            'author_url',
+            'name',
+            'title',
+            'identifier',
+        ];
+
+        $data['author_id'] = $this->getId();
+
+        foreach ($keys as $key) {
+            $method = 'get' . str_replace(
+                '_',
+                '',
+                ucwords($key, '_')
+            );
+            $data[$key] = $this->$method();
+        }
+
+        return $data;
+    }
+
+    /**
+     * Retrieve controller name
+     * @return string
+     */
+    public function getControllerName()
+    {
+        return $this->controllerName;
+    }
+
+    /**
+     * Retrieve true if author is active
+     * @return boolean
+     */
+    public function isActive()
+    {
+        return $this->getIsActive();
+    }
+
+    /**
+     * @return ShortContentExtractorInterface
+     */
+    public function getShortContentExtractor()
+    {
+        if (null === $this->shortContentExtractor) {
+            $this->shortContentExtractor = \Magento\Framework\App\ObjectManager::getInstance()
+                ->get(ShortContentExtractorInterface::class);
+        }
+
+        return $this->shortContentExtractor;
     }
 }

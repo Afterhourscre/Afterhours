@@ -10,10 +10,14 @@ namespace Magefan\Blog\Api;
 
 /**
  * Interface AuthorRepositoryInterface
- * @package Magefan\Blog\Api
  */
 interface AuthorRepositoryInterface
 {
+    /**
+     * @return AuthorInterfaceFactory
+     */
+    public function getFactory();
+
     /**
      * @param AuthorInterface $author
      * @return mixed

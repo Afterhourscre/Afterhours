@@ -13,7 +13,6 @@ namespace Magefan\Blog\Model;
  */
 class PreviewUrl extends Url
 {
-
     /**
      * Initialize dependencies.
      *
@@ -30,7 +29,6 @@ class PreviewUrl extends Url
     ) {
         parent::__construct($registry, $url, $storeManager, $scopeConfig);
     }
-
 
     /**
      * Retrieve blog page preview url

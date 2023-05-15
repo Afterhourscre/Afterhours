@@ -31,6 +31,7 @@ class ImageUploader extends \Magento\Catalog\Model\ImageUploader
      * @param string $baseTmpPath
      * @param string $basePath
      * @param string[] $allowedExtensions
+     * @param string[] $allowedMimeTypes
      */
     public function __construct(
         \Magento\MediaStorage\Helper\File\Storage\Database $coreFileStorageDatabase,
@@ -38,11 +39,22 @@ class ImageUploader extends \Magento\Catalog\Model\ImageUploader
         \Magento\MediaStorage\Model\File\UploaderFactory $uploaderFactory,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Psr\Log\LoggerInterface $logger,
-        $baseTmpPath,
-        $basePath,
-        $allowedExtensions
+       $baseTmpPath,
+       $basePath,
+       $allowedExtensions,
+       $allowedMimeTypes = []
     ) {
-        parent::__construct($coreFileStorageDatabase, $filesystem, $uploaderFactory, $storeManager, $logger, $baseTmpPath, $basePath, $allowedExtensions);
+        parent::__construct(
+            $coreFileStorageDatabase,
+            $filesystem,
+            $uploaderFactory,
+            $storeManager,
+            $logger,
+            $baseTmpPath,
+            $basePath,
+            $allowedExtensions,
+            $allowedMimeTypes
+        );
         $this->filesystem = $filesystem;
     }
 
@@ -50,15 +62,14 @@ class ImageUploader extends \Magento\Catalog\Model\ImageUploader
      * Checking file for moving and move it
      *
      * @param string $imageName
-     *
+     * @param bool $returnRelativePath
      * @return string
      *
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function moveFileFromTmp($imageName)
+    public function moveFileFromTmp($imageName, $returnRelativePath = false)
     {
         $originalImageName = $imageName;
-
         $baseTmpPath = $this->getBaseTmpPath();
         $basePath = $this->getBasePath();
         $baseImagePath = $this->getFilePath($basePath, $imageName);
@@ -94,6 +105,6 @@ class ImageUploader extends \Magento\Catalog\Model\ImageUploader
             );
         }
 
-        return $imageName;
+        return $returnRelativePath ? $baseImagePath : $imageName;
     }
 }

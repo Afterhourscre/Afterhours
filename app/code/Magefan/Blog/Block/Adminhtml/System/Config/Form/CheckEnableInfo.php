@@ -8,14 +8,17 @@
 
 namespace Magefan\Blog\Block\Adminhtml\System\Config\Form;
 
+use Magento\Framework\App\ObjectManager;
+use Magefan\Community\Model\Section;
+
 /**
- * Class CheckEnableInfo
- * @package Magefan\Blog\Block\Adminhtml\System\Config\Form
+ * Class Check EnableInfo Block
  */
 class CheckEnableInfo extends \Magento\Backend\Block\Template
 {
     /**
-     * Magefan Blog Plus
+     * Magefan Blog Plus Module
+     * @deprecated
      */
     const MAGEFAN_BLOG_PLUS = 'Magefan_BlogPlus';
 
@@ -89,9 +92,37 @@ class CheckEnableInfo extends \Magento\Backend\Block\Template
      */
     public function isKeyMissing()
     {
+        $section = ObjectManager::getInstance()->create(Section::class, ['name' => 'mfblog']);
         return !$this->config->getConfig(self::XML_PATH_KEY)
-            && ($this->metadata->getEdition() != 'Community'
-                || $this->moduleList->has(self::MAGEFAN_BLOG_PLUS)
-        );
+            && $section->getModule();
+    }
+
+    /**
+     * @return array|bool
+     */
+    public function isAnotherBlogModulesEnabled()
+    {
+        $blogModules = [];
+
+        foreach ($this->moduleList->getNames() as $module) {
+            if (false === strpos($module, '_')) {
+                continue;
+            }
+
+            list($vendor, $name) = explode('_', $module);
+            if ('Magefan' == $vendor) {
+                continue;
+            }
+
+            if ('Blog' == $name) {
+                $blogModules[] = $module;
+            }
+        }
+
+        if (count($blogModules) && $this->isEnabled()) {
+            return $blogModules;
+        }
+
+        return false;
     }
 }

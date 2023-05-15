@@ -115,15 +115,21 @@ abstract class AbstractManagement implements ManagementInterface
     {
         try {
             $item = $this->_itemFactory->create();
-            $item->load($id);
+            $item->getResource()->load($item, $id);
 
             if (!$item->isVisibleOnStore($storeId)) {
                 return false;
             }
-            $item->initDinamicData();
-            return json_encode($item->getData());
+
+            return json_encode($this->getDynamicData($item));
         } catch (\Exception $e) {
             return false;
         }
     }
+
+    /**
+     * @param $item
+     * @return mixed
+     */
+    protected abstract function getDynamicData($item);
 }

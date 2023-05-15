@@ -11,8 +11,7 @@ namespace Magefan\Blog\Model\Config\Source;
 use Magento\Config\Model\Config\Source\Design\Robots;
 
 /**
- * Class TagRobots
- * @package Magefan\Blog\Model\Config\Source
+ * Class Tag Robots Model
  */
 class TagRobots extends Robots
 {

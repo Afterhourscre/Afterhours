@@ -9,7 +9,7 @@
 namespace Magefan\Blog\Block\Adminhtml\Post;
 
 /**
- * Class DeleteButton
+ * Class Delete Button Block
  */
 class DeleteButton extends \Magefan\Community\Block\Adminhtml\Edit\DeleteButton
 {

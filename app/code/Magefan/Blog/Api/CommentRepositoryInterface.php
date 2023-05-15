@@ -9,13 +9,18 @@
 namespace Magefan\Blog\Api;
 
 use Magefan\Blog\Model\Comment;
+use Magefan\Blog\Model\CommentFactory;
 
 /**
  * Interface CommentRepositoryInterface
- * @package Magefan\Blog\Api
  */
 interface CommentRepositoryInterface
 {
+    /**
+     * @return CommentFactory
+     */
+    public function getFactory();
+
     /**
      * @param Comment $comment
      * @return mixed

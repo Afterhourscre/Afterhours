@@ -24,6 +24,11 @@ class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\Ab
     protected $_storeId;
 
     /**
+     * @var bool
+     */
+    protected $_previewFlag;
+
+    /**
      * @param \Magento\Framework\Data\Collection\EntityFactory $entityFactory
      * @param \Psr\Log\LoggerInterface $logger
      * @param \Magento\Framework\Data\Collection\Db\FetchStrategyInterface $fetchStrategy
@@ -54,7 +59,7 @@ class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\Ab
     protected function _construct()
     {
         parent::_construct();
-        $this->_init('Magefan\Blog\Model\Category', 'Magefan\Blog\Model\ResourceModel\Category');
+        $this->_init(\Magefan\Blog\Model\Category::class, \Magefan\Blog\Model\ResourceModel\Category::class);
         $this->_map['fields']['category_id'] = 'main_table.category_id';
         $this->_map['fields']['store'] = 'store_table.store_id';
     }
@@ -68,6 +73,15 @@ class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\Ab
      */
     public function addFieldToFilter($field, $condition = null)
     {
+        if (is_array($field)) {
+            if (count($field) > 1) {
+                return parent::addFieldToFilter($field, $condition);
+            } elseif (count($field) === 1) {
+                $field = $field[0];
+                $condition = isset($condition[0]) ? $condition[0] : $condition;
+            }
+        }
+
         if ($field === 'store_id' || $field === 'store_ids') {
             return $this->addStoreFilter($condition);
         }
@@ -107,6 +121,7 @@ class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\Ab
             }
 
             $this->addFilter('store', ['in' => $store], 'public');
+            $this->setFlag('store_filter_added', 1);
         }
         return $this;
     }

@@ -54,9 +54,13 @@ class Content extends \Magento\Backend\Block\Widget
                     ?: ObjectManager::getInstance()->get(\Magento\Backend\Block\DataProviders\ImageUploadConfig::class);
             } elseif (class_exists(\Magento\Backend\Block\DataProviders\UploadConfig::class)) {
                 /* Workaround for Magento 2.2.8 */
-                $this->imageUploadConfigDataProvider = ObjectManager::getInstance()->get(\Magento\Backend\Block\DataProviders\UploadConfig::class);
+                $this->imageUploadConfigDataProvider = ObjectManager::getInstance()->get(
+                    \Magento\Backend\Block\DataProviders\UploadConfig::class
+                );
             }
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+            return;
+        }
     }
 
     /**
@@ -71,7 +75,7 @@ class Content extends \Magento\Backend\Block\Widget
         );
 
         $this->getUploader()->getConfig()->setUrl(
-            $this->_urlBuilder->addSessionParam()->getUrl('blog/post_upload/gallery')
+            $this->_urlBuilder->getUrl('blog/post_upload/gallery')
         )->setFileField(
             'image'
         )->setFilters(

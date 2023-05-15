@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+-->
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">custom_fieldset_form.custom_fieldset_form_data_source</item>
+            <item name="deps" xsi:type="string">custom_fieldset_form.custom_fieldset_form_data_source</item>
+            <item name="namespace" xsi:type="string">custom_fieldset_form</item>
+        </item>
+        <item name="buttons" xsi:type="array">
+            <item name="save" xsi:type="array">
+                <item name="name" xsi:type="string">save</item>
+                <item name="label" xsi:type="string" translate="true">Save Fieldset</item>
+                <item name="class" xsi:type="string">primary</item>
+                <item name="save" xsi:type="array">
+                    <item name="mage-init" xsi:type="array">
+                        <item name="button" xsi:type="array">
+                            <item name="event" xsi:type="string">save</item>
+                        </item>
+                    </item>
+                    <item name="form-role" xsi:type="string">save</item>
+                </item>
+            </item>
+        </item>
+        <item name="template" xsi:type="string">templates/form/collapsible</item>
+        <item name="config" xsi:type="array">
+            <item name="ajaxSaveType" xsi:type="string">simple</item>
+        </item>
+    </argument>
+    <dataSource name="custom_fieldset_form_data_source">
+        <argument name="dataProvider" xsi:type="configurableObject">
+            <argument name="class" xsi:type="string">Mageside\MultipleCustomForms\Ui\DataProvider\Form\FormFieldsetDataProvider</argument>
+            <argument name="name" xsi:type="string">custom_fieldset_form_data_source</argument>
+            <argument name="primaryFieldName" xsi:type="string">entity_id</argument>
+            <argument name="requestFieldName" xsi:type="string">id</argument>
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="submit_url" xsi:type="url" path="customform/fieldset/save"/>
+                    <item name="reloadUrl" xsi:type="url" path="mui/index/render" />
+                </item>
+            </argument>
+        </argument>
+        <argument name="data" xsi:type="array">
+            <item name="js_config" xsi:type="array">
+                <item name="component" xsi:type="string">Magento_Ui/js/form/provider</item>
+            </item>
+        </argument>
+    </dataSource>
+    <fieldset name="fieldset">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="label" xsi:type="string"/>
+                <item name="collapsible" xsi:type="boolean">false</item>
+            </item>
+        </argument>
+        <container name="messages">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string"/>
+                    <item name="component" xsi:type="string">Magento_Catalog/js/components/messages</item>
+                </item>
+            </argument>
+        </container>
+        <field name="name">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Name</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="componentType" xsi:type="string">field</item>
+                    <item name="dataScope" xsi:type="string">data.fieldset.name</item>
+                    <item name="notice" xsi:type="string">It will be used only in admin panel.</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="sortOrder" xsi:type="string">10</item>
+                </item>
+            </argument>
+        </field>
+        <field name="title">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Title</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="componentType" xsi:type="string">field</item>
+                    <item name="dataScope" xsi:type="string">data.fieldset.title</item>
+                    <item name="sortOrder" xsi:type="string">20</item>
+                    <item name="notice" xsi:type="string">It will be shown on website frontend as heading for a group of fields.</item>
+                </item>
+            </argument>
+        </field>
+    </fieldset>
+</form>

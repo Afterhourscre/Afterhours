@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_CallForPrice
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Mageplaza_CallForPrice::callforprice" title="Call For Price" module="Mageplaza_CallForPrice"
+             sortOrder="999" resource="Mageplaza_CallForPrice::callforprice" parent="Magento_Sales::sales"/>
+        <add id="Mageplaza_CallForPrice::rules" title="Rules Management" module="Mageplaza_CallForPrice" sortOrder="10"
+             action="mpcallforprice/rules" resource="Mageplaza_CallForPrice::rules"
+             parent="Mageplaza_CallForPrice::callforprice"/>
+        <add id="Mageplaza_CallForPrice::requests" title="Requests Management" module="Mageplaza_CallForPrice"
+             sortOrder="500" action="mpcallforprice/requests" resource="Mageplaza_CallForPrice::requests"
+             parent="Mageplaza_CallForPrice::callforprice"/>
+        <add id="Mageplaza_CallForPrice::configuration" title="Configuration" module="Mageplaza_CallForPrice"
+             sortOrder="100" action="adminhtml/system_config/edit/section/mpcallforprice"
+             resource="Mageplaza_CallForPrice::configuration" parent="Mageplaza_CallForPrice::callforprice"/>
+    </menu>
+</config>

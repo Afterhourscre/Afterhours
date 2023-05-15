@@ -1,0 +1,80 @@
+<?php
+/**
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the commercial license
+ * that is bundled with this package in the file LICENSE.txt.
+ *
+ * @category Extait
+ * @package Extait_Cookie
+ * @copyright Copyright (c) 2016-2018 Extait, Inc. (http://www.extait.com)
+ */
+
+/** @codingStandardsIgnoreFile */
+
+/** @var \Extait\Cookie\Block\Settings\Index $block */
+?>
+
+<div class="cookie-settings cms-content">
+    <div id="cookieContent" class="cookie-settings-content" data-mage-init='{"saveCookieSettings":{}}'>
+        <form>
+        <?php foreach ($block->getCookieCategories()->getItems() as $cookieCategory): ?>
+            <div id="category[<?= /* @noEscape */ $cookieCategory->getId() ?>]" class="cookie-category-desc">
+                <div class="toggle">
+                    <input type="checkbox" id="switchBox<?= /* @noEscape */ $cookieCategory->getId(); ?>"
+                           name="allowed_category[<?= /* @noEscape */ $cookieCategory->getId(); ?>]"
+                           data-category-id="<?= /* @noEscape */ $cookieCategory->getId() ?>"
+                           data-is-system="<?= /* @noEscape */ $cookieCategory->getIsSystem() ?>"
+                           <?= /* @noEscape */ $cookieCategory->getIsSystem() ? 'disabled' : '' ?>
+                           <?= /* @noEscape */ in_array($cookieCategory->getId(), $block->getUserSelectedCategories()) ? 'checked' : '' ?> />
+                    <label for="switchBox<?=$cookieCategory->getId()?>"><span class="on"><?= /* @noEscape */ __('On'); ?></span><span class="off"><?= /* @noEscape */ __('Off'); ?></span></label>
+                </div>
+                <h2>
+                    <?= $block->escapeHtml($cookieCategory->getName()) . ' ' . __('Cookies') ?>
+                </h2>
+                <p><?= /* @noEscape */ $cookieCategory->getDescription() ?></p>
+
+                <?php if ($block->showCookieInCategory()): ?>
+                    <div data-role="collapsible" class="filter-options-item">
+                        <div data-role="title" class="filter-options-title">
+                            <?= /* @noEscape */ __('List of cookies the %1 Category collects', $cookieCategory->getName()) ?>
+                        </div>
+                    </div>
+                    <div data-role="content" class="cookie-category-table" style="display: none;">
+                        <table class="data-table">
+                            <thead>
+                            <tr>
+                                <th><?= /* @noEscape */ __('Cookie Name') ?></th>
+                                <th><?= /* @noEscape */ __('Cookie Description') ?></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php /** @var \Extait\Cookie\Api\Data\CookieInterface $cookie */ ?>
+                            <?php foreach ($cookieCategory->getData('cookies') as $cookie): ?>
+                                <tr>
+                                    <td><?= $block->escapeHtml($cookie->getName()) ?></td>
+                                    <td class="desc"><?= /* @noEscape */ $cookie->getDescription() ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif ?>
+            </div>
+        <?php endforeach; ?>
+        </form>
+    </div>
+</div>
+<script>
+    require([
+        'jquery',
+        'accordion'
+    ], function ($) {
+        $("#cookieContent").accordion({
+            active: false,
+            multipleCollapsible: true,
+            openedState: "active",
+            collapsible: true
+        });
+    });
+</script>

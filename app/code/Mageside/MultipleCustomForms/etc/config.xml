@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <mageside_customform>
+            <general>
+                <enabled>0</enabled>
+                <recipient_email><![CDATA[hello@example.example]]></recipient_email>
+                <email_sender>custom1</email_sender>
+                <email_template>mageside_customform_general_email_template</email_template>
+                <module_name>Multiple Custom Forms</module_name>
+                <module_page_link>https://mageside.com/multiple-custom-forms.html</module_page_link>
+                <recaptcha_public_key backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
+                <recaptcha_secret_key backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
+            </general>
+        </mageside_customform>
+    </default>
+</config>

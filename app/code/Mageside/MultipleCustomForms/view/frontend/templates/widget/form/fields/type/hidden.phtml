@@ -1,0 +1,20 @@
+<?php
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+
+/** @var Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\HiddenType $block */
+
+$field = $block->getField();
+?>
+<div class="field input">
+    <div class="control">
+        <input type="hidden"
+               name="<?= $block->escapeHtmlAttr($block->getFieldHtmlName()); ?>"
+               id="<?= $block->escapeHtmlAttr($block->getFieldHtmlId()); ?>"
+               value="<?= $block->escapeHtmlAttr($block->getHiddenValue()); ?>"
+               title="<?= $block->escapeHtmlAttr($field->getTitle()); ?>"
+               class="input-hidden" />
+    </div>
+</div>

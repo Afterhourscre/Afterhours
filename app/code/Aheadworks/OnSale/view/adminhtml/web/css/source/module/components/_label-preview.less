@@ -1,0 +1,70 @@
+//
+//  Ui component label preview
+//  _____________________________________________
+
+//
+//  Variables
+//  ---------------------------------------------
+
+@special-price-height: 110px;
+@product-image-large-height: 260px;
+@product-image-large-width: 260px;
+@special-price-large-width: 260px;
+@product-image-medium-height: 180px;
+@product-image-medium-width: 170px;
+@special-price-medium-width: 170px;
+@product-image-small-height: 70px;
+@product-image-small-width: 70px;
+@special-price-small-width: 70px;
+@block-border-color: #e4e4e4;
+
+.aw-onsale__label-preview {
+    .product-image-area {
+        position: relative;
+        margin-bottom: 15px;
+    }
+
+    .special-area {
+        position: relative;
+        height: @special-price-height;
+    }
+
+    .large {
+        .product-image-area {
+            height: @product-image-large-height;
+            width: @product-image-large-width;
+        }
+        .special-area {
+            width: @special-price-large-width;
+        }
+    }
+
+    .medium {
+        .product-image-area {
+            width: @product-image-medium-width;
+            height: @product-image-medium-height;
+        }
+        .special-area {
+            width: @special-price-medium-width;
+        }
+    }
+
+    .small {
+        .product-image-area {
+            height: @product-image-small-height;
+            width: @product-image-small-width;
+        }
+        .special-area {
+            width: @special-price-small-width;
+        }
+    }
+
+    .border-for-area {
+        border: 2px solid @block-border-color;
+    }
+
+    .label-preview {
+        display: inline-block;
+        padding-right: 25px;
+    }
+}

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+See LICENSE.txt for license details.
+*/
+-->
+
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <!-- todo M2OS-182  -->
+    <!--<columns name="widget_columns">
+        <column name="aw-onsale_label" component="Aheadworks_OnSale/js/view/label/renderer/product/list/columns/label" sortOrder="2" displayArea="description-area">
+            <settings>
+                <label translate="true">On Sale Label</label>
+                <bodyTmpl>Aheadworks_OnSale/view/label/renderer/product/list/columns/label</bodyTmpl>
+            </settings>
+        </column>
+    </columns>-->
+</listing>

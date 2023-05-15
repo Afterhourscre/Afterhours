@@ -1,0 +1,12 @@
+<div class="admin__field aw-onsale__label-preview">
+    <each args="data: sizeList, as: '$size'">
+        <div class="label-preview" css="$size">
+            <div class="product-image-area border-for-area">
+                <render if="$parent.isDisplayLabelForArea('product_image')" args="$parent.labelTmpl"/>
+            </div>
+            <div class="special-area border-for-area">
+                <render if="$parent.isDisplayLabelForArea('next_to_price')" args="$parent.labelTmpl"/>
+            </div>
+        </div>
+    </each>
+</div>

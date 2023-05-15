@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Mageside_MultipleCustomForms::multiple_custom_forms"
+             title="Custom Forms"
+             translate="title"
+             module="Mageside_MultipleCustomForms"
+             sortOrder="30"
+             parent="Magento_Backend::content"
+             dependsOnModule="Mageside_MultipleCustomForms"
+             resource="Mageside_MultipleCustomForms::mageside_multiple_custom_forms"/>
+        <add id="Mageside_MultipleCustomForms::form"
+             title="Manage Forms"
+             translate="title"
+             module="Mageside_MultipleCustomForms"
+             sortOrder="10"
+             resource="Mageside_MultipleCustomForms::mageside_multiple_custom_forms"
+             parent="Mageside_MultipleCustomForms::multiple_custom_forms"
+             action="customform/form/manage"/>
+    </menu>
+</config>

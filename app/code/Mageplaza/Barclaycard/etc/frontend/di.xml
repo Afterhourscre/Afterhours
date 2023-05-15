@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_Barclaycard
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Mageplaza\Barclaycard\Model\ConfigProvider">
+        <arguments>
+            <argument name="paymentProviders" xsi:type="array">
+                <item name="mpbarclaycard_direct" xsi:type="object">MpBarclaycardDirectFacade</item>
+                <item name="mpbarclaycard_hosted" xsi:type="object">MpBarclaycardHostedFacade</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Checkout\Model\CompositeConfigProvider">
+        <arguments>
+            <argument name="configProviders" xsi:type="array">
+                <item name="mpbarclaycard" xsi:type="object">Mageplaza\Barclaycard\Model\ConfigProvider</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Payment\Model\CcGenericConfigProvider">
+        <arguments>
+            <argument name="methodCodes" xsi:type="array">
+                <item name="mpbarclaycard_direct" xsi:type="const">Mageplaza\Barclaycard\Model\Payment\Direct::CODE</item>
+                <item name="mpbarclaycard_hosted" xsi:type="const">Mageplaza\Barclaycard\Model\Payment\Hosted::CODE</item>
+            </argument>
+        </arguments>
+    </type>
+</config>

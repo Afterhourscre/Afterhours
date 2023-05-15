@@ -1,0 +1,197 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+/** @var  $block \Magento\Sales\Block\Order\Item\Renderer\DefaultRenderer */
+$ObjectManager = \Magento\Framework\App\ObjectManager::getInstance();
+$modelCollection = $ObjectManager->create('MageCloud\SalesOrder\Model\SalesOrder')->getCollection();
+$conf = $ObjectManager->get('Magento\Framework\App\Config\ScopeConfigInterface')->getValue('sale_order_upload/order_status/order_statuses');
+$productCollectionAttr = $modelCollection->getData();
+$_item = $block->getItem();
+$_order = $block->getOrder();
+if ($_item->getProduct()) {
+    $product = $ObjectManager->create('Magento\Catalog\Model\Product')->load($_item->getProduct()->getId());
+    $imagewidth=200;
+    $imageheight=200;
+    $imageHelper  = $ObjectManager->get('\Magento\Catalog\Helper\Image');
+    $image_url = $imageHelper->init($product, 'product_page_image_small')->setImageFile($product->getFile())->resize($imagewidth, $imageheight)->getUrl();
+    $_itemImage = "<img src = ".$image_url. " height=200 width=200 />";
+}
+?>
+<tr id="order-item-row-<?= (int) $_item->getId() ?>">
+    <td class="col name" data-th="<?= $block->escapeHtml(__('Product Name')) ?>">
+        <strong class="product name product-item-name"><?= $block->escapeHtml($_item->getName()) ?></strong>
+        <div class="product-item-image">
+            <?= $_item->getProduct() ? $_itemImage : false; ?>
+            <?php if(strpos($conf, $_order->getStatus()) !== false): ?>
+                <div class="form_parent">
+                    <form class="form" method="post" id="frm_attachment<?= /* @escapeNotVerified */ $_item->getId() ?>" enctype="multipart/form-data" autocomplete="off">
+                        <div class="admin__field field field-attachment">
+                            <label class="label admin__field-label"><strong><span>Attachment :</span></strong></label>
+                            <div>
+                                <p>
+                                    Accepted file formats: jpg, pdf, ai, eps, psd and tiff
+                                </p>
+                                <p>Please see our <a href="/file-setup-guide" target="_blank">file setup guide</a> to ensure your files are set up correctly.</p>
+                            </div>
+                            <div class="admin__field-control control">
+                                <button type="button" class="scalable action-show-hide action primary" id="uploadAttachment<?= /* @escapeNotVerified */ $_item->getId() ?>"><span><span><span>Upload</span></span></span></button>
+                                <input type="file" class="attachment" name="image_name" style="display: none;"/>
+                                <input type="hidden" class="attachment" name="order_id" value="<?= /* @escapeNotVerified */ $_order->getId() ?>" style="display: none;"/>
+                                <input type="hidden" class="attachment" name="order_item_id" value="<?= /* @escapeNotVerified */ $_item->getId() ?>" style="display: none;"/>
+                                <input type="hidden" id="pathTo<?= /* @escapeNotVerified */ $_item->getId() ?>" class="attachment" name="image_path" value="" style="display: none;"/>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            <?php endif; ?>
+            <div id="attachmentFiles<?= /* @escapeNotVerified */ $_item->getId() ?>" class="mc_attachmentFiles">
+                <?php foreach ($productCollectionAttr as $productCollection) : ?>
+                    <?php if($productCollection['order_id'] == $_order->getId() && $productCollection['order_item_id'] == $_item->getId()) : ?>
+                        <div class="image item base-image" data-role="image" id="<?= $productCollection['id'] ?>">
+                            <a href="<?= $productCollection['image_path'] ?>" target="_blank">
+                                <div class="product-image-wrapper">
+                                    <span><?= $productCollection['image_name'] ?></span>
+                                </div>
+                            </a>
+                            <?php if($_order->getStatus() === 'pending'): ?>
+                                <div class="actions">
+                                    <button type="button" class="action-remove" data-role="delete-button" data-image="<?= $productCollection['image_path'] ?>" title="Delete image"><span>Delete</span></button>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php if ($_options = $block->getItemOptions()) : ?>
+            <dl class="item-options">
+                <?php foreach ($_options as $_option) : ?>
+                    <dt><?= $block->escapeHtml($_option['label']) ?></dt>
+                    <?php if (!$block->getPrintStatus()) : ?>
+                        <?php $_formatedOptionValue = $block->getFormatedOptionValue($_option) ?>
+                        <dd>
+                            <?php if (isset($_formatedOptionValue['full_view'])) : ?>
+                                <?= $block->escapeHtml($_formatedOptionValue['full_view'], ['a']) ?>
+                            <?php else : ?>
+                                <?=$block->escapeHtml($_formatedOptionValue['value'], ['a']) ?>
+                            <?php endif; ?>
+                        </dd>
+                    <?php else : ?>
+                        <dd>
+                            <?= /* @noEscape */ nl2br($block->escapeHtml($_option['print_value'] ?? $_option['value'])) ?>
+                        </dd>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </dl>
+        <?php endif; ?>
+        <?php $addtInfoBlock = $block->getProductAdditionalInformationBlock(); ?>
+        <?php if ($addtInfoBlock) : ?>
+            <?= $addtInfoBlock->setItem($_item)->toHtml() ?>
+        <?php endif; ?>
+        <?= $block->escapeHtml($_item->getDescription()) ?>
+    </td>
+    <td class="col sku" data-th="<?= $block->escapeHtml(__('SKU')) ?>"><?= /* @noEscape */ $block->prepareSku($block->getSku()) ?></td>
+    <td class="col price" data-th="<?= $block->escapeHtml(__('Price')) ?>">
+        <?= $block->getItemPriceHtml() ?>
+    </td>
+    <td class="col qty" data-th="<?= $block->escapeHtml(__('Qty')) ?>">
+        <ul class="items-qty">
+            <?php if ($block->getItem()->getQtyOrdered() > 0) : ?>
+                <li class="item">
+                    <span class="title"><?= $block->escapeHtml(__('Ordered')) ?></span>
+                    <span class="content"><?= (int) $block->getItem()->getQtyOrdered() ?></span>
+                </li>
+            <?php endif; ?>
+            <?php if ($block->getItem()->getQtyShipped() > 0) : ?>
+                <li class="item">
+                    <span class="title"><?= $block->escapeHtml(__('Shipped')) ?></span>
+                    <span class="content"><?= (int) $block->getItem()->getQtyShipped() ?></span>
+                </li>
+            <?php endif; ?>
+            <?php if ($block->getItem()->getQtyCanceled() > 0) : ?>
+                <li class="item">
+                    <span class="title"><?= $block->escapeHtml(__('Canceled')) ?></span>
+                    <span class="content"><?= (int) $block->getItem()->getQtyCanceled() ?></span>
+                </li>
+            <?php endif; ?>
+            <?php if ($block->getItem()->getQtyRefunded() > 0) : ?>
+                <li class="item">
+                    <span class="title"><?= $block->escapeHtml(__('Refunded')) ?></span>
+                    <span class="content"><?= (int) $block->getItem()->getQtyRefunded() ?></span>
+                </li>
+            <?php endif; ?>
+        </ul>
+    </td>
+    <td class="col subtotal" data-th="<?= $block->escapeHtml(__('Subtotal')) ?>">
+        <?= $block->getItemRowTotalHtml() ?>
+    </td>
+</tr>
+
+<script>
+    require(['jquery'], function ($) {
+        $(document).ready(function ($) {
+
+            $(document).on('click', '#attachmentFiles<?= /* @escapeNotVerified */ $_item->getId() ?> .action-remove', function(){
+                if (window.confirm("Are you sure you want to delete?")) {
+                    var attachmentPath = $(this).attr("data-image"),
+                        divID = $(this).parents(".base-image").attr("id"),
+                        pathThisFirstBaseImage = $('#attachmentFiles<?= /* @escapeNotVerified */ $_item->getId() ?> > .base-image a').attr('href');
+
+                    jQuery.ajax({
+                        url: "<?php echo $block->getBaseUrl() . 'magecloud_salesorder/frontend/deleteAttachment?isAjax=true' ?>",
+                        type: "POST",
+                        data: {
+                            filename: attachmentPath,
+                            form_key: window.FORM_KEY,
+                            id:  divID,
+                            pathThisFirstBaseImage: pathThisFirstBaseImage
+                        },
+                        showLoader: true,
+                        success: function (response) {
+                            if(response.success == true){
+                                $(".base-image#"+divID).remove();
+                            }
+                            // alert(response.message);
+                        },
+                        error: function (response) {
+                            // alert(response.message);
+                        }
+                    });
+                }
+            });
+
+            $('#uploadAttachment<?= /* @escapeNotVerified */ $_item->getId() ?>').click(function(){
+                $(this).siblings('.attachment').trigger('click');
+                if($('.table-order-items').find('base-image')) {
+                    var pathFirstBaseImage = $('.table-order-items :first-child .base-image a').attr('href');
+                    $('#pathTo<?= /* @escapeNotVerified */ $_item->getId() ?>').attr('value', pathFirstBaseImage);
+                }
+            });
+
+            $('#uploadAttachment<?= /* @escapeNotVerified */ $_item->getId() ?>').siblings('.attachment').change(function(){
+                var data = $("#frm_attachment<?= /* @escapeNotVerified */ $_item->getId() ?>").get(0);
+
+                jQuery.ajax({
+                    url: "<?php echo $block->getBaseUrl() . 'magecloud_salesorder/frontend/addAttachment?isAjax=true' ?>",
+                    type: "POST",
+                    data: new FormData(data),
+                    processData: false,
+                    contentType: false,
+                    showLoader: true,
+                    success: function (response) {
+                        // alert(response.message);
+                        $("#attachmentFiles<?= /* @escapeNotVerified */ $_item->getId() ?>").prepend(response.data.html);
+                        $('#frm_attachment<?= /* @escapeNotVerified */ $_item->getId() ?>')[0].reset();
+                    },
+                    error: function (response) {
+                        // alert(response.message);
+                        $('#frm_attachment<?= /* @escapeNotVerified */ $_item->getId() ?>')[0].reset();
+                    }
+                });
+            });
+        });
+    });
+</script>

@@ -1,0 +1,64 @@
+<?php
+/**
+ * Copyright © MageWorx. All rights reserved.
+ * See LICENSE.txt for license details.
+ */
+
+/** @var $block \Magento\Catalog\Block\Product\View */
+?>
+<?php $_product = $block->getProduct(); ?>
+<?php $buttonTitle = __('Add to Cart'); ?>
+<?php if ($_product->isSaleable()): ?>
+    <div class="box-tocart">
+        <div class="fieldset">
+            <?php if ($block->shouldRenderQuantity()): ?>
+                <div class="field qty">
+                    <label class="label" for="qty"><span><?= $block->escapeHtml(__('Qty')) ?></span></label>
+                    <div class="control">
+                        <input type="number"
+                               name="qty"
+                               id="qty"
+                               value="<?= $block->escapeHtml($block->getProductDefaultQty() * 1) ?>"
+                               title="<?= $block->escapeHtml(__('Qty')) ?>"
+                               class="input-text qty"
+                               data-validate="<?= $block->escapeHtml(json_encode($block->getQuantityValidators())) ?>"
+                        />
+                    </div>
+                </div>
+            <?php endif; ?>
+            <div class="product-info-price mageworx-product-final-price">
+                <div class="price-box price-final_price">
+                    <label class="label" for="mageworx-product-final-price">
+                            <span>
+                                <?= $block->escapeHtml(
+                                    $this->helper("MageWorx\OptionFeatures\Helper\Data")
+                                         ->getAdditionalProductPriceFieldLabel($_product->getStoreId())
+                                ) ?>
+                            </span>
+                    </label>
+                    <span class="price-container price-final_price tax weee" name="mageworx-product-final-price">
+                            <span class="price-wrapper" data-price-type="finalPrice">
+                                <span class="mageworx-additional-price-field price"></span>
+                            </span>
+                        </span>
+                </div>
+            </div>
+        </div>
+        <div class="actions">
+            <button type="submit"
+                    title="<?= $block->escapeHtmlAttr($buttonTitle) ?>"
+                    class="action primary tocart"
+                    id="product-addtocart-button">
+                <span><?= $block->escapeHtml($buttonTitle) ?></span>
+            </button>
+            <?= $block->getChildHtml('', true) ?>
+        </div>
+    </div>
+<?php endif; ?>
+<script type="text/x-magento-init">
+    {
+        "#product_addtocart_form": {
+            "Magento_Catalog/js/validate-product": {}
+        }
+    }
+</script>

@@ -1,0 +1,36 @@
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_Barclaycard
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+
+#mpbarclaycard_direct_expiration, #mpbarclaycard_direct_expiration_yr {
+    width: 48%;
+}
+
+#payment_form_mpbarclaycard_direct .admin__field {
+    margin-bottom: 0;
+}
+
+#payment_form_mpbarclaycard_direct label span.required {
+    color: #e02b27;
+    font-size: 1.2rem;
+}
+
+#payment_form_mpbarclaycard_direct > .field-type {
+    display: none;
+}

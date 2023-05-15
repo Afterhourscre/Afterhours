@@ -1,0 +1,228 @@
+//
+//  label shapes
+//  _____________________________________________
+
+//
+//  Variables
+//  ---------------------------------------------
+
+@label-default-color: #bf1b1a;
+@label-default-text-color: #fff;
+
+.aw-onsale__label-wrap {
+    .label-wrap {
+        &.shape {
+            background-color: @label-default-color;
+            color: @label-default-text-color;
+        }
+    }
+
+    //
+    //  Rectangle & Rectangle with Bevel
+    //  ---------------------------------------------
+
+    .rectangle,
+    .rectangle-with-bevel-up,
+    .rectangle-with-bevel-down {
+        padding: 1px 2px;
+        min-height: 3px;
+        min-width: 6px;
+    }
+
+    //
+    //  Rectangle
+    //  ---------------------------------------------
+
+    .rectangle {
+
+    }
+
+    //
+    //  Rectangle with Bevel
+    //  ---------------------------------------------
+
+    .rectangle-with-bevel-up,
+    .rectangle-with-bevel-down {
+
+        &::after {
+            content: '';
+            position: absolute;
+            height: 100%;
+            width: 50%;
+            display: block;
+            top: 0;
+            background-color: inherit;
+            z-index: -1;
+        }
+    }
+
+    &.top-right, &.bottom-right {
+        .rectangle-with-bevel-down {
+            margin-left: 2.5%;
+
+            &::after {
+                -webkit-transform: skew(-20deg, 0deg);
+                transform: skew(-20deg, 0deg);
+                -webkit-transform-origin: top left;
+                transform-origin: top left;
+                left: 0;
+            }
+        }
+    }
+
+    &.top-left, &.bottom-left, &.next-to-price {
+        .rectangle-with-bevel-down {
+            margin-right: 2.5%;
+
+            &::after {
+                -webkit-transform: skew(20deg, 0deg);
+                transform: skew(20deg, 0deg);
+                -webkit-transform-origin: top right;
+                transform-origin: top right;
+                right: 0;
+            }
+        }
+    }
+
+    &.top-right, &.bottom-right {
+        .rectangle-with-bevel-up {
+            margin-left: 2.5%;
+
+            &::after {
+                -webkit-transform: skew(20deg, 0deg);
+                transform: skew(20deg, 0deg);
+                -webkit-transform-origin: bottom right;
+                transform-origin: bottom left;
+                left: 0;
+            }
+        }
+    }
+
+    &.top-left, &.bottom-left, &.next-to-price {
+        .rectangle-with-bevel-up {
+            margin-right: 2.5%;
+
+            &::after {
+                -webkit-transform: skew(-20deg, 0deg);
+                transform: skew(-20deg, 0deg);
+                -webkit-transform-origin: bottom right;
+                transform-origin: bottom right;
+                right: 0;
+            }
+        }
+    }
+
+    //
+    //  Circle & Square
+    //  ---------------------------------------------
+
+    .square,
+    .circle {
+        width: 60px;
+    }
+
+    .square::after,
+    .circle::after {
+        content: '';
+        display: block;
+        padding-top: 100%;
+    }
+
+    //
+    //  Circle
+    //  ---------------------------------------------
+
+    .circle {
+        border-radius: 50%;
+    }
+
+    //
+    //  Flag
+    //  ---------------------------------------------
+
+    .flag {
+        width: 56px;
+        margin-bottom: 30%;
+
+        .position-block {
+            -webkit-box-align: start;
+            -ms-flex-align: start;
+            align-items: flex-start;
+            padding-top: 10px;
+        }
+
+        &::after {
+            content: '';
+            display: block;
+            padding-top: 85%;
+        }
+
+        .left-side,
+        .right-side {
+            display: block;
+            position: absolute;
+            bottom: -30%;
+            background-color: inherit;
+            width: 50%;
+            height: 50%;
+            z-index: -1;
+        }
+
+        .left-side {
+            left: 0;
+            -webkit-transform: skew(0deg, -20deg);
+            transform: skew(0deg, -20deg);
+            -webkit-transform-origin: top left;
+            transform-origin: top left;
+        }
+
+        .right-side {
+            right: 0;
+            -webkit-transform: skew(0deg, 20deg);
+            transform: skew(0deg, 20deg);
+            -webkit-transform-origin: top right;
+            transform-origin: top right;
+        }
+    }
+
+    //
+    //  Burst 12
+    //  ---------------------------------------------
+
+    .point-burst-wrap {
+        width: 60px;
+        margin: 15px;
+
+        &::after {
+            content: '';
+            display: block;
+            padding-top: 100%;
+        }
+
+        .point-brust-square {
+            position: absolute;
+            left: 0;
+            top: 0;
+            display: block;
+            background-color: inherit;
+            height: 100%;
+            width: 100%;
+
+            &.rotate-1 {
+                -webkit-transform: rotate(30deg);
+                -moz-transform: rotate(30deg);
+                -ms-transform: rotate(30deg);
+                -o-transform: rotate(30deg);
+                transform: rotate(30deg);
+            }
+
+            &.rotate-2 {
+                -webkit-transform: rotate(60deg);
+                -moz-transform: rotate(60deg);
+                -ms-transform: rotate(60deg);
+                -o-transform: rotate(60deg);
+                transform: rotate(60deg);
+            }
+        }
+    }
+}

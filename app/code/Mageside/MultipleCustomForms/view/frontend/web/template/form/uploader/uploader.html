@@ -1,0 +1,20 @@
+<input type="hidden" css="'file-input': required, 'required-entry': required" attr="name: fieldName, value: fileNamesSerialized" />
+<div class="gallery">
+    <each args="data: value, as: '$file'" render="$parent.getPreviewTmpl($file)"/>
+    <div class="file file-placeholder" data-role="drop-zone" if="countUploadsNotExceed">
+        <div class="uploader">
+            <div class="fileinput-button form-buttons button">
+                <span translate="'Browse Files...'" />
+                <input id="fileupload"
+                       type="file"
+                       afterRender="onElementRender"
+                       attr="id: uid, name: inputName, multiple: isMultipleFiles" />
+            </div>
+            <div class="clear"></div>
+            <div class="loader" css="_loading: isLoading"></div>
+        </div>
+        <div class="file-preview-wrapper">
+            <p class="file-placeholder-text" translate="'Browse to find or drag file here'" />
+        </div>
+    </div>
+</div>

@@ -1,0 +1,53 @@
+.aw-coupongenerator-admin-coupon-generate .fieldset > .legend,
+.aw_coupongenerator_admin-coupon-generate .fieldset > .legend {
+    border-bottom: 1px solid #cac3b4;
+}
+
+.aw-coupongenerator-admin-coupon-generate .fieldset > .legend span,
+.aw_coupongenerator_admin-coupon-generate .fieldset > .legend span {
+    padding: 7px 0 10px;
+    display: inline-block;
+}
+
+#coupongenerate_base_customer_fieldset .field-customer_note .control {
+    margin-left: 0;
+}
+#coupongenerate_base_fieldset input[type="checkbox"] {
+    background: #fff;
+    border: 1px solid #adadad;
+    border-radius: 2px;
+    cursor: pointer;
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 5px 0 0;
+    height: 16px;
+    width: 16px;
+    position: relative;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    transition: all .1s ease-in;
+}
+#coupongenerate_base_fieldset input[type="checkbox"]:checked:after {
+    font-family: 'Admin Icons';
+    content: "\e62d";
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 14px;
+    color: #514943;
+    font-size: 11px;
+    line-height: 13px;
+    text-align: center;
+    font-weight: 400;
+}
+.aw-coupongenerator-admin-rule-edit #rule_conditions_fieldset > .legend span,
+.aw-coupongenerator-admin-rule-edit #rule_actions_fieldset > .legend span,
+.aw_coupongenerator_admin-rule-edit #rule_conditions_fieldset > .legend span,
+.aw_coupongenerator_admin-rule-edit #rule_actions_fieldset > .legend span {
+    font-size: 1.4rem;
+}
+.aw-coupongenerator-admin-coupon-generate-button {
+    margin-left: calc( (100%) * .25 - 30px ) !important;
+}

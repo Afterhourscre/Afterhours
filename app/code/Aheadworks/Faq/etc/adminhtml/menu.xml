@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+* See LICENSE.txt for license details.
+*/
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Aheadworks_Faq::elements" title="FAQ by Aheadworks" module="Aheadworks_Faq" parent="Magento_Backend::content" sortOrder="100" resource="Aheadworks_Faq::elements" translate="title"/>
+        <add id="Aheadworks_Faq::article" title="Articles" module="Aheadworks_Faq" parent="Aheadworks_Faq::elements" sortOrder="10" action="faq/article/" resource="Aheadworks_Faq::article" translate="title"/>
+        <add id="Aheadworks_Faq::category" title="Categories" module="Aheadworks_Faq" parent="Aheadworks_Faq::elements" sortOrder="20" action="faq/category/" resource="Aheadworks_Faq::category" translate="title"/>
+    </menu>
+</config>

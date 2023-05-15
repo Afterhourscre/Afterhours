@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<page layout="1column" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <container name="cart.custom.block.container" htmlTag="div" htmlClass="cart-custom-block">
+            <block class="Magento\Cms\Block\Block" name="cart.custom.block">
+                <arguments>
+                    <argument name="block_id" xsi:type="string">cart.custom.block</argument>
+                </arguments>
+            </block>
+        </container>
+        <move element="cart.custom.block.container" destination="checkout.cart.container" after="cart.discount" />
+    </body>
+</page>

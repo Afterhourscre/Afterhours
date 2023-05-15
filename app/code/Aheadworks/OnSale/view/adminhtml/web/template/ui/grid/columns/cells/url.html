@@ -1,0 +1,8 @@
+<div class="aw-onsale__grid-cell url">
+    <if args="getUrl($row())">
+        <a href="#" data-bind="attr: {href: getUrl($row())}, text: getLabel($row())"></a>
+    </if>
+    <ifnot args="getUrl($row())">
+        <text args="getLabel($row())" />
+    </ifnot>
+</div>

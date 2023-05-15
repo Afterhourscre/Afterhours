@@ -1,0 +1,1010 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+-->
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">custom_input_form.custom_input_form_data_source</item>
+            <item name="deps" xsi:type="string">custom_input_form.custom_input_form_data_source</item>
+            <item name="namespace" xsi:type="string">custom_input_form</item>
+        </item>
+        <item name="buttons" xsi:type="array">
+            <item name="save" xsi:type="array">
+                <item name="name" xsi:type="string">save</item>
+                <item name="label" xsi:type="string" translate="true">Save Field</item>
+                <item name="class" xsi:type="string">primary</item>
+                <item name="save" xsi:type="array">
+                    <item name="mage-init" xsi:type="array">
+                        <item name="button" xsi:type="array">
+                            <item name="event" xsi:type="string">save</item>
+                        </item>
+                    </item>
+                    <item name="form-role" xsi:type="string">save</item>
+                </item>
+            </item>
+        </item>
+        <item name="template" xsi:type="string">templates/form/collapsible</item>
+        <item name="config" xsi:type="array">
+            <item name="ajaxSaveType" xsi:type="string">simple</item>
+        </item>
+    </argument>
+    <dataSource name="custom_input_form_data_source">
+        <argument name="dataProvider" xsi:type="configurableObject">
+            <argument name="class" xsi:type="string">Mageside\MultipleCustomForms\Ui\DataProvider\Form\FormInputDataProvider</argument>
+            <argument name="name" xsi:type="string">custom_input_form_data_source</argument>
+            <argument name="primaryFieldName" xsi:type="string">entity_id</argument>
+            <argument name="requestFieldName" xsi:type="string">id</argument>
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="submit_url" xsi:type="url" path="customform/field/save"/>
+                    <item name="reloadUrl" xsi:type="url" path="mui/index/render" />
+                </item>
+            </argument>
+        </argument>
+        <argument name="data" xsi:type="array">
+            <item name="js_config" xsi:type="array">
+                <item name="component" xsi:type="string">Magento_Ui/js/form/provider</item>
+            </item>
+        </argument>
+    </dataSource>
+    <fieldset name="fields">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="label" xsi:type="string"/>
+                <item name="collapsible" xsi:type="boolean">false</item>
+            </item>
+        </argument>
+        <container name="messages">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string"/>
+                    <item name="component" xsi:type="string">Magento_Catalog/js/components/messages</item>
+                </item>
+            </argument>
+        </container>
+        <field name="title">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Title</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="componentType" xsi:type="string">field</item>
+                    <item name="dataScope" xsi:type="string">data.field.title</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="sortOrder" xsi:type="string">10</item>
+                </item>
+            </argument>
+        </field>
+        <field name="input_type">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Input Type</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="dataScope" xsi:type="string">data.field.type</item>
+                    <item name="sortOrder" xsi:type="string">20</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+                <item name="options" xsi:type="array">
+                    <item name="0" xsi:type="array">
+                        <item name="value" xsi:type="string"/>
+                        <item name="label" xsi:type="string" translate="true">-- Please Select --</item>
+                    </item>
+                    <item name="input" xsi:type="array">
+                        <item name="value" xsi:type="string">input</item>
+                        <item name="label" xsi:type="string" translate="true">Text Field</item>
+                    </item>
+                    <item name="textarea" xsi:type="array">
+                        <item name="value" xsi:type="string">textarea</item>
+                        <item name="label" xsi:type="string" translate="true">Text Area</item>
+                    </item>
+                    <item name="select" xsi:type="array">
+                        <item name="value" xsi:type="string">select</item>
+                        <item name="label" xsi:type="string" translate="true">Drop Down</item>
+                    </item>
+                    <item name="multiselect" xsi:type="array">
+                        <item name="value" xsi:type="string">multiselect</item>
+                        <item name="label" xsi:type="string" translate="true">Multiple Select</item>
+                    </item>
+                    <item name="radio" xsi:type="array">
+                        <item name="value" xsi:type="string">radio</item>
+                        <item name="label" xsi:type="string" translate="true">Radio Buttons</item>
+                    </item>
+                    <item name="checkbox" xsi:type="array">
+                        <item name="value" xsi:type="string">checkbox</item>
+                        <item name="label" xsi:type="string" translate="true">Checkbox</item>
+                    </item>
+                    <item name="agreement" xsi:type="array">
+                        <item name="value" xsi:type="string">agreement</item>
+                        <item name="label" xsi:type="string" translate="true">Agreement</item>
+                    </item>
+                    <item name="date" xsi:type="array">
+                        <item name="value" xsi:type="string">date</item>
+                        <item name="label" xsi:type="string" translate="true">Date and Time</item>
+                    </item>
+                    <item name="file" xsi:type="array">
+                        <item name="value" xsi:type="string">file</item>
+                        <item name="label" xsi:type="string" translate="true">File</item>
+                    </item>
+                    <item name="hidden" xsi:type="array">
+                        <item name="value" xsi:type="string">hidden</item>
+                        <item name="label" xsi:type="string" translate="true">Hidden</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="required">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/checkbox</item>
+                    <item name="label" xsi:type="string" translate="true">Required</item>
+                    <item name="dataScope" xsi:type="string">data.field.required</item>
+                    <item name="sortOrder" xsi:type="string">30</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="dataType" xsi:type="string">boolean</item>
+                    <item name="formElement" xsi:type="string">checkbox</item>
+                    <item name="prefer" xsi:type="string">toggle</item>
+                    <item name="valueMap" xsi:type="array">
+                        <item name="true" xsi:type="string">1</item>
+                        <item name="false" xsi:type="string">0</item>
+                    </item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="inverse" xsi:type="boolean">true</item>
+                            <item name="options" xsi:type="array">
+                                <item name="hidden" xsi:type="string">hidden</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="fieldset_id">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Mageside\MultipleCustomForms\Model\Source\FieldsetOptions</item>
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Fieldset</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="dataScope" xsi:type="string">data.field.fieldset_id</item>
+                    <item name="sortOrder" xsi:type="string">35</item>
+                </item>
+            </argument>
+        </field>
+        <field name="options_source">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Mageside\MultipleCustomForms\Model\Source\SourceOptions</item>
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Options Source</item>
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/select</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="dataScope" xsi:type="string">data.field.options_source</item>
+                    <item name="sortOrder" xsi:type="string">40</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="select" xsi:type="string">select</item>
+                                <item name="radio" xsi:type="string">radio</item>
+                                <item name="checkbox" xsi:type="string">checkbox</item>
+                                <item name="multiselect" xsi:type="string">multiselect</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <!--************************Input and Textarea Fields Settings************************-->
+        <field name="placeholder">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/input</item>
+                    <item name="label" xsi:type="string">Placeholder</item>
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="sortOrder" xsi:type="number">50</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="dataScope" xsi:type="string">data.field.placeholder</item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="input" xsi:type="string">input</item>
+                                <item name="textarea" xsi:type="string">textarea</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <!--************************Select Field Settings************************-->
+        <field name="product_attribute">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Mageside\MultipleCustomForms\Model\Source\ProductAttributes</item>
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Product Attribute</item>
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/select</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="dataScope" xsi:type="string">data.field.product_attribute</item>
+                    <item name="sortOrder" xsi:type="string">60</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.options_source" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="product_attribute" xsi:type="string">product_attribute</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="region_source">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Region Source</item>
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/select</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="dataScope" xsi:type="string">data.field.region_source</item>
+                    <item name="sortOrder" xsi:type="string">70</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="select" xsi:type="string">select</item>
+                                <item name="multiselect" xsi:type="string">multiselect</item>
+                            </item>
+                        </item>
+                        <item name="custom_input_form.custom_input_form.fields.options_source" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="region" xsi:type="string">region</item>
+                            </item>
+                        </item>
+                    </item>
+                    <item name="notice" xsi:type="string">'Depends on specific field' option use only with 'Drop Down' input type.</item>
+                </item>
+                <item name="options" xsi:type="array">
+                    <item name="0" xsi:type="array">
+                        <item name="value" xsi:type="string"/>
+                        <item name="label" xsi:type="string" translate="true">-- Please Select --</item>
+                    </item>
+                    <item name="country" xsi:type="array">
+                        <item name="value" xsi:type="string">specific_country</item>
+                        <item name="label" xsi:type="string" translate="true">Specific country</item>
+                    </item>
+                    <item name="region" xsi:type="array">
+                        <item name="value" xsi:type="string">specific_field</item>
+                        <item name="label" xsi:type="string" translate="true">Depends on specific field</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="specific_country">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Magento\Directory\Model\ResourceModel\Country\Collection</item>
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Country</item>
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/select</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="dataScope" xsi:type="string">data.field.specific_country</item>
+                    <item name="sortOrder" xsi:type="string">80</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.region_source" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="specific_country" xsi:type="string">specific_country</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="country_field">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Mageside\MultipleCustomForms\Model\Source\CountryFields</item>
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Country Field</item>
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/select</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="dataScope" xsi:type="string">data.field.country_field</item>
+                    <item name="sortOrder" xsi:type="string">90</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.region_source" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="specific_field" xsi:type="string">specific_field</item>
+                            </item>
+                        </item>
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="select" xsi:type="string">select</item>
+                                <item name="multiselect" xsi:type="string">multiselect</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <!--************************Hidden Field Settings************************-->
+        <field name="hidden_source">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Mageside\MultipleCustomForms\Model\Source\HiddenOptions</item>
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Hidden Source</item>
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/select</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="dataScope" xsi:type="string">data.field.hidden_source</item>
+                    <item name="sortOrder" xsi:type="string">100</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="hidden" xsi:type="string">hidden</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="hidden_product_attribute">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Mageside\MultipleCustomForms\Model\Source\AllProductAttribute</item>
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Product Attribute</item>
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/select</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="dataScope" xsi:type="string">data.field.hidden_product_attribute</item>
+                    <item name="sortOrder" xsi:type="string">110</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="notice" xsi:type="string">Attribute value will be populated only for forms placed on product view page.</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.hidden_source" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="hidden_product_attribute" xsi:type="string">hidden_product_attribute</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="hidden_category_attribute">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Mageside\MultipleCustomForms\Model\Source\CategoryAttribute</item>
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Category Attribute</item>
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/select</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="dataScope" xsi:type="string">data.field.hidden_category_attribute</item>
+                    <item name="sortOrder" xsi:type="string">120</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="notice" xsi:type="string">Attribute value will be populated only for forms placed on category view page.</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.hidden_source" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="hidden_category_attribute" xsi:type="string">hidden_category_attribute</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="hidden_customer_attribute">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Mageside\MultipleCustomForms\Model\Source\CustomerAttribute</item>
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Customer Attribute</item>
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/select</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="dataScope" xsi:type="string">data.field.hidden_customer_attribute</item>
+                    <item name="sortOrder" xsi:type="string">130</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="notice" xsi:type="string">Attribute value will be populated only for forms placed on customer view page.</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.hidden_source" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="hidden_customer_attribute" xsi:type="string">hidden_customer_attribute</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="hidden_static">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/input</item>
+                    <item name="label" xsi:type="string">Static Value</item>
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="dataScope" xsi:type="string">data.field.hidden_static</item>
+                    <item name="sortOrder" xsi:type="number">140</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.hidden_source" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="hidden_static" xsi:type="string">hidden_static</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <!--************************File Field Settings************************-->
+        <field name="allowed_extensions">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/input</item>
+                    <item name="label" xsi:type="string" translate="true">Allowed Extensions</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="dataScope" xsi:type="string">data.field.allowed_extensions</item>
+                    <item name="sortOrder" xsi:type="string">150</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="file" xsi:type="string">file</item>
+                            </item>
+                        </item>
+                    </item>
+                    <item name="notice" xsi:type="string">List allowed extensions separated by comma.</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="default" xsi:type="string">jpg, jpeg, gif, png, svg</item>
+                </item>
+            </argument>
+        </field>
+        <field name="count_uploads">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/input</item>
+                    <item name="label" xsi:type="string" translate="true">Allowed Number of Uploads</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="dataScope" xsi:type="string">data.field.count_uploads</item>
+                    <item name="sortOrder" xsi:type="string">160</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="file" xsi:type="string">file</item>
+                            </item>
+                        </item>
+                    </item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                        <item name="validate-number" xsi:type="boolean">true</item>
+                        <item name="validate-digits" xsi:type="boolean">true</item>
+                        <item name="validate-greater-than-zero" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="default" xsi:type="string">1</item>
+                </item>
+            </argument>
+        </field>
+        <field name="max_file_size">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/input</item>
+                    <item name="label" xsi:type="string" translate="true">Max File Size</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="dataScope" xsi:type="string">data.field.max_file_size</item>
+                    <item name="sortOrder" xsi:type="string">170</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="file" xsi:type="string">file</item>
+                            </item>
+                        </item>
+                    </item>
+                    <item name="notice" xsi:type="string">Max file size in KB (2048 KB = 2 MB).</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                        <item name="validate-number" xsi:type="boolean">true</item>
+                        <item name="validate-digits" xsi:type="boolean">true</item>
+                        <item name="validate-greater-than-zero" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="default" xsi:type="string">2048</item>
+                </item>
+            </argument>
+        </field>
+        <!--************************Agreement Field Settings************************-->
+        <field name="agreement">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Agreement Label</item>
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/wysiwyg</item>
+                    <item name="formElement" xsi:type="string">wysiwyg</item>
+                    <item name="wysiwygConfigData" xsi:type="array">
+                        <item name="settings" xsi:type="array">
+                            <item name="theme_advanced_buttons1" xsi:type="string">bold,italic,|,justifyleft,justifycenter,justifyright,|,fontselect,fontsizeselect,|,forecolor,backcolor,|,link,unlink,image,|,bullist,numlist,|,code</item>
+                            <item name="theme_advanced_buttons2" xsi:type="boolean">false</item>
+                            <item name="theme_advanced_buttons3" xsi:type="boolean">false</item>
+                            <item name="theme_advanced_buttons4" xsi:type="boolean">false</item>
+                            <item name="theme_advanced_statusbar_location" xsi:type="boolean">false</item>
+                            <item name="forced_root_block" xsi:type="string"/>
+                            <item name="height" xsi:type="number">180</item>
+                        </item>
+                        <item name="add_variables" xsi:type="boolean">false</item>
+                        <item name="add_widgets" xsi:type="boolean">false</item>
+                        <item name="add_images" xsi:type="boolean">false</item>
+                    </item>
+                    <item name="template" xsi:type="string">ui/form/field</item>
+                    <item name="wysiwyg" xsi:type="boolean">true</item>
+                    <item name="dataScope" xsi:type="string">data.field.agreement</item>
+                    <item name="sortOrder" xsi:type="number">150</item>
+                    <item name="rows" xsi:type="number">4</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="agreement" xsi:type="string">agreement</item>
+                            </item>
+                        </item>
+                    </item>
+                    <item name="notice" xsi:type="string">Use placeholder {{agreement_link}} to insert button which shows agreement terms in popup.</item>
+                </item>
+            </argument>
+        </field>
+        <field name="agreement_button">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/input</item>
+                    <item name="label" xsi:type="string" translate="true">Agreement Link Text</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="dataScope" xsi:type="string">data.field.agreement_button</item>
+                    <item name="sortOrder" xsi:type="string">190</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="agreement" xsi:type="string">agreement</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="agreement_text">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Agreement Text</item>
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/wysiwyg</item>
+                    <item name="formElement" xsi:type="string">wysiwyg</item>
+                    <item name="wysiwygConfigData" xsi:type="array">
+                        <item name="settings" xsi:type="array">
+                            <item name="forced_root_block" xsi:type="string"/>
+                            <item name="height" xsi:type="number">200</item>
+                        </item>
+                        <item name="add_variables" xsi:type="boolean">false</item>
+                        <item name="add_widgets" xsi:type="boolean">false</item>
+                        <item name="add_images" xsi:type="boolean">false</item>
+                    </item>
+                    <item name="template" xsi:type="string">ui/form/field</item>
+                    <item name="wysiwyg" xsi:type="boolean">true</item>
+                    <item name="dataScope" xsi:type="string">data.field.agreement_text</item>
+                    <item name="sortOrder" xsi:type="number">200</item>
+                    <item name="rows" xsi:type="number">24</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="agreement" xsi:type="string">agreement</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <!--************************Input and Textarea Fields Settings************************-->
+        <field name="date_type">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Mageside\MultipleCustomForms\Model\Source\DateTimeType</item>
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Date Time Type</item>
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/select</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="dataScope" xsi:type="string">data.field.date_type</item>
+                    <item name="sortOrder" xsi:type="string">202</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="date" xsi:type="string">date</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="use_calendar">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/checkbox</item>
+                    <item name="label" xsi:type="string" translate="true">Use Calendar</item>
+                    <item name="dataScope" xsi:type="string">data.field.use_calendar</item>
+                    <item name="sortOrder" xsi:type="string">204</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="dataType" xsi:type="string">boolean</item>
+                    <item name="formElement" xsi:type="string">checkbox</item>
+                    <item name="prefer" xsi:type="string">toggle</item>
+                    <item name="valueMap" xsi:type="array">
+                        <item name="true" xsi:type="string">1</item>
+                        <item name="false" xsi:type="string">0</item>
+                    </item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="date" xsi:type="string">date</item>
+                            </item>
+                        </item>
+                        <item name="custom_input_form.custom_input_form.fields.date_type" xsi:type="array">
+                            <item name="inverse" xsi:type="boolean">true</item>
+                            <item name="options" xsi:type="array">
+                                <item name="time" xsi:type="string">time</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="time_format">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/checkbox</item>
+                    <item name="label" xsi:type="string" translate="true">Use 24h Time Format</item>
+                    <item name="dataScope" xsi:type="string">data.field.time_format</item>
+                    <item name="sortOrder" xsi:type="string">205</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="dataType" xsi:type="string">boolean</item>
+                    <item name="formElement" xsi:type="string">checkbox</item>
+                    <item name="prefer" xsi:type="string">toggle</item>
+                    <item name="valueMap" xsi:type="array">
+                        <item name="true" xsi:type="string">1</item>
+                        <item name="false" xsi:type="string">0</item>
+                    </item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="date" xsi:type="string">date</item>
+                            </item>
+                        </item>
+                        <item name="custom_input_form.custom_input_form.fields.date_type" xsi:type="array">
+                            <item name="inverse" xsi:type="boolean">true</item>
+                            <item name="options" xsi:type="array">
+                                <item name="date" xsi:type="string">date</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="year_from">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/input</item>
+                    <item name="label" xsi:type="string">Year From</item>
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="sortOrder" xsi:type="number">206</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="dataScope" xsi:type="string">data.field.year_from</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                        <item name="validate-greater-than-zero" xsi:type="boolean">true</item>
+                        <item name="validate-number-range" xsi:type="string">1900-2100</item>
+                    </item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="date" xsi:type="string">date</item>
+                            </item>
+                        </item>
+                        <item name="custom_input_form.custom_input_form.fields.date_type" xsi:type="array">
+                            <item name="inverse" xsi:type="boolean">true</item>
+                            <item name="options" xsi:type="array">
+                                <item name="time" xsi:type="string">time</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="year_to">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/input</item>
+                    <item name="label" xsi:type="string">Year To</item>
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="sortOrder" xsi:type="number">207</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="dataScope" xsi:type="string">data.field.year_to</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                        <item name="validate-greater-than-zero" xsi:type="boolean">true</item>
+                        <item name="validate-number-range" xsi:type="string">1900-2100</item>
+                    </item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="date" xsi:type="string">date</item>
+                            </item>
+                        </item>
+                        <item name="custom_input_form.custom_input_form.fields.date_type" xsi:type="array">
+                            <item name="inverse" xsi:type="boolean">true</item>
+                            <item name="options" xsi:type="array">
+                                <item name="time" xsi:type="string">time</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <!--************************Default Value Settings************************-->
+        <field name="default_value">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/input</item>
+                    <item name="label" xsi:type="string">Default Value</item>
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="sortOrder" xsi:type="number">210</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="dataScope" xsi:type="string">data.field.default_value</item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="input" xsi:type="string">input</item>
+                                <item name="textarea" xsi:type="string">textarea</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="default_value_select">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Mageside\MultipleCustomForms\Model\Source\FieldOptions</item>
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Default Option</item>
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/select</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="dataScope" xsi:type="string">data.field.default_value_select</item>
+                    <item name="sortOrder" xsi:type="string">220</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="notice" xsi:type="string">Default option can be set after saving the field.</item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="select" xsi:type="string">select</item>
+                                <item name="radio" xsi:type="string">radio</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="default_value_multiselect">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Mageside\MultipleCustomForms\Model\Source\FieldOptions</item>
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Default Options</item>
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/multiselect</item>
+                    <item name="formElement" xsi:type="string">multiselect</item>
+                    <item name="dataScope" xsi:type="string">data.field.default_value_multiselect</item>
+                    <item name="sortOrder" xsi:type="string">230</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="notice" xsi:type="string">Default options can be set after saving the field.</item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="checkbox" xsi:type="string">checkbox</item>
+                                <item name="multiselect" xsi:type="string">multiselect</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="default_value_date">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/date</item>
+                    <item name="formElement" xsi:type="string">date</item>
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string">Default Date</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="dataScope" xsi:type="string">data.field.default_value_date</item>
+                    <item name="sortOrder" xsi:type="number">232</item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="date" xsi:type="string">date</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <!--************************Another Settings************************-->
+        <field name="validation">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Mageside\MultipleCustomForms\Model\Source\Validation</item>
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/select</item>
+                    <item name="label" xsi:type="string" translate="true">Validation</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="dataScope" xsi:type="string">data.field.validation</item>
+                    <item name="sortOrder" xsi:type="string">240</item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="options" xsi:type="array">
+                                <item name="input" xsi:type="string">input</item>
+                                <item name="textarea" xsi:type="string">textarea</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="comment">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/input</item>
+                    <item name="label" xsi:type="string" translate="true">Comment</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="dataScope" xsi:type="string">data.field.comment</item>
+                    <item name="sortOrder" xsi:type="string">250</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="inverse" xsi:type="boolean">true</item>
+                            <item name="options" xsi:type="array">
+                                <item name="agreement" xsi:type="string">agreement</item>
+                                <item name="hidden" xsi:type="string">hidden</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="show_in_grid">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/checkbox</item>
+                    <item name="label" xsi:type="string" translate="true">Show in grid</item>
+                    <item name="dataScope" xsi:type="string">data.field.show_in_grid</item>
+                    <item name="sortOrder" xsi:type="string">260</item>
+                    <item name="notice" xsi:type="string">Show column with values of this field in submissions grid.</item>
+                    <item name="dataType" xsi:type="string">boolean</item>
+                    <item name="formElement" xsi:type="string">checkbox</item>
+                    <item name="prefer" xsi:type="string">toggle</item>
+                    <item name="valueMap" xsi:type="array">
+                        <item name="true" xsi:type="string">1</item>
+                        <item name="false" xsi:type="string">0</item>
+                    </item>
+                    <item name="visibleToggles" xsi:type="array">
+                        <item name="custom_input_form.custom_input_form.fields.input_type" xsi:type="array">
+                            <item name="inverse" xsi:type="boolean">true</item>
+                            <item name="options" xsi:type="array">
+                                <item name="file" xsi:type="string">file</item>
+                            </item>
+                        </item>
+                    </item>
+                    <item name="default" xsi:type="string">0</item>
+                </item>
+            </argument>
+        </field>
+    </fieldset>
+    <!--************************Dynamic Rows for Options************************-->
+    <fieldset name="fieldset_options">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/form/fieldset</item>
+                <item name="label" xsi:type="null" />
+                <item name="visible" xsi:type="boolean">false</item>
+                <item name="visibleToggles" xsi:type="array">
+                    <item name="custom_input_form.custom_input_form.fields.options_source" xsi:type="array">
+                        <item name="options" xsi:type="array">
+                            <item name="custom" xsi:type="string">custom</item>
+                        </item>
+                    </item>
+                </item>
+            </item>
+        </argument>
+        <container name="options">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Mageside_MultipleCustomForms/js/components/dynamic-rows/dynamic-rows</item>
+                    <item name="template" xsi:type="string">ui/dynamic-rows/templates/default</item>
+                    <item name="componentType" xsi:type="string">dynamicRows</item>
+                    <item name="recordTemplate" xsi:type="string">option</item>
+                    <item name="addButtonLabel" xsi:type="string" translate="true">Add Option</item>
+                    <item name="label" xsi:type="string">Options</item>
+                    <item name="dataScope" xsi:type="string">data.field</item>
+                </item>
+            </argument>
+            <container name="option">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="component" xsi:type="string">Magento_Ui/js/dynamic-rows/record</item>
+                        <item name="isTemplate" xsi:type="boolean">true</item>
+                        <item name="is_collection" xsi:type="boolean">true</item>
+                    </item>
+                </argument>
+                <field name="id">
+                    <argument name="data" xsi:type="array">
+                        <item name="config" xsi:type="array">
+                            <item name="formElement" xsi:type="string">input</item>
+                            <item name="dataType" xsi:type="string">text</item>
+                            <item name="label" xsi:type="string" translate="true">Id</item>
+                            <item name="dataScope" xsi:type="string">id</item>
+                            <item name="visible" xsi:type="boolean">false</item>
+                        </item>
+                    </argument>
+                </field>
+                <field name="label">
+                    <argument name="data" xsi:type="array">
+                        <item name="config" xsi:type="array">
+                            <item name="formElement" xsi:type="string">input</item>
+                            <item name="dataType" xsi:type="string">text</item>
+                            <item name="label" xsi:type="string" translate="true">Label</item>
+                            <item name="dataScope" xsi:type="string">label</item>
+                        </item>
+                    </argument>
+                </field>
+                <actionDelete name="actionDelete" class="Magento\Ui\Component\Form\Element\ActionDelete">
+                    <argument name="data" xsi:type="array">
+                        <item name="config" xsi:type="array">
+                            <item name="componentType" xsi:type="string">actionDelete</item>
+                            <item name="dataType" xsi:type="string">text</item>
+                            <item name="label" xsi:type="string" translate="true">Actions</item>
+                            <item name="template" xsi:type="string">ui/dynamic-rows/cells/action-delete</item>
+                            <item name="additionalClasses" xsi:type="string">data-grid-actions-cell</item>
+                        </item>
+                    </argument>
+                </actionDelete>
+            </container>
+        </container>
+    </fieldset>
+</form>

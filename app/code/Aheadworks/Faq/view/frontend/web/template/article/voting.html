@@ -1,0 +1,30 @@
+<!-- ko if: canDisplay -->
+    <div id="aw-faq__helpfulness" data-bind="blockLoader: isLoading">
+        <!-- ko if: isVoted() -->
+            <span><!-- ko i18n: 'Was this helpful?' --><!-- /ko --></span>
+                <!-- ko if: isVoteLike() -->
+                    <span id="aw__helpfulness-vote-yes" class="aw_bold"><!-- ko i18n: 'You said "Yes"' --><!-- /ko --></span>
+                <!-- /ko -->
+                <!-- ko if: !isVoteLike() -->
+                    <span id="aw__helpfulness-vote-no" class="aw_bold"><!-- ko i18n: 'You said "No"' --><!-- /ko --></span>
+                <!-- /ko -->
+            <!-- ko if: isRateAfterVotingEnabled -->
+                <span id="ratingMessage" data-bind="text: getRatingMessage()"></span>
+            <!-- /ko -->
+        <!-- /ko -->
+        <!-- ko if: !isVoted() -->
+            <span class="aw_bold"><!-- ko i18n: 'Was this helpful?' --><!-- /ko --></span>
+            <span id="aw__helpfulness-voting">
+                <span class="like">
+                    <a id="like" data-bind="click: onLikeClick"><!-- ko i18n: 'Yes' --><!-- /ko --></a>
+                </span>
+                <span class="dislike">
+                    <a id="dislike" data-bind="click: onDislikeClick"><!-- ko i18n: 'No' --><!-- /ko --></a>
+                </span>
+            </span>
+            <!-- ko if: isRateBeforeVotingEnabled -->
+                <span id="ratingMessage" data-bind="text: getRatingMessage()"></span>
+            <!-- /ko -->
+        <!-- /ko -->
+    </div>
+<!-- /ko -->

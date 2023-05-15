@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="Aheadworks\Coupongenerator\Api\Data\SalesruleInterface" type="Aheadworks\Coupongenerator\Model\Data\Salesrule"/>
+    <preference for="Aheadworks\Coupongenerator\Api\Data\CouponInterface" type="Aheadworks\Coupongenerator\Model\Data\Coupon"/>
+    <preference for="Aheadworks\Coupongenerator\Api\Data\CouponGenerationResultInterface" type="Aheadworks\Coupongenerator\Model\Data\CouponGenerationResult"/>
+    <preference for="Aheadworks\Coupongenerator\Api\Data\CouponVariableInterface" type="Aheadworks\Coupongenerator\Model\Data\CouponVariable"/>
+    <preference for="Aheadworks\Coupongenerator\Api\CouponManagerInterface" type="Aheadworks\Coupongenerator\Model\CouponManager"/>
+    <preference for="Aheadworks\Coupongenerator\Api\CouponVariableManagerInterface" type="Aheadworks\Coupongenerator\Model\CouponVariableManager"/>
+    <preference for="Aheadworks\Coupongenerator\Api\CouponVariableProcessorInterface" type="Aheadworks\Coupongenerator\Model\CouponVariableProcessor"/>
+    <type name="Magento\Framework\EntityManager\MetadataPool">
+        <arguments>
+            <argument name="metadata" xsi:type="array">
+                <item name="Aheadworks\Coupongenerator\Api\Data\SalesruleInterface" xsi:type="array">
+                    <item name="entityTableName" xsi:type="string">aw_coupongenerator_salesrule</item>
+                    <item name="identifierField" xsi:type="string">id</item>
+                </item>
+                <item name="Aheadworks\Coupongenerator\Api\Data\CouponInterface" xsi:type="array">
+                    <item name="entityTableName" xsi:type="string">aw_coupongenerator_coupon</item>
+                    <item name="identifierField" xsi:type="string">id</item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
+    <preference for="Magento\Newsletter\Model\Subscriber" type="Aheadworks\Coupongenerator\Model\Newsletter\Subscriber" />
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+                <item name="aw_coupongenerator_coupon_listing_data_source" xsi:type="string">Aheadworks\Coupongenerator\Model\ResourceModel\Coupon\Grid\Collection</item>
+                <item name="aw_coupongenerator_rule_listing_data_source" xsi:type="string">Aheadworks\Coupongenerator\Model\ResourceModel\Salesrule\Grid\Collection</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Aheadworks\Coupongenerator\Model\ResourceModel\Coupon\Grid\Collection">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">aw_coupongenerator_coupon</argument>
+            <argument name="eventPrefix" xsi:type="string">aw_coupongenerator_coupon_grid_collection</argument>
+            <argument name="eventObject" xsi:type="string">coupon_grid_collection</argument>
+            <argument name="resourceModel" xsi:type="string">Aheadworks\Coupongenerator\Model\ResourceModel\Coupon</argument>
+        </arguments>
+    </type>
+    <type name="Aheadworks\Coupongenerator\Model\ResourceModel\Salesrule\Grid\Collection">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">aw_coupongenerator_salesrule</argument>
+            <argument name="eventPrefix" xsi:type="string">aw_coupongenerator_salesrule_grid_collection</argument>
+            <argument name="eventObject" xsi:type="string">salesrule_grid_collection</argument>
+            <argument name="resourceModel" xsi:type="string">Aheadworks\Coupongenerator\Model\ResourceModel\Salesrule</argument>
+        </arguments>
+    </type>
+    <type name="Aheadworks\Followupemail\Model\Event\Type\TypeAbstract">
+        <plugin name="coupongenerator_fue_plugin" type="Aheadworks\Coupongenerator\Model\Plugin\FueEventType" sortOrder="1" disabled="false"/>
+    </type>
+    <type name="Aheadworks\Followupemail2\Model\Template\Variable">
+        <plugin name="coupongenerator_fue2_plugin" type="Aheadworks\Coupongenerator\Model\Plugin\FueTemplateVariable" sortOrder="1" disabled="false"/>
+    </type>
+    <type name="Magento\SalesRule\Model\ResourceModel\Rule\Quote\Collection">
+        <plugin name="coupongenerator_typeabstract_plugin" type="Aheadworks\Coupongenerator\Model\Plugin\SalesruleCollection" sortOrder="2" disabled="false"/>
+    </type>
+    <type name="Magento\SalesRule\Api\RuleRepositoryInterface">
+        <plugin name="awcoupongenerator-salesrule-plugin" type="Aheadworks\Coupongenerator\Model\Plugin\RuleRepository" sortOrder="3" disabled="false" />
+    </type>
+    <type name="Magento\SalesRule\Model\ResourceModel\Coupon">
+        <plugin name="awcoupongenerator-coupon-plugin" type="Aheadworks\Coupongenerator\Model\Plugin\CouponResource" sortOrder="4" disabled="false" />
+    </type>
+    <type name="Magento\Customer\Controller\Adminhtml\Index\Save">
+        <plugin name="awcoupongenerator-customer-plugin" type="Aheadworks\Coupongenerator\Model\Plugin\AdminhtmlCustomerSave" sortOrder="5" disabled="false" />
+    </type>
+    <type name="Magento\SalesRule\Model\ResourceModel\Rule\Collection">
+        <plugin name="awcoupongenerator-salesrule-plugin" type="Aheadworks\Coupongenerator\Model\Plugin\SalesruleCouponValidation" sortOrder="6" disabled="false" />
+    </type>
+    <type name="Aheadworks\Helpdesk\Block\Adminhtml\Ticket\Edit\Tabs\General">
+        <plugin name="awcoupongenerator-helpdesk-edit-plugin" type="Aheadworks\Coupongenerator\Model\Plugin\HelpdeskTicketEdit" sortOrder="7" disabled="false" />
+    </type>
+    <type name="Aheadworks\Helpdesk\Controller\Adminhtml\Ticket\Reply">
+        <plugin name="awcoupongenerator-helpdesk-reply-plugin" type="Aheadworks\Coupongenerator\Model\Plugin\HelpdeskTicketReply" sortOrder="8" disabled="false" />
+    </type>
+
+    <type name="Aheadworks\Coupongenerator\Model\SalesRule\ResourceModel\Rule\Collection\ProcessorPool">
+        <arguments>
+            <argument name="processorForVersion231" xsi:type="object">Aheadworks\Coupongenerator\Model\SalesRule\ResourceModel\Rule\Collection\Processor\Version231</argument>
+            <argument name="processorForVersionPriorTo231" xsi:type="object">Aheadworks\Coupongenerator\Model\SalesRule\ResourceModel\Rule\Collection\Processor\VersionPriorTo231</argument>
+        </arguments>
+    </type>
+</config>

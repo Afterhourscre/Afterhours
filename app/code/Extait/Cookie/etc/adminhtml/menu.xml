@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the commercial license
+ * that is bundled with this package in the file LICENSE.txt.
+ *
+ * @category Extait
+ * @package Extait_Cookie
+ * @copyright Copyright (c) 2016-2018 Extait, Inc. (http://www.extait.com)
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Extait_Cookie::cookie_settings"
+             title="Cookie Settings"
+             translate="title"
+             module="Extait_Cookie"
+             sortOrder="100"
+             parent="Magento_Backend::stores"
+             resource="Extait_Cookie::config"
+             dependsOnConfig="extait_cookie/general/enable"/>
+
+        <add id="Extait_Cookie::category"
+             title="Cookie Categories"
+             translate="title"
+             module="Extait_Cookie"
+             sortOrder="110"
+             parent="Extait_Cookie::cookie_settings"
+             action="cookie/category/index"
+             resource="Extait_Cookie::config"
+             dependsOnConfig="extait_cookie/general/enable"/>
+
+        <add id="Extait_Cookie::cookie"
+             title="Cookies"
+             translate="title"
+             module="Extait_Cookie"
+             sortOrder="120"
+             parent="Extait_Cookie::cookie_settings"
+             action="cookie/cookie/index"
+             resource="Extait_Cookie::config"
+             dependsOnConfig="extait_cookie/general/enable"/>
+    </menu>
+</config>

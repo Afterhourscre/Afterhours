@@ -1,0 +1,10 @@
+#paybylink-spinner {
+    vertical-align: middle;
+    margin: 0 5px;
+}
+
+#paybylink-messages {
+    margin-top: 10px;
+    max-width: 500px;
+    word-break: break-word;
+}

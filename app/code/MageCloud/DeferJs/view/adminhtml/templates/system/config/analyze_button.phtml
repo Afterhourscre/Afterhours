@@ -1,0 +1,75 @@
+<?php
+/**
+ * @var $block MageCloud\DeferJs\Block\Adminhtml\System\Form\Field\AnalyzeButton
+ * @var $jsonHelper \Magento\Framework\Json\Helper\Data
+ */
+$jsonHelper = $this->helper('Magento\Framework\Json\Helper\Data');
+?>
+<script>
+    require([
+        'jquery',
+        'Magento_Ui/js/modal/modal',
+        'Magento_Ui/js/modal/confirm',
+        'Magento_Ui/js/modal/alert'
+    ], function ($, modal, confirm, alert) {
+        window.analyzeSiteOptimization = function(){
+            confirm({
+                content: $.mage.__('This operation can take a some time. Continue?'),
+                actions: {
+                    confirm: function () {
+                        $.ajax({
+                            url: '<?php echo $block->getAnalyzeSiteOptimizationUrl() ?>',
+                            type: "post",
+                            dataType: "html",
+                            data: {
+                                form_key: FORM_KEY
+                            },
+                            showLoader: true
+                        }).done(function(data) {
+                            alert({
+                                title: 'Results:',
+                                content: data,
+                                buttons: [{
+                                    text: $.mage.__('Cancel'),
+                                    class: 'action-secondary action-dismiss',
+                                    click: function (event) {
+                                        this.closeModal(true);
+                                    }
+                                }, {
+                                    text: $.mage.__('Apply recommended solutions'),
+                                    class: 'action-primary action-accept',
+                                    click: function (event) {
+                                        console.log('apply');
+                                    }
+                                }]
+                            });
+                        });
+                    }
+                }
+            });
+        };
+
+        window.openModal = function (url, label) {
+            window.open(url, label, getPopupParams());
+        };
+
+        function getPopupParams (w, h, l, t) {
+            this.screenX = typeof window.screenX != 'undefined' ? window.screenX : window.screenLeft;
+            this.screenY = typeof window.screenY != 'undefined' ? window.screenY : window.screenTop;
+            this.outerWidth = typeof window.outerWidth != 'undefined' ? window.outerWidth : document.body.clientWidth;
+            this.outerHeight = typeof window.outerHeight != 'undefined' ? window.outerHeight : (document.body.clientHeight - 22);
+            this.width = w ? w : 500;
+            this.height = h ? h : 420;
+            this.left = l ? l : parseInt(this.screenX + ((this.outerWidth - this.width) / 2), 10);
+            this.top = t ? t : parseInt(this.screenY + ((this.outerHeight - this.height) / 2.5), 10);
+
+            return (
+                'width=' + this.width +
+                ',height=' + this.height +
+                ',left=' + this.left +
+                ',top=' + this.top
+            );
+        }
+    });
+</script>
+<?php echo $block->getButtonHtml() ?>

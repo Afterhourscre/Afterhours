@@ -1,0 +1,28 @@
+<?php
+    $topImage = $this->getTopImage();
+    $BlockHtmlAfterId = $this->getBlockHtmlAfterId();
+    $isEnabledBlock = $this->isEnableBlock();
+    $classForm = $isEnabledBlock ? '' : 'mg-top-contact';
+?>
+
+<div class="contact-v2">
+    <?php if($topImage):?>
+        <div class="center">
+            <img class="top-image" src="<?php echo $topImage; ?>">
+        </div>
+    <?php endif; ?>
+    <?php if($isEnabledBlock):?>
+        <div class="block-container">
+            <?php echo $BlockHtmlAfterId; ?>
+        </div>
+    <?php endif; ?>
+    <?php echo $this->getLayout()->createBlock("Mageside\MultipleCustomForms\Block\Widget\CustomForm")->setFormId("3")->setFormDisplay("static")->toHtml(); ?>
+</div>
+
+<style>
+    .page-main,
+    #maincontent .columns{
+        max-width: 100% !important;
+        padding: 0px !important;
+    }
+</style>

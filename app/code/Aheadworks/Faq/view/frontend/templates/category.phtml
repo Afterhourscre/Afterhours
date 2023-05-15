@@ -1,0 +1,28 @@
+<?php
+/**
+ * Copyright 2019 aheadWorks. All rights reserved.
+ * See LICENSE.txt for license details.
+ */
+
+// @codingStandardsIgnoreFile
+
+/** @var \Aheadworks\Faq\Block\Category\Category $block */
+?>
+<?php
+    $category = $block->getCategory();
+    $articleListIcon = $category->getArticleListIcon()
+        ? 'class="image-item" style="background:url(' . $block->escapeUrl($block->getArticleListIconUrl($category)) . ')"'
+        : '';
+?>
+<div class="article-list aw-page-container">
+    <ul <?php echo $articleListIcon ? '' : 'class="aw-list-style"'; ?>>
+        <?php foreach ($block->getCategoryArticles() as $article): ?>
+            <?php /** @var \Aheadworks\Faq\Api\Data\ArticleInterface $article */?>
+            <li <?php /* @noEscape */ echo $articleListIcon ?>>
+                <a href="<?php echo $block->escapeUrl($block->getArticleUrl($article)); ?>">
+                    <?php echo $block->escapeHtml($article->getTitle()); ?>
+                </a>
+            </li>
+        <?php endforeach ?>
+    </ul>
+</div>

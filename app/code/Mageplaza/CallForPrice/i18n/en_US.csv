@@ -1,0 +1,154 @@
+"Save Request","Save Request"
+"Save and Continue Edit","Save and Continue Edit"
+"Edit Request ""%1""","Edit Request ""%1"""
+"New Request","New Request"
+"Request Information","Request Information"
+"Requested at","Requested at"
+"Product Requested","Product Requested"
+SKU,SKU
+"Store Views","Store Views"
+Status,Status
+Name,Name
+Email,Email
+Phone,Phone
+"Customer Note","Customer Note"
+"Internal Note","Internal Note"
+"This note can be seen by internal team only","This note can be seen by internal team only"
+General,General
+Product,Product
+"Created At","Created At"
+Requested,Requested
+"Save Rule","Save Rule"
+"Edit Rule ""%1""","Edit Rule ""%1"""
+"New Rule","New Rule"
+"Product ID","Product ID"
+Sku,Sku
+Price,Price
+"Customer Groups","Customer Groups"
+From,From
+To,To
+Priority,Priority
+"Default is 100, and 0 is highest.","Default is 100, and 0 is highest."
+"What To Show","What To Show"
+"Button Label","Button Label"
+"Call For Price","Call For Price"
+Action,Action
+"Redirect URL","Redirect URL"
+"Enter a URL here, visitor will be redirected to this URL when the button is clicked","Enter a URL here, visitor will be redirected to this URL when the button is clicked"
+"Quote Heading","Quote Heading"
+"Get a quote","Get a quote"
+"Quote Description","Quote Description"
+"Jot us a note and we’ll get back to you as quickly as possible.","Jot us a note and we’ll get back to you as quickly as possible."
+"Show Fields","Show Fields"
+"If no fields are chosen, Email and Note are shown by default","If no fields are chosen, Email and Note are shown by default"
+"Required Fields","Required Fields"
+"Enable Terms and Condtions","Enable Terms and Condtions"
+"Apply the rule only if the following conditions are met (leave blank for all products).","Apply the rule only if the following conditions are met (leave blank for all products)."
+Conditions,Conditions
+"Where To Show","Where To Show"
+"Rule Information","Rule Information"
+Label,Label
+"Is Default","Is Default"
+Add,Add
+"Call for price: Requests","Call for price: Requests"
+"Top Requested Product","Top Requested Product"
+"An error occurred","An error occurred"
+"The request has been deleted.","The request has been deleted."
+"Something went wrong while deleting request data. Please review the action log and try again.","Something went wrong while deleting request data. Please review the action log and try again."
+"We cannot find a request to delete.","We cannot find a request to delete."
+"This request no longer exists.","This request no longer exists."
+Requests,Requests
+"Please correct the data sent.","Please correct the data sent."
+"Something went wrong while saving the Request.","Something went wrong while saving the Request."
+"Something went wrong while deleting. Please review the action log and try again.","Something went wrong while deleting. Please review the action log and try again."
+"A total of %1 record(s) have been deleted.","A total of %1 record(s) have been deleted."
+"Something went wrong while updating status for %1.","Something went wrong while updating status for %1."
+"A total of %1 record(s) have been updated.","A total of %1 record(s) have been updated."
+"This $request does not exist.","This $request does not exist."
+"You saved the request.","You saved the request."
+"We cannot save the $request.","We cannot save the $request."
+"The rule has been deleted.","The rule has been deleted."
+"Something went wrong while deleting rule data. Please review the action log and try again.","Something went wrong while deleting rule data. Please review the action log and try again."
+"We cannot find a rule to delete.","We cannot find a rule to delete."
+"This rule no longer exists.","This rule no longer exists."
+Rules,Rules
+"Something went wrong while saving the Rule.","Something went wrong while saving the Rule."
+"This rule does not exist.","This rule does not exist."
+"You saved the rule.","You saved the rule."
+"'We cannot save the rule.' .","'We cannot save the rule.' ."
+"Your request has been successfully submitted. We will contact you shortly.","Your request has been successfully submitted. We will contact you shortly."
+"Something went wrong while saving data. Please try again later.","Something went wrong while saving data. Please try again later."
+"Popup a quote form","Popup a quote form"
+"Redirect to an URL","Redirect to an URL"
+"Login to See Price","Login to See Price"
+"Hide Add To Cart Button","Hide Add To Cart Button"
+"Inherit from Rule","Inherit from Rule"
+"Inherit from Category/Rule","Inherit from Category/Rule"
+No,No
+name,name
+"Call For Price Attribute %1 column","Call For Price Attribute %1 column"
+"-- Please Select --","-- Please Select --"
+Note,Note
+"All Store Views","All Store Views"
+View,View
+Delete,Delete
+"Delete %1","Delete %1"
+"Are you sure you want to delete a %1 record?","Are you sure you want to delete a %1 record?"
+Edit,Edit
+"Number quotes:","Number quotes:"
+"PREVIEW PRODUCTS","PREVIEW PRODUCTS"
+"Add after","Add after"
+"Phone Number","Phone Number"
+"Terms and Condition","Terms and Condition"
+Submit,Submit
+Loading...,Loading...
+"%name sent you a request quote notify","%name sent you a request quote notify"
+"Store Name: %store_name","Store Name: %store_name"
+"Store Code: %store_code","Store Code: %store_code"
+"Data Request Quote Activities","Data Request Quote Activities"
+"This is an automated email sent from Mageplaza Call for Price to notice that you have a request quote created from a visitor on website","This is an automated email sent from Mageplaza Call for Price to notice that you have a request quote created from a visitor on website"
+Quote,Quote
+%name,%name
+%email,%email
+"Phone No.","Phone No."
+%phone,%phone
+%note,%note
+"Product requested","Product requested"
+%productName,%productName
+"General Configuration","General Configuration"
+Enable,Enable
+"Select <strong>Yes</strong> to enable this module","Select <strong>Yes</strong> to enable this module"
+"Request Status","Request Status"
+"Terms and Conditions","Terms and Conditions"
+"Checked by default","Checked by default"
+"Select Yes to have the Term and Condition check box ticked by default","Select Yes to have the Term and Condition check box ticked by default"
+"Is Required","Is Required"
+Title,Title
+"Template label. The ""%anchor"" will be replaced with text with an inserted link as below","Template label. The ""%anchor"" will be replaced with text with an inserted link as below"
+"Anchor Text","Anchor Text"
+"The label for the link ""%anchor""","The label for the link ""%anchor"""
+"Anchor URL","Anchor URL"
+"The URL for the link ""%anchor"". If empty, the anchor will be generated as text only.","The URL for the link ""%anchor"". If empty, the anchor will be generated as text only."
+"Disable Default Functions","Disable Default Functions"
+"Disable Add to compare, Wishlist","Disable Add to compare, Wishlist"
+"Disable Register Customer Account","Disable Register Customer Account"
+"Disable Shopping cart by Customer groups","Disable Shopping cart by Customer groups"
+"Disable Checkout page by Customer groups","Disable Checkout page by Customer groups"
+"Compatible with <a href=""https://www.mageplaza.com/magento-2-one-step-checkout-extension/?utm_source=extension&utm_medium=link&utm_campaign=call-for-price"" target=""_blank"">One Step Checkout</a>","Compatible with <a href=""https://www.mageplaza.com/magento-2-one-step-checkout-extension/?utm_source=extension&utm_medium=link&utm_campaign=call-for-price"" target=""_blank"">One Step Checkout</a>"
+"Admin Email Notification","Admin Email Notification"
+"To avoid sending to spam box, you should install <a href=""https://www.mageplaza.com/magento-2-smtp/?utm_source=free-extensions&utm_medium=link&utm_campaign=call-for-price"" target=""_blank"">SMTP</a>","To avoid sending to spam box, you should install <a href=""https://www.mageplaza.com/magento-2-smtp/?utm_source=free-extensions&utm_medium=link&utm_campaign=call-for-price"" target=""_blank"">SMTP</a>"
+"Sender Email","Sender Email"
+"Send To","Send To"
+"Separated by commas (,)","Separated by commas (,)"
+"Delete Request(s)","Delete Request(s)"
+"Are you sure you want to delete the selected request(s)?","Are you sure you want to delete the selected request(s)?"
+"Change Status","Change Status"
+"Are you sure to change status?","Are you sure to change status?"
+ID,ID
+"Store View","Store View"
+"Create At","Create At"
+"Add New Rule","Add New Rule"
+"Delete Rule(s)","Delete Rule(s)"
+"Are you sure you want to delete the selected rule(s)?","Are you sure you want to delete the selected rule(s)?"
+"Change status","Change status"
+Disable,Disable

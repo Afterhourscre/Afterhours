@@ -1,0 +1,44 @@
+<?php
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+
+use Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\AgreementType;
+
+/** @var AgreementType $block */
+
+$field = $block->getField();
+?>
+<div class="field checkbox <?= /* @noEscape */ $field->getRequired() ? 'required' : ''; ?>">
+    <div class="control validation-block" data-role="agreement">
+        <input  type="checkbox"
+                class="checkbox"
+                data-role="agreements-checkbox-<?= $block->escapeHtmlAttr($field->getId()); ?>"
+                id="<?= $block->escapeHtmlAttr($block->getFieldHtmlId()); ?>"
+                name="<?= $block->escapeHtmlAttr($block->getFieldHtmlName()); ?>"
+                <?= /* @noEscape */ $block->getValidation(); ?>
+                value="yes"/>
+        <label class="label" for="<?= $block->escapeHtmlAttr($block->getFieldHtmlId()); ?>">
+            <span><?= /* @noEscape */ $block->removeDataBind($block->getAgreementBlockHtml()); ?></span>
+        </label>
+        <div class="agreement-text" data-role="agreement-content" style="display: none;">
+            <?= /* @noEscape */ $block->removeDataBind($field->getAgreementText()); ?>
+        </div>
+    </div>
+</div>
+
+<script type="text/x-magento-init">
+    {
+        "[data-role='agreements-checkbox-<?= $block->escapeJs($block->escapeHtmlAttr($field->getId())); ?>']": {
+            "Mageside_MultipleCustomForms/js/form/agreements": {
+                "agreementSelector": "[<?= $block->escapeJs(AgreementType::AGREEMENT_SELECTOR); ?>]",
+                "buttonSelector": "[<?= $block->escapeJs(AgreementType::AGREEMENT_BUTTON_SELECTOR); ?>]",
+                "contentSelector": "[<?= $block->escapeJs(AgreementType::AGREEMENT_CONTENT_SELECTOR); ?>]",
+                "modal": {
+                    "title": "<?= $block->escapeJs($block->escapeHtml(__($field->getTitle()))); ?>"
+                }
+            }
+        }
+    }
+</script>

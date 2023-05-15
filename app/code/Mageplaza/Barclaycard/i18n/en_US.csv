@@ -1,0 +1,92 @@
+"Test Credential","Test Credential"
+"Invalid credentials","Invalid credentials"
+"Credentials are valid","Credentials are valid"
+"The payment is cancelled.","The payment is cancelled."
+"The payment is declined.","The payment is declined."
+"An exception has occurred.","An exception has occurred."
+"We can't initialize checkout.","We can't initialize checkout."
+"Response does not exist","Response does not exist"
+"Transaction invalid or incomplete","Transaction invalid or incomplete"
+"Transaction is cancelled","Transaction is cancelled"
+"Authorisation is refused","Authorisation is refused"
+"Error Code","Error Code"
+"Invalid response","Invalid response"
+Visa,Visa
+Mastercard,Mastercard
+"American Express","American Express"
+Maestro,Maestro
+"Diners Club","Diners Club"
+JCB,JCB
+"Manually keyed (MOTO) (card not present)","Manually keyed (MOTO) (card not present)"
+"E-commerce with SSL encryption","E-commerce with SSL encryption"
+Sandbox,Sandbox
+Production,Production
+SHA-1,SHA-1
+SHA-256,SHA-256
+SHA-512,SHA-512
+Processing,Processing
+"Suspected Fraud","Suspected Fraud"
+Authorize,Authorize
+"Authorize and Capture","Authorize and Capture"
+"Card Type","Card Type"
+"Last Card Number","Last Card Number"
+"Expiration Date","Expiration Date"
+"Transaction ID","Transaction ID"
+Status,Status
+"Order ID","Order ID"
+"CVC Response","CVC Response"
+"AAV Response","AAV Response"
+"We found an invalid quantity to invoice item ""%1"".","We found an invalid quantity to invoice item ""%1""."
+"Credit Card Information","Credit Card Information"
+"Credit Card Number","Credit Card Number"
+"This is a required field.","This is a required field."
+"Card Verification Number","Card Verification Number"
+"What is this?","What is this?"
+"Place Order","Place Order"
+"Please fill in all credential fields","Please fill in all credential fields"
+"<div class=""mpbarclaycard-payment-logo""></div>
+                    <div class=""mpbarclaycard-payment-byline"">
+                        <span class=""mpbarclaycard-payment-title"">Barclaycard Payment by Mageplaza</span></br>
+                        <span class=""mpbarclaycard-payment-comment"">Barclaycard is the UK’s payment gateway reaching customers and clients globally across 40 countries. Barclaycard facilitates every online payment with all major credit cards including Visa, Mastercard, American Express, Maestro, Diners Club and JCB.</span></br>
+                    </div>","<div class=""mpbarclaycard-payment-logo""></div>
+                    <div class=""mpbarclaycard-payment-byline"">
+                        <span class=""mpbarclaycard-payment-title"">Barclaycard Payment by Mageplaza</span></br>
+                        <span class=""mpbarclaycard-payment-comment"">Barclaycard is the UK’s payment gateway reaching customers and clients globally across 40 countries. Barclaycard facilitates every online payment with all major credit cards including Visa, Mastercard, American Express, Maestro, Diners Club and JCB.</span></br>
+                    </div>"
+Credentials,Credentials
+Environment,Environment
+"Please follow our <a href=""https://docs.mageplaza.com/barclaycard"" target=""_blank"">User Guide</a> and register a Barclaycard account <a href=""https://mdepayments.epdq.co.uk/Ncol/Test/BackOffice/accountcreation/create?ISP=epdq&acountry=gb"" target=""_blank"">here</a>.","Please follow our <a href=""https://docs.mageplaza.com/barclaycard"" target=""_blank"">User Guide</a> and register a Barclaycard account <a href=""https://mdepayments.epdq.co.uk/Ncol/Test/BackOffice/accountcreation/create?ISP=epdq&acountry=gb"" target=""_blank"">here</a>."
+PSPID,PSPID
+"Hash Algorithm","Hash Algorithm"
+"User ID","User ID"
+"User for e-Commerce integration","User for e-Commerce integration"
+"e-Commerce SHA-IN Pass Phrase","e-Commerce SHA-IN Pass Phrase"
+"e-Commerce SHA-OUT Pass Phrase","e-Commerce SHA-OUT Pass Phrase"
+"API User ID","API User ID"
+"Special user for API. An API user is needed to make DirectLink requests.","Special user for API. An API user is needed to make DirectLink requests."
+"API User Password","API User Password"
+"DirectLink SHA-IN Pass Phrase","DirectLink SHA-IN Pass Phrase"
+"Barclaycard ePDQ e-Commerce","Barclaycard ePDQ e-Commerce"
+Enable,Enable
+"Language Code","Language Code"
+"The language of the page which customers are redirected to","The language of the page which customers are redirected to"
+Title,Title
+"Payment Action","Payment Action"
+"New Order Status","New Order Status"
+"Card Types","Card Types"
+"Accepted Currencies","Accepted Currencies"
+"Accepted currencies must be corresponding to the store currency (at the currency setup section of the admin backend) in order to display the payment method","Accepted currencies must be corresponding to the store currency (at the currency setup section of the admin backend) in order to display the payment method"
+"Payment from Applicable Countries","Payment from Applicable Countries"
+"To restrict this payment with more conditions, see <a href=""https://www.mageplaza.com/magento-2-payment-restriction/"" target=""_blank"">Payment Restrictions</a> module.","To restrict this payment with more conditions, see <a href=""https://www.mageplaza.com/magento-2-payment-restriction/"" target=""_blank"">Payment Restrictions</a> module."
+"Payment from Specific Countries","Payment from Specific Countries"
+"Show Logo","Show Logo"
+"Allowed upload file types: .jpg, .jpeg, .gif, .png, .svg","Allowed upload file types: .jpg, .jpeg, .gif, .png, .svg"
+"Minimum Order Total","Minimum Order Total"
+"Maximum Order Total","Maximum Order Total"
+"Debug Mode","Debug Mode"
+"If Yes, diagnostic information is stored in log files on the Magento web server.","If Yes, diagnostic information is stored in log files on the Magento web server."
+"Sort Order","Sort Order"
+"Default is 0. The one with the smallest order will display first.","Default is 0. The one with the smallest order will display first."
+"Barclaycard ePDQ DirectLink","Barclaycard ePDQ DirectLink"
+"3D Secure","3D Secure"
+"Enable Admin Order (MOTO)","Enable Admin Order (MOTO)"

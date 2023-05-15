@@ -1,0 +1,46 @@
+<?php
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_Worldpay
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+
+/** @var \Magento\Framework\View\Element\Template $block */
+
+$details = $block->getData(\Magento\Vault\Model\Ui\TokenUiComponentProviderInterface::COMPONENT_DETAILS);
+$hash    = $block->getData(\Magento\Vault\Model\Ui\TokenUiComponentProviderInterface::COMPONENT_PUBLIC_HASH);
+$icon    = $block->getData('icons')[$details['type']];
+$label   = __('ending %1 (expires %2)', $details['maskedCC'], $details['expirationDate']);
+?>
+
+<div id="payment_<?= $block->escapeHtml($block->getData('id')) ?>" class="admin__field"
+     data-mage-init='{"Mageplaza_Worldpay/js/form": <?= /* @noEscape */ $block->getData('clientKey') ?>}'>
+    <div class="admin__field-control control">
+        <input type="radio" class="validate-one-required-by-name saved_tokens"
+               name="payment[token]"
+               id="<?= $block->escapeHtml($hash) ?>"
+               value="<?= $block->escapeHtml($block->getData('token')) ?>"/>
+        <label for="<?= $block->escapeHtml($hash) ?>">
+            <img src="<?= $block->escapeUrl($icon['url']) ?>"
+                 width="<?= $block->escapeHtml($icon['width']) ?>"
+                 height="<?= $block->escapeHtml($icon['height']) ?>"
+                 class="payment-icon" alt="payment-icon">
+            <span><?= $block->escapeHtml($label) ?></span>
+        </label>
+        <div class="admin__field-control control cvc_container"></div>
+    </div>
+</div>

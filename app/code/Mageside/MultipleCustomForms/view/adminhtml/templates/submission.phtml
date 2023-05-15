@@ -1,0 +1,73 @@
+<?php
+/** @var Mageside\MultipleCustomForms\Block\Adminhtml\Submission\View $block */
+?>
+<?php if ($block->isInformationAvailable()) : ?>
+<div class="fieldset-wrapper form-submission">
+    <div class="fieldset-wrapper-title">
+        <span class="title"><?= $block->escapeHtml($block->getTitle()); ?></span>
+    </div>
+    <br>
+    <table class="admin__table-secondary">
+        <tbody>
+            <?php foreach ($block->getFormFieldCollection() as $field) : ?>
+                <?php if ($field->getType() != "file") : ?>
+                    <tr>
+                        <th><?= $block->escapeHtml($field->getTitle()); ?></th>
+                        <td><?= $block->escapeHtml($field->getSubmissionValue()); ?></td>
+                    </tr>
+                <?php else : ?>
+                    <tr>
+                        <th><?= $block->escapeHtml($field->getTitle()); ?></th>
+                        <td>
+                            <?php $files = $block->getFiles($field); ?>
+                            <?php if (!empty($files)) : ?>
+                                <?php foreach ($files as $file) :?>
+                                    <?php if ($block->isFileImage($file)) : ?>
+                                            <a href="<?= $block->escapeUrl($block->getContentUrl($file)); ?>">
+                                                <div class="image item base-image image-adminhtml" data-role="image">
+                                                    <div class="product-image-wrapper">
+                                                        <img class="product-image" data-role="image-element"
+                                                             src="<?= $block->escapeUrl($block->getContentUrl($file)); ?>"
+                                                             alt="Image">
+                                                    </div>
+                                                    <div class="item-description">
+                                                        <div class="item-title" data-role="img-title">
+                                                            <?= $block->escapeHtml($file); ?>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                    <?php else : ?>
+                                        <a href="<?= $block->escapeUrl($block->getContentUrl($file)); ?>">
+                                            <div class="image item base-image image-adminhtml" data-role="image">
+                                                <div class="product-image-wrapper file-wrapper"></div>
+                                                <div class="item-description">
+                                                    <div class="item-title" data-role="img-title">
+                                                        <?= $block->escapeHtml($file); ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            <?php else : ?>
+                                &nbsp;
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endif; ?>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+<?php else : ?>
+    <div class="block-messages">
+        <div class="messages">
+            <div class="message message-notice notice">
+                <div data-ui-id="messages-message-notice">
+                    <?= $block->escapeHtml(__('Requested information is unavailable.')); ?>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>

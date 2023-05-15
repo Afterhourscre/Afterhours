@@ -1,0 +1,61 @@
+<!--
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_CallForPrice
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+-->
+.ar_dashboard #recentRequestedProducts .view-detail {
+    float: right;
+    position: relative;
+    margin-right: 15px;
+}
+
+#no_quote_title {
+    font-weight: bold;
+    margin-left: 4px;
+    font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 1.4rem;
+}
+
+#no_quote_value {
+    font-size: 13px;
+    font-weight: 600;
+    margin-left: 30px;
+}
+
+#no_quote_percent {
+    font-size: 13px;
+    font-weight: 600;
+    float: right;
+    text-align: right;
+    margin-right: 10px;
+}
+
+#recent_view_item_dashboard a {
+    color: #303030;
+}
+
+#recent_view_item_dashboard a:hover {
+    color: #303030;
+    text-decoration: none;
+}
+
+#recentRequestedProducts .chart-rate,
+#topRequestedProducts .chart-rate {
+    display: none;
+}

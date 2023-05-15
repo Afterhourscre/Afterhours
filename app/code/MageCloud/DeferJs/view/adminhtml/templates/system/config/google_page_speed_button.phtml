@@ -1,0 +1,183 @@
+<?php
+/**
+ * @var $block MageCloud\DeferJs\Block\Adminhtml\System\Form\Field\GooglePageSpeedButton
+ * @var $jsonHelper \Magento\Framework\Json\Helper\Data
+ */
+$jsonHelper = $this->helper('Magento\Framework\Json\Helper\Data');
+?>
+<script>
+    require([
+        'jquery',
+        'Magento_Ui/js/modal/confirm',
+        'Magento_Ui/js/modal/alert'
+    ], function ($, confirm, alert) {
+        var response, callbacks = {};
+        var CHART_API_URL = 'http://chart.apis.google.com/chart?';
+        var RESOURCE_TYPE_INFO = [
+            {label: 'JavaScript', field: 'javascriptResponseBytes', color: 'e2192c'},
+            {label: 'Images', field: 'imageResponseBytes', color: 'f3ed4a'},
+            {label: 'CSS', field: 'cssResponseBytes', color: 'ff7008'},
+            {label: 'HTML', field: 'htmlResponseBytes', color: '43c121'},
+            {label: 'Flash', field: 'flashResponseBytes', color: 'f8ce44'},
+            {label: 'Text', field: 'textResponseBytes', color: 'ad6bc5'},
+            {label: 'Other', field: 'otherResponseBytes', color: '1051e8'}
+        ];
+
+        window.googlePageSpeedTest = function(){
+            confirm({
+                content: 'This operation can take a some time. Continue?',
+                actions: {
+                    confirm: function () {
+                        $.ajax({
+                            url: '<?php echo $block->getGooglePageSpeedTestUrl() ?>',
+                            type: "post",
+                            dataType: "json",
+                            data: {
+                                form_key: FORM_KEY,
+                                api_endpoint: $('#defer_js_speed_test_google_page_speed_api_endpoint').val(),
+                                api_key: $('#defer_js_speed_test_google_page_speed_api_key').val(),
+                                api_strategy: $('#defer_js_speed_test_google_page_speed_api_strategy').val()
+                            },
+                            showLoader: true
+                        }).done(function(data) {
+                            console.log(typeof data);
+                            console.log(data);
+//                            response = JSON.parse(data);
+                            response = data;
+                            if (typeof response != 'undefined') {
+                                if (response.error) {
+                                    var errors = result.error.errors;
+                                    for (var i = 0, len = errors.length; i < len; ++i) {
+                                        if (errors[i].reason == 'badRequest') {
+                                            response = 'Please specify your Google API key.';
+                                        } else {
+                                            response = errors[i].message;
+                                        }
+                                    }
+                                }
+
+                                // Dispatch to each function on the callbacks object.
+                                for (var fn in callbacks) {
+                                    var f = callbacks[fn];
+                                    if (typeof f == 'function') {
+                                        callbacks[fn](response);
+                                    }
+                                }
+
+                            } else {
+                                response = 'Can\'t retrieve page speed results. Please try later.'
+                            }
+
+                            var ruleResults = response.formattedResults.ruleResults;
+                            if (ruleResults) {
+                                response = ruleResults
+                            }
+
+//                            var imageMimeType = response.screenshot.mime_type;
+//                            var imagebase64Data = response.screenshot.data;
+//                            var image = new Image();
+//                            image.src = 'data:' + imageMimeType + ';base64,' + imagebase64Data + '';
+//                            image.width = response.width;
+//                            image.height = response.height;
+//                            document.body.appendChild(image);
+//                            console.log(image);
+
+                            alert({
+                                title: 'Speed Test Results:',
+                                content: 'Testing: '
+                            });
+                        });
+                    }
+                }
+            });
+        };
+
+        /**
+         * Display the PageSpeed score as a Google-O-Meter
+         * @param result
+         */
+        callbacks.displayPageSpeedScore = function(result) {
+            var score = result.ruleGroups.SPEED.score;
+            // Construct the query to send to the Google Chart Tools.
+            var query = [
+                'chtt=Page+Speed+score:+' + score,
+                'chs=180x100',
+                'cht=gom',
+                'chd=t:' + score,
+                'chxt=x,y',
+                'chxl=0:|' + score
+            ].join('&');
+            var i = document.createElement('img');
+            i.src = CHART_API_URL + query;
+            document.body.insertBefore(i, null);
+//            var modalContainer = document.getElementsByClassName('modal-content')[0];
+//            modalContainer.insertBefore(i, null);
+        };
+
+        /**
+         * Display a resource size breakdown pie chart
+         * @param result
+         */
+        callbacks.displayResourceSizeBreakdown = function(result) {
+            var stats = result.pageStats;
+            var labels = [];
+            var data = [];
+            var colors = [];
+            var totalBytes = 0;
+            var largestSingleCategory = 0;
+            for (var i = 0, len = RESOURCE_TYPE_INFO.length; i < len; ++i) {
+                var label = RESOURCE_TYPE_INFO[i].label;
+                var field = RESOURCE_TYPE_INFO[i].field;
+                var color = RESOURCE_TYPE_INFO[i].color;
+                if (field in stats) {
+                    var val = Number(stats[field]);
+                    totalBytes += val;
+                    if (val > largestSingleCategory) largestSingleCategory = val;
+                    labels.push(label);
+                    data.push(val);
+                    colors.push(color);
+                }
+            }
+            // Construct the query to send to the Google Chart Tools.
+            var query = [
+                'chs=300x140',
+                'cht=p3',
+                'chts=' + ['000000', 16].join(','),
+                'chco=' + colors.join('|'),
+                'chd=t:' + data.join(','),
+                'chdl=' + labels.join('|'),
+                'chdls=000000,14',
+                'chp=1.6',
+                'chds=0,' + largestSingleCategory
+            ].join('&');
+            var i = document.createElement('img');
+            i.src = CHART_API_URL + query;
+            document.body.insertBefore(i, null);
+//            var modalContainer = document.getElementsByClassName('modal-content')[0];
+//            modalContainer.insertBefore(i, null);
+        };
+
+        window.openModal = function (url, label) {
+            window.open(url, label, getPopupParams());
+        };
+
+        function getPopupParams (w, h, l, t) {
+            this.screenX = typeof window.screenX != 'undefined' ? window.screenX : window.screenLeft;
+            this.screenY = typeof window.screenY != 'undefined' ? window.screenY : window.screenTop;
+            this.outerWidth = typeof window.outerWidth != 'undefined' ? window.outerWidth : document.body.clientWidth;
+            this.outerHeight = typeof window.outerHeight != 'undefined' ? window.outerHeight : (document.body.clientHeight - 22);
+            this.width = w ? w : 500;
+            this.height = h ? h : 420;
+            this.left = l ? l : parseInt(this.screenX + ((this.outerWidth - this.width) / 2), 10);
+            this.top = t ? t : parseInt(this.screenY + ((this.outerHeight - this.height) / 2.5), 10);
+
+            return (
+                'width=' + this.width +
+                ',height=' + this.height +
+                ',left=' + this.left +
+                ',top=' + this.top
+            );
+        }
+    });
+</script>
+<?php echo $block->getButtonHtml() ?>

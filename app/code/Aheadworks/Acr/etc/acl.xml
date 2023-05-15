@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+* See LICENSE.txt for license details.
+*/
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Acl/etc/acl.xsd">
+    <acl>
+        <resources>
+            <resource id="Magento_Backend::admin">
+                <resource id="Magento_Backend::marketing">
+                    <resource id="Aheadworks_Acr::acr" title="Abandoned Cart Reminder by Aheadworks" sortOrder="0">
+                        <resource id="Aheadworks_Acr::rules" title="Rules" sortOrder="10"/>
+                        <resource id="Aheadworks_Acr::mail_log" title="Mail Log" sortOrder="20"/>
+                    </resource>
+                </resource>
+                <resource id="Magento_Backend::stores">
+                    <resource id="Magento_Backend::stores_settings">
+                        <resource id="Magento_Config::config">
+                            <resource id="Aheadworks_Acr::config_aw_acr" title="Abandoned Cart Reminder by Aheadworks" />
+                        </resource>
+                    </resource>
+                </resource>
+            </resource>
+        </resources>
+    </acl>
+</config>

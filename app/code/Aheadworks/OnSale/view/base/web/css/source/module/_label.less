@@ -1,0 +1,85 @@
+//
+//  label
+//  _____________________________________________
+
+//
+//  Components
+//  ---------------------------------------------
+
+@import 'label/_position.less';
+@import 'label/_shape.less';
+@import 'label/_picture.less';
+
+.aw-onsale__label-area-wrap {
+    &.right-position {
+        text-align: right;
+    }
+
+    &.absolute-label-container {
+        position: absolute;
+        bottom: 5px;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+    }
+
+    &.static-label-wrap-container {
+        .aw-onsale__label-wrap {
+            position: static;
+
+            .flag {
+                margin-bottom: 20px;
+            }
+        }
+    }
+}
+
+.aw-onsale__label-wrap {
+    position: absolute;
+
+    .label-wrap {
+        position: relative;
+        z-index: 1;
+        font-size: 15px;
+        font-weight: bold;
+        color: #111;
+    }
+
+    .label-inline-block {
+        display: inline-block;
+        vertical-align: top;
+    }
+
+    .label-block {
+        display: block;
+    }
+
+    .absolute-text {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+
+    .label-text {
+    }
+
+    .position-block {
+        display: -webkit-box;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-box-pack: center;
+        -ms-flex-pack: center;
+        justify-content: center;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+        text-align: center;
+    }
+}

@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+See LICENSE.txt for license details.
+*/
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Webapi:etc/webapi.xsd">
+    <!-- Managing OnSale Rule -->
+    <route url="/V1/awOnSaleRule/get/:ruleId" method="GET">
+        <service class="Aheadworks\OnSale\Api\RuleRepositoryInterface" method="get"/>
+        <resources>
+            <resource ref="Aheadworks_OnSale::rules"/>
+        </resources>
+    </route>
+    <route url="/V1/awOnSaleRule/save" method="PUT">
+        <service class="Aheadworks\OnSale\Api\RuleRepositoryInterface" method="save"/>
+        <resources>
+            <resource ref="Aheadworks_OnSale::rules"/>
+        </resources>
+    </route>
+    <route url="/V1/awOnSaleRule/list" method="GET">
+        <service class="Aheadworks\OnSale\Api\RuleRepositoryInterface" method="getList"/>
+        <resources>
+            <resource ref="Aheadworks_OnSale::rules"/>
+        </resources>
+    </route>
+    <route url="/V1/awOnSaleRule/deleteById/:ruleId" method="DELETE">
+        <service class="Aheadworks\OnSale\Api\RuleRepositoryInterface" method="deleteById"/>
+        <resources>
+            <resource ref="Aheadworks_OnSale::rules"/>
+        </resources>
+    </route>
+    <route url="/V1/awOnSaleRule/delete" method="POST">
+        <service class="Aheadworks\OnSale\Api\RuleRepositoryInterface" method="delete"/>
+        <resources>
+            <resource ref="Aheadworks_OnSale::rules"/>
+        </resources>
+    </route>
+
+    <!-- Managing OnSale Label -->
+    <route url="/V1/awOnSaleLabel/get/:labelId" method="GET">
+        <service class="Aheadworks\OnSale\Api\LabelRepositoryInterface" method="get"/>
+        <resources>
+            <resource ref="Aheadworks_OnSale::labels"/>
+        </resources>
+    </route>
+    <route url="/V1/awOnSaleLabel/save" method="PUT">
+        <service class="Aheadworks\OnSale\Api\LabelRepositoryInterface" method="save"/>
+        <resources>
+            <resource ref="Aheadworks_OnSale::labels"/>
+        </resources>
+    </route>
+    <route url="/V1/awOnSaleLabel/list" method="GET">
+        <service class="Aheadworks\OnSale\Api\LabelRepositoryInterface" method="getList"/>
+        <resources>
+            <resource ref="Aheadworks_OnSale::labels"/>
+        </resources>
+    </route>
+    <route url="/V1/awOnSaleLabel/deleteById/:labelId" method="DELETE">
+        <service class="Aheadworks\OnSale\Api\LabelRepositoryInterface" method="deleteById"/>
+        <resources>
+            <resource ref="Aheadworks_OnSale::labels"/>
+        </resources>
+    </route>
+    <route url="/V1/awOnSaleLabel/delete" method="POST">
+        <service class="Aheadworks\OnSale\Api\LabelRepositoryInterface" method="delete"/>
+        <resources>
+            <resource ref="Aheadworks_OnSale::labels"/>
+        </resources>
+    </route>
+
+    <!-- Managing OnSale Block -->
+    <route url="/V1/awOnSaleBlock/list" method="POST">
+        <service class="Aheadworks\OnSale\Api\BlockRepositoryInterface" method="getList"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+</routes>

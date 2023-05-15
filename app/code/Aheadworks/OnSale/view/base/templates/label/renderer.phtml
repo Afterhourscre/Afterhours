@@ -1,0 +1,42 @@
+<?php
+/**
+ * Copyright 2019 aheadWorks. All rights reserved.
+See LICENSE.txt for license details.
+ */
+
+// @codingStandardsIgnoreFile
+
+/** @var $block \Aheadworks\OnSale\Block\Label\Renderer */
+/** @var $viewModel \Aheadworks\OnSale\ViewModel\Label\Renderer */
+
+$viewModel = $block->getViewModel();
+?>
+<?php foreach ($viewModel->getLabelAreas() as $labelArea): ?>
+    <?php
+        $labelConfig = $viewModel->getLabelConfig($labelArea, $block->getPlacement(), $block->getImage());
+        $labelBlocksForArea = $block->getLabelBlocksForArea($labelArea)
+    ?>
+    <?php if (count($labelBlocksForArea)): ?>
+        <div class="aw-onsale__label-area-wrap <?= /* @noEscape */ $labelConfig->getAreaAdditionalClasses() ?>"
+             style="display: none;"
+             data-mage-init='{
+                     "awOnSaleLabelRenderer": {
+                         "moveToSelector": "<?= /* @noEscape */ $labelConfig->getMoveToSelector() ?>",
+                         "inParentSelector": "<?= /* @noEscape */ $labelConfig->getInParentSelector() ?>",
+                         "action": "<?= /* @noEscape */ $labelConfig->getAction() ?>"
+                     }
+                 }'>
+            <?php foreach ($labelBlocksForArea as $position => $labelBlocks): ?>
+                <div class="aw-onsale__label-wrap <?= /* @noEscape */ $viewModel->getCssByPosition($position) ?>">
+                    <?php $preparedLabelBlocks = $viewModel->prepareLabelBlocksByPosition($labelBlocks, $position) ?>
+                    <?php foreach ($preparedLabelBlocks as $labelBlock): ?>
+                        <?= /* @noEscape */ $viewModel->createLabelBlock($labelBlock, $labelConfig) ?>
+                    <?php endforeach; ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
+        <style type="text/css">
+            <?= /* @noEscape */ $labelConfig->getAreaStylesheet() ?>
+        </style>
+    <?php endif; ?>
+<?php endforeach; ?>

@@ -1,0 +1,34 @@
+<?php
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+
+/** @var Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\DefaultType $block */
+
+$field = $block->getField();
+?>
+<div class="field checkbox <?= /* @noEscape */ $field->getRequired() ? 'required' : ''; ?>">
+    <label class="label" for="<?= $block->escapeHtmlAttr($block->getFieldHtmlId()); ?>">
+        <span><?= $block->escapeHtml($field->getTitle()); ?></span>
+    </label>
+    <div class="control validation-block">
+        <?php foreach ($field->getOptions(false) as $option) : ?>
+            <input  type="checkbox"
+                    class="checkbox"
+                    id="<?= $block->escapeHtmlAttr($block->getFieldHtmlId($option['value'])); ?>"
+                    name="<?= $block->escapeHtmlAttr($block->getFieldHtmlName()); ?>"
+                    <?= /* @noEscape */ $block->getValidation(); ?>
+                    value="<?= $block->escapeHtmlAttr($option['value']); ?>"
+                    <?= /* @noEscape */ $block->isOptionSelected($option['value']) ? 'checked="checked"' : '' ?>
+            />
+            <label class="label" for="<?= $block->escapeHtmlAttr($block->getFieldHtmlId($option['value'])); ?>">
+                <span><?= $block->escapeHtml($option['label']); ?></span>
+            </label><br>
+        <?php endforeach; ?>
+        <?php if ($block->getComment()) : ?>
+            <p class="note"><span><?= $block->escapeHtml($block->getComment()); ?></span></p>
+        <?php endif; ?>
+    </div>
+
+</div>

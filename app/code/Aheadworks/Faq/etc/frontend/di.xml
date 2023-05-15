@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+* See LICENSE.txt for license details.
+*/
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Framework\App\RouterList">
+        <arguments>
+            <argument name="routerList" xsi:type="array">
+                <item name="faq" xsi:type="array">
+                    <item name="class" xsi:type="string">Aheadworks\Faq\Controller\Router</item>
+                    <item name="disable" xsi:type="boolean">false</item>
+                    <item name="sortOrder" xsi:type="string">70</item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Framework\View\Element\Message\MessageConfigurationsPool">
+        <arguments>
+            <argument name="configurationsMap" xsi:type="array">
+                <item name="voteNoSuccessMessage" xsi:type="array">
+                    <item name="renderer" xsi:type="const">\Magento\Framework\View\Element\Message\Renderer\BlockRenderer::CODE</item>
+                    <item name="data" xsi:type="array">
+                        <item name="template" xsi:type="string">Aheadworks_Faq::messages/voteNoSuccessMessage.phtml</item>
+                    </item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Aheadworks\Faq\Block\Article\Voting">
+        <arguments>
+            <argument name="layoutProcessors" xsi:type="array">
+                <item name="votingProcessor" xsi:type="object">Aheadworks\Faq\Model\Layout\Processor\HelpfulnessProcessor</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Customer\CustomerData\Customer">
+        <plugin name="aw-faq-customer-data" type="Aheadworks\Faq\Plugin\CustomerData\CustomerPlugin" />
+    </type>
+</config>

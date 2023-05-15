@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+* See LICENSE.txt for license details.
+*/
+-->
+
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">faq_article_form.article_form_data_source</item>
+            <item name="deps" xsi:type="string">faq_article_form.article_form_data_source</item>
+        </item>
+        <item name="label" xsi:type="string" translate="true">Article Information</item>
+        <item name="config" xsi:type="array">
+            <item name="dataScope" xsi:type="string">data</item>
+            <item name="namespace" xsi:type="string">faq_article_form</item>
+        </item>
+        <item name="template" xsi:type="string">templates/form/collapsible</item>
+        <item name="buttons" xsi:type="array">
+            <item name="back" xsi:type="string">Aheadworks\Faq\Block\Adminhtml\Article\Edit\BackButton</item>
+            <item name="delete" xsi:type="string">Aheadworks\Faq\Block\Adminhtml\Article\Edit\DeleteButton</item>
+            <item name="save" xsi:type="string">Aheadworks\Faq\Block\Adminhtml\Article\Edit\SaveButton</item>
+        </item>
+    </argument>
+    <dataSource name="article_form_data_source">
+        <argument name="dataProvider" xsi:type="configurableObject">
+            <argument name="class" xsi:type="string">Aheadworks\Faq\Model\Article\DataProvider</argument>
+            <argument name="name" xsi:type="string">article_form_data_source</argument>
+            <argument name="primaryFieldName" xsi:type="string">article_id</argument>
+            <argument name="requestFieldName" xsi:type="string">article_id</argument>
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="submit_url" xsi:type="url" path="faq/article/save"/>
+                </item>
+            </argument>
+        </argument>
+        <argument name="data" xsi:type="array">
+            <item name="js_config" xsi:type="array">
+                <item name="component" xsi:type="string">Magento_Ui/js/form/provider</item>
+            </item>
+        </argument>
+    </dataSource>
+    <fieldset name="general">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="label" xsi:type="string"/>
+            </item>
+        </argument>
+        <field name="article_id">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                </item>
+            </argument>
+        </field>
+        <field name="is_enable">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">boolean</item>
+                    <item name="label" xsi:type="string" translate="true">Enable article</item>
+                    <item name="formElement" xsi:type="string">checkbox</item>
+                    <item name="prefer" xsi:type="string">toggle</item>
+                    <item name="sortOrder" xsi:type="number">10</item>
+                    <item name="valueMap" xsi:type="array">
+                        <item name="true" xsi:type="number">1</item>
+                        <item name="false" xsi:type="number">0</item>
+                    </item>
+                    <item name="default" xsi:type="number">1</item>
+                </item>
+            </argument>
+        </field>
+        <field name="title">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">Article title</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="sortOrder" xsi:type="number">20</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="url_key">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">URL key</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="store_ids">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Aheadworks\Faq\Ui\Component\Listing\Column\Faq\Options</item>
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">int</item>
+                    <item name="label" xsi:type="string" translate="true">Store view</item>
+                    <item name="formElement" xsi:type="string">multiselect</item>
+                    <item name="default" xsi:type="string">0</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="category_id">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Aheadworks\Faq\Model\ResourceModel\Category\Collection</item>
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">int</item>
+                    <item name="label" xsi:type="string" translate="true">Category</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="default" xsi:type="string">0</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="sort_order">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">Sort order</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="default" xsi:type="string">0</item>
+                    <item name="notice" xsi:type="string" translate="true">Articles with lower value will appear first. Note: Articles with the same value are sorted by number of helpful votes</item>
+                </item>
+            </argument>
+        </field>
+        <field name="meta_title">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">Meta title</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                </item>
+            </argument>
+        </field>
+        <field name="meta_description">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">Meta description</item>
+                    <item name="formElement" xsi:type="string">textarea</item>
+                </item>
+            </argument>
+        </field>
+    </fieldset>
+    <fieldset>
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="label" xsi:type="string" translate="true">Content</item>
+                <item name="sortOrder" xsi:type="number">30</item>
+            </item>
+        </argument>
+        <field name="content">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" />
+                    <item name="formElement" xsi:type="string">wysiwyg</item>
+                    <item name="height" xsi:type="string">200px</item>
+                    <item name="source" xsi:type="string">page</item>
+                    <item name="wysiwyg" xsi:type="boolean">true</item>
+                    <item name="dataScope" xsi:type="string">content</item>
+                    <item name="additionalClasses" xsi:type="string">admin__field-wide</item>
+                </item>
+            </argument>
+        </field>
+    </fieldset>
+    <fieldset name="statistics">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="label" xsi:type="string" translate="true">Statistics</item>
+                <item name="sortOrder" xsi:type="number">40</item>
+            </item>
+        </argument>
+        <field name="votes_yes">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">Number of helpful votes</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="default" xsi:type="string">0</item>
+                </item>
+            </argument>
+        </field>
+        <field name="total_votes">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">Number of total votes</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="default" xsi:type="string">0</item>
+                </item>
+            </argument>
+        </field>
+    </fieldset>
+</form>

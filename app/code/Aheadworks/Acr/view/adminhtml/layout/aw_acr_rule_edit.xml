@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+* See LICENSE.txt for license details.
+*/
+-->
+
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <update handle="editor"/>
+    <update handle="aw_acr_default"/>
+    <body>
+        <referenceContainer name="content">
+            <block class="Magento\Framework\View\Element\Template" name="frame.template" template="Aheadworks_Acr::preview/popup.phtml"/>
+            <uiComponent name="aw_acr_rule_form"/>
+        </referenceContainer>
+    </body>
+</page>

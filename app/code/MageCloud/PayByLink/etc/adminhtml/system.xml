@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="payment">
+            <group id="mpbarclaycard" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <group id="paybylink" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Barclaycard Pay By Link</label>
+                    <field id="order_number" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Order/Invoice #</label>
+                        <config_path>payment/mpbarclaycard_paybylink/order_number</config_path>
+                    </field>
+                    <field id="amount" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Amount</label>
+                        <comment>Amount in GBP.</comment>
+                        <config_path>payment/mpbarclaycard_paybylink/amount</config_path>
+                        <validate>validate-number validate-zero-or-greater</validate>
+                    </field>
+<!--                    <field id="generate_button" translate="label" type="select" sortOrder="180" showInDefault="1" showInWebsite="1" showInStore="1">-->
+<!--                        <label>Generate link</label>-->
+<!--                        <frontend_model>MageCloud\PayByLink\Block\Adminhtml\System\Config\Button</frontend_model>-->
+<!--                    </field>-->
+                    <field id="generate" translate="label" type="button" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <frontend_model>MageCloud\PayByLink\Block\Adminhtml\Generate</frontend_model>
+                    </field>
+                </group>
+            </group>
+        </section>
+    </system>
+</config>

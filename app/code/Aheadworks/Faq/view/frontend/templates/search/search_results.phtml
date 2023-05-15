@@ -1,0 +1,49 @@
+<?php
+/**
+ * Copyright 2019 aheadWorks. All rights reserved.
+ * See LICENSE.txt for license details.
+ */
+
+// @codingStandardsIgnoreFile
+
+/** @var $block \Aheadworks\Faq\Block\Search\Search */
+?>
+<?php $searchWords = explode(" ", $block->getSearchQueryString()); ?>
+<?php $searchResults = $block->getSearchResults(); ?>
+<div class="search-results">
+    <div class="results-list article-list">
+        <?php if ($searchResults): ?>
+            <h3><?php echo $block->escapeHtml(__(
+                    'Number of articles containing "%1": %2',
+                    [$block->escapeHtml($block->getSearchQueryString()), count($searchResults)]
+                )); ?>
+            </h3>
+            <ul class="aw-list-style">
+                <?php foreach($searchResults as $article): ?>
+                    <li>
+                        <?php $articleTitle = $block->escapeHtml($article->getTitle()); ?>
+                        <?php foreach ($searchWords as $word) {
+                            if (stripos($articleTitle, $word) !== false) {
+                                $articleTitle = preg_replace(
+                                        '/' . $word . '+/i',
+                                        '<strong>' . substr($articleTitle, stripos($articleTitle, $word), strlen($word)) . '</strong>',
+                                        $articleTitle
+                                );
+                            }
+                        }
+                        ?>
+                        <a href="<?php echo $block->escapeUrl($block->getArticleUrl($article)); ?>"
+                           title="<?php echo $block->escapeHtml(__('Go to %1', $block->escapeHtml($article->getTitle()))); ?>">
+                            <?php /* @noEscape */ echo $articleTitle; ?>
+                        </a>
+                    </li>
+                <?php endforeach ?>
+            </ul>
+        <?php else: ?>
+            <h3><?php echo $block->escapeHtml(__('No articles found.')); ?></h3>
+            <div>
+                <?php /* @noEscape */ echo (__('Try searching something else or <a href="%1">go back</a> to previous page.', $block->getBackUrl())); ?>
+            </div>
+    <?php endif; ?>
+    </div>
+</div>

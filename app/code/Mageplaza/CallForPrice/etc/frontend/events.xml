@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_CallForPrice
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="layout_load_before">
+        <observer name="mpcfp_layout_load_before_callforprice" instance="Mageplaza\CallForPrice\Observer\CallForPriceLayoutLoadBefore"/>
+    </event>
+    <event name="controller_action_predispatch_checkout_cart_index">
+        <observer name="mpcfp_disable_checkout_cart_index" instance="Mageplaza\CallForPrice\Observer\DisableShoppingCart"/>
+    </event>
+    <event name="controller_action_predispatch_checkout_index_index">
+        <observer name="mpcfp_disable_checkout_checkout_index" instance="Mageplaza\CallForPrice\Observer\DisableCheckout"/>
+    </event>
+</config>

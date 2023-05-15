@@ -1,0 +1,934 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+See LICENSE.txt for license details.
+*/
+-->
+
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form_data_source</item>
+            <item name="deps" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form_data_source</item>
+        </item>
+        <item name="label" xsi:type="string" translate="true">Label</item>
+        <item name="config" xsi:type="array">
+            <item name="dataScope" xsi:type="string">data</item>
+            <item name="namespace" xsi:type="string">aw_onsale_label_form</item>
+        </item>
+        <item name="template" xsi:type="string">templates/form/collapsible</item>
+        <item name="buttons" xsi:type="array">
+            <item name="back" xsi:type="string">Aheadworks\OnSale\Block\Adminhtml\Label\Edit\Button\Back</item>
+            <item name="delete" xsi:type="string">Aheadworks\OnSale\Block\Adminhtml\Label\Edit\Button\Delete</item>
+            <item name="reset" xsi:type="string">Aheadworks\OnSale\Block\Adminhtml\Label\Edit\Button\Reset</item>
+            <item name="save" xsi:type="string">Aheadworks\OnSale\Block\Adminhtml\Label\Edit\Button\Save</item>
+            <item name="save_and_continue" xsi:type="string">Aheadworks\OnSale\Block\Adminhtml\Label\Edit\Button\SaveAndContinue</item>
+        </item>
+    </argument>
+    <dataSource name="aw_onsale_label_form_data_source">
+        <argument name="dataProvider" xsi:type="configurableObject">
+            <argument name="class" xsi:type="string">Aheadworks\OnSale\Ui\DataProvider\Label\FormDataProvider</argument>
+            <argument name="name" xsi:type="string">aw_onsale_label_form_data_source</argument>
+            <argument name="primaryFieldName" xsi:type="string">label_id</argument>
+            <argument name="requestFieldName" xsi:type="string">id</argument>
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="submit_url" xsi:type="url" path="aw_onsale/label/save"/>
+                </item>
+            </argument>
+        </argument>
+        <argument name="data" xsi:type="array">
+            <item name="js_config" xsi:type="array">
+                <item name="component" xsi:type="string">Magento_Ui/js/form/provider</item>
+            </item>
+        </argument>
+    </dataSource>
+    <fieldset name="general_information">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="label" xsi:type="string" translate="true">General Information</item>
+                <item name="collapsible" xsi:type="boolean">true</item>
+                <item name="opened" xsi:type="boolean">true</item>
+            </item>
+        </argument>
+        <field name="label_id">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="source" xsi:type="string">label</item>
+                    <item name="dataScope" xsi:type="string">label_id</item>
+                </item>
+            </argument>
+        </field>
+        <field name="name">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">Name</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="source" xsi:type="string">label</item>
+                    <item name="dataScope" xsi:type="string">name</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="position">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Aheadworks\OnSale\Model\Source\Label\Position</item>
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">Position</item>
+                    <item name="formElement" xsi:type="string">radioset</item>
+                    <item name="source" xsi:type="string">label</item>
+                    <item name="dataScope" xsi:type="string">position</item>
+                    <item name="additionalClasses" xsi:type="string">aw-onsale__radioset-label-display aw-onsale__radio-btn-middle-space</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="type">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Aheadworks\OnSale\Model\Source\Label\Type</item>
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">Type</item>
+                    <item name="formElement" xsi:type="string">radioset</item>
+                    <item name="source" xsi:type="string">label</item>
+                    <item name="dataScope" xsi:type="string">type</item>
+                    <item name="additionalClasses" xsi:type="string">aw-onsale__radioset-label-display</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="deps" xsi:type="array">
+                        <item name="0" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form_data_source</item>
+                        <item name="1" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.shape_type</item>
+                    </item>
+                    <item name="switcherConfig" xsi:type="array">
+                        <item name="enabled" xsi:type="boolean">true</item>
+                        <item name="rules" xsi:type="array">
+                            <item name="0" xsi:type="array">
+                                <item name="value" xsi:type="string">shape</item>
+                                <item name="actions" xsi:type="array">
+                                    <item name="0" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.shape_type</item>
+                                        <item name="callback" xsi:type="string">show</item>
+                                    </item>
+                                    <item name="1" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.img_file</item>
+                                        <item name="callback" xsi:type="string">hide</item>
+                                    </item>
+                                    <item name="2" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.shape_type</item>
+                                        <item name="callback" xsi:type="string">reinit</item>
+                                    </item>
+                                </item>
+                            </item>
+                            <item name="1" xsi:type="array">
+                                <item name="value" xsi:type="string">picture</item>
+                                <item name="actions" xsi:type="array">
+                                    <item name="0" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.shape_type</item>
+                                        <item name="callback" xsi:type="string">hide</item>
+                                    </item>
+                                    <item name="1" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.img_file</item>
+                                        <item name="callback" xsi:type="string">show</item>
+                                    </item>
+                                    <item name="2" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.width</item>
+                                        <item name="callback" xsi:type="string">changeLabel</item>
+                                        <item name="params" xsi:type="array">
+                                            <item name="0" xsi:type="string" translate="true">Width</item>
+                                        </item>
+                                    </item>
+                                    <item name="3" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.width</item>
+                                        <item name="callback" xsi:type="string">show</item>
+                                    </item>
+                                    <item name="4" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.height</item>
+                                        <item name="callback" xsi:type="string">show</item>
+                                    </item>
+                                </item>
+                            </item>
+                            <item name="2" xsi:type="array">
+                                <item name="value" xsi:type="string">text</item>
+                                <item name="actions" xsi:type="array">
+                                    <item name="0" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.shape_type</item>
+                                        <item name="callback" xsi:type="string">hide</item>
+                                    </item>
+                                    <item name="1" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.img_file</item>
+                                        <item name="callback" xsi:type="string">hide</item>
+                                    </item>
+                                    <item name="2" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.width</item>
+                                        <item name="callback" xsi:type="string">hide</item>
+                                    </item>
+                                    <item name="3" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.height</item>
+                                        <item name="callback" xsi:type="string">hide</item>
+                                    </item>
+                                </item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="shape_type">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Aheadworks\OnSale\Model\Source\Label\Shape\Type</item>
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Shape Type</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/ui-select</item>
+                    <item name="elementTmpl" xsi:type="string">ui/grid/filters/elements/ui-select</item>
+                    <item name="dataScope" xsi:type="string">shape_type</item>
+                    <item name="filterOptions" xsi:type="boolean">false</item>
+                    <item name="showCheckbox" xsi:type="boolean">false</item>
+                    <item name="disableLabel" xsi:type="boolean">true</item>
+                    <item name="multiple" xsi:type="boolean">false</item>
+                    <item name="levelsVisibility" xsi:type="number">1</item>
+                    <item name="switcherConfig" xsi:type="array">
+                        <item name="enabled" xsi:type="boolean">true</item>
+                        <item name="rules" xsi:type="array">
+                            <item name="0" xsi:type="array">
+                                <item name="value" xsi:type="string">rectangle</item>
+                                <item name="actions" xsi:type="array">
+                                    <item name="0" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.width</item>
+                                        <item name="callback" xsi:type="string">changeLabel</item>
+                                        <item name="params" xsi:type="array">
+                                            <item name="0" xsi:type="string" translate="true">Width</item>
+                                        </item>
+                                    </item>
+                                    <item name="1" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.height</item>
+                                        <item name="callback" xsi:type="string">show</item>
+                                    </item>
+                                </item>
+                            </item>
+                            <item name="1" xsi:type="array">
+                                <item name="value" xsi:type="string">rectangle_with_bevel_up</item>
+                                <item name="actions" xsi:type="array">
+                                    <item name="0" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.width</item>
+                                        <item name="callback" xsi:type="string">changeLabel</item>
+                                        <item name="params" xsi:type="array">
+                                            <item name="0" xsi:type="string" translate="true">Width</item>
+                                        </item>
+                                    </item>
+                                    <item name="1" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.height</item>
+                                        <item name="callback" xsi:type="string">show</item>
+                                    </item>
+                                </item>
+                            </item>
+                            <item name="2" xsi:type="array">
+                                <item name="value" xsi:type="string">rectangle_with_bevel_down</item>
+                                <item name="actions" xsi:type="array">
+                                    <item name="0" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.width</item>
+                                        <item name="callback" xsi:type="string">changeLabel</item>
+                                        <item name="params" xsi:type="array">
+                                            <item name="0" xsi:type="string" translate="true">Width</item>
+                                        </item>
+                                    </item>
+                                    <item name="1" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.height</item>
+                                        <item name="callback" xsi:type="string">show</item>
+                                    </item>
+                                </item>
+                            </item>
+                            <item name="3" xsi:type="array">
+                                <item name="value" xsi:type="string">square</item>
+                                <item name="actions" xsi:type="array">
+                                    <item name="0" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.width</item>
+                                        <item name="callback" xsi:type="string">changeLabel</item>
+                                        <item name="params" xsi:type="array">
+                                            <item name="0" xsi:type="string" translate="true">Side</item>
+                                        </item>
+                                    </item>
+                                    <item name="1" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.height</item>
+                                        <item name="callback" xsi:type="string">hide</item>
+                                    </item>
+                                    <item name="2" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.height</item>
+                                        <item name="callback" xsi:type="string">clear</item>
+                                    </item>
+                                </item>
+                            </item>
+                            <item name="4" xsi:type="array">
+                                <item name="value" xsi:type="string">circle</item>
+                                <item name="actions" xsi:type="array">
+                                    <item name="0" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.width</item>
+                                        <item name="callback" xsi:type="string">changeLabel</item>
+                                        <item name="params" xsi:type="array">
+                                            <item name="0" xsi:type="string" translate="true">Radius</item>
+                                        </item>
+                                    </item>
+                                    <item name="1" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.height</item>
+                                        <item name="callback" xsi:type="string">hide</item>
+                                    </item>
+                                    <item name="2" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.height</item>
+                                        <item name="callback" xsi:type="string">clear</item>
+                                    </item>
+                                </item>
+                            </item>
+                            <item name="5" xsi:type="array">
+                                <item name="value" xsi:type="string">flag</item>
+                                <item name="actions" xsi:type="array">
+                                    <item name="0" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.width</item>
+                                        <item name="callback" xsi:type="string">changeLabel</item>
+                                        <item name="params" xsi:type="array">
+                                            <item name="0" xsi:type="string" translate="true">Width</item>
+                                        </item>
+                                    </item>
+                                    <item name="1" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.height</item>
+                                        <item name="callback" xsi:type="string">show</item>
+                                    </item>
+                                </item>
+                            </item>
+                            <item name="6" xsi:type="array">
+                                <item name="value" xsi:type="string">point_burst</item>
+                                <item name="actions" xsi:type="array">
+                                    <item name="0" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.width</item>
+                                        <item name="callback" xsi:type="string">changeLabel</item>
+                                        <item name="params" xsi:type="array">
+                                            <item name="0" xsi:type="string" translate="true">Radius</item>
+                                        </item>
+                                    </item>
+                                    <item name="1" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.height</item>
+                                        <item name="callback" xsi:type="string">hide</item>
+                                    </item>
+                                    <item name="2" xsi:type="array">
+                                        <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_toolbar.general.height</item>
+                                        <item name="callback" xsi:type="string">clear</item>
+                                    </item>
+                                </item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="img_file">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/image-uploader</item>
+                    <item name="label" xsi:type="string" translate="true">Image</item>
+                    <item name="formElement" xsi:type="string">fileUploader</item>
+                    <item name="componentType" xsi:type="string">fileUploader</item>
+                    <item name="notice" xsi:type="string" translate="true">Allowed file types: jpg, jpeg, gif, png.</item>
+                    <item name="maxFileSize" xsi:type="number">2097152</item>
+                    <item name="allowedExtensions" xsi:type="string">jpg jpeg gif png svg</item>
+                    <item name="uploaderConfig" xsi:type="array">
+                        <item name="url" xsi:type="string">aw_onsale/label/uploadImage</item>
+                    </item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <container name="preview_container">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="template" xsi:type="string">Aheadworks_OnSale/ui/form/components/2columns-layout</item>
+                </item>
+            </argument>
+            <container name="preview" class="Aheadworks\OnSale\Ui\Component\Form\Label\Preview">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/components/label/preview</item>
+                        <item name="displayArea" xsi:type="string">left</item>
+                    </item>
+                </argument>
+            </container>
+            <field name="size_switcher">
+                <argument name="data" xsi:type="array">
+                    <item name="options" xsi:type="object">Aheadworks\OnSale\Model\Source\Label\Renderer\Size</item>
+                    <item name="config" xsi:type="array">
+                        <item name="dataType" xsi:type="string">text</item>
+                        <item name="formElement" xsi:type="string">radioset</item>
+                        <item name="source" xsi:type="string">label</item>
+                        <item name="dataScope" xsi:type="string">size_switcher</item>
+                        <item name="displayArea" xsi:type="string">right</item>
+                        <item name="additionalClasses" xsi:type="string">aw-onsale__radioset-size-switcher</item>
+                        <item name="deps" xsi:type="array">
+                            <item name="0" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form_data_source</item>
+                        </item>
+                        <item name="switcherConfig" xsi:type="array">
+                            <item name="enabled" xsi:type="boolean">true</item>
+                            <item name="rules" xsi:type="array">
+                                <item name="0" xsi:type="array">
+                                    <item name="value" xsi:type="string">large</item>
+                                    <item name="actions" xsi:type="array">
+                                        <item name="0" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_large</item>
+                                            <item name="callback" xsi:type="string">show</item>
+                                        </item>
+                                        <item name="1" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_label_large</item>
+                                            <item name="callback" xsi:type="string">show</item>
+                                        </item>
+                                        <item name="2" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_medium</item>
+                                            <item name="callback" xsi:type="string">hide</item>
+                                        </item>
+                                        <item name="3" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_label_medium</item>
+                                            <item name="callback" xsi:type="string">hide</item>
+                                        </item>
+                                        <item name="4" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_small</item>
+                                            <item name="callback" xsi:type="string">hide</item>
+                                        </item>
+                                        <item name="5" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_label_small</item>
+                                            <item name="callback" xsi:type="string">hide</item>
+                                        </item>
+                                        <item name="6" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.test_text_large</item>
+                                            <item name="callback" xsi:type="string">show</item>
+                                        </item>
+                                        <item name="7" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.test_text_medium</item>
+                                            <item name="callback" xsi:type="string">hide</item>
+                                        </item>
+                                        <item name="8" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.test_text_small</item>
+                                            <item name="callback" xsi:type="string">hide</item>
+                                        </item>
+                                    </item>
+                                </item>
+                                <item name="1" xsi:type="array">
+                                    <item name="value" xsi:type="string">medium</item>
+                                    <item name="actions" xsi:type="array">
+                                        <item name="0" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_large</item>
+                                            <item name="callback" xsi:type="string">hide</item>
+                                        </item>
+                                        <item name="1" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_label_large</item>
+                                            <item name="callback" xsi:type="string">hide</item>
+                                        </item>
+                                        <item name="2" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_medium</item>
+                                            <item name="callback" xsi:type="string">show</item>
+                                        </item>
+                                        <item name="3" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_label_medium</item>
+                                            <item name="callback" xsi:type="string">show</item>
+                                        </item>
+                                        <item name="4" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_small</item>
+                                            <item name="callback" xsi:type="string">hide</item>
+                                        </item>
+                                        <item name="5" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_label_small</item>
+                                            <item name="callback" xsi:type="string">hide</item>
+                                        </item>
+                                        <item name="6" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.test_text_large</item>
+                                            <item name="callback" xsi:type="string">hide</item>
+                                        </item>
+                                        <item name="7" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.test_text_medium</item>
+                                            <item name="callback" xsi:type="string">show</item>
+                                        </item>
+                                        <item name="8" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.test_text_small</item>
+                                            <item name="callback" xsi:type="string">hide</item>
+                                        </item>
+                                    </item>
+                                </item>
+                                <item name="2" xsi:type="array">
+                                    <item name="value" xsi:type="string">small</item>
+                                    <item name="actions" xsi:type="array">
+                                        <item name="0" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_large</item>
+                                            <item name="callback" xsi:type="string">hide</item>
+                                        </item>
+                                        <item name="1" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_label_large</item>
+                                            <item name="callback" xsi:type="string">hide</item>
+                                        </item>
+                                        <item name="2" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_medium</item>
+                                            <item name="callback" xsi:type="string">hide</item>
+                                        </item>
+                                        <item name="3" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_label_medium</item>
+                                            <item name="callback" xsi:type="string">hide</item>
+                                        </item>
+                                        <item name="4" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_container_small</item>
+                                            <item name="callback" xsi:type="string">show</item>
+                                        </item>
+                                        <item name="5" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.customize_css_label_small</item>
+                                            <item name="callback" xsi:type="string">show</item>
+                                        </item>
+                                        <item name="6" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.test_text_large</item>
+                                            <item name="callback" xsi:type="string">hide</item>
+                                        </item>
+                                        <item name="7" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.test_text_medium</item>
+                                            <item name="callback" xsi:type="string">hide</item>
+                                        </item>
+                                        <item name="8" xsi:type="array">
+                                            <item name="target" xsi:type="string">aw_onsale_label_form.aw_onsale_label_form.general_information.preview_container.test_text_small</item>
+                                            <item name="callback" xsi:type="string">show</item>
+                                        </item>
+                                    </item>
+                                </item>
+                            </item>
+                        </item>
+                    </item>
+                </argument>
+            </field>
+            <!-- todo review to reduce copy-pasted components -->
+            <field name="test_text_large" class="Aheadworks\OnSale\Ui\Component\Form\Label\TestText">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="dataType" xsi:type="string">text</item>
+                        <item name="label" xsi:type="string" translate="true">Test Text</item>
+                        <item name="formElement" xsi:type="string">input</item>
+                        <item name="source" xsi:type="string">label</item>
+                        <item name="dataScope" xsi:type="string">test_text_large</item>
+                        <item name="default" xsi:type="string">sale</item>
+                        <item name="valueUpdate" xsi:type="string">afterkeydown</item>
+                        <item name="notice" xsi:type="string" translate="true">This field is only used to test the label display, text input doesn't get saved. Set up actual label texts in rules.</item>
+                        <item name="displayArea" xsi:type="string">right</item>
+                        <item name="tooltipTpl" xsi:type="string">Aheadworks_OnSale/ui/form/element/helper/tooltip/as-array</item>
+                        <item name="tooltip" xsi:type="array">
+                            <item name="beforeDescription" xsi:type="string" translate="true">Variables you can use in test text:</item>
+                        </item>
+                    </item>
+                </argument>
+            </field>
+            <field name="test_text_medium" class="Aheadworks\OnSale\Ui\Component\Form\Label\TestText">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="dataType" xsi:type="string">text</item>
+                        <item name="label" xsi:type="string" translate="true">Test Text</item>
+                        <item name="formElement" xsi:type="string">input</item>
+                        <item name="source" xsi:type="string">label</item>
+                        <item name="dataScope" xsi:type="string">test_text_medium</item>
+                        <item name="default" xsi:type="string">sale</item>
+                        <item name="valueUpdate" xsi:type="string">afterkeydown</item>
+                        <item name="notice" xsi:type="string" translate="true">This field is only used to test the label display, text input doesn't get saved. Set up actual label texts in rules.</item>
+                        <item name="displayArea" xsi:type="string">right</item>
+                        <item name="tooltipTpl" xsi:type="string">Aheadworks_OnSale/ui/form/element/helper/tooltip/as-array</item>
+                        <item name="tooltip" xsi:type="array">
+                            <item name="beforeDescription" xsi:type="string" translate="true">Variables you can use in test text:</item>
+                        </item>
+                    </item>
+                </argument>
+            </field>
+            <field name="test_text_small" class="Aheadworks\OnSale\Ui\Component\Form\Label\TestText">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="dataType" xsi:type="string">text</item>
+                        <item name="label" xsi:type="string" translate="true">Test Text</item>
+                        <item name="formElement" xsi:type="string">input</item>
+                        <item name="source" xsi:type="string">label</item>
+                        <item name="dataScope" xsi:type="string">test_text_small</item>
+                        <item name="default" xsi:type="string">sale</item>
+                        <item name="valueUpdate" xsi:type="string">afterkeydown</item>
+                        <item name="notice" xsi:type="string" translate="true">This field is only used to test the label display, text input doesn't get saved. Set up actual label texts in rules.</item>
+                        <item name="displayArea" xsi:type="string">right</item>
+                        <item name="tooltipTpl" xsi:type="string">Aheadworks_OnSale/ui/form/element/helper/tooltip/as-array</item>
+                        <item name="tooltip" xsi:type="array">
+                            <item name="beforeDescription" xsi:type="string" translate="true">Variables you can use in test text:</item>
+                        </item>
+                    </item>
+                </argument>
+            </field>
+            <field name="customize_css_container_large">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="label" xsi:type="string" translate="true">Customize Container</item>
+                        <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/css-wysiwyg</item>
+                        <item name="visible" xsi:type="boolean">true</item>
+                        <item name="dataType" xsi:type="string">text</item>
+                        <item name="formElement" xsi:type="string">textarea</item>
+                        <item name="source" xsi:type="string">label</item>
+                        <item name="dataScope" xsi:type="string">customize_css_container_large</item>
+                        <item name="displayArea" xsi:type="string">right</item>
+                        <item name="advancedSettingsTooltip" xsi:type="array">
+                            <item name="link" xsi:type="string">http://confluence.aheadworks.com/display/EUDOC/Product+Labels+-+Magento+2#ProductLabels-Magento2-CustomizeCSSContainer</item>
+                            <item name="description" xsi:type="string" translate="true">CSS parameters applied to the label container. Click the question mark to see more details in user guide.</item>
+                        </item>
+                        <item name="toolbarConfig" xsi:type="array">
+                            <item name="children" xsi:type="array">
+                                <item name="general" xsi:type="array">
+                                    <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/css-wysiwyg/toolbar/tab</item>
+                                    <item name="label" xsi:type="string" translate="true">General</item>
+                                    <item name="children" xsi:type="array">
+                                        <item name="background_color" xsi:type="array">
+                                            <item name="formElement" xsi:type="string">input</item>
+                                            <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/color-picker</item>
+                                            <item name="template" xsi:type="string">ui/form/field</item>
+                                            <item name="dataType" xsi:type="string">text</item>
+                                            <item name="label" xsi:type="string" translate="true">Color</item>
+                                            <item name="name" xsi:type="string">background_color</item>
+                                            <item name="css" xsi:type="array">
+                                                <item name="property" xsi:type="string">background-color</item>
+                                            </item>
+                                        </item>
+                                        <item name="width" xsi:type="array">
+                                            <item name="formElement" xsi:type="string">input</item>
+                                            <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/abstract</item>
+                                            <item name="template" xsi:type="string">ui/form/field</item>
+                                            <item name="dataType" xsi:type="string">text</item>
+                                            <item name="label" xsi:type="string" translate="true">Width</item>
+                                            <item name="name" xsi:type="string">width</item>
+                                            <item name="addafter" xsi:type="string">px</item>
+                                            <item name="valueUpdate" xsi:type="string">afterkeydown</item>
+                                            <item name="css" xsi:type="array">
+                                                <item name="property" xsi:type="string">width</item>
+                                                <item name="unit" xsi:type="string">px</item>
+                                            </item>
+                                        </item>
+                                        <item name="height" xsi:type="array">
+                                            <item name="formElement" xsi:type="string">input</item>
+                                            <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/abstract</item>
+                                            <item name="template" xsi:type="string">ui/form/field</item>
+                                            <item name="dataType" xsi:type="string">text</item>
+                                            <item name="label" xsi:type="string" translate="true">Height</item>
+                                            <item name="name" xsi:type="string">width</item>
+                                            <item name="addafter" xsi:type="string">px</item>
+                                            <item name="valueUpdate" xsi:type="string">afterkeydown</item>
+                                            <item name="css" xsi:type="array">
+                                                <item name="property" xsi:type="string">height</item>
+                                                <item name="unit" xsi:type="string">px</item>
+                                            </item>
+                                        </item>
+                                    </item>
+                                </item>
+                            </item>
+                        </item>
+                    </item>
+                </argument>
+            </field>
+            <field name="customize_css_label_large">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="label" xsi:type="string" translate="true">Customize Label</item>
+                        <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/css-wysiwyg</item>
+                        <item name="visible" xsi:type="boolean">true</item>
+                        <item name="dataType" xsi:type="string">text</item>
+                        <item name="formElement" xsi:type="string">textarea</item>
+                        <item name="source" xsi:type="string">label</item>
+                        <item name="dataScope" xsi:type="string">customize_css_label_large</item>
+                        <item name="displayArea" xsi:type="string">right</item>
+                        <item name="advancedSettingsTooltip" xsi:type="array">
+                            <item name="link" xsi:type="string">http://confluence.aheadworks.com/display/EUDOC/Product+Labels+-+Magento+2#ProductLabels-Magento2-CustomizeotherCSSParameters</item>
+                            <item name="description" xsi:type="string" translate="true">Other CSS parameters. Click the question mark to see more details in user guide.</item>
+                        </item>
+                        <item name="toolbarConfig" xsi:type="array">
+                            <item name="children" xsi:type="array">
+                                <item name="text" xsi:type="array">
+                                    <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/css-wysiwyg/toolbar/tab</item>
+                                    <item name="label" xsi:type="string" translate="true">Text</item>
+                                    <item name="children" xsi:type="array">
+                                        <item name="color" xsi:type="array">
+                                            <item name="formElement" xsi:type="string">input</item>
+                                            <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/color-picker</item>
+                                            <item name="template" xsi:type="string">ui/form/field</item>
+                                            <item name="dataType" xsi:type="string">text</item>
+                                            <item name="label" xsi:type="string" translate="true">Color</item>
+                                            <item name="name" xsi:type="string">color</item>
+                                            <item name="cssProperty" xsi:type="string">color</item>
+                                            <item name="css" xsi:type="array">
+                                                <item name="property" xsi:type="string">color</item>
+                                            </item>
+                                        </item>
+                                        <item name="size" xsi:type="array">
+                                            <item name="formElement" xsi:type="string">input</item>
+                                            <item name="component" xsi:type="string">Magento_Ui/js/form/element/abstract</item>
+                                            <item name="template" xsi:type="string">ui/form/field</item>
+                                            <item name="dataType" xsi:type="string">text</item>
+                                            <item name="label" xsi:type="string" translate="true">Size</item>
+                                            <item name="name" xsi:type="string">color</item>
+                                            <item name="addafter" xsi:type="string">px</item>
+                                            <item name="valueUpdate" xsi:type="string">afterkeydown</item>
+                                            <item name="css" xsi:type="array">
+                                                <item name="property" xsi:type="string">font-size</item>
+                                                <item name="unit" xsi:type="string">px</item>
+                                            </item>
+                                        </item>
+                                    </item>
+                                </item>
+                            </item>
+                        </item>
+                    </item>
+                </argument>
+            </field>
+            <field name="customize_css_container_medium">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="label" xsi:type="string" translate="true">Customize Container</item>
+                        <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/css-wysiwyg</item>
+                        <item name="visible" xsi:type="boolean">true</item>
+                        <item name="dataType" xsi:type="string">text</item>
+                        <item name="formElement" xsi:type="string">textarea</item>
+                        <item name="source" xsi:type="string">label</item>
+                        <item name="dataScope" xsi:type="string">customize_css_container_medium</item>
+                        <item name="displayArea" xsi:type="string">right</item>
+                        <item name="advancedSettingsTooltip" xsi:type="array">
+                            <item name="link" xsi:type="string">http://confluence.aheadworks.com/display/EUDOC/Product+Labels+-+Magento+2#ProductLabels-Magento2-CustomizeCSSContainer</item>
+                            <item name="description" xsi:type="string" translate="true">CSS parameters applied to the label container. Click the question mark to see more details in user guide.</item>
+                        </item>
+                        <item name="toolbarConfig" xsi:type="array">
+                            <item name="children" xsi:type="array">
+                                <item name="general" xsi:type="array">
+                                    <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/css-wysiwyg/toolbar/tab</item>
+                                    <item name="label" xsi:type="string" translate="true">General</item>
+                                    <item name="children" xsi:type="array">
+                                        <item name="background_color" xsi:type="array">
+                                            <item name="formElement" xsi:type="string">input</item>
+                                            <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/color-picker</item>
+                                            <item name="template" xsi:type="string">ui/form/field</item>
+                                            <item name="dataType" xsi:type="string">text</item>
+                                            <item name="label" xsi:type="string" translate="true">Color</item>
+                                            <item name="name" xsi:type="string">background_color</item>
+                                            <item name="css" xsi:type="array">
+                                                <item name="property" xsi:type="string">background-color</item>
+                                            </item>
+                                        </item>
+                                        <item name="width" xsi:type="array">
+                                            <item name="formElement" xsi:type="string">input</item>
+                                            <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/abstract</item>
+                                            <item name="template" xsi:type="string">ui/form/field</item>
+                                            <item name="dataType" xsi:type="string">text</item>
+                                            <item name="label" xsi:type="string" translate="true">Width</item>
+                                            <item name="name" xsi:type="string">width</item>
+                                            <item name="addafter" xsi:type="string">px</item>
+                                            <item name="valueUpdate" xsi:type="string">afterkeydown</item>
+                                            <item name="css" xsi:type="array">
+                                                <item name="property" xsi:type="string">width</item>
+                                                <item name="unit" xsi:type="string">px</item>
+                                            </item>
+                                        </item>
+                                        <item name="height" xsi:type="array">
+                                            <item name="formElement" xsi:type="string">input</item>
+                                            <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/abstract</item>
+                                            <item name="template" xsi:type="string">ui/form/field</item>
+                                            <item name="dataType" xsi:type="string">text</item>
+                                            <item name="label" xsi:type="string" translate="true">Height</item>
+                                            <item name="name" xsi:type="string">width</item>
+                                            <item name="addafter" xsi:type="string">px</item>
+                                            <item name="valueUpdate" xsi:type="string">afterkeydown</item>
+                                            <item name="css" xsi:type="array">
+                                                <item name="property" xsi:type="string">height</item>
+                                                <item name="unit" xsi:type="string">px</item>
+                                            </item>
+                                        </item>
+                                    </item>
+                                </item>
+                            </item>
+                        </item>
+                    </item>
+                </argument>
+            </field>
+            <field name="customize_css_label_medium">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="label" xsi:type="string" translate="true">Customize Label</item>
+                        <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/css-wysiwyg</item>
+                        <item name="visible" xsi:type="boolean">true</item>
+                        <item name="dataType" xsi:type="string">text</item>
+                        <item name="formElement" xsi:type="string">textarea</item>
+                        <item name="source" xsi:type="string">label</item>
+                        <item name="dataScope" xsi:type="string">customize_css_label_medium</item>
+                        <item name="displayArea" xsi:type="string">right</item>
+                        <item name="advancedSettingsTooltip" xsi:type="array">
+                            <item name="link" xsi:type="string">http://confluence.aheadworks.com/display/EUDOC/Product+Labels+-+Magento+2#ProductLabels-Magento2-CustomizeotherCSSParameters</item>
+                            <item name="description" xsi:type="string" translate="true">Other CSS parameters. Click the question mark to see more details in user guide.</item>
+                        </item>
+                        <item name="toolbarConfig" xsi:type="array">
+                            <item name="children" xsi:type="array">
+                                <item name="text" xsi:type="array">
+                                    <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/css-wysiwyg/toolbar/tab</item>
+                                    <item name="label" xsi:type="string" translate="true">Text</item>
+                                    <item name="children" xsi:type="array">
+                                        <item name="color" xsi:type="array">
+                                            <item name="formElement" xsi:type="string">input</item>
+                                            <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/color-picker</item>
+                                            <item name="template" xsi:type="string">ui/form/field</item>
+                                            <item name="dataType" xsi:type="string">text</item>
+                                            <item name="label" xsi:type="string" translate="true">Color</item>
+                                            <item name="name" xsi:type="string">color</item>
+                                            <item name="cssProperty" xsi:type="string">color</item>
+                                            <item name="css" xsi:type="array">
+                                                <item name="property" xsi:type="string">color</item>
+                                            </item>
+                                        </item>
+                                        <item name="size" xsi:type="array">
+                                            <item name="formElement" xsi:type="string">input</item>
+                                            <item name="component" xsi:type="string">Magento_Ui/js/form/element/abstract</item>
+                                            <item name="template" xsi:type="string">ui/form/field</item>
+                                            <item name="dataType" xsi:type="string">text</item>
+                                            <item name="label" xsi:type="string" translate="true">Size</item>
+                                            <item name="name" xsi:type="string">color</item>
+                                            <item name="addafter" xsi:type="string">px</item>
+                                            <item name="valueUpdate" xsi:type="string">afterkeydown</item>
+                                            <item name="css" xsi:type="array">
+                                                <item name="property" xsi:type="string">font-size</item>
+                                                <item name="unit" xsi:type="string">px</item>
+                                            </item>
+                                        </item>
+                                    </item>
+                                </item>
+                            </item>
+                        </item>
+                    </item>
+                </argument>
+            </field>
+            <field name="customize_css_container_small">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="label" xsi:type="string" translate="true">Customize Container</item>
+                        <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/css-wysiwyg</item>
+                        <item name="visible" xsi:type="boolean">true</item>
+                        <item name="dataType" xsi:type="string">text</item>
+                        <item name="formElement" xsi:type="string">textarea</item>
+                        <item name="source" xsi:type="string">label</item>
+                        <item name="dataScope" xsi:type="string">customize_css_container_small</item>
+                        <item name="displayArea" xsi:type="string">right</item>
+                        <item name="advancedSettingsTooltip" xsi:type="array">
+                            <item name="link" xsi:type="string">http://confluence.aheadworks.com/display/EUDOC/Product+Labels+-+Magento+2#ProductLabels-Magento2-CustomizeCSSContainer</item>
+                            <item name="description" xsi:type="string" translate="true">CSS parameters applied to the label container. Click the question mark to see more details in user guide.</item>
+                        </item>
+                        <item name="toolbarConfig" xsi:type="array">
+                            <item name="children" xsi:type="array">
+                                <item name="general" xsi:type="array">
+                                    <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/css-wysiwyg/toolbar/tab</item>
+                                    <item name="label" xsi:type="string" translate="true">General</item>
+                                    <item name="children" xsi:type="array">
+                                        <item name="background_color" xsi:type="array">
+                                            <item name="formElement" xsi:type="string">input</item>
+                                            <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/color-picker</item>
+                                            <item name="template" xsi:type="string">ui/form/field</item>
+                                            <item name="dataType" xsi:type="string">text</item>
+                                            <item name="label" xsi:type="string" translate="true">Color</item>
+                                            <item name="name" xsi:type="string">background_color</item>
+                                            <item name="css" xsi:type="array">
+                                                <item name="property" xsi:type="string">background-color</item>
+                                            </item>
+                                        </item>
+                                        <item name="width" xsi:type="array">
+                                            <item name="formElement" xsi:type="string">input</item>
+                                            <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/abstract</item>
+                                            <item name="template" xsi:type="string">ui/form/field</item>
+                                            <item name="dataType" xsi:type="string">text</item>
+                                            <item name="label" xsi:type="string" translate="true">Width</item>
+                                            <item name="name" xsi:type="string">width</item>
+                                            <item name="addafter" xsi:type="string">px</item>
+                                            <item name="valueUpdate" xsi:type="string">afterkeydown</item>
+                                            <item name="css" xsi:type="array">
+                                                <item name="property" xsi:type="string">width</item>
+                                                <item name="unit" xsi:type="string">px</item>
+                                            </item>
+                                        </item>
+                                        <item name="height" xsi:type="array">
+                                            <item name="formElement" xsi:type="string">input</item>
+                                            <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/abstract</item>
+                                            <item name="template" xsi:type="string">ui/form/field</item>
+                                            <item name="dataType" xsi:type="string">text</item>
+                                            <item name="label" xsi:type="string" translate="true">Height</item>
+                                            <item name="name" xsi:type="string">width</item>
+                                            <item name="addafter" xsi:type="string">px</item>
+                                            <item name="valueUpdate" xsi:type="string">afterkeydown</item>
+                                            <item name="css" xsi:type="array">
+                                                <item name="property" xsi:type="string">height</item>
+                                                <item name="unit" xsi:type="string">px</item>
+                                            </item>
+                                        </item>
+                                    </item>
+                                </item>
+                            </item>
+                        </item>
+                    </item>
+                </argument>
+            </field>
+            <field name="customize_css_label_small">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="label" xsi:type="string" translate="true">Customize Label</item>
+                        <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/css-wysiwyg</item>
+                        <item name="visible" xsi:type="boolean">true</item>
+                        <item name="dataType" xsi:type="string">text</item>
+                        <item name="formElement" xsi:type="string">textarea</item>
+                        <item name="source" xsi:type="string">label</item>
+                        <item name="dataScope" xsi:type="string">customize_css_label_small</item>
+                        <item name="displayArea" xsi:type="string">right</item>
+                        <item name="advancedSettingsTooltip" xsi:type="array">
+                            <item name="link" xsi:type="string">http://confluence.aheadworks.com/display/EUDOC/Product+Labels+-+Magento+2#ProductLabels-Magento2-CustomizeotherCSSParameters</item>
+                            <item name="description" xsi:type="string" translate="true">Other CSS parameters. Click the question mark to see more details in user guide.</item>
+                        </item>
+                        <item name="toolbarConfig" xsi:type="array">
+                            <item name="children" xsi:type="array">
+                                <item name="text" xsi:type="array">
+                                    <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/css-wysiwyg/toolbar/tab</item>
+                                    <item name="label" xsi:type="string" translate="true">Text</item>
+                                    <item name="children" xsi:type="array">
+                                        <item name="color" xsi:type="array">
+                                            <item name="formElement" xsi:type="string">input</item>
+                                            <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/element/color-picker</item>
+                                            <item name="template" xsi:type="string">ui/form/field</item>
+                                            <item name="dataType" xsi:type="string">text</item>
+                                            <item name="label" xsi:type="string" translate="true">Color</item>
+                                            <item name="name" xsi:type="string">color</item>
+                                            <item name="cssProperty" xsi:type="string">color</item>
+                                            <item name="css" xsi:type="array">
+                                                <item name="property" xsi:type="string">color</item>
+                                            </item>
+                                        </item>
+                                        <item name="size" xsi:type="array">
+                                            <item name="formElement" xsi:type="string">input</item>
+                                            <item name="component" xsi:type="string">Magento_Ui/js/form/element/abstract</item>
+                                            <item name="template" xsi:type="string">ui/form/field</item>
+                                            <item name="dataType" xsi:type="string">text</item>
+                                            <item name="label" xsi:type="string" translate="true">Size</item>
+                                            <item name="name" xsi:type="string">color</item>
+                                            <item name="addafter" xsi:type="string">px</item>
+                                            <item name="valueUpdate" xsi:type="string">afterkeydown</item>
+                                            <item name="css" xsi:type="array">
+                                                <item name="property" xsi:type="string">font-size</item>
+                                                <item name="unit" xsi:type="string">px</item>
+                                            </item>
+                                        </item>
+                                    </item>
+                                </item>
+                            </item>
+                        </item>
+                    </item>
+                </argument>
+            </field>
+        </container>
+    </fieldset>
+</form>

@@ -1,0 +1,66 @@
+<?php
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+
+/** @var \Mageside\MultipleCustomForms\Block\Widget\CustomForm\Recaptcha $block */
+
+/** @var Mageside\MultipleCustomForms\Helper\Config $config */
+$config = $this->helper('Mageside\MultipleCustomForms\Helper\Config');
+$form = $block->getForm();
+$widgetId = $block->escapeHtmlAttr($block->getWidgetId());
+?>
+
+<?php if ($block->canShowReCaptcha()) : ?>
+<!-- Google reCAPTCHA -->
+<div class="field recaptcha" style="display: none;">
+    <div class="control">
+        <div id="g-recaptcha-<?= $widgetId; ?>" class="g-recaptcha"></div>
+        <input type="hidden"
+               id="g-recaptcha-response-<?= $widgetId; ?>"
+               name="g-recaptcha-response-<?= $form->getId(); ?>"
+               class="required-entry recaptcha-input"
+               data-validate='{"required":true}' />
+    </div>
+</div>
+<script type="text/javascript">
+    require(["jquery"], function($) {
+        window.msOnVerifyCallback<?= $block->escapeJs($widgetId); ?> = function (response) {
+            $('body')
+                .trigger(
+                    'msOnVerifyCallback<?= $block->escapeJs($widgetId); ?>',
+                    [response]
+                );
+        };
+        window.msOnExpireCallback<?= $block->escapeJs($widgetId); ?> = function (response) {
+            $('body')
+                .trigger(
+                    'msOnExpireCallback<?= $block->escapeJs($widgetId); ?>',
+                    ['<?= $block->escapeJs($widgetId); ?>']
+                );
+        };
+    });
+</script>
+<script type="text/x-magento-init">
+    {
+        "#g-recaptcha-<?= $block->escapeJs($widgetId); ?>": {
+            "Mageside_MultipleCustomForms/js/form/field-recaptcha": {
+                "widgetId": "<?= $block->escapeJs($widgetId); ?>",
+                "formId": "<?= $block->escapeJs($form->getId()); ?>",
+                "recaptchaPublicKey": "<?= $block->escapeJs($config->getConfigModule('recaptcha_public_key')); ?>"
+            }
+        }
+    }
+</script>
+<?php endif; ?>
+<script type="text/javascript">
+    require(["jquery"], function($) {
+        <?php if ($block->isNeedToLoadReCaptchaScript()) : ?>
+        window.msOnLoadCallback = function () {
+            window.recaptchaLoaded = true;
+            $('body').trigger('msOnLoadCallback');
+        };
+        <?php endif; ?>
+    });
+</script>

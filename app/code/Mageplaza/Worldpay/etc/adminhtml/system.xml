@@ -1,0 +1,692 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_Worldpay
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="payment">
+            <group id="mpworldpay" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>
+                    <![CDATA[
+                    <div class="mpworldpay-payment-logo"></div>
+                    <div class="mpworldpay-payment-byline">
+                        <span class="mpworldpay-payment-title">Worldpay Payment by Mageplaza</span></br>
+                        <span class="mpworldpay-payment-comment">Worldpay is a global leader in payments processing technology and solutions for our merchant customers.</span></br>
+                        <span class="mpworldpay-payment-comment">Accept credit cards and debits cards in your Magento store.</span>
+                    </div>
+                ]]>
+                </label>
+                <fieldset_css>complex mpworldpay-payment-section</fieldset_css>
+                <frontend_model>Magento\Paypal\Block\Adminhtml\System\Config\Fieldset\Payment</frontend_model>
+                <group id="credentials" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Credentials</label>
+                    <field id="environment" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Environment</label>
+                        <source_model>Mageplaza\Worldpay\Model\Source\Environment</source_model>
+                        <comment><![CDATA[Get account <a href="https://online.worldpay.com/login" target="_blank">here</a>]]></comment>
+                        <config_path>mpworldpay/general/environment</config_path>
+                    </field>
+                    <field id="service_key" translate="label comment" type="obscure" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Service Key</label>
+                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                        <config_path>mpworldpay/general/service_key</config_path>
+                    </field>
+                    <field id="client_key" translate="label comment" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Client Key</label>
+                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                        <config_path>mpworldpay/general/client_key</config_path>
+                    </field>
+                    <field id="test" translate="label" type="button" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <frontend_model>Mageplaza\Worldpay\Block\Adminhtml\Backend\Credential</frontend_model>
+                    </field>
+                </group>
+
+                <group id="general" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>General Setting</label>
+                    <field id="merchant_country" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Merchant Country</label>
+                        <source_model>Magento\Config\Model\Config\Source\Locale\Country</source_model>
+                        <comment>The country that is used by the Worldwide Payment Gateway to determine which payment methods the shopper can use.</comment>
+                        <config_path>mpworldpay/general/merchant_country</config_path>
+                    </field>
+                    <field id="settlement_currency" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Settlement Currency</label>
+                        <source_model>Magento\Config\Model\Config\Source\Locale\Currency</source_model>
+                        <config_path>mpworldpay/general/settlement_currency</config_path>
+                    </field>
+                    <field id="language_code" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Language Code</label>
+                        <config_path>mpworldpay/general/language_code</config_path>
+                        <comment><![CDATA[<a href="https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes" target="_blank">ISO 639-1 language code</a> indicating the preferred language of the shopper, where supported by the Payment Provider. Default is "EN".]]></comment>
+                    </field>
+                    <field id="display_logo" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Show Worldpay Logo</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>mpworldpay/general/display_logo</config_path>
+                    </field>
+                    <field id="site_codes" translate="label comment" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Site Codes</label>
+                        <frontend_model>Mageplaza\Worldpay\Block\Adminhtml\Backend\SiteCodes</frontend_model>
+                        <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                        <comment><![CDATA[Currency is the one customers choose to pay.<br/>Settlement currency is the one the merchant receive.<br/>With currencies not included in the site code list, the settlement currency is the default one from general configuration.]]></comment>
+                        <config_path>mpworldpay/general/site_codes</config_path>
+                    </field>
+                </group>
+
+                <group id="cards" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Worldpay Cards</label>
+                    <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Enable</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/mpworldpay_cards/active</config_path>
+                    </field>
+                    <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Title</label>
+                        <config_path>payment/mpworldpay_cards/title</config_path>
+                    </field>
+                    <field id="order_status" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>New Order Status</label>
+                        <source_model>Mageplaza\Worldpay\Model\Source\OrderStatus</source_model>
+                        <config_path>payment/mpworldpay_cards/order_status</config_path>
+                    </field>
+                    <field id="payment_action" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Payment Action</label>
+                        <source_model>Mageplaza\Worldpay\Model\Source\PaymentAction</source_model>
+                        <config_path>payment/mpworldpay_cards/payment_action</config_path>
+                    </field>
+                    <field id="cctypes" translate="label" type="multiselect" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Card Types</label>
+                        <source_model>Mageplaza\Worldpay\Model\Source\CardType</source_model>
+                        <config_path>payment/mpworldpay_cards/cctypes</config_path>
+                    </field>
+                    <field id="use3ds" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>3D Secure</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/mpworldpay_cards/use3ds</config_path>
+                    </field>
+                    <field id="display_checkout" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Display Checkout</label>
+                        <source_model>Mageplaza\Worldpay\Model\Source\DisplayCheckout</source_model>
+                        <config_path>payment/mpworldpay_cards/display_checkout</config_path>
+                    </field>
+                    <field id="vault_active" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Vault Enabled</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/mpworldpay_cards_vault/active</config_path>
+                    </field>
+                    <field id="vault_title" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Vault Title</label>
+                        <config_path>payment/mpworldpay_cards_vault/title</config_path>
+                    </field>
+                    <field id="allowspecific" translate="label" type="allowspecific" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Payment from Applicable Countries</label>
+                        <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                        <config_path>payment/mpworldpay_cards/allowspecific</config_path>
+                        <comment><![CDATA[To restrict this payment with more conditions, see <a href="https://www.mageplaza.com/magento-2-payment-restriction/" target="_blank">Payment Restrictions</a> module.]]></comment>
+                    </field>
+                    <field id="specificcountry" translate="label" type="multiselect" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Payment from Specific Countries</label>
+                        <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                        <can_be_empty>1</can_be_empty>
+                        <config_path>payment/mpworldpay_cards/specificcountry</config_path>
+                    </field>
+                    <field id="min_order_total" translate="label" type="text" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Minimum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_cards/min_order_total</config_path>
+                    </field>
+                    <field id="max_order_total" translate="label" type="text" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Maximum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_cards/max_order_total</config_path>
+                    </field>
+                    <field id="debug" translate="label comment" type="select" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Debug Mode</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>If Yes, diagnostic information is stored in log files on the Magento web server.</comment>
+                        <config_path>payment/mpworldpay_cards/debug</config_path>
+                    </field>
+                    <field id="sort_order" translate="label comment" type="text" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Sort Order</label>
+                        <config_path>payment/mpworldpay_cards/sort_order</config_path>
+                        <comment>Default is 0. The one with the smallest order will display first.</comment>
+                    </field>
+                </group>
+
+                <group id="paypal" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Worldpay Paypal</label>
+                    <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Enable</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/mpworldpay_paypal/active</config_path>
+                    </field>
+                    <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Title</label>
+                        <config_path>payment/mpworldpay_paypal/title</config_path>
+                    </field>
+                    <field id="allowspecific" translate="label" type="allowspecific" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Payment from Applicable Countries</label>
+                        <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                        <config_path>payment/mpworldpay_paypal/allowspecific</config_path>
+                        <comment><![CDATA[To restrict this payment with more conditions, see <a href="https://www.mageplaza.com/magento-2-payment-restriction/" target="_blank">Payment Restrictions</a> module.]]></comment>
+                    </field>
+                    <field id="specificcountry" translate="label" type="multiselect" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Payment from Specific Countries</label>
+                        <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                        <can_be_empty>1</can_be_empty>
+                        <config_path>payment/mpworldpay_paypal/specificcountry</config_path>
+                    </field>
+                    <field id="min_order_total" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Minimum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_paypal/min_order_total</config_path>
+                    </field>
+                    <field id="max_order_total" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Maximum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_paypal/max_order_total</config_path>
+                    </field>
+                    <field id="debug" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Debug Mode</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>If Yes, diagnostic information is stored in log files on the Magento web server.</comment>
+                        <config_path>payment/mpworldpay_paypal/debug</config_path>
+                    </field>
+                    <field id="sort_order" translate="label comment" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Sort Order</label>
+                        <config_path>payment/mpworldpay_paypal/sort_order</config_path>
+                        <comment>Default is 0. The one with the smallest order will display first.</comment>
+                    </field>
+                </group>
+
+                <group id="alipay" translate="label comment" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Worldpay Alipay</label>
+                    <comment>This payment is only available with the merchant country as China</comment>
+                    <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Enable</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/mpworldpay_alipay/active</config_path>
+                    </field>
+                    <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Title</label>
+                        <config_path>payment/mpworldpay_alipay/title</config_path>
+                    </field>
+                    <field id="allowspecific" translate="label" type="allowspecific" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Payment from Applicable Countries</label>
+                        <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                        <config_path>payment/mpworldpay_alipay/allowspecific</config_path>
+                        <comment><![CDATA[To restrict this payment with more conditions, see <a href="https://www.mageplaza.com/magento-2-payment-restriction/" target="_blank">Payment Restrictions</a> module.]]></comment>
+                    </field>
+                    <field id="specificcountry" translate="label" type="multiselect" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Payment from Specific Countries</label>
+                        <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                        <can_be_empty>1</can_be_empty>
+                        <config_path>payment/mpworldpay_alipay/specificcountry</config_path>
+                    </field>
+                    <field id="min_order_total" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Minimum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_alipay/min_order_total</config_path>
+                    </field>
+                    <field id="max_order_total" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Maximum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_alipay/max_order_total</config_path>
+                    </field>
+                    <field id="debug" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Debug Mode</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>If Yes, diagnostic information is stored in log files on the Magento web server.</comment>
+                        <config_path>payment/mpworldpay_alipay/debug</config_path>
+                    </field>
+                    <field id="sort_order" translate="label comment" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Sort Order</label>
+                        <config_path>payment/mpworldpay_alipay/sort_order</config_path>
+                        <comment>Default is 0. The one with the smallest order will display first.</comment>
+                    </field>
+                </group>
+
+                <group id="giropay" translate="label comment" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Worldpay Giropay</label>
+                    <comment>This payment is only available with the merchant country as Germany</comment>
+                    <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Enable</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/mpworldpay_giropay/active</config_path>
+                    </field>
+                    <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Title</label>
+                        <config_path>payment/mpworldpay_giropay/title</config_path>
+                    </field>
+                    <field id="allowspecific" translate="label" type="allowspecific" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Payment from Applicable Countries</label>
+                        <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                        <config_path>payment/mpworldpay_giropay/allowspecific</config_path>
+                        <comment><![CDATA[To restrict this payment with more conditions, see <a href="https://www.mageplaza.com/magento-2-payment-restriction/" target="_blank">Payment Restrictions</a> module.]]></comment>
+                    </field>
+                    <field id="specificcountry" translate="label" type="multiselect" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Payment from Specific Countries</label>
+                        <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                        <can_be_empty>1</can_be_empty>
+                        <config_path>payment/mpworldpay_giropay/specificcountry</config_path>
+                    </field>
+                    <field id="min_order_total" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Minimum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_giropay/min_order_total</config_path>
+                    </field>
+                    <field id="max_order_total" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Maximum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_giropay/max_order_total</config_path>
+                    </field>
+                    <field id="debug" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Debug Mode</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>If Yes, diagnostic information is stored in log files on the Magento web server.</comment>
+                        <config_path>payment/mpworldpay_giropay/debug</config_path>
+                    </field>
+                    <field id="sort_order" translate="label comment" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Sort Order</label>
+                        <config_path>payment/mpworldpay_giropay/sort_order</config_path>
+                        <comment>Default is 0. The one with the smallest order will display first.</comment>
+                    </field>
+                </group>
+
+                <group id="ideal" translate="label comment" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Worldpay iDeal</label>
+                    <comment>This payment is only available with the merchant country as Netherlands</comment>
+                    <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Enable</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/mpworldpay_ideal/active</config_path>
+                    </field>
+                    <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Title</label>
+                        <config_path>payment/mpworldpay_ideal/title</config_path>
+                    </field>
+                    <field id="allowspecific" translate="label" type="allowspecific" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Payment from Applicable Countries</label>
+                        <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                        <config_path>payment/mpworldpay_ideal/allowspecific</config_path>
+                        <comment><![CDATA[To restrict this payment with more conditions, see <a href="https://www.mageplaza.com/magento-2-payment-restriction/" target="_blank">Payment Restrictions</a> module.]]></comment>
+                    </field>
+                    <field id="specificcountry" translate="label" type="multiselect" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Payment from Specific Countries</label>
+                        <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                        <can_be_empty>1</can_be_empty>
+                        <config_path>payment/mpworldpay_ideal/specificcountry</config_path>
+                    </field>
+                    <field id="min_order_total" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Minimum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_ideal/min_order_total</config_path>
+                    </field>
+                    <field id="max_order_total" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Maximum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_ideal/max_order_total</config_path>
+                    </field>
+                    <field id="debug" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Debug Mode</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>If Yes, diagnostic information is stored in log files on the Magento web server.</comment>
+                        <config_path>payment/mpworldpay_ideal/debug</config_path>
+                    </field>
+                    <field id="sort_order" translate="label comment" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Sort Order</label>
+                        <config_path>payment/mpworldpay_ideal/sort_order</config_path>
+                        <comment>Default is 0. The one with the smallest order will display first.</comment>
+                    </field>
+                </group>
+
+                <group id="mistercash" translate="label comment" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Worldpay Mistercash</label>
+                    <comment>This payment is only available with the merchant country as Belgium</comment>
+                    <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Enable</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/mpworldpay_mistercash/active</config_path>
+                    </field>
+                    <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Title</label>
+                        <config_path>payment/mpworldpay_mistercash/title</config_path>
+                    </field>
+                    <field id="allowspecific" translate="label" type="allowspecific" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Payment from Applicable Countries</label>
+                        <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                        <config_path>payment/mpworldpay_mistercash/allowspecific</config_path>
+                        <comment><![CDATA[To restrict this payment with more conditions, see <a href="https://www.mageplaza.com/magento-2-payment-restriction/" target="_blank">Payment Restrictions</a> module.]]></comment>
+                    </field>
+                    <field id="specificcountry" translate="label" type="multiselect" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Payment from Specific Countries</label>
+                        <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                        <can_be_empty>1</can_be_empty>
+                        <config_path>payment/mpworldpay_mistercash/specificcountry</config_path>
+                    </field>
+                    <field id="min_order_total" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Minimum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_mistercash/min_order_total</config_path>
+                    </field>
+                    <field id="max_order_total" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Maximum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_mistercash/max_order_total</config_path>
+                    </field>
+                    <field id="debug" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Debug Mode</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>If Yes, diagnostic information is stored in log files on the Magento web server.</comment>
+                        <config_path>payment/mpworldpay_mistercash/debug</config_path>
+                    </field>
+                    <field id="sort_order" translate="label comment" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Sort Order</label>
+                        <config_path>payment/mpworldpay_mistercash/sort_order</config_path>
+                        <comment>Default is 0. The one with the smallest order will display first.</comment>
+                    </field>
+                </group>
+
+                <group id="paysafecard" translate="label comment" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Worldpay PaySafeCard</label>
+                    <comment>This payment is only available with the merchant country as United Kingdom</comment>
+                    <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Enable</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/mpworldpay_paysafecard/active</config_path>
+                    </field>
+                    <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Title</label>
+                        <config_path>payment/mpworldpay_paysafecard/title</config_path>
+                    </field>
+                    <field id="allowspecific" translate="label" type="allowspecific" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Payment from Applicable Countries</label>
+                        <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                        <config_path>payment/mpworldpay_paysafecard/allowspecific</config_path>
+                        <comment><![CDATA[To restrict this payment with more conditions, see <a href="https://www.mageplaza.com/magento-2-payment-restriction/" target="_blank">Payment Restrictions</a> module.]]></comment>
+                    </field>
+                    <field id="specificcountry" translate="label" type="multiselect" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Payment from Specific Countries</label>
+                        <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                        <can_be_empty>1</can_be_empty>
+                        <config_path>payment/mpworldpay_paysafecard/specificcountry</config_path>
+                    </field>
+                    <field id="min_order_total" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Minimum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_paysafecard/min_order_total</config_path>
+                    </field>
+                    <field id="max_order_total" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Maximum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_paysafecard/max_order_total</config_path>
+                    </field>
+                    <field id="debug" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Debug Mode</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>If Yes, diagnostic information is stored in log files on the Magento web server.</comment>
+                        <config_path>payment/mpworldpay_paysafecard/debug</config_path>
+                    </field>
+                    <field id="sort_order" translate="label comment" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Sort Order</label>
+                        <config_path>payment/mpworldpay_paysafecard/sort_order</config_path>
+                        <comment>Default is 0. The one with the smallest order will display first.</comment>
+                    </field>
+                </group>
+
+                <group id="postepay" translate="label comment" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Worldpay Postepay</label>
+                    <comment>This payment is only available with the merchant country as Italy</comment>
+                    <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Enable</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/mpworldpay_postepay/active</config_path>
+                    </field>
+                    <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Title</label>
+                        <config_path>payment/mpworldpay_postepay/title</config_path>
+                    </field>
+                    <field id="allowspecific" translate="label" type="allowspecific" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Payment from Applicable Countries</label>
+                        <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                        <config_path>payment/mpworldpay_postepay/allowspecific</config_path>
+                        <comment><![CDATA[To restrict this payment with more conditions, see <a href="https://www.mageplaza.com/magento-2-payment-restriction/" target="_blank">Payment Restrictions</a> module.]]></comment>
+                    </field>
+                    <field id="specificcountry" translate="label" type="multiselect" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Payment from Specific Countries</label>
+                        <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                        <can_be_empty>1</can_be_empty>
+                        <config_path>payment/mpworldpay_postepay/specificcountry</config_path>
+                    </field>
+                    <field id="min_order_total" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Minimum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_postepay/min_order_total</config_path>
+                    </field>
+                    <field id="max_order_total" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Maximum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_postepay/max_order_total</config_path>
+                    </field>
+                    <field id="debug" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Debug Mode</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>If Yes, diagnostic information is stored in log files on the Magento web server.</comment>
+                        <config_path>payment/mpworldpay_postepay/debug</config_path>
+                    </field>
+                    <field id="sort_order" translate="label comment" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Sort Order</label>
+                        <config_path>payment/mpworldpay_postepay/sort_order</config_path>
+                        <comment>Default is 0. The one with the smallest order will display first.</comment>
+                    </field>
+                </group>
+
+                <group id="przelewy24" translate="label comment" type="text" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Worldpay Przelewy24</label>
+                    <comment>This payment is only available with the merchant country as Poland</comment>
+                    <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Enable</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/mpworldpay_przelewy24/active</config_path>
+                    </field>
+                    <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Title</label>
+                        <config_path>payment/mpworldpay_przelewy24/title</config_path>
+                    </field>
+                    <field id="allowspecific" translate="label" type="allowspecific" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Payment from Applicable Countries</label>
+                        <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                        <config_path>payment/mpworldpay_przelewy24/allowspecific</config_path>
+                        <comment><![CDATA[To restrict this payment with more conditions, see <a href="https://www.mageplaza.com/magento-2-payment-restriction/" target="_blank">Payment Restrictions</a> module.]]></comment>
+                    </field>
+                    <field id="specificcountry" translate="label" type="multiselect" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Payment from Specific Countries</label>
+                        <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                        <can_be_empty>1</can_be_empty>
+                        <config_path>payment/mpworldpay_przelewy24/specificcountry</config_path>
+                    </field>
+                    <field id="min_order_total" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Minimum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_przelewy24/min_order_total</config_path>
+                    </field>
+                    <field id="max_order_total" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Maximum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_przelewy24/max_order_total</config_path>
+                    </field>
+                    <field id="debug" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Debug Mode</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>If Yes, diagnostic information is stored in log files on the Magento web server.</comment>
+                        <config_path>payment/mpworldpay_przelewy24/debug</config_path>
+                    </field>
+                    <field id="sort_order" translate="label comment" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Sort Order</label>
+                        <config_path>payment/mpworldpay_przelewy24/sort_order</config_path>
+                        <comment>Default is 0. The one with the smallest order will display first.</comment>
+                    </field>
+                </group>
+
+                <group id="qiwi" translate="label comment" type="text" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Worldpay Qiwi</label>
+                    <comment>This payment is only available with the merchant country as Russia</comment>
+                    <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Enable</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/mpworldpay_qiwi/active</config_path>
+                    </field>
+                    <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Title</label>
+                        <config_path>payment/mpworldpay_qiwi/title</config_path>
+                    </field>
+                    <field id="allowspecific" translate="label" type="allowspecific" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Payment from Applicable Countries</label>
+                        <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                        <config_path>payment/mpworldpay_qiwi/allowspecific</config_path>
+                        <comment><![CDATA[To restrict this payment with more conditions, see <a href="https://www.mageplaza.com/magento-2-payment-restriction/" target="_blank">Payment Restrictions</a> module.]]></comment>
+                    </field>
+                    <field id="specificcountry" translate="label" type="multiselect" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Payment from Specific Countries</label>
+                        <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                        <can_be_empty>1</can_be_empty>
+                        <config_path>payment/mpworldpay_qiwi/specificcountry</config_path>
+                    </field>
+                    <field id="min_order_total" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Minimum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_qiwi/min_order_total</config_path>
+                    </field>
+                    <field id="max_order_total" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Maximum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_qiwi/max_order_total</config_path>
+                    </field>
+                    <field id="debug" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Debug Mode</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>If Yes, diagnostic information is stored in log files on the Magento web server.</comment>
+                        <config_path>payment/mpworldpay_qiwi/debug</config_path>
+                    </field>
+                    <field id="sort_order" translate="label comment" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Sort Order</label>
+                        <config_path>payment/mpworldpay_qiwi/sort_order</config_path>
+                        <comment>Default is 0. The one with the smallest order will display first.</comment>
+                    </field>
+                </group>
+
+                <group id="sofort" translate="label comment" type="text" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Worldpay Sofort</label>
+                    <comment>This payment is only available with the merchant country as Germany</comment>
+                    <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Enable</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/mpworldpay_sofort/active</config_path>
+                    </field>
+                    <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Title</label>
+                        <config_path>payment/mpworldpay_sofort/title</config_path>
+                    </field>
+                    <field id="allowspecific" translate="label" type="allowspecific" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Payment from Applicable Countries</label>
+                        <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                        <config_path>payment/mpworldpay_sofort/allowspecific</config_path>
+                        <comment><![CDATA[To restrict this payment with more conditions, see <a href="https://www.mageplaza.com/magento-2-payment-restriction/" target="_blank">Payment Restrictions</a> module.]]></comment>
+                    </field>
+                    <field id="specificcountry" translate="label" type="multiselect" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Payment from Specific Countries</label>
+                        <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                        <can_be_empty>1</can_be_empty>
+                        <config_path>payment/mpworldpay_sofort/specificcountry</config_path>
+                    </field>
+                    <field id="min_order_total" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Minimum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_sofort/min_order_total</config_path>
+                    </field>
+                    <field id="max_order_total" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Maximum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_sofort/max_order_total</config_path>
+                    </field>
+                    <field id="debug" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Debug Mode</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>If Yes, diagnostic information is stored in log files on the Magento web server.</comment>
+                        <config_path>payment/mpworldpay_sofort/debug</config_path>
+                    </field>
+                    <field id="sort_order" translate="label comment" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Sort Order</label>
+                        <config_path>payment/mpworldpay_sofort/sort_order</config_path>
+                        <comment>Default is 0. The one with the smallest order will display first.</comment>
+                    </field>
+                </group>
+
+                <group id="yandex" translate="label comment" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Worldpay Yandex</label>
+                    <comment>This payment is only available with the merchant country as Russia</comment>
+                    <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Enable</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/mpworldpay_yandex/active</config_path>
+                    </field>
+                    <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Title</label>
+                        <config_path>payment/mpworldpay_yandex/title</config_path>
+                    </field>
+                    <field id="allowspecific" translate="label" type="allowspecific" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Payment from Applicable Countries</label>
+                        <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                        <config_path>payment/mpworldpay_yandex/allowspecific</config_path>
+                        <comment><![CDATA[To restrict this payment with more conditions, see <a href="https://www.mageplaza.com/magento-2-payment-restriction/" target="_blank">Payment Restrictions</a> module.]]></comment>
+                    </field>
+                    <field id="specificcountry" translate="label" type="multiselect" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Payment from Specific Countries</label>
+                        <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                        <can_be_empty>1</can_be_empty>
+                        <config_path>payment/mpworldpay_yandex/specificcountry</config_path>
+                    </field>
+                    <field id="min_order_total" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Minimum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_yandex/min_order_total</config_path>
+                    </field>
+                    <field id="max_order_total" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Maximum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpworldpay_yandex/max_order_total</config_path>
+                    </field>
+                    <field id="debug" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Debug Mode</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>If Yes, diagnostic information is stored in log files on the Magento web server.</comment>
+                        <config_path>payment/mpworldpay_yandex/debug</config_path>
+                    </field>
+                    <field id="sort_order" translate="label comment" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Sort Order</label>
+                        <config_path>payment/mpworldpay_yandex/sort_order</config_path>
+                        <comment>Default is 0. The one with the smallest order will display first.</comment>
+                    </field>
+                </group>
+            </group>
+        </section>
+    </system>
+</config>

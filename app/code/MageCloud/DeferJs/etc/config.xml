@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @author andy
+ * @email andyworkbase@gmail.com
+ * @package MageCloud_DeferJs
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <defer_js>
+            <general>
+                <enabled>0</enabled>
+                <all_controllers>1</all_controllers>
+                <all_url_paths>1</all_url_paths>
+                <all_scripts>1</all_scripts>
+            </general>
+            <speed_test_tools>
+                <gtmetrix>
+                    <gtmetrix_api_endpoint><![CDATA[https://gtmetrix.com/api/0.1/test]]></gtmetrix_api_endpoint>
+                    <gtmetrix_api_username><![CDATA[test@example.com]]></gtmetrix_api_username>
+                </gtmetrix>
+                <google_page_speed>
+                    <google_page_speed_api_endpoint><![CDATA[https://www.googleapis.com/pagespeedonline/v2/runPagespeed]]></google_page_speed_api_endpoint>
+                    <google_page_speed_api_strategy>desktop</google_page_speed_api_strategy>
+                </google_page_speed>
+            </speed_test_tools>
+        </defer_js>
+    </default>
+</config>

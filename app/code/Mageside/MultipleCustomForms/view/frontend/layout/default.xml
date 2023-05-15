@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <block class="Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields" name="custom.form.fields" as="custom.form.fields" template="widget/form/fields.phtml">
+            <block class="Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\DefaultType" as="input" template="widget/form/fields/type/input.phtml"/>
+            <block class="Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\SelectType"  as="select" template="widget/form/fields/type/select.phtml"/>
+            <block class="Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\DefaultType" as="textarea" template="widget/form/fields/type/textarea.phtml"/>
+            <block class="Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\MultiSelectType" as="multiselect" template="widget/form/fields/type/select.phtml"/>
+            <block class="Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\DefaultType" as="radio" template="widget/form/fields/type/radio.phtml"/>
+            <block class="Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\DefaultType" as="checkbox" template="widget/form/fields/type/checkbox.phtml"/>
+            <block class="Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\RegionType" as="select_region" template="widget/form/fields/type/region.phtml"/>
+            <block class="Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\RegionMultiSelectType" as="multiselect_region" template="widget/form/fields/type/region.phtml"/>
+            <block class="Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\FileType" as="file" template="widget/form/fields/type/file.phtml"/>
+            <block class="Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\AgreementType" as="agreement" template="widget/form/fields/type/agreement.phtml"/>
+            <block class="Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\HiddenType" as="hidden" template="widget/form/fields/type/hidden.phtml"/>
+            <block class="Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\DateType" as="date" template="widget/form/fields/type/date.phtml"/>
+        </block>
+        <block class="Mageside\MultipleCustomForms\Block\Widget\CustomForm\Recaptcha" name="custom.form.recaptcha" as="custom.form.recaptcha" template="widget/form/recaptcha.phtml" />
+    </body>
+</page>

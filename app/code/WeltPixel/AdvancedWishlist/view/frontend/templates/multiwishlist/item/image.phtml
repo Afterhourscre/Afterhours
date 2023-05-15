@@ -1,0 +1,10 @@
+<?php
+// @codingStandardsIgnoreFile
+
+/** @var \Magento\Wishlist\Block\Customer\Wishlist\Item\Column\Image $block */
+
+/** @var \Magento\Wishlist\Model\Item $item */
+$item = $block->getItem();
+$product = $item->getProduct();
+?>
+<?= $block->getImage($product, 'multiwishlist_thumb')->toHtml() ?>

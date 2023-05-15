@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2020 aheadWorks. All rights reserved.
+See LICENSE.txt for license details.
+*/
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <virtualType name="Aheadworks\Helpdesk\Ui\Component\MassAction\Automation\Status\Options"
+                 type="Aheadworks\Helpdesk\Ui\Component\MassAction\Options">
+        <arguments>
+            <argument name="optionSource" xsi:type="object">Aheadworks\Helpdesk\Model\Source\Automation\Status</argument>
+            <argument name="data" xsi:type="array">
+                <item name="urlPath" xsi:type="string">aw_helpdesk/automation/massStatus</item>
+                <item name="paramName" xsi:type="string">status</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Aheadworks\Helpdesk\Ui\Component\MassAction\Ticket\Status\Options"
+                 type="Aheadworks\Helpdesk\Ui\Component\MassAction\Options">
+        <arguments>
+            <argument name="optionSource" xsi:type="object">Aheadworks\Helpdesk\Model\Source\Ticket\Status</argument>
+            <argument name="data" xsi:type="array">
+                <item name="urlPath" xsi:type="string">aw_helpdesk/ticket/massStatus</item>
+                <item name="paramName" xsi:type="string">status</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Aheadworks\Helpdesk\Ui\Component\MassAction\Ticket\Priority\Options"
+                 type="Aheadworks\Helpdesk\Ui\Component\MassAction\Options">
+        <arguments>
+            <argument name="optionSource" xsi:type="object">Aheadworks\Helpdesk\Model\Source\Ticket\Priority</argument>
+            <argument name="data" xsi:type="array">
+                <item name="urlPath" xsi:type="string">aw_helpdesk/ticket/massPriority</item>
+                <item name="paramName" xsi:type="string">priority</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="Aheadworks\Helpdesk\Ui\Component\MassAction\Ticket\Agent\Options">
+        <arguments>
+            <argument name="data" xsi:type="array">
+                <item name="urlPath" xsi:type="string">aw_helpdesk/ticket/massAssign</item>
+                <item name="paramName" xsi:type="string">agent_id</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Aheadworks\Helpdesk\Ui\Component\MassAction\Ticket\Department\Options">
+        <arguments>
+            <argument name="data" xsi:type="array">
+                <item name="urlPath" xsi:type="string">aw_helpdesk/ticket/massDepartment</item>
+                <item name="paramName" xsi:type="string">department_id</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Aheadworks\Helpdesk\Ui\Component\MassAction\QuickResponse\Status\Options">
+        <arguments>
+            <argument name="data" xsi:type="array">
+                <item name="urlPath" xsi:type="string">aw_helpdesk/quickresponse/MassStatus</item>
+                <item name="paramName" xsi:type="string">status</item>
+            </argument>
+        </arguments>
+    </type>
+</config>

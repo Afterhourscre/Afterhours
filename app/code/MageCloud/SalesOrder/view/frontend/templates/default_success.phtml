@@ -1,0 +1,46 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+// @codingStandardsIgnoreFile
+
+?>
+<?php /** @var $block \Magento\Checkout\Block\Onepage\Success */ ?>
+<div class="checkout-success">
+    <?php if ($block->getOrderId()):?>
+        <?php if ($block->getCanViewOrder()) :?>
+            <p><?= __('Your order number is: %1.', sprintf('<a href="%s" class="order-number"><strong>%s</strong></a>', $block->escapeHtml($block->getViewOrderUrl()), $block->escapeHtml($block->getOrderId()))) ?></p>
+        <?php  else :?>
+            <p><?= __('Your order # is: <span>%1</span>.', $block->escapeHtml($block->getOrderId())) ?></p>
+        <?php endif;?>
+            <p><?= /* @escapeNotVerified */ __('We\'ll email you an order confirmation with details and tracking info.') ?></p>
+    <?php endif;?>
+
+    <?= $block->getAdditionalInfoHtml() ?>
+
+    <div class="actions-toolbar">
+        <div class="primary">
+            <a class="action primary continue" href="<?= /* @escapeNotVerified */ $block->getContinueUrl() ?>"><span><?= /* @escapeNotVerified */ __('Continue Shopping') ?></span></a>
+            <?php if ($block->getOrderId()):?>
+                <?php if ($block->getCanViewOrder()) :?>
+                    <?= __(sprintf('<a href="%s" class="action primary upload-design"><span>Upload Design</span></a>', $block->escapeHtml($block->getViewOrderUrl()), $block->escapeHtml($block->getOrderId()))) ?>
+                <?php else:?>
+                    <a href="<?= /* @escapeNotVerified */ $blockSales->getActionUrl() ?>" class="action primary upload-design"><span>Upload Design</span></a>
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+        <br>
+        <br>
+        <div>
+            <p>
+                <?php if ($block->getOrderId()):?>
+                    <?php if (!$block->getCanViewOrder()) :?>
+                        <?= __("Please send your artwork to")?> <a href="mailto:support@ahc.studio">support@ahc.studio</a> <?= __("if you do no wish to create an account") ?>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </p>
+        </div>
+    </div>
+</div>

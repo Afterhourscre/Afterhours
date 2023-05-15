@@ -1,0 +1,96 @@
+<?php
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_CallForPrice
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+
+/** @var Mageplaza\CallForPrice\Block\Product\ProductList $block */
+?>
+<!-- The Modal -->
+<div id="mp_popupquote" class="mp_modal">
+    <!-- Modal content -->
+    <div class="mp_popupquote-content">
+        <span class="close" id="mp_close_cfp">&times;</span>
+        <form class="mpcpf_request_quote_popup" id="mpcpf_request_quote_popup" data-hasrequired="* Required Fields" data-mage-init='{"validation":{}}'>
+            <fieldset class="fieldset">
+                <legend class="legend"><span id="mp_quote_heading_title"></span></legend><br/>
+                <div class="field note no-label"><span id="mp_quote_description"></span></div>
+                <div class="fields">
+                    <div class="field name" id="mp_request_field_name">
+                        <label class="label" for="mp_name"><span><?= $block->escapeHtml(__('Name')) ?></span></label>
+                        <div class="control">
+                            <input name="name" id="mp_name" title="<?= __('Name') ?>" value="" class="input-text" type="text"/>
+                        </div>
+                    </div>
+                    <div class="field email" id="mp_request_field_email">
+                        <label class="label" for="mp_email"><span><?= $block->escapeHtml(__('Email')) ?></span></label>
+                        <div class="control">
+                            <input name="email" id="mp_email" title="<?= __('Email') ?>" value="" class="input-text" type="email"/>
+                        </div>
+                    </div>
+                    <div class="field phone" id="mp_request_field_phone">
+                        <label class="label" for="mp_phone"><span><?= $block->escapeHtml(__('Phone Number')) ?></span></label>
+                        <div class="control">
+                            <input name="phone" id="mp_phone" title="<?= __('Phone Number') ?>" value="" class="input-text" type="text"/>
+                        </div>
+                    </div>
+                    <div class="field note" id="mp_request_field_note">
+                        <label class="label" for="mp_note"><span><?= $block->escapeHtml(__('Note')) ?></span></label>
+                        <div class="control">
+                            <textarea name="customer_note" id="mp_note" title="<?= __('Note') ?>" class="input-text" cols="5" rows="5""></textarea>
+                        </div>
+                    </div>
+                    <input type="hidden" name="product_id" id="mp_product_id">
+                    <input type="hidden" name="customer_group_ids" id="mp_customergroup_id">
+                    <div class="field terms_condition" id="mp_request_field_terms_condition">
+                        <input name="mp_terms_condition" id="mp_terms_condition" title="<?= __('Terms and Condition') ?>" value="true" class="input-text" type="checkbox"/>
+                        <label class="label mp_tac_label" for="mp_terms_condition">
+                            <span id="mpcfp_toc_label"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="actions-toolbar">
+                    <div class="primary">
+                        <button type="submit" title="<?= __('Submit') ?>" class="action submit primary callforprice-button" id="mp_request_button_submit">
+                            <span><?= $block->escapeHtml(__('Submit')) ?></span>
+                        </button>
+                    </div>
+                </div>
+                <div class="popup-loading-request">
+                    <div data-role="loader" class="loading-mask" style="display:none">
+                        <div class="loader">
+                            <img src="<?= $block->getViewFileUrl('images/loader-1.gif') ?>" alt="<?= __('Loading...') ?>">
+                        </div>
+                    </div>
+                    <span id="mp_message"></span>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>
+<script type="text/x-magento-init">
+        {
+            "#mp_popupquote": {
+                "Mageplaza_CallForPrice/js/popupquote":{
+                    "action": "popup_quote_form",
+                    "request_form_url": "<?php echo $block->getRequestQuoteUrl(); ?>",
+                    "customer_group_id": "<?php echo $block->getCustomerGroupId(); ?>"
+                }
+            }
+        }
+</script>

@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @author andy
+ * @email andyworkbase@gmail.com
+ * @package MageCloud_DeferJs
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="magecloud" translate="label" sortOrder="500">
+            <label>MageCloud</label>
+        </tab>
+        <section id="defer_js" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+            <class>separator-top</class>
+            <label>Defer Javascript</label>
+            <tab>magecloud</tab>
+            <resource>MageCloud_DeferJs::deferjs</resource>
+            <group id="general" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Defer Javascript</label>
+                <field id="enabled" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="all_controllers" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Use for all controllers</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Specific controllers will be unaffected by defer action. Use like: {module}_{controller}_{action}.]]></comment>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                </field>
+                <field id="exclude_controllers" translate="label" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Exclude controllers</label>
+                    <frontend_model>MageCloud\DeferJs\Block\Adminhtml\System\Form\Field\Deferjs</frontend_model>
+                    <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                    <depends>
+                        <field id="enabled">1</field>
+                        <field id="all_controllers">0</field>
+                    </depends>
+                </field>
+                <field id="all_url_paths" translate="label" type="select" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Use for all url paths</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Specific url paths will be unaffected by defer action. Example: cars/tools/some-other-tools.html.]]></comment>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                </field>
+                <field id="exclude_url_paths" translate="label" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Exclude url paths</label>
+                    <frontend_model>MageCloud\DeferJs\Block\Adminhtml\System\Form\Field\Deferjs</frontend_model>
+                    <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                    <depends>
+                        <field id="enabled">1</field>
+                        <field id="all_url_paths">0</field>
+                    </depends>
+                </field>
+                <field id="all_scripts" translate="label" type="select" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Use for all scripts</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Scripts marked by specific attribute will be unaffected by defer action.]]></comment>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                </field>
+                <field id="exclude_scripts_attribute" translate="label" type="text" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Attribute for exclude scripts</label>
+                    <comment><![CDATA[You need add this attribute for each specific scripts.
+                    If empty - default attribute will be used (data-defer-skip)]]></comment>
+                    <depends>
+                        <field id="enabled">1</field>
+                        <field id="all_scripts">0</field>
+                    </depends>
+                </field>
+            </group>
+            <group id="speed_test_tools" translate="label" showInDefault="1" showInWebsite="1" showInStore="1" sortOrder="100">
+                <label>Speed Test Tools</label>
+                <group id="gtmetrix" translate="label" showInDefault="1" showInWebsite="1" showInStore="1" sortOrder="100">
+                    <label>GTMetrix</label>
+                    <field id="gtmetrix_api_endpoint" translate="label comment" type="text" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Api Endpoint</label>
+                        <comment><![CDATA[<a href="#"
+                        onclick="javascript:openModal('https://gtmetrix.com/api/#api-access-url', 'GTmetrix REST API'); return false;">Check actual api endpoint</a>]]></comment>
+                    </field>
+                    <field id="gtmetrix_api_username" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Api User Name</label>
+                        <comment><![CDATA[Your email address registered in gtmetrix.com. Not registered yet? <a href="#"
+                        onclick="javascript:openModal('https://gtmetrix.com/', 'Dashboard | GTmetrix'); return false;">Create account.</a>]]></comment>
+                    </field>
+                    <field id="gtmetrix_api_key" translate="label comment" type="text" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Api Key</label>
+                        <comment><![CDATA[<a href="#"
+                        onclick="javascript:openModal('https://gtmetrix.com/api#api-details', 'Dashboard | GTmetrix'); return false;">Get api key</a>]]></comment>
+                    </field>
+                    <field id="button" translate="label comment" type="button" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <frontend_model>MageCloud\DeferJs\Block\Adminhtml\System\Form\Field\Button</frontend_model>
+                    </field>
+                </group>
+                <group id="google_page_speed" translate="label" showInDefault="1" showInWebsite="1" showInStore="1" sortOrder="100">
+                    <label>Google Page Speed</label>
+                    <field id="google_page_speed_api_endpoint" translate="label comment" type="text" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Api Endpoint</label>
+                        <comment><![CDATA[<a href="#"
+                        onclick="javascript:openModal('https://developers.google.com/speed/docs/insights/v2/reference/', 'Google Page Speed API Reference'); return false;">Check actual api endpoint</a>]]></comment>
+                    </field>
+                    <field id="google_page_speed_api_key" translate="label comment" type="text" sortOrder="14" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Api Key</label>
+                        <comment><![CDATA[<a href="#"
+                        onclick="javascript:openModal('https://console.developers.google.com/apis/credentials', 'Google Credentials'); return false;">Get api key</a>]]></comment>
+                    </field>
+                    <field id="google_page_speed_api_strategy" translate="label comment" type="select" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Api Strategy</label>
+                        <comment>The analysis strategy to use</comment>
+                        <source_model>MageCloud\DeferJs\Model\Source\GooglePageSpeedStrategy</source_model>
+                    </field>
+                    <field id="google_page_speed_button" translate="label comment" type="button" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <frontend_model>MageCloud\DeferJs\Block\Adminhtml\System\Form\Field\GooglePageSpeedButton</frontend_model>
+                    </field>
+                </group>
+            </group>
+            <group id="optimization" translate="label" showInDefault="1" showInWebsite="1" showInStore="1" sortOrder="100">
+                <label>Optimization</label>
+                <field id="analyze_button" translate="label comment" type="button" sortOrder="90" showInDefault="12" showInWebsite="1" showInStore="1">
+                    <label>Analyze Site Optimization</label>
+                    <frontend_model>MageCloud\DeferJs\Block\Adminhtml\System\Form\Field\AnalyzeButton</frontend_model>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

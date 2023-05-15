@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the commercial license
+ * that is bundled with this package in the file LICENSE.txt.
+ *
+ * @category Extait
+ * @package Extait_Cookie
+ * @copyright Copyright (c) 2016-2018 Extait, Inc. (http://www.extait.com)
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="extait" translate="label" sortOrder="550">
+            <label>Extait Modules</label>
+        </tab>
+        <section id="extait_cookie" translate="label" showInDefault="1" showInStore="1" showInWebsite="1">
+            <resource>Extait_Cookie::config</resource><!-- ACL -->
+            <class>separator-top</class>
+            <label>Cookie Mode Pro</label>
+            <tab>extait</tab>
+
+            <group id="general" translate="label" type="text" showInDefault="1" showInStore="1" showInWebsite="1">
+                <label>General Settings</label>
+
+                <field id="enable" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInStore="1" showInWebsite="1">
+                    <label>Enable Module</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <backend_model>Extait\Cookie\Model\Config\Backend\EnableCookie</backend_model>
+                </field>
+
+                <field id="show_cookie_in_category" translate="label comment" type="select" sortOrder="15" showInDefault="1" showInStore="1" showInWebsite="1">
+                    <label>Display Cookie List in Categories</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+
+                <field id="message" translate="label comment" type="editor" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Cookie Restriction Message</label>
+                    <comment>Enter the text for a cookie restriction message.</comment>
+                    <validate>required-entry</validate>
+                    <frontend_model>Extait\Cookie\Block\Adminhtml\System\Config\Form\Wysiwyg</frontend_model>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

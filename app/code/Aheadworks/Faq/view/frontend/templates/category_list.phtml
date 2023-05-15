@@ -1,0 +1,42 @@
+<?php
+/**
+ * Copyright 2019 aheadWorks. All rights reserved.
+ * See LICENSE.txt for license details.
+ */
+
+// @codingStandardsIgnoreFile
+
+/** @var \Aheadworks\Faq\Block\Category\CategoryList $block */
+?>
+<div class="aw-container <?php /* @noEscape */ echo $block->getDefaultNumberOfColumnsToDisplay() == 1 ? 'columns-to-center' : ''; ?>">
+<?php /** @var \Aheadworks\Faq\Model\Category $category */ ?>
+<?php foreach ($block->getCategories() as $category): ?>
+    <?php
+        $categoryArticles = $block->getCategoryArticles($category);
+        $moreArticlesNumber = $block->getMoreArticlesNumber($category->getId());
+        $articleListIcon = $category->getArticleListIcon()
+            ? 'class="image-item" style="background:url(' . $block->escapeUrl($block->getArticleListIconUrl($category)) . ')"'
+            : '';
+    ?>
+    <div class="aw-column">
+        <section class="article-list">
+            <h3 class="category-name">
+                <?php if ($block->getCategoryIconUrl($category)) :?>
+                    <img class="category-icon" src="<?php echo $block->escapeUrl($block->getCategoryIconUrl($category)); ?>" alt="<?php echo $block->escapeHtml($category->getName()); ?>" />
+                <?php endif; ?>
+                <a href="<?php echo $block->escapeUrl($block->getCategoryUrl($category)); ?>"><?php echo $block->escapeHtml($category->getName()); ?></a>
+            </h3>
+            <ul <?php echo $articleListIcon ? '' : 'class="aw-list-style"'; ?>>
+                <?php foreach ($categoryArticles as $article): ?>
+                    <li <?php /* @noEscape */ echo $articleListIcon ?> >
+                        <a href="<?php echo $block->escapeUrl($block->getArticleUrl($article)); ?>"><?php echo  $block->escapeHtml($article->getTitle()); ?></a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+            <?php if ($category->getNumArticlesToDisplay() && $moreArticlesNumber > 0):?>
+                <a href="<?php echo $block->escapeUrl($block->getCategoryUrl($category)); ?>" class="more-articles-link"><i><?php echo $block->escapeHtml(__('Read %1 more article(s)', $moreArticlesNumber)) ?></i></a>
+            <?php endif; ?>
+        </section>
+    </div>
+<?php endforeach ?>
+</div>

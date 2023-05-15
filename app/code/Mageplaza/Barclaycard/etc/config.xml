@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_Barclaycard
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <mpbarclaycard>
+            <general>
+                <hash_algorithm>sha256</hash_algorithm>
+            </general>
+        </mpbarclaycard>
+        <payment>
+            <mpbarclaycard_hosted>
+                <active>0</active>
+                <model>MpBarclaycardHostedFacade</model>
+                <title>Barclaycard ePDQ e-Commerce</title>
+                <lang_code>en_US</lang_code>
+                <order_status>processing</order_status>
+                <payment_action>authorize</payment_action>
+                <paymentInfoKeys>txn_id,cc_type,cc_last_4,cc_exp_date,order_id,status</paymentInfoKeys>
+                <cctypes>VI,MC,AE,MD,DN,JCB</cctypes>
+                <currencies>GBP</currencies>
+                <allowspecific>0</allowspecific>
+                <can_capture>1</can_capture>
+                <can_authorize>1</can_authorize>
+                <can_refund>1</can_refund>
+                <can_refund_partial_per_invoice>1</can_refund_partial_per_invoice>
+                <can_use_checkout>1</can_use_checkout>
+                <can_review_payment>1</can_review_payment>
+                <is_gateway>1</is_gateway>
+                <debug>0</debug>
+                <required_credentials>user_id,sha_in,sha_out</required_credentials>
+            </mpbarclaycard_hosted>
+            <mpbarclaycard_direct>
+                <active>0</active>
+                <model>MpBarclaycardDirectFacade</model>
+                <title>Barclaycard ePDQ DirectLink</title>
+                <order_status>processing</order_status>
+                <payment_action>authorize</payment_action>
+                <paymentInfoKeys>txn_id,cc_type,cc_last_4,cc_exp_date,order_id,status</paymentInfoKeys>
+                <cctypes>VI,MC,AE,MD,DN,JCB</cctypes>
+                <currencies>GBP</currencies>
+                <allowspecific>0</allowspecific>
+                <can_capture>1</can_capture>
+                <can_authorize>1</can_authorize>
+                <can_refund>1</can_refund>
+                <can_refund_partial_per_invoice>1</can_refund_partial_per_invoice>
+                <can_use_checkout>1</can_use_checkout>
+                <can_review_payment>1</can_review_payment>
+                <is_gateway>1</is_gateway>
+                <three_d>1</three_d>
+                <can_use_internal>1</can_use_internal>
+                <debug>0</debug>
+                <debugReplaceKeys>CARDNO,ED,CVC</debugReplaceKeys>
+                <required_credentials>user_id,password,sha_in</required_credentials>
+            </mpbarclaycard_direct>
+        </payment>
+    </default>
+</config>

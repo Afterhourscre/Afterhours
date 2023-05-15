@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+See LICENSE.txt for license details.
+*/
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="aheadworks" translate="label" sortOrder="300">
+            <label>Aheadworks Extensions</label>
+        </tab>
+        <section id="aw_onsale" translate="label" type="text" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="1">
+            <label>Product Labels</label>
+            <tab>aheadworks</tab>
+            <resource>Aheadworks_OnSale::config_aw_onsale</resource>
+            <group id="general" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+                <label>General Settings</label>
+                <field id="margin_between_labels" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Distance from Label with Higher Priority, px</label>
+                    <comment>Margin in pixels between two labels that overlap each other in some way</comment>
+                    <validate>validate-digits validate-zero-or-greater</validate>
+                </field>
+                <field id="labels_lineup_type" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Label Alignment</label>
+                    <source_model>Aheadworks\OnSale\Model\Source\Label\LineUpType</source_model>
+                    <comment>How several labels that overlap each other should line up</comment>
+                </field>
+                <field id="max_number_of_labels_over_product" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Max. Number of Labels Over Product Image</label>
+                    <validate>validate-digits validate-zero-or-greater</validate>
+                </field>
+                <field id="max_number_of_labels_next_to_price" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Max. Number of Labels Next to Price</label>
+                    <validate>validate-digits validate-zero-or-greater</validate>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

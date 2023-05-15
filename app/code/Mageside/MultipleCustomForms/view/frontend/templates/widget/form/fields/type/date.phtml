@@ -1,0 +1,49 @@
+<?php
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+
+/** @var Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\DateType $block */
+
+use Mageside\MultipleCustomForms\Model\Source\DateTimeType;
+
+$field = $block->getField();
+?>
+<?php $_fieldId = $block->getFieldHtmlId() ?>
+<?php $class = ($field->getRequired()) ? ' required' : ''; ?>
+<div class="field date<?= /* @noEscape */ $class ?>">
+    <label class="label" for="<?= $block->escapeHtmlAttr($block->getFieldHtmlId()); ?>">
+        <span><?= $block->escapeHtml($field->getTitle()); ?></span>
+    </label>
+    <fieldset class="fieldset validation-block <?= /* @noEscape */ $class ?>">
+        <div class="control">
+            <?php if ($field->getDateType() == DateTimeType::OPTION_TYPE_DATE_TIME
+                || $field->getDateType() == DateTimeType::OPTION_TYPE_DATE): ?>
+                <?= /* @noEscape */ $block->getDateHtml() ?>
+            <?php endif; ?>
+
+            <?php if ($field->getDateType() == DateTimeType::OPTION_TYPE_DATE_TIME
+                || $field->getDateType() == DateTimeType::OPTION_TYPE_TIME) : ?>
+                <?= /* @noEscape */ $block->getTimeHtml() ?>
+            <?php endif; ?>
+
+            <?php if ($field->getRequired()) : ?>
+                <input type="hidden"
+                       name="validate_datetime_<?= $block->escapeHtmlAttr($_fieldId); ?>"
+                       class="validate-datetime-<?= $block->escapeHtmlAttr($_fieldId); ?>"
+                       value=""
+                       data-validate="{'validate-required-datetime':'<?= $block->escapeHtmlAttr($_fieldId); ?>'}"/>
+            <?php else : ?>
+                <input type="hidden"
+                       name="validate_datetime_<?= $block->escapeHtmlAttr($_fieldId); ?>"
+                       class="validate-datetime-<?= $block->escapeHtmlAttr($_fieldId); ?>"
+                       value=""
+                       data-validate="{'validate-optional-datetime':'<?= $block->escapeHtmlAttr($_fieldId); ?>'}"/>
+            <?php endif; ?>
+        </div>
+    </fieldset>
+    <?php if ($block->getComment()) : ?>
+        <p class="note"><span><?= $block->escapeHtml($block->getComment()); ?></span></p>
+    <?php endif; ?>
+</div>

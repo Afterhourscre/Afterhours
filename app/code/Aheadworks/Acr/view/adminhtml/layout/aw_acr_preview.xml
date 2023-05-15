@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+* See LICENSE.txt for license details.
+*/
+-->
+
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="admin-empty" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <title>Abandoned Cart Reminder</title>
+        <css src="Aheadworks_Acr::css/preview.css"/>
+    </head>
+    <body>
+        <attribute name="id" value="html-body"/>
+        <attribute name="class" value="preview-window"/>
+        <referenceContainer name="backend.page" remove="true"/>
+        <referenceContainer name="root">
+            <block name="preview.page.content" class="Magento\Backend\Block\Page" template="Aheadworks_Acr::preview/page.phtml">
+                <block class="Aheadworks\Acr\Block\Adminhtml\Preview" name="preview" as="preview" template="Aheadworks_Acr::preview/content.phtml" />
+            </block>
+            <block class="Magento\RequireJs\Block\Html\Head\Config" name="requirejs-config"/>
+        </referenceContainer>
+    </body>
+</page>

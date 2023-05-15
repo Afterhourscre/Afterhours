@@ -1,0 +1,67 @@
+.speed-test-results th,
+.speed-test-results td {
+    padding: 3px 40px 3px 20px;
+    text-align: left;
+}
+.screenshot {
+    text-align: center;
+    margin-bottom: 20px;
+}
+.screenshot img{
+    display: inline-block;
+    border: 1px solid #ccc;
+    padding: 20px;
+    -webkit-box-shadow: 1px 1px 10px 5px rgba(0, 0, 0, .1);
+    -moz-box-shadow: 1px 1px 10px 5px rgba(0, 0, 0, .1);
+    box-shadow: 1px 1px 10px 5px rgba(0, 0, 0, .1);
+}
+.solutions ul {
+    list-style: none;
+    margin-left: 20px;
+}
+.solutions ul li {
+    font-size: 14px;
+}
+.solutions ul li.parent li {
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+.solutions ul.items {
+
+}
+.solutions ul.items > .item {
+    margin-bottom: 10px;
+}
+.solutions .title {
+    font-weight: 600;
+}
+.solutions ul.items .item:not(.marked) .title {
+    padding-left: 10px;
+}
+.solutions ul.items .item.can-apply {
+
+}
+.solutions ul.items .item .sub-list {
+
+}
+.solutions ul.items .item .sub-list .sub-item:not(:last-child) {
+    padding-bottom: 3px;
+}
+.apply-tip {
+    display: block;
+    margin: 20px 0 0;
+    padding: 15px;
+    background-color: #fffbbb;
+    font-style: italic;
+}
+.solutions .marked:before {
+    content: "*";
+    display: inline-block;
+    padding-right: 3px;
+    color: #ef672f;
+}
+.sub-item:before {
+    content: "-";
+    display: inline-block;
+    padding-right: 3px;
+}

@@ -1,0 +1,78 @@
+<?php
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+
+/** @var Mageside\MultipleCustomForms\Block\Widget\CustomForm $block */
+
+/** @var Mageside\MultipleCustomForms\Helper\Config $config */
+$config = $this->helper('Mageside\MultipleCustomForms\Helper\Config');
+$form = $block->getForm();
+?>
+
+<?php if ($block->canShowForm()) : ?>
+    <?php if ($block->getFormId()) : ?>
+    <div class="custom-form-container">
+        <div class="block block-custom-form"
+            <?= /* @noEscape */ ($block->getData('form_display') != 'static') ? 'style="display:none"' : '' ?>>
+            <?php if ($block->getData('form_display') == 'static') : ?>
+            <div class="block-title">
+                <strong id="block-custom-form-heading-<?= $block->escapeHtmlAttr($form->getId()); ?>"
+                        role="heading"
+                        aria-level="2">
+                    <?= $block->escapeHtml($form->getName()); ?>
+                </strong>
+            </div>
+            <?php endif; ?>
+            <div class="block-messages"></div>
+            <div class="block-content"
+                 aria-labelledby="block-custom-form-heading-<?= $block->escapeHtmlAttr($form->getId()); ?>">
+                <p><?= /* @noEscape */ $block->removeDataBind($form->getDescription()); ?></p>
+                <form class="custom-form <?= $block->escapeHtmlAttr($block->getFormCssClass()); ?>"
+                      id="<?= $block->escapeHtmlAttr($block->getFormHtmlId()); ?>"
+                      method="post"
+                      enctype="multipart/form-data"
+                      data-hasrequired="<?= $block->escapeHtmlAttr(__('* Required Fields')); ?>"
+                      action="<?= $block->escapeUrl($block->getSubmitUrl()); ?>">
+                    <fieldset class="fieldset">
+                        <?= /* @noEscape */ $block->getBlockHtml('formkey'); ?>
+                        <input type="hidden" name="form_id" value="<?= $block->escapeHtmlAttr($form->getId()); ?>" />
+                        <?= /* @noEscape */ $block->getFieldsHtml(); ?>
+                        <?= /* @noEscape */ $block->getRecaptchaHtml(); ?>
+                        <div class="actions-toolbar">
+                            <div class="primary">
+                                <button type="submit" class="action save primary" data-action="save-form" title="<?= $form->getButtonText() ?>">
+                                    <span><?= $block->escapeHtml($form->getButtonText()); ?></span>
+                                </button>
+                            </div>
+                        </div>
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+        <?php if ($block->getData('form_display') == 'popup_with_button') : ?>
+            <div class="block block-custom-form-button">
+                <div class="block-content" aria-labelledby="block-custom-form-button-heading-<?= $block->escapeHtmlAttr($form->getId()); ?>">
+                    <div class="actions-toolbar">
+                        <div class="primary">
+                            <button id="custom-form-open-modal-button-<?= $form->getId(); ?>"
+                                    class="custom-form-open-modal-button action save primary"
+                                    title="<?= $block->escapeHtmlAttr(__($block->getButtonTitle())); ?>">
+                                <span><?= $block->escapeHtml(__($block->getButtonTitle())); ?></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+    </div>
+    <script type="text/x-magento-init">
+        {
+            "#<?= $block->escapeJs($block->escapeHtmlAttr($block->getFormHtmlId())); ?>": {
+                "Mageside_MultipleCustomForms/js/custom-form": <?= /* @noEscape */ $block->getJsonFormConfig(); ?>
+            }
+        }
+    </script>
+    <?php endif; ?>
+<?php endif; ?>

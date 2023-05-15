@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_CallForPrice
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <mpcallforprice>
+            <general>
+                <enabled>0</enabled>
+                <request_status>{"_1541058017797_797":{"labelstatus":"To Do","isdefault":"1"},"_1541071412520_520":{"labelstatus":"Doing"},"_1541071454019_19":{"labelstatus":"To Review"},"_1541071464729_729":{"labelstatus":"Done"}}</request_status>
+            </general>
+            <admin_email>
+                <sendto>example_admin_email@gmail.com</sendto>
+            </admin_email>
+            <terms_conditions>
+                <title>I agree with the %anchor</title>
+                <anchor>Terms and Conditions</anchor>
+                <url>https://domain.com/tos.html</url>
+            </terms_conditions>
+        </mpcallforprice>
+    </default>
+</config>

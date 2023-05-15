@@ -1,0 +1,132 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+See LICENSE.txt for license details.
+*/
+-->
+
+<view xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:Config/etc/view.xsd">
+    <vars module="Aheadworks_OnSale">
+        <var name="config_data">
+            <var name="placement">
+                <var name="product_list">
+                    <var name="applicable_image">
+                        <var name="category_page_list">true</var>
+                        <var name="category_page_grid">true</var>
+                        <var name="related_products_list">true</var>
+                        <var name="upsell_products_list">true</var>
+                        <var name="new_products_content_widget_grid">true</var>
+                        <var name="recently_viewed_products_grid_content_widget">true</var>
+                        <var name="recently_viewed_products_list_content_widget">true</var>
+                        <var name="recently_compared_products_grid_content_widget">true</var>
+                        <var name="recently_compared_products_list_content_widget">true</var>
+                    </var>
+                    <var name="move_to_selector_by_area">
+                        <var name="product_image">
+                            <var name="move_to_selector">.product-image-container</var>
+                            <var name="action">appendTo</var>
+                            <var name="additional_classes">absolute-label-container</var>
+                        </var>
+                        <var name="next_to_price">
+                            <var name="move_to_selector">.price-box</var>
+                            <var name="action">appendTo</var>
+                            <var name="additional_classes">static-label-wrap-container</var>
+                        </var>
+                    </var>
+                    <var name="in_parent_selector">li</var>
+                    <var name="size">medium</var>
+                </var>
+                <var name="product_page">
+                    <var name="move_to_selector_by_area">
+                        <var name="product_image">
+                            <var name="move_to_selector">.fotorama__stage</var>
+                            <var name="action">appendTo</var>
+                            <var name="additional_classes">absolute-label-container</var>
+                        </var>
+                        <var name="next_to_price">
+                            <var name="move_to_selector">.product-info-price</var>
+                            <var name="action">after</var>
+                            <var name="additional_classes">static-label-wrap-container right-position</var>
+                        </var>
+                    </var>
+                    <var name="size">large</var>
+                </var>
+                <var name="minicart">
+                    <var name="move_to_selector_by_area">
+                        <var name="product_image">
+                            <var name="move_to_selector">.product-image-container</var>
+                            <var name="action">appendTo</var>
+                            <var name="additional_classes">absolute-label-container</var>
+                        </var>
+                        <var name="next_to_price">
+                            <var name="move_to_selector">.price-container</var>
+                            <var name="action">appendTo</var>
+                            <var name="additional_classes">static-label-wrap-container</var>
+                        </var>
+                    </var>
+                    <var name="in_parent_selector">li</var>
+                    <var name="size">small</var>
+                </var>
+                <var name="cart">
+                    <var name="applicable_image">
+                        <var name="cart_page_product_thumbnail">true</var>
+                    </var>
+                    <var name="move_to_selector_by_area">
+                        <var name="product_image">
+                            <var name="move_to_selector">.product-image-container</var>
+                            <var name="action">appendTo</var>
+                            <var name="additional_classes">absolute-label-container</var>
+                        </var>
+                        <var name="next_to_price">
+                            <var name="move_to_selector">.product-item-details</var>
+                            <var name="action">appendTo</var>
+                            <var name="additional_classes">static-label-wrap-container</var>
+                        </var>
+                    </var>
+                    <var name="in_parent_selector">td.item</var>
+                    <var name="size">medium</var>
+                </var>
+                <var name="checkout">
+                    <var name="move_to_selector_by_area">
+                        <var name="product_image">
+                            <var name="move_to_selector">.product-image-container</var>
+                            <var name="action">appendTo</var>
+                            <var name="additional_classes">absolute-label-container</var>
+                        </var>
+                        <var name="next_to_price">
+                            <var name="move_to_selector">.product-item-name</var>
+                            <var name="action">appendTo</var>
+                            <var name="additional_classes">static-label-wrap-container</var>
+                        </var>
+                    </var>
+                    <var name="in_parent_selector">li</var>
+                    <var name="size">small</var>
+                </var>
+                <var name="wishlist_sidebar">
+                    <var name="applicable_image">
+                        <var name="side_column_widget_product_thumbnail">true</var>
+                        <var name="new_products_images_only_widget">true</var>
+                        <var name="recently_viewed_products_images_names_widget">true</var>
+                        <var name="recently_compared_products_images_names_widget">true</var>
+                    </var>
+                    <var name="move_to_selector_by_area">
+                        <var name="product_image">
+                            <var name="move_to_selector">.product-image-container</var>
+                            <var name="action">appendTo</var>
+                            <var name="additional_classes">absolute-label-container</var>
+                        </var>
+                        <var name="next_to_price">
+                            <var name="move_to_selector">.price-box</var>
+                            <var name="action">appendTo</var>
+                            <var name="additional_classes">static-label-wrap-container</var>
+                        </var>
+                    </var>
+                    <var name="in_parent_selector">li</var>
+                    <var name="size">small</var>
+                </var>
+            </var>
+        </var>
+    </vars>
+</view>

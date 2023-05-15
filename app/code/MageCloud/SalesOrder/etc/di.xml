@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="Magento\Sales\Block\Order\Item\Renderer\DefaultRenderer"
+                type="MageCloud\SalesOrder\Block\Item\Renderer"/>
+
+    <preference for="Magento\Sales\Block\Order\Info\Buttons"
+                type="MageCloud\SalesOrder\Block\Order\Info\Buttons"/>
+
+    <preference for="WeltPixel\ThankYouPage\Helper\Data"
+                type="MageCloud\SalesOrder\Helper\Data"/>
+</config>

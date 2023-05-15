@@ -1,0 +1,26 @@
+<?php
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+
+/** @var \Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields $block */
+?>
+
+<?php $_fieldsets = $block->getFieldsets() ?>
+<?php if (!empty($_fieldsets)) : ?>
+    <?php foreach ($_fieldsets as $_fieldset) : ?>
+        <?php if ($_fields = $_fieldset->getData('fields')) : ?>
+            <?php $title = $_fieldset->getData('title') ? $_fieldset->getData('title') : false; ?>
+            <fieldset class="fieldset fieldset-<?= /* @escapeNotVerified */ $_fieldset->getData('name'); ?><?= /* @escapeNotVerified */ !$title ? ' no-title-fieldset' : ''; ?>">
+            <?php if ($title) : ?>
+                <legend><?= /* @escapeNotVerified */ $title; ?></legend>
+            <?php endif; ?>
+                <?php foreach ($_fields as $_field) : ?>
+                    <?= /* @escapeNotVerified */ $block->getFieldHtml($_field); ?>
+                <?php endforeach; ?>
+            </fieldset>
+        <?php endif; ?>
+    <?php endforeach; ?>
+<?php endif; ?>
+

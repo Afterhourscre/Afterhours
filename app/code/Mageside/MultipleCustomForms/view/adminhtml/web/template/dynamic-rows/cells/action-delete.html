@@ -1,0 +1,25 @@
+<!--
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+-->
+<div class="action-select-wrap" data-bind="collapsible">
+    <button class="action-select" data-bind="i18n: 'Select', toggleCollapsible">Select</button>
+    <ul class="action-menu" data-bind="css: {_active: $collapsible.opened}">
+        <li data-repeat-index="0">
+            <a class="action-menu-item" data-bind="
+                    attr: {'data-action': 'edit_row'},
+                    text: $parent.editButtonLabel,
+                    click: function(){ $parent.processingEditRecord($record().index, $record().data().id); }"
+               href="javascript:void(0);">Edit</a>
+        </li>
+        <li data-repeat-index="1">
+            <a class="action-menu-item" data-bind="
+                    attr: {'data-action': 'remove_row'},
+                    text: $parent.deleteButtonLabel,
+                    click: function(){ $parent.processingDeleteRecord($record().index, $record().recordId); }"
+               href="javascript:void(0);">Remove</a>
+        </li>
+    </ul>
+</div>

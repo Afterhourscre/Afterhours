@@ -1,0 +1,33 @@
+<div class="aw-onsale__css-wysiwyg">
+    <div class="toolbar">
+        <scope args="toolbar" render=""/>
+    </div>
+
+    <div class="collapsible-block-wrapper" collapsible="openClass: '_show', closeOnOuter: false">
+        <div class="collapsible-title-wrapper" toggleCollapsible>
+            <div class="admin__collapsible-title" data-role="collapsible-title" >
+                <span text="collapsibleTitle"/>
+            </div>
+            <render args="advancedSettingsTooltipTpl" if="$data.advancedSettingsTooltip"/>
+        </div>
+
+        <div class="admin__collapsible-content"
+             css="{_show: $collapsible.opened()}"
+             data-role="collapsible-content">
+            <textarea class="admin__control-textarea"
+                data-bind="
+                    value: value,
+                    valueUpdate: valueUpdate,
+                    hasFocus: focused,
+                    attr: {
+                        name: inputName,
+                        cols: cols,
+                        rows: rows,
+                        'aria-describedby': noticeId,
+                        placeholder: placeholder,
+                        id: uid,
+                        disabled: disabled
+                    }"/>
+        </div>
+    </div>
+</div>

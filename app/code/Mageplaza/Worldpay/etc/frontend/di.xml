@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_Worldpay
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Mageplaza\Worldpay\Model\ConfigProvider">
+        <arguments>
+            <argument name="paymentProviders" xsi:type="array">
+                <item name="mpworldpay_cards" xsi:type="object">MpWorldpayCardsFacade</item>
+                <item name="mpworldpay_paypal" xsi:type="object">MpWorldpayPayPalFacade</item>
+                <item name="mpworldpay_alipay" xsi:type="object">MpWorldpayAlipayFacade</item>
+                <item name="mpworldpay_giropay" xsi:type="object">MpWorldpayGiropayFacade</item>
+                <item name="mpworldpay_ideal" xsi:type="object">MpWorldpayIdealFacade</item>
+                <item name="mpworldpay_mistercash" xsi:type="object">MpWorldpayMistercashFacade</item>
+                <item name="mpworldpay_paysafecard" xsi:type="object">MpWorldpayPaysafecardFacade</item>
+                <item name="mpworldpay_postepay" xsi:type="object">MpWorldpayPostepayFacade</item>
+                <item name="mpworldpay_przelewy24" xsi:type="object">MpWorldpayPrzelewy24Facade</item>
+                <item name="mpworldpay_qiwi" xsi:type="object">MpWorldpayQiwiFacade</item>
+                <item name="mpworldpay_sofort" xsi:type="object">MpWorldpaySofortFacade</item>
+                <item name="mpworldpay_yandex" xsi:type="object">MpWorldpayYandexFacade</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Checkout\Model\CompositeConfigProvider">
+        <arguments>
+            <argument name="configProviders" xsi:type="array">
+                <item name="mpworldpay" xsi:type="object">Mageplaza\Worldpay\Model\ConfigProvider</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Payment\Model\CcGenericConfigProvider">
+        <arguments>
+            <argument name="methodCodes" xsi:type="array">
+                <item name="mpworldpay_cards" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Cards::CODE</item>
+                <item name="mpworldpay_paypal" xsi:type="const">Mageplaza\Worldpay\Model\Payment\PayPal::CODE</item>
+                <item name="mpworldpay_alipay" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Alipay::CODE</item>
+                <item name="mpworldpay_giropay" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Giropay::CODE</item>
+                <item name="mpworldpay_ideal" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Ideal::CODE</item>
+                <item name="mpworldpay_mistercash" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Mistercash::CODE</item>
+                <item name="mpworldpay_paysafecard" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Paysafecard::CODE</item>
+                <item name="mpworldpay_postepay" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Postepay::CODE</item>
+                <item name="mpworldpay_przelewy24" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Przelewy24::CODE</item>
+                <item name="mpworldpay_qiwi" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Qiwi::CODE</item>
+                <item name="mpworldpay_sofort" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Sofort::CODE</item>
+                <item name="mpworldpay_yandex" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Yandex::CODE</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Magento\Vault\Model\Ui\TokensConfigProvider">
+        <arguments>
+            <argument name="tokenUiComponentProviders" xsi:type="array">
+                <item name="mpworldpay_cards" xsi:type="object">Mageplaza\Worldpay\Model\Ui\TokenUiComponentProvider</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Magento\Framework\Data\Form\FormKey\Validator">
+        <plugin name="mpworldpay_validator_plugin" type="Mageplaza\Worldpay\Plugin\Data\Form\FormKey\ValidatorPlugin" sortOrder="100"/>
+    </type>
+</config>

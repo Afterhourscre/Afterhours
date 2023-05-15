@@ -1,0 +1,52 @@
+<?php
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+
+/** @var Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\RegionType $block */
+
+/** @var Magento\Directory\Helper\Data $directoryHelper */
+$directoryHelper = $this->helper('Magento\Directory\Helper\Data');
+
+$field = $block->getField();
+?>
+<div class="field select <?= /* @noEscape */ $field->getRequired() ? 'required' : ''; ?>">
+    <label class="label" for="<?= $block->escapeHtmlAttr($block->getFieldHtmlId()); ?>">
+        <span><?= $block->escapeHtml($field->getTitle()); ?></span>
+    </label>
+    <div class="control">
+        <?= /* @noEscape */ $block->getSelectHtml(); ?>
+        <input type="text" id="region_<?= $block->escapeHtmlAttr($field->getId()); ?>"
+               name="region_<?= $block->escapeHtmlAttr($field->getId()); ?>"
+               value=""
+               title="<?= $block->escapeHtmlAttr($field->getTitle()); ?>"
+               class="input-text <?= $block->escapeHtmlAttr($this->helper('Magento\Customer\Helper\Address')->getAttributeValidationClass('region')); ?>"
+               style="display:none;">
+        <?= /* @noEscape */ $block->getCountrySelectHtml() ?>
+        <?php if ($block->getComment()) : ?>
+            <p class="note"><span><?= $block->escapeHtml($block->getComment()); ?></span></p>
+        <?php endif; ?>
+    </div>
+</div>
+
+<script type="text/x-magento-init">
+    {
+        "#<?= $block->escapeJs($block->escapeHtmlAttr($block->getCountryFieldId())); ?>": {
+            "Mageside_MultipleCustomForms/js/region-updater": {
+                "isMultiSelect": <?= $block->escapeJs(($field->getType() == 'multiselect') ? 'true' : 'false'); ?>,
+                "optionalRegionAllowed": true,
+                "regionListId": "#<?= $block->escapeJs($block->escapeHtmlAttr($block->getFieldHtmlId())); ?>",
+                "regionInputId": "#region_<?= $block->escapeJs($block->escapeHtmlAttr($field->getId())); ?>",
+                "postcodeId": "",
+                "form": "#<?= $block->escapeJs($block->escapeHtmlAttr($block->getFormHtmlId())); ?>",
+                "regionJson": <?= /* @noEscape */ $directoryHelper->getRegionJson(); ?>,
+                "defaultRegion": "<?= $block->escapeJs($block->getDefaultValue()); ?>",
+                "isRegionRequired": <?= $block->escapeJs($block->isRequired() ? 'true' : 'false'); ?>,
+                "isZipRequired": false,
+                "isCountryRequired": false,
+                "checkRegionRequired": false
+            }
+        }
+    }
+</script>

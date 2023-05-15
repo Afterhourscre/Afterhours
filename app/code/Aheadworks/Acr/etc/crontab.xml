@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+* See LICENSE.txt for license details.
+*/
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron/etc/crontab.xsd">
+    <group id="default">
+        <job name="aheadworks_acr_process_cart_history" instance="Aheadworks\Acr\Cron\CartHistoryProcessor" method="execute">
+            <schedule>*/5 * * * *</schedule>
+        </job>
+        <job name="aheadworks_acr_send_emails" instance="Aheadworks\Acr\Cron\MailSender" method="execute">
+            <schedule>*/5 * * * *</schedule>
+        </job>
+        <job name="aheadworks_acr_clear_log" instance="Aheadworks\Acr\Cron\MailLogCleaner" method="execute">
+            <schedule>0 0 * * *</schedule>
+        </job>
+    </group>
+</config>

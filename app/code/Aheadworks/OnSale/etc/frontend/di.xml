@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+See LICENSE.txt for license details.
+*/
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Checkout\CustomerData\Cart">
+        <plugin name="awOnSaleMinicartLabelRendering" type="Aheadworks\OnSale\Plugin\CustomerData\CartPlugin"/>
+    </type>
+    <type name="Magento\Wishlist\CustomerData\Wishlist">
+        <plugin name="awOnSaleWishlistLabelRendering" type="Aheadworks\OnSale\Plugin\CustomerData\WishlistPlugin"/>
+    </type>
+</config>

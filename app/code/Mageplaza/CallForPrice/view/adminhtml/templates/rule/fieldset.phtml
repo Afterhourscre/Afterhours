@@ -1,0 +1,56 @@
+<?php
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_CallForPrice
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+
+$_element = $block->getElement();
+$_jsObjectName = $block->getFieldSetId() != null ? $block->getFieldSetId() : $_element->getHtmlId(); ?>
+<div class="rule-tree mpcallforprice-rule-tree">
+    <fieldset id="<?php echo $_jsObjectName ?>" <?php echo $_element->serialize(['class']) ?> class="fieldset">
+        <legend class="legend"><span><?php echo $_element->getLegend() ?></span></legend><br>
+        <?php if ($_element->getComment()): ?>
+            <div class="messages">
+                <div class="message message-notice"><?php echo $block->escapeHtml($_element->getComment()) ?></div>
+            </div>
+        <?php endif; ?>
+        <div class="rule-tree-wrapper">
+            <?php echo $_element->getChildrenHtml() ?>
+            <div data-mage-init='{
+                    "Mageplaza_CallForPrice/js/productfilter/initConditions": {
+                        "url": "<?php echo $this->getUrl('mpcallforprice/grid/productlist', ['form_key' => $block->getFormKey(), 'loadGrid' => 1]); ?>"
+                    }
+                }' class="mpcallforprice-list-button">
+                <button type="button" class="show-details"><?php echo __('PREVIEW PRODUCTS') ?></button>
+            </div>
+            <div class="mpcallforprice-list"></div>
+        </div>
+    </fieldset>
+</div>
+<script>
+    require([
+        "Magento_Rule/rules",
+        "prototype"
+    ], function (VarienRulesForm) {
+        window.<?php  echo $_jsObjectName ?> = new VarienRulesForm('<?php  echo $_jsObjectName ?>', '<?php  echo $block->getNewChildUrl() ?>');
+        <?php if ($_element->getReadonly()): ?>
+            <?php echo $_element->getHtmlId() ?>.
+            setReadonly(true);
+        <?php endif; ?>
+    });
+</script>

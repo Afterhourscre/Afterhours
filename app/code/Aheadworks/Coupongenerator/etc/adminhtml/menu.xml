@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+See LICENSE.txt for license details.
+*/
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Aheadworks_Coupongenerator::main" title="Coupon Code Generator by Aheadworks" module="Aheadworks_Coupongenerator" sortOrder="100" parent="Magento_Backend::marketing" resource="Aheadworks_Coupongenerator::main"/>
+        <add id="Aheadworks_Coupongenerator::generate_coupons" title="Generate Coupons" module="Aheadworks_Coupongenerator" sortOrder="1" parent="Aheadworks_Coupongenerator::main" action="aw_coupongenerator_admin/coupon/generate" resource="Aheadworks_Coupongenerator::generate_coupons"/>
+        <add id="Aheadworks_Coupongenerator::manage_coupons" title="Manage Coupon Codes" module="Aheadworks_Coupongenerator" sortOrder="2" parent="Aheadworks_Coupongenerator::main" action="aw_coupongenerator_admin/coupons/index" resource="Aheadworks_Coupongenerator::manage_coupons"/>
+        <add id="Aheadworks_Coupongenerator::manage_rules" title="Manage Rules" module="Aheadworks_Coupongenerator" sortOrder="3" parent="Aheadworks_Coupongenerator::main" action="aw_coupongenerator_admin/rule/index" resource="Aheadworks_Coupongenerator::manage_rules"/>
+    </menu>
+</config>

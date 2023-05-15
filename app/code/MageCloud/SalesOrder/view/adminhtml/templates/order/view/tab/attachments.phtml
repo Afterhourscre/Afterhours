@@ -1,0 +1,178 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: michael
+ * Date: 07.11.18
+ * Time: 8:12
+ */
+
+/** @var  $block \MageCloud\SalesOrder\Block\Adminhtml\Order\View\Tab\OrderItemAttachment */
+$ObjectManager = \Magento\Framework\App\ObjectManager::getInstance();
+$modelCollection = $ObjectManager->create('MageCloud\SalesOrder\Model\SalesOrder')->getCollection();
+$productCollectionAttr = $modelCollection->getData();
+$_order = $block->getOrder();
+$_orderItems = $_order->getAllVisibleItems();
+?>
+<section class="admin__page-section order-view-account-information">
+    <div class="admin__page-section-title">
+        <span class="title"><?= /* @escapeNotVerified */ __('Attachments for this Order') ?><?= $block->escapeHtml(__('# %1', $_order->getRealOrderId())) ?></span>
+    </div>
+    <div class="admin__page-section-content">
+            <section class="admin__page-section order-addresses">
+                <div class="admin__table-wrapper">
+                    <table class="data-table admin__table-primary edit-order-table">
+                        <thead>
+                            <tr class="heading">
+                                <th class="col-product">
+                                    <?= /* @escapeNotVerified */ __('Product Name') ?>
+                                </th>
+                                <th class="col-sku">
+                                    <?= /* @escapeNotVerified */ __('SKU') ?>
+                                </th>
+                                <th class="col-status">
+                                    <?= /* @escapeNotVerified */ __('Status') ?>
+                                </th>
+                                <th class="col-price">
+                                    <?= /* @escapeNotVerified */ __('Price') ?>
+                                </th>
+                                <th class="col-qty">
+                                    <?= /* @escapeNotVerified */ __('Qty') ?>
+                                </th>
+                                <th class="col-subtotal">
+                                    <?= /* @escapeNotVerified */ __('Row Total') ?>
+                                </th>
+                            </tr>
+                        </thead>
+                        <?php foreach ($_orderItems as $_item) : ?>
+                        <tbody class="even">
+                            <tr>
+                                <th class="col-product">
+                                    <?= $_item->getName(); ?>
+                                </th>
+                                <th class="col-sku">
+                                    <?= $_item->getSku()?>
+                                </th>
+                                <th class="col-status">
+                                    <?= $_item->getStatus()?>
+                                </th>
+                                <th class="col-price">
+                                    <?= $_item->getPrice()?>
+                                </th>
+                                <th class="col-qty">
+                                    <?= intval($_item->getData('qty_ordered'))?>
+                                </th>
+                                <th class="col-subtotal">
+                                    <?= $_item->getRowTotal()?>
+                                </th>
+                            </tr>
+                            <tr>
+                                <td colspan="999">
+                                    <?php if($_order->getStatus() === 'pending'): ?>
+                                    <div class="form_parent">
+                                        <form class="form" method="post" id="frm_attachment<?= /* @escapeNotVerified */ $_item->getId() ?>" enctype="multipart/form-data" autocomplete="off">
+                                            <div class="admin__field field field-attachment">
+                                                <label class="label admin__field-label"><span>Attachment</span></label>
+                                                <div class="admin__field-control control">
+                                                    <button type="button" class="scalable action-show-hide" id="uploadAttachment<?= /* @escapeNotVerified */ $_item->getId() ?>"><span><span><span>Upload</span></span></span></button>
+                                                    <input type="file" class="attachment" name="image_name" style="display: none;"/>
+                                                    <input type="hidden" class="attachment" name="order_id" value="<?= /* @escapeNotVerified */ $_order->getId() ?>" style="display: none;"/>
+                                                    <input type="hidden" class="attachment" name="order_item_id" value="<?= /* @escapeNotVerified */ $_item->getId() ?>" style="display: none;"/>
+                                                    <input type="hidden" id="pathTo<?= /* @escapeNotVerified */ $_item->getId() ?>" class="attachment" name="image_path" value="" style="display: none;"/>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <?php endif; ?>
+                                    <div id="attachmentFiles<?= /* @escapeNotVerified */ $_item->getId() ?>" class="mc_attachmentFiles">
+                                        <?php foreach ($productCollectionAttr as $productCollection) : ?>
+                                            <?php if($productCollection['order_id'] == $_order->getId() && $productCollection['order_item_id'] == $_item->getId()) : ?>
+                                                <div class="image item base-image" data-role="image" id="<?= $productCollection['id'] ?>">
+                                                    <a href="<?= $productCollection['image_path'] ?>" download>
+                                                        <div class="product-image-wrapper">
+                                                            <img class="product-image" data-role="image-element" src="<?= $productCollection['image_path'] ?>" alt="">
+                                                        </div>
+                                                    </a>
+                                                    <?php if($_order->getStatus() === 'pending'): ?>
+                                                    <div class="actions">
+                                                        <button type="button" class="action-remove" data-role="delete-button" data-image="<?= $productCollection['image_path'] ?>" title="Delete image"><span>Delete</span></button>
+                                                    </div>
+                                                    <?php endif; ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <script>
+                                        require(['jquery'], function ($) {
+                                            $(document).ready(function ($) {
+
+                                                $(document).on('click', '#attachmentFiles<?= /* @escapeNotVerified */ $_item->getId() ?> .action-remove', function(){
+                                                    if (window.confirm("Are you sure you want to delete?")) {
+                                                        var attachmentPath = $(this).attr("data-image"),
+                                                            divID = $(this).parents(".base-image").attr("id"),
+                                                            pathThisFirstBaseImage = $('#attachmentFiles<?= /* @escapeNotVerified */ $_item->getId() ?> > .base-image a').attr('href');
+
+                                                        jQuery.ajax({
+                                                            url: "<?php echo $block->getBaseUrl() . 'magecloud_salesorder/frontend/deleteAttachment?isAjax=true' ?>",
+                                                            type: "POST",
+                                                            data: {
+                                                                filename: attachmentPath,
+                                                                form_key: window.FORM_KEY,
+                                                                id:  divID,
+                                                                pathThisFirstBaseImage: pathThisFirstBaseImage
+                                                            },
+                                                            showLoader: true,
+                                                            success: function (response) {
+                                                                if(response.success == true){
+                                                                    $(".base-image#"+divID).remove();
+                                                                }
+                                                                // alert(response.message);
+                                                            },
+                                                            error: function (response) {
+                                                                // alert(response.message);
+                                                            }
+                                                        });
+                                                    }
+                                                });
+
+                                                $('#uploadAttachment<?= /* @escapeNotVerified */ $_item->getId() ?>').click(function(){
+                                                    $(this).siblings('.attachment').trigger('click');
+                                                    if($('.table-order-items').find('base-image')) {
+                                                        var pathFirstBaseImage = $('.table-order-items :first-child .base-image a').attr('href');
+                                                        $('#pathTo<?= /* @escapeNotVerified */ $_item->getId() ?>').attr('value', pathFirstBaseImage);
+                                                    }
+                                                });
+
+                                                $('#uploadAttachment<?= /* @escapeNotVerified */ $_item->getId() ?>').siblings('.attachment').change(function(){
+                                                    var data = $("#frm_attachment<?= /* @escapeNotVerified */ $_item->getId() ?>").get(0);
+
+                                                    jQuery.ajax({
+                                                        url: "<?php echo $block->getBaseUrl() . 'magecloud_salesorder/frontend/addAttachment?isAjax=true' ?>",
+                                                        type: "POST",
+                                                        data: new FormData(data),
+                                                        processData: false,
+                                                        contentType: false,
+                                                        showLoader: true,
+                                                        success: function (response) {
+                                                            // alert(response.message);
+                                                            $("#attachmentFiles<?= /* @escapeNotVerified */ $_item->getId() ?>").prepend(response.data.html);
+                                                            $('#frm_attachment<?= /* @escapeNotVerified */ $_item->getId() ?>')[0].reset();
+                                                        },
+                                                        error: function (response) {
+                                                            // alert(response.message);
+                                                            $('#frm_attachment<?= /* @escapeNotVerified */ $_item->getId() ?>')[0].reset();
+                                                        }
+                                                    });
+                                                });
+                                            });
+                                        });
+                                    </script>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <?php endforeach; ?>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+</section>

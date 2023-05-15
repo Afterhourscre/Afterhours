@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="admin-2columns-left" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="left">
+            <referenceBlock name="sales_order_tabs">
+                <block class="MageCloud\SalesOrder\Block\Adminhtml\Order\View\Tab\OrderItemAttachment"
+                       name="attachments_tab_info" template="MageCloud_SalesOrder::order/view/tab/attachments.phtml">
+                    <block class="MageCloud\SalesOrder\Block\Adminhtml\Order\View\Attachments" name="attachments_info"
+                           template="MageCloud_SalesOrder::order/view/attachments.phtml">
+                        <container name="extra_customer_attachments"/>
+                    </block>
+                </block>
+                <!--<action method="addTab">-->
+                    <!--<argument name="name" xsi:type="string">attachments_info</argument>-->
+                    <!--<argument name="block" xsi:type="string">attachments_tab_info</argument>-->
+                <!--</action>-->
+                <action method="addTabAfter">
+                    <argument name="name" xsi:type="string">attachments_info</argument>
+                    <argument name="block" xsi:type="string">attachments_tab_info</argument>
+                    <argument name="afterTabId" xsi:type="string">order_history</argument>
+                </action>
+            </referenceBlock>
+        </referenceContainer>
+    </body>
+</page>

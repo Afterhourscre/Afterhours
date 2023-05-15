@@ -1,0 +1,264 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_Barclaycard
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="payment">
+            <group id="mpbarclaycard" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>
+                    <![CDATA[
+                    <div class="mpbarclaycard-payment-logo"></div>
+                    <div class="mpbarclaycard-payment-byline">
+                        <span class="mpbarclaycard-payment-title">Barclaycard Payment by Mageplaza</span></br>
+                        <span class="mpbarclaycard-payment-comment">Barclaycard is the UK’s payment gateway reaching customers and clients globally across 40 countries. Barclaycard facilitates every online payment with all major credit cards including Visa, Mastercard, American Express, Maestro, Diners Club and JCB.</span></br>
+                    </div>
+                ]]>
+                </label>
+                <fieldset_css>complex mpbarclaycard-payment-section</fieldset_css>
+                <frontend_model>Magento\Paypal\Block\Adminhtml\System\Config\Fieldset\Payment</frontend_model>
+                <group id="credentials" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Credentials</label>
+                    <field id="environment" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Environment</label>
+                        <source_model>Mageplaza\Barclaycard\Model\Source\Environment</source_model>
+                        <config_path>mpbarclaycard/general/environment</config_path>
+                        <comment><![CDATA[Please follow our <a href="https://docs.mageplaza.com/barclaycard" target="_blank">User Guide</a> and register a Barclaycard account <a href="https://mdepayments.epdq.co.uk/Ncol/Test/BackOffice/accountcreation/create?ISP=epdq&acountry=gb" target="_blank">here</a>.]]></comment>
+                    </field>
+                    <field id="psp_id" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>PSPID</label>
+                        <config_path>mpbarclaycard/general/psp_id</config_path>
+                    </field>
+                    <field id="hash_algorithm" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Hash Algorithm</label>
+                        <source_model>Mageplaza\Barclaycard\Model\Source\HashAlgorithm</source_model>
+                        <config_path>mpbarclaycard/general/hash_algorithm</config_path>
+                    </field>
+
+                    <field id="hosted_user_id" translate="label comment" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>User ID</label>
+                        <config_path>payment/mpbarclaycard_hosted/user_id</config_path>
+                        <comment>User for e-Commerce integration</comment>
+                    </field>
+                    <field id="hosted_sha_in" translate="label" type="obscure" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>e-Commerce SHA-IN Pass Phrase</label>
+                        <config_path>payment/mpbarclaycard_hosted/sha_in</config_path>
+                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    </field>
+                    <field id="hosted_sha_out" translate="label" type="obscure" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>e-Commerce SHA-OUT Pass Phrase</label>
+                        <config_path>payment/mpbarclaycard_hosted/sha_out</config_path>
+                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    </field>
+
+                    <field id="direct_user_id" translate="label comment" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>API User ID</label>
+                        <config_path>payment/mpbarclaycard_direct/user_id</config_path>
+                        <comment>Special user for API. An API user is needed to make DirectLink requests.</comment>
+                    </field>
+                    <field id="direct_password" translate="label comment" type="obscure" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>API User Password</label>
+                        <config_path>payment/mpbarclaycard_direct/password</config_path>
+                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    </field>
+                    <field id="direct_sha_in" translate="label" type="obscure" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>DirectLink SHA-IN Pass Phrase</label>
+                        <config_path>payment/mpbarclaycard_direct/sha_in</config_path>
+                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    </field>
+
+                    <field id="test" translate="label" type="button" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <frontend_model>Mageplaza\Barclaycard\Block\Adminhtml\Backend\Credential</frontend_model>
+                        <depends>
+                            <field id="environment">test</field>
+                        </depends>
+                    </field>
+                </group>
+
+                <group id="hosted" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Barclaycard ePDQ e-Commerce</label>
+                    <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Enable</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/mpbarclaycard_hosted/active</config_path>
+                    </field>
+                    <field id="lang_code" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Language Code</label>
+                        <source_model>Mageplaza\Barclaycard\Model\Source\Locale</source_model>
+                        <comment>The language of the page which customers are redirected to</comment>
+                        <config_path>payment/mpbarclaycard_hosted/lang_code</config_path>
+                    </field>
+                    <field id="title" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Title</label>
+                        <config_path>payment/mpbarclaycard_hosted/title</config_path>
+                    </field>
+                    <field id="payment_action" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Payment Action</label>
+                        <source_model>Mageplaza\Barclaycard\Model\Source\PaymentAction</source_model>
+                        <config_path>payment/mpbarclaycard_hosted/payment_action</config_path>
+                    </field>
+                    <field id="order_status" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>New Order Status</label>
+                        <source_model>Mageplaza\Barclaycard\Model\Source\OrderStatus</source_model>
+                        <config_path>payment/mpbarclaycard_hosted/order_status</config_path>
+                    </field>
+                    <field id="cctypes" translate="label" type="multiselect" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Card Types</label>
+                        <source_model>Mageplaza\Barclaycard\Model\Source\CardType</source_model>
+                        <config_path>payment/mpbarclaycard_hosted/cctypes</config_path>
+                    </field>
+                    <field id="currencies" translate="label comment" type="multiselect" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Accepted Currencies</label>
+                        <source_model>Mageplaza\Barclaycard\Model\Source\Currency</source_model>
+                        <config_path>payment/mpbarclaycard_hosted/currencies</config_path>
+                        <comment>Accepted currencies must be corresponding to the store currency (at the currency setup section of the admin backend) in order to display the payment method</comment>
+                    </field>
+                    <field id="allowspecific" translate="label comment" type="allowspecific" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Payment from Applicable Countries</label>
+                        <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                        <config_path>payment/mpbarclaycard_hosted/allowspecific</config_path>
+                        <comment><![CDATA[To restrict this payment with more conditions, see <a href="https://www.mageplaza.com/magento-2-payment-restriction/" target="_blank">Payment Restrictions</a> module.]]></comment>
+                    </field>
+                    <field id="specificcountry" translate="label" type="multiselect" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Payment from Specific Countries</label>
+                        <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                        <can_be_empty>1</can_be_empty>
+                        <config_path>payment/mpbarclaycard_hosted/specificcountry</config_path>
+                    </field>
+                    <field id="logo" translate="label comment" type="image" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Show Logo</label>
+                        <backend_model>Mageplaza\Barclaycard\Model\Backend\Logo</backend_model>
+                        <comment>Allowed upload file types: .jpg, .jpeg, .gif, .png, .svg</comment>
+                        <base_url type="media" scope_info="1">mageplaza/barclaycard</base_url>
+                        <config_path>payment/mpbarclaycard_hosted/logo</config_path>
+                    </field>
+                    <field id="min_order_total" translate="label" type="text" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Minimum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpbarclaycard_hosted/min_order_total</config_path>
+                    </field>
+                    <field id="max_order_total" translate="label" type="text" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Maximum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpbarclaycard_hosted/max_order_total</config_path>
+                    </field>
+                    <field id="debug" translate="label comment" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Debug Mode</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>If Yes, diagnostic information is stored in log files on the Magento web server.</comment>
+                        <config_path>payment/mpbarclaycard_hosted/debug</config_path>
+                    </field>
+                    <field id="sort_order" translate="label comment" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Sort Order</label>
+                        <config_path>payment/mpbarclaycard_hosted/sort_order</config_path>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <comment>Default is 0. The one with the smallest order will display first.</comment>
+                    </field>
+                </group>
+
+                <group id="direct" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Barclaycard ePDQ DirectLink</label>
+                    <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Enable</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/mpbarclaycard_direct/active</config_path>
+                    </field>
+                    <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Title</label>
+                        <config_path>payment/mpbarclaycard_direct/title</config_path>
+                    </field>
+                    <field id="payment_action" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Payment Action</label>
+                        <source_model>Mageplaza\Barclaycard\Model\Source\PaymentAction</source_model>
+                        <config_path>payment/mpbarclaycard_direct/payment_action</config_path>
+                    </field>
+                    <field id="order_status" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>New Order Status</label>
+                        <source_model>Mageplaza\Barclaycard\Model\Source\OrderStatus</source_model>
+                        <config_path>payment/mpbarclaycard_direct/order_status</config_path>
+                    </field>
+                    <field id="cctypes" translate="label" type="multiselect" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Card Types</label>
+                        <source_model>Mageplaza\Barclaycard\Model\Source\CardType</source_model>
+                        <config_path>payment/mpbarclaycard_direct/cctypes</config_path>
+                    </field>
+                    <field id="three_d" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>3D Secure</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/mpbarclaycard_direct/three_d</config_path>
+                    </field>
+                    <field id="can_use_internal" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Enable Admin Order (MOTO)</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/mpbarclaycard_direct/can_use_internal</config_path>
+                    </field>
+                    <field id="currencies" translate="label comment" type="multiselect" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Accepted Currencies</label>
+                        <source_model>Mageplaza\Barclaycard\Model\Source\Currency</source_model>
+                        <config_path>payment/mpbarclaycard_direct/currencies</config_path>
+                        <comment>Accepted currencies must be corresponding to the store currency (at the currency setup section of the admin backend) in order to display the payment method</comment>
+                    </field>
+                    <field id="allowspecific" translate="label comment" type="allowspecific" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Payment from Applicable Countries</label>
+                        <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                        <config_path>payment/mpbarclaycard_direct/allowspecific</config_path>
+                        <comment><![CDATA[To restrict this payment with more conditions, see <a href="https://www.mageplaza.com/magento-2-payment-restriction/" target="_blank">Payment Restrictions</a> module.]]></comment>
+                    </field>
+                    <field id="specificcountry" translate="label" type="multiselect" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Payment from Specific Countries</label>
+                        <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                        <can_be_empty>1</can_be_empty>
+                        <config_path>payment/mpbarclaycard_direct/specificcountry</config_path>
+                    </field>
+                    <field id="logo" translate="label comment" type="image" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Show Logo</label>
+                        <backend_model>Mageplaza\Barclaycard\Model\Backend\Logo</backend_model>
+                        <comment>Allowed upload file types: .jpg, .jpeg, .gif, .png, .svg</comment>
+                        <base_url type="media" scope_info="1">mageplaza/barclaycard</base_url>
+                        <config_path>payment/mpbarclaycard_direct/logo</config_path>
+                    </field>
+                    <field id="min_order_total" translate="label" type="text" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Minimum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpbarclaycard_direct/min_order_total</config_path>
+                    </field>
+                    <field id="max_order_total" translate="label" type="text" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Maximum Order Total</label>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <config_path>payment/mpbarclaycard_direct/max_order_total</config_path>
+                    </field>
+                    <field id="debug" translate="label comment" type="select" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Debug Mode</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>If Yes, diagnostic information is stored in log files on the Magento web server.</comment>
+                        <config_path>payment/mpbarclaycard_direct/debug</config_path>
+                    </field>
+                    <field id="sort_order" translate="label comment" type="text" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Sort Order</label>
+                        <config_path>payment/mpbarclaycard_direct/sort_order</config_path>
+                        <validate>validate-number validate-zero-or-greater validate-digits</validate>
+                        <comment>Default is 0. The one with the smallest order will display first.</comment>
+                    </field>
+                </group>
+            </group>
+        </section>
+    </system>
+</config>

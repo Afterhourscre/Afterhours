@@ -1,0 +1,22 @@
+{
+	"name": "weltpixel/module-instagramwidget",
+	"description": "WeltPixel InstagramWidget",
+	"require": {
+		"weltpixel/m2-weltpixel-backend": "~1.0 | master",
+		"magento/module-widget": "101.* | 100.*"
+	},
+	"type": "magento2-module",
+	"version": "1.9.5",
+	"license": [
+		"OSL-3.0",
+		"AFL-3.0"
+	],
+	"autoload": {
+		"files": [
+			"registration.php"
+		],
+		"psr-4": {
+			"WeltPixel\\InstagramWidget\\": ""
+		}
+	}
+}

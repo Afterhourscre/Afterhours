@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2015 Magento. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd" layout="1column">
+    <head>
+        <css src="Aheadworks_Helpdesk::css/file-upload.css"/>
+        <css src="Aheadworks_Helpdesk::css/ticket-view.css"/>
+    </head>
+    <referenceBlock name="head.additional">
+        <block class="MGS\Portfolio\Block\Portfolio" name="mgs.facebook.opengraph" template="MGS_Portfolio::facebookopengraph_head.phtml" />
+    </referenceBlock>
+    <body>
+		<referenceContainer name="content">
+			<block class="MGS\Portfolio\Block\Portfolio" name="portfolio.view" template="MGS_Portfolio::view.phtml">
+                <block class="Aheadworks\Helpdesk\Block\Customer\TicketCreate" name="aw_helpdesk_ticket_create" as="aw_helpdesk_ticket_create_portfolio" template="customer/ticket_create_portfolio.phtml" cacheable="false">
+                    <block class="Aheadworks\Helpdesk\Block\Customer\FileUpload" name="aw_helpdesk_ticket_file_upload" as="fileUpload"  template="customer/file_upload_portfolio.phtml" cacheable="false" />
+                </block>
+            </block>
+		</referenceContainer>
+        <referenceBlock name="page.main.title" remove="true"/>
+    </body>
+</page>

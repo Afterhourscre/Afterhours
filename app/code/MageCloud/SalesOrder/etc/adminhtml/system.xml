@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @author andy
+ * @email andyworkbase@gmail.com
+ * @team MageCloud
+ * @package MageCloud_CloudwaysManager
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="magecloud" translate="label" sortOrder="200">
+            <label>MageCloud</label>
+        </tab>
+        <section id="sale_order_upload" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+            <class>separator-top</class>
+            <label>Form Upload</label>
+            <tab>magecloud</tab>
+            <resource>MageCloud_SaleOrder::sale_order_upload</resource>
+            <group id="order_status" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="1">
+                <label>Order Status</label>
+                <field id="order_statuses" translate="label" type="multiselect" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Order Statuses</label>
+                    <source_model>Magento\Sales\Model\ResourceModel\Order\Status\Collection</source_model>
+                    <can_be_empty>1</can_be_empty>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

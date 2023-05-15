@@ -1,0 +1,40 @@
+Back,Back
+Delete,Delete
+"Are you sure want to do delete this category?","Are you sure want to do delete this category?"
+Save,Save
+"Are you sure want to do delete this cookie?","Are you sure want to do delete this cookie?"
+"There is no Category with ID %1","There is no Category with ID %1"
+"An error occurred: %1","An error occurred: %1"
+"Edit Category","Edit Category"
+"Cookie Categories","Cookie Categories"
+"New Category","New Category"
+"There is no Cookie with ID %1","There is no Cookie with ID %1"
+"Edit Cookie","Edit Cookie"
+Cookies,Cookies
+"New Cookie","New Cookie"
+"Cookie Settings have been saved.","Cookie Settings have been saved."
+"Module is disabled","Module is disabled"
+"Cookie Settings","Cookie Settings"
+"Category with ID ""%1"" does not exist.","Category with ID ""%1"" does not exist."
+"Cookie with ID ""%1"" does not exist.","Cookie with ID ""%1"" does not exist."
+"Cookie with name ""%1"" does not exist.","Cookie with name ""%1"" does not exist."
+Edit,Edit
+"Allow Cookies","Allow Cookies"
+"Save Cookie Settings","Save Cookie Settings"
+"List of cookies the %1 Category collects","List of cookies the %1 Category collects"
+"Cookie Name","Cookie Name"
+"Cookie Description","Cookie Description"
+"Extait Modules","Extait Modules"
+"Cookie Mode Pro","Cookie Mode Pro"
+"General Settings","General Settings"
+"Enable Module","Enable Module"
+"Cookie Restriction Message","Cookie Restriction Message"
+"Enter the text for a cookie restriction message.","Enter the text for a cookie restriction message."
+"Category Details","Category Details"
+ID,ID
+Name,Name
+"Is System","Is System"
+"Cookie Details","Cookie Details"
+Category,Category
+On,On
+Off,Off

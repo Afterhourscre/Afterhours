@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the commercial license
+ * that is bundled with this package in the file LICENSE.txt.
+ *
+ * @category Extait
+ * @package Extait_Cookie
+ * @copyright Copyright (c) 2016-2018 Extait, Inc. (http://www.extait.com)
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Framework\App\Action\AbstractAction">
+        <plugin name="extait_cookie_context_plugin" type="Extait\Cookie\Plugin\Framework\App\Action\Context"/>
+    </type>
+
+    <type name="Magento\Framework\Stdlib\Cookie\PhpCookieManager">
+        <plugin name="extait_cookie_php_plugin" type="Extait\Cookie\Plugin\Framework\Stdlib\Cookie\PhpCookieManager"/>
+    </type>
+</config>

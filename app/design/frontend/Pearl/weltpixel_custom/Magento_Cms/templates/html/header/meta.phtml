@@ -1,0 +1,19 @@
+<?php
+$_objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+$request = $_objectManager->get('Magento\Framework\App\Action\Context')->getRequest();
+$title = $_objectManager->get('Magento\Framework\View\Page\Title');
+$storeManager = $_objectManager->get('\Magento\Store\Model\StoreManagerInterface');
+$cmsPage = $_objectManager->get('\Magento\Cms\Model\Page');
+?>
+<?php if($request->getFullActionName() == 'cms_page_view') : ?>
+    <meta property="og:site_name" content="<?php /* @escapeNotVerified */ echo $storeManager->getStore()->getName(); ?>" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="<?php /* @escapeNotVerified */ echo $this->stripTags($cmsPage->getTitle()); ?>" />
+    <?php if ($cmsPage->getOpenGraphImageUrl()) : ?>
+        <meta property="og:description" content="<?php /* @escapeNotVerified */ echo $this->escapeQuote(strip_tags(nl2br($cmsPage->getMetaDescription()))); ?>" />
+    <?php endif; ?>
+    <meta property="og:url" content="<?php /* @escapeNotVerified */ echo $this->stripTags($this->getUrl('*/*/*', ['_current' => true, '_use_rewrite' => true])); ?>" />
+    <?php if ($cmsPage->getOpenGraphImageUrl()) : ?>
+        <meta property="og:image" content="<?php /* @escapeNotVerified */ echo $this->stripTags($cmsPage->getOpenGraphImageUrl()); ?>" />
+    <?php endif; ?>
+<?php endif; ?>

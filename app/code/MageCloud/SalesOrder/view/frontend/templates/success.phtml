@@ -1,0 +1,50 @@
+<?php
+// @codingStandardsIgnoreFile
+/** @var $_helper WeltPixel\ThankYouPage\Helper\Data */
+$blockSales= $block->getLayout()->createBlock('Magento\Sales\Block\Widget\Guest\Form');
+$_helper = $this->helper('WeltPixel\ThankYouPage\Helper\Data');
+$pageSubtitle = $_helper->getPageSubTitle();
+$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+$customerSession = $objectManager->get('Magento\Customer\Model\Session');
+?>
+<?php /** @var $block \Magento\Checkout\Block\Onepage\Success */ ?>
+<div class="checkout-page-title-wrapper thank-you-page">
+    <div class="icon_thank_you_01"></div>
+    <h1 class="page-title"><?= $_helper->getPageTitle() ?></h1>
+</div>
+<div class="checkout-success">
+    <?php if ($block->getOrderId()):?>
+        <?php if ($block->getCanViewOrder()) :?>
+            <p><?= __($pageSubtitle, sprintf('<a href="%s" class="order-number"><strong>%s</strong></a>', $block->escapeHtml($block->getViewOrderUrl()), $block->escapeHtml($block->getOrderId()))) ?></p>
+        <?php  else :?>
+            <p><?= __($pageSubtitle, sprintf('<strong>%s</strong>', $block->escapeHtml($block->getOrderId()))) ?></p>
+        <?php endif;?>
+        <p><?= $_helper->getOrderDescription() ?></p>
+    <?php endif;?>
+
+    <?= $block->getAdditionalInfoHtml() ?>
+
+    <?php if ($_helper->showContinueShopping()) : ?>
+        <div class="actions-toolbar">
+            <div class="primary">
+                <a class="action primary continue" href="<?= /* @escapeNotVerified */ $block->getContinueUrl() ?>"><span><?= /* @escapeNotVerified */ __('Continue Shopping') ?></span></a>
+                <?php if ($block->getOrderId()):?>
+                    <?php if ($block->getCanViewOrder()) :?>
+                        <?= __(sprintf('<a href="%s" class="action primary upload-design"><span>Upload Design</span></a>', $block->escapeHtml($block->getViewOrderUrl()), $block->escapeHtml($block->getOrderId()))) ?>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </div>
+            <br>
+            <br>
+            <div>
+                <p>
+                    <?php if ($block->getOrderId()):?>
+                        <?php if (!$block->getCanViewOrder()) :?>
+                            <?= __("Please send your artwork to")?> <a href="mailto:support@ahc.studio">support@ahc.studio</a> <?= __("if you do no wish to create an account") ?>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </p>
+            </div>
+        </div>
+    <?php endif; ?>
+</div>

@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+* See LICENSE.txt for license details.
+*/
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <faq>
+            <general>
+                <meta_title>FAQ</meta_title>
+                <faq_route>faq</faq_route>
+                <faq_search_enabled>1</faq_search_enabled>
+                <footer_menu_link_enabled>1</footer_menu_link_enabled>
+                <navigation_menu_link_enabled>1</navigation_menu_link_enabled>
+                <top_menu_link_enabled>1</top_menu_link_enabled>
+                <enable_ask_queston_form>0</enable_ask_queston_form>
+            </general>
+            <helpfulness>
+                <helpfulness_customer_groups>32000</helpfulness_customer_groups>
+                <helpfulness_rate_before_voting>1</helpfulness_rate_before_voting>
+                <helpfulness_rate_after_voting>1</helpfulness_rate_after_voting>
+            </helpfulness>
+        </faq>
+        <sitemap>
+            <aw_faq>
+                <priority>0.5</priority>
+                <changefreq>weekly</changefreq>
+            </aw_faq>
+        </sitemap>
+    </default>
+</config>

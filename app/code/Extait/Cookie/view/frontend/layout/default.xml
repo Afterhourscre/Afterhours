@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the commercial license
+ * that is bundled with this package in the file LICENSE.txt.
+ *
+ * @category Extait
+ * @package Extait_Cookie
+ * @copyright Copyright (c) 2016-2018 Extait, Inc. (http://www.extait.com)
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceBlock name="after.body.start">
+            <block class="Extait\Cookie\Block\CookieConfig"
+                   name="extait.cookie.config"
+                   template="Extait_Cookie::cookie-config.phtml"
+                   before="-"/>
+            <block class="Extait\Cookie\Block\Cookie\Notice"
+                   name="extait_cookie_cookie_notice"
+                   template="Extait_Cookie::cookie\notice.phtml"
+                   ifconfig='extait_cookie/general/enable'/>
+        </referenceBlock>
+        <referenceBlock name="footer_links">
+            <block class="Magento\Framework\View\Element\Html\Link\Current"
+                   name="extait-cookie-settings-link"
+                   ifconfig='extait_cookie/general/enable'>
+                <arguments>
+                    <argument name="label" xsi:type="string">Cookie Settings</argument>
+                    <argument name="path" xsi:type="string">cookie/settings</argument>
+                </arguments>
+            </block>
+        </referenceBlock>
+    </body>
+</page>

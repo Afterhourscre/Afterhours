@@ -1,0 +1,34 @@
+<div style="width: 300px;">
+    <div id="progressbar" class="uk-progress uk-progress-success">
+        <div class="uk-progress-bar" style="width: 0%;">0%</div>
+    </div>
+</div>
+
+<script>
+    requirejs( [ 'require', 'jquery',  'uikit' ],
+        function( require, $, uikit ) {
+
+            $(window).load(function () {
+                var bar = document.getElementById('progressbar');
+                bar.max  = 5; // Total Steps
+                bar.value  = 1; // completed Steps
+                var barmessage = $('.uk-progress-bar');
+                var percent = Math.floor(( bar.value  /  bar.max) * 100);
+                barmessage.css('width', percent + '%').text(bar.value + ' out of '+bar.max+' Completed.');
+
+
+
+                var animate = setInterval(function () {
+                    bar.value += 1;
+                    var percent = Math.floor(( bar.value  /  bar.max) * 100);
+                    barmessage.css('width', percent + '%').text(bar.value + ' out of '+bar.max+' Completed.');
+                    if (bar.value >= bar.max) {
+                        clearInterval(animate);
+                    }
+
+                }, 1000);
+            });
+
+
+        });
+</script>

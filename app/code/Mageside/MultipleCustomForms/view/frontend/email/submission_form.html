@@ -1,0 +1,8 @@
+<!--@subject {{trans "%subject" subject=$subject}} @-->
+
+{{template config_path="design/email/header_template"}}
+
+<h2>{{trans "New submission for form %form_name" form_name=$form_name}}</h2>
+<p>{{var content|raw}}</p>
+
+{{template config_path="design/email/footer_template"}}

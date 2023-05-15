@@ -1,0 +1,92 @@
+<?php
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_CallForPrice
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+
+// @codingStandardsIgnoreFile
+/** @var \Mageplaza\CallForPrice\Block\Adminhtml\Requests\RecentRequestTimeRange $block */
+
+$numColumns        = sizeof($block->getColumns());
+$getPercentCompare = $block->getNoRequestByTimeRangePercentUnit();
+?>
+    <div>
+        <span id="no_quote_title"><?php echo __("Number quotes:"); ?> </span>
+        <span id="no_quote_value"><?php echo $block->getNoRequestByTimeRange(); ?></span>
+        <span id="no_quote_percent"><?php echo $getPercentCompare; ?>%</span>
+    </div>
+    <style>
+        .ar_dashboard .dashboard-item-content {
+            top: 50px;
+        }
+
+        #no_quote_percent:before {
+            font-family: FontAwesome;
+            margin-right: 3px;
+        }
+
+        <?php if($getPercentCompare >= 0):?>
+        #no_quote_percent:before {
+            color: lightgreen;
+            content: '\f062';
+        }
+        <?php else: ?>
+        #no_quote_percent:before {
+            color: red;
+            content: '\f063';
+        }
+        <?php endif; ?>
+    </style>
+<?php if ($block->getCollection()): ?>
+    <div class="dashboard-item-content">
+        <?php if ($block->getCollection()->getSize() > 0): ?>
+            <table class="admin__table-primary dashboard-data" id="<?= $block->getId() ?>_table">
+                <?php if ($block->getHeadersVisibility() || $block->getFilterVisibility()): ?>
+                    <thead>
+                    <?php if ($block->getHeadersVisibility()): ?>
+                        <tr>
+                            <?php foreach ($block->getColumns() as $_column): ?>
+                                <?= $_column->getHeaderHtml() ?>
+                            <?php endforeach; ?>
+                        </tr>
+                    <?php endif; ?>
+                    </thead>
+                <?php endif; ?>
+                <?php if (!$block->getIsCollapsed()): ?>
+                    <tbody>
+                    <?php foreach ($block->getCollection() as $_index => $_item): ?>
+                        <tr title="<?= $block->getRowUrl($_item) ?>">
+                            <?php $i = 0;
+                            foreach ($block->getColumns() as $_column): ?>
+                                <td class="<?= $_column->getCssProperty() ?> <?= ++$i == $numColumns ? 'last' : '' ?>"
+                                    id="recent_view_item_dashboard"><a href="<?= $block->getRowUrl($_item) ?>"
+                                                                       target="_blank"><?= (($_html = $_column->getRowField($_item)) != '' ? $_html : '&nbsp;') ?></a>
+                                </td>
+                            <?php endforeach; ?>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                <?php endif; ?>
+            </table>
+        <?php else: ?>
+            <div class="<?= 
+            $block->getEmptyTextClass() ?>"><?= 
+                $block->getEmptyText() ?></div>
+        <?php endif; ?>
+    </div>
+<?php endif ?>

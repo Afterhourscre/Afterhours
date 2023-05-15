@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+See LICENSE.txt for license details.
+*/
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Aheadworks_OnSale::home" 
+             title="Product Labels by Aheadworks"
+             module="Aheadworks_OnSale"
+             sortOrder="100" 
+             parent="Magento_Backend::marketing"
+             resource="Aheadworks_OnSale::home"/>
+        <add id="Aheadworks_OnSale::rules"
+             title="Rules"
+             module="Aheadworks_OnSale" 
+             sortOrder="10" 
+             parent="Aheadworks_OnSale::home" 
+             action="aw_onsale/rule/index"
+             resource="Aheadworks_OnSale::rules"/>
+        <add id="Aheadworks_OnSale::labels"
+             title="Labels"
+             module="Aheadworks_OnSale"
+             sortOrder="20"
+             parent="Aheadworks_OnSale::home"
+             action="aw_onsale/label/index"
+             resource="Aheadworks_OnSale::labels"/>
+    </menu>
+</config>

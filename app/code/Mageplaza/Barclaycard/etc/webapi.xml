@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_Barclaycard
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+-->
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Webapi:etc/webapi.xsd">
+    <route url="/V1/guest-carts/:cartId/mpbarclaycard-get-hosted-url" method="POST">
+        <service class="Mageplaza\Barclaycard\Api\GuestPaymentInterface" method="getHostedUrl"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+    <route url="/V1/carts/mine/mpbarclaycard-get-hosted-url" method="POST">
+        <service class="Mageplaza\Barclaycard\Api\PaymentInterface" method="getHostedUrl"/>
+        <resources>
+            <resource ref="self"/>
+        </resources>
+        <data>
+            <parameter name="cartId" force="true">%cart_id%</parameter>
+        </data>
+    </route>
+
+    <route url="/V1/guest-carts/:cartId/mpbarclaycard-process-3ds" method="POST">
+        <service class="Mageplaza\Barclaycard\Api\GuestPaymentInterface" method="process3DS"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+    <route url="/V1/carts/mine/mpbarclaycard-process-3ds" method="POST">
+        <service class="Mageplaza\Barclaycard\Api\PaymentInterface" method="process3DS"/>
+        <resources>
+            <resource ref="self"/>
+        </resources>
+        <data>
+            <parameter name="cartId" force="true">%cart_id%</parameter>
+        </data>
+    </route>
+</routes>

@@ -1,0 +1,73 @@
+<!--
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_Worldpay
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+-->
+<div class="payment-method" data-bind="css: {_active: (getId() === isChecked())}">
+    <div class="payment-method-title field choice">
+        <input type="radio" name="payment[method]" class="radio"
+               data-bind="attr: {'id': getId()},
+                    value: getId(),
+                    click: selectPaymentMethod,
+                    checked: isChecked,
+                    visible: isRadioButtonVisible()"/>
+        <label class="label" data-bind="attr: {'for': getId()}">
+            <img data-bind="attr: {
+            'src': getIcons(getCardType()).url,
+            'width': getIcons(getCardType()).width,
+            'height': getIcons(getCardType()).height
+            }" class="payment-icon">
+            <span><!-- ko i18n: 'ending'--><!-- /ko --></span>
+            <span><!-- ko text: getMaskedCard()--><!-- /ko --></span>
+            (
+            <span><!-- ko i18n: 'expires'--><!-- /ko --></span>:
+            <span><!-- ko text: getExpirationDate()--><!-- /ko --></span>
+            )
+        </label>
+    </div>
+
+    <div class="payment-method-content">
+        <!-- ko foreach: getRegion('messages') -->
+        <!-- ko template: getTemplate() --><!-- /ko -->
+        <!--/ko-->
+
+        <!-- ko if: errorValidationMessage().length -->
+        <div class="message notice">
+            <span><!-- ko i18n: errorValidationMessage()--><!-- /ko --></span>
+        </div>
+        <!-- /ko -->
+
+        <div data-bind="attr: {'id': getId() + '-container'}"></div>
+
+        <div class="checkout-agreements-block">
+            <!-- ko foreach: $parent.getRegion('before-place-order') -->
+            <!-- ko template: getTemplate() --><!-- /ko -->
+            <!--/ko-->
+        </div>
+
+        <div class="actions-toolbar">
+            <div class="primary">
+                <button class="action primary checkout" type="submit"
+                        data-bind="click: checkout, css: {disabled: !isPlaceOrderActionAllowed()}">
+                    <!-- ko i18n: 'Place Order'--><!-- /ko -->
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

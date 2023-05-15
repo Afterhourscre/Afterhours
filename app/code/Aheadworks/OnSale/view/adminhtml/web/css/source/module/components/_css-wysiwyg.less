@@ -1,0 +1,90 @@
+//
+//  Css Wysiwyg
+//  _____________________________________________
+
+.aw-onsale__css-wysiwyg {
+
+    .toolbar {
+        .admin__action-dropdown-wrap {
+            margin-top: 5px;
+            border: 1px solid #e3e3e3;
+
+            &._active {
+                border: none;
+                z-index: 3;
+
+                .admin__action-dropdown,
+                .admin__action-dropdown-menu {
+                    border-color: #adadad;
+                }
+            }
+        }
+
+        .admin__action-dropdown {
+            background-color: #f8f8f8;
+            min-width: 170px;
+
+            &:hover, &:focus{
+                background-color: #f8f8f8;
+            }
+        }
+
+        .admin__action-dropdown-menu {
+            right: auto;
+            left: 0;
+            width: 250px;
+            background-color: #f8f8f8;
+
+            > .admin__field {
+                margin: 1.5rem 0 1.5rem 0;
+
+                &:after {
+                    clear: both;
+                    content: '';
+                    display: table;
+                }
+
+                > .admin__field-label {
+                    float: left;
+                    width: ~'calc( (100%) * 0.2)';
+
+                    span {
+                        vertical-align: middle;
+                    }
+                }
+
+                > .admin__field-control {
+                    width: 120px;
+                    float: left;
+                    margin-left: 15px;
+                }
+            }
+        }
+
+        .admin__action-dropdown-text {
+            &:after {
+                left: 0;
+                right: -6px;
+                background-color: #f8f8f8;
+            }
+        }
+    }
+
+    .collapsible-block-wrapper {
+        .collapsible-title-wrapper {
+            margin-top: 0.5rem;
+        }
+
+        .admin__collapsible-title {
+            font-size: 1.3rem;
+            padding: 0.9rem 0 0.9rem 2.2rem;
+            font-weight: normal;
+            float: left;
+
+            &:before {
+                top: 1.1rem;
+                font-size: 1.3rem;
+            }
+        }
+    }
+}

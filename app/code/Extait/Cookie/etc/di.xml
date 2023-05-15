@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the commercial license
+ * that is bundled with this package in the file LICENSE.txt.
+ *
+ * @category Extait
+ * @package Extait_Cookie
+ * @copyright Copyright (c) 2016-2018 Extait, Inc. (http://www.extait.com)
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!-- UI Data Provider -->
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+                <item name="cookie_data_source" xsi:type="string">cookieSearchResult</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Cookie Search Result -->
+    <virtualType name="cookieSearchResult" type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">extait_cookie_cookie</argument>
+            <argument name="resourceModel" xsi:type="string">Extait\Cookie\Model\ResourceModel\Cookie</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Preferences for cookie interfaces -->
+    <preference for="Extait\Cookie\Api\Data\CookieInterface" type="Extait\Cookie\Model\Cookie"/>
+    <preference for="Extait\Cookie\Api\Data\CookieRepositoryInterface" type="Extait\Cookie\Model\CookieRepository"/>
+    <preference for="Extait\Cookie\Api\Data\CookieSearchResultsInterface" type="Extait\Cookie\Model\CookieSearchResults"/>
+
+    <!-- Preferences for cookie categories interfaces -->
+    <preference for="Extait\Cookie\Api\Data\CategoryInterface" type="Extait\Cookie\Model\Category"/>
+    <preference for="Extait\Cookie\Api\Data\CategoryRepositoryInterface" type="Extait\Cookie\Model\CategoryRepository"/>
+    <preference for="Extait\Cookie\Api\Data\CategorySearchResultsInterface" type="Extait\Cookie\Model\CategorySearchResults"/>
+</config>

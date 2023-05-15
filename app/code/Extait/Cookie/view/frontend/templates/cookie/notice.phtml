@@ -1,0 +1,47 @@
+<?php
+/**
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the commercial license
+ * that is bundled with this package in the file LICENSE.txt.
+ *
+ * @category Extait
+ * @package Extait_Cookie
+ * @copyright Copyright (c) 2016-2018 Extait, Inc. (http://www.extait.com)
+ */
+
+/** @codingStandardsIgnoreFile */
+
+/** @var \Extait\Cookie\Block\Cookie\Notice $block */
+?>
+<?php if ($block->isModuleEnabled()): ?>
+    <div role="alertdialog" tabindex="-1" class="message global cookie" id="notice-cookie-block" style="display: none;">
+        <div role="document" class="page-main" tabindex="0">
+            <?= /* @noEscape */ $block->getCookieRestrictionMessage(); ?>
+            <div class="actions">
+                <button id="btn-cookie-allow" class="action allow primary">
+                    <span><?= $block->escapeHtml(__('Allow Cookies')) ?></span>
+                </button>
+                <button id="btn-cookie-settings"
+                        class="action allow default"
+                        onclick="window.location='<?= /* @noEscape */ $block->getCookieSettingsUrl() ?>'">
+                        <?= $block->escapeHtml(__('Cookie Settings')) ?>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/x-magento-init">
+        {
+            "#notice-cookie-block": {
+                "cookieNotices": {
+                    "cookieAllowButtonSelector": "#btn-cookie-allow",
+                    "cookieName": "<?= /* @noEscape */ \Magento\Cookie\Helper\Cookie::IS_USER_ALLOWED_SAVE_COOKIE ?>",
+                    "cookieValue": <?= /* @noEscape */ $this->helper(\Magento\Cookie\Helper\Cookie::class)->getAcceptedSaveCookiesWebsiteIds() ?>,
+                    "cookieLifetime": <?= /* @noEscape */ $this->helper(\Magento\Cookie\Helper\Cookie::class)->getCookieRestrictionLifetime() ?>,
+                    "noCookiesUrl": "<?= $block->escapeUrl($block->getUrl('cookie/index/noCookies')) ?>"
+                }
+            }
+        }
+    </script>
+<?php endif; ?>

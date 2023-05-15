@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Framework\Controller\ResultInterface">
+        <plugin name="MageCloud_RemoveDefaultRichSnippets::remove_rich_snippets"
+                type="MageCloud\RemoveDefaultRichSnippets\Plugin\RemoveRichSnippetsPlugin" sortOrder="10000001" />
+    </type>
+    <type name="Mirasvit\SeoMarkup\Block\Rs\Product">
+        <plugin name="MageCloud_RemoveDefaultRichSnippets::add_brand_to_product_rich_snippet"
+                type="MageCloud\RemoveDefaultRichSnippets\Plugin\AddBrandToProductRichSnippet"/>
+    </type>
+</config>

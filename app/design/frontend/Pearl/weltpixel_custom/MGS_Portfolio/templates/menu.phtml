@@ -1,0 +1,13 @@
+<?php $menu = $this->getMenu() ?>
+<div class="portfolio_nav">
+    <ul class="portfolio_nav__items">
+        <li class="portfolio_nav__items___item"><a href="/portfolio">All</a></li>
+        <?php foreach($menu as $_menu ): ?>
+            <?php if($_menu->getId() == $this->getRequest()->getParam('id')): ?>
+                <li class="portfolio_nav__items___item current"><strong><?php echo $_menu->getCategoryName() ?></strong></li>
+            <?php else: ?>
+                <li class="portfolio_nav__items___item"><a href="<?php echo $_menu->getLinkCate(); ?>"><?php echo $_menu->getCategoryName() ?></a></li>
+            <?php endif ?>
+        <?php endforeach; ?>
+    </ul>
+</div>

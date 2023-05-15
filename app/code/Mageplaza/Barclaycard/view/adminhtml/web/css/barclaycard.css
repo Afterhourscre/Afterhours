@@ -1,0 +1,65 @@
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_Barclaycard
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+
+.complex.mpbarclaycard-payment-section .mpbarclaycard-payment-logo {
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 20px 0 0;
+    width: 180px;
+    height: 60px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-image: url("../images/logo.png");
+}
+
+.complex.mpbarclaycard-payment-section .mpbarclaycard-payment-title {
+    display: inline-block;
+    margin-bottom: .5rem;
+}
+
+.complex.mpbarclaycard-payment-section .mpbarclaycard-payment-comment {
+    font-weight: normal;
+}
+
+.complex.mpbarclaycard-payment-section .button-container {
+    float: right;
+}
+
+.complex.mpbarclaycard-payment-section .mpbarclaycard-payment-byline {
+    display: inline-block;
+    vertical-align: middle;
+    width: 50%;
+}
+
+.mpbarclaycard-payment-section.section-config.active > .admin__collapsible-block + input + fieldset {
+    margin-left: 40px;
+}
+
+#mpbarclaycard-spinner {
+    vertical-align: middle;
+    margin: 0 5px;
+}
+
+#mpbarclaycard-messages {
+    margin-top: 10px;
+    max-width: 500px;
+    word-break: break-word;
+}

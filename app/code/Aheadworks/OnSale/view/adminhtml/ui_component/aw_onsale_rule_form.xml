@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+See LICENSE.txt for license details.
+*/
+-->
+
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">aw_onsale_rule_form.aw_onsale_rule_form_data_source</item>
+            <item name="deps" xsi:type="string">aw_onsale_rule_form.aw_onsale_rule_form_data_source</item>
+        </item>
+        <item name="label" xsi:type="string" translate="true">Rule</item>
+        <item name="config" xsi:type="array">
+            <item name="dataScope" xsi:type="string">data</item>
+            <item name="namespace" xsi:type="string">aw_onsale_rule_form</item>
+        </item>
+        <item name="template" xsi:type="string">templates/form/collapsible</item>
+        <item name="buttons" xsi:type="array">
+            <item name="back" xsi:type="string">Aheadworks\OnSale\Block\Adminhtml\Rule\Edit\Button\Back</item>
+            <item name="delete" xsi:type="string">Aheadworks\OnSale\Block\Adminhtml\Rule\Edit\Button\Delete</item>
+            <item name="reset" xsi:type="string">Aheadworks\OnSale\Block\Adminhtml\Rule\Edit\Button\Reset</item>
+            <item name="save_and_apply" xsi:type="string">Aheadworks\OnSale\Block\Adminhtml\Rule\Edit\Button\SaveAndApply</item>
+            <item name="save_and_continue" xsi:type="string">Aheadworks\OnSale\Block\Adminhtml\Rule\Edit\Button\SaveAndContinue</item>
+            <item name="save" xsi:type="string">Aheadworks\OnSale\Block\Adminhtml\Rule\Edit\Button\Save</item>
+        </item>
+    </argument>
+    <dataSource name="aw_onsale_rule_form_data_source">
+        <argument name="dataProvider" xsi:type="configurableObject">
+            <argument name="class" xsi:type="string">Aheadworks\OnSale\Ui\DataProvider\Rule\FormDataProvider</argument>
+            <argument name="name" xsi:type="string">aw_onsale_rule_form_data_source</argument>
+            <argument name="primaryFieldName" xsi:type="string">rule_id</argument>
+            <argument name="requestFieldName" xsi:type="string">id</argument>
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="submit_url" xsi:type="url" path="aw_onsale/rule/save"/>
+                </item>
+            </argument>
+        </argument>
+        <argument name="data" xsi:type="array">
+            <item name="js_config" xsi:type="array">
+                <item name="component" xsi:type="string">Magento_Ui/js/form/provider</item>
+            </item>
+        </argument>
+    </dataSource>
+    <fieldset name="general_information">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="label" xsi:type="string" translate="true">General Information</item>
+                <item name="collapsible" xsi:type="boolean">true</item>
+                <item name="opened" xsi:type="boolean">true</item>
+                <item name="sortOrder" xsi:type="number">10</item>
+            </item>
+        </argument>
+        <field name="rule_id">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="source" xsi:type="string">rule</item>
+                    <item name="dataScope" xsi:type="string">rule_id</item>
+                </item>
+            </argument>
+        </field>
+        <field name="is_active">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">boolean</item>
+                    <item name="formElement" xsi:type="string">checkbox</item>
+                    <item name="label" xsi:type="string" translate="true">Enable Rule</item>
+                    <item name="prefer" xsi:type="string">toggle</item>
+                    <item name="source" xsi:type="string">rule</item>
+                    <item name="sortOrder" xsi:type="number">10</item>
+                    <item name="dataScope" xsi:type="string">is_active</item>
+                    <item name="valueMap" xsi:type="array">
+                        <item name="true" xsi:type="string">1</item>
+                        <item name="false" xsi:type="string">0</item>
+                    </item>
+                    <item name="default" xsi:type="string">1</item>
+                </item>
+            </argument>
+        </field>
+        <field name="name">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">Rule Name</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="source" xsi:type="string">rule</item>
+                    <item name="sortOrder" xsi:type="number">20</item>
+                    <item name="dataScope" xsi:type="string">name</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="label_id">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Aheadworks\OnSale\Model\Source\Label\Options</item>
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Label</item>
+                    <item name="sortOrder" xsi:type="number">30</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="component" xsi:type="string">Magento_Ui/js/form/element/ui-select</item>
+                    <item name="elementTmpl" xsi:type="string">ui/grid/filters/elements/ui-select</item>
+                    <item name="dataScope" xsi:type="string">label_id</item>
+                    <item name="filterOptions" xsi:type="boolean">true</item>
+                    <item name="showCheckbox" xsi:type="boolean">false</item>
+                    <item name="disableLabel" xsi:type="boolean">true</item>
+                    <item name="multiple" xsi:type="boolean">false</item>
+                    <item name="levelsVisibility" xsi:type="number">1</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="priority">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">Priority</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="source" xsi:type="string">rule</item>
+                    <item name="sortOrder" xsi:type="number">40</item>
+                    <item name="dataScope" xsi:type="string">priority</item>
+                    <item name="notice" xsi:type="string" translate="true">Decrease the number to increase the Priority level</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                        <item name="validate-number" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="default" xsi:type="string">10</item>
+                </item>
+            </argument>
+        </field>
+        <field name="website_ids" class="Aheadworks\OnSale\Ui\Component\Form\Rule\Element\Website">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Aheadworks\OnSale\Model\Source\System\Website</item>
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">number</item>
+                    <item name="label" xsi:type="string" translate="true">Website</item>
+                    <item name="formElement" xsi:type="string">multiselect</item>
+                    <item name="source" xsi:type="string">rule</item>
+                    <item name="sortOrder" xsi:type="number">50</item>
+                    <item name="dataScope" xsi:type="string">website_ids</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="customer_groups">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Aheadworks\OnSale\Model\Source\Customer\Group</item>
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">number</item>
+                    <item name="label" xsi:type="string" translate="true">Customer Groups</item>
+                    <item name="formElement" xsi:type="string">multiselect</item>
+                    <item name="source" xsi:type="string">rule</item>
+                    <item name="sortOrder" xsi:type="number">60</item>
+                    <item name="dataScope" xsi:type="string">customer_groups</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="from_date">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">From</item>
+                    <item name="formElement" xsi:type="string">date</item>
+                    <item name="source" xsi:type="string">rule</item>
+                    <item name="sortOrder" xsi:type="number">70</item>
+                    <item name="dataScope" xsi:type="string">from_date</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-date" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="to_date">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">To</item>
+                    <item name="formElement" xsi:type="string">date</item>
+                    <item name="source" xsi:type="string">rule</item>
+                    <item name="sortOrder" xsi:type="number">80</item>
+                    <item name="dataScope" xsi:type="string">to_date</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-date" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+    </fieldset>
+    <fieldset name="frontend_label_text">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="label" xsi:type="string" translate="true">Frontend Label Text</item>
+                <item name="collapsible" xsi:type="boolean">true</item>
+                <item name="opened" xsi:type="boolean">true</item>
+                <item name="sortOrder" xsi:type="number">20</item>
+                <item name="template" xsi:type="string">ui/form/fieldset</item>
+                <item name="additionalClasses" xsi:type="string">aw-onsale frontend-label-text</item>
+            </item>
+        </argument>
+        <container name="frontend_label_text_variable_helper" class="Aheadworks\OnSale\Ui\Component\Form\Rule\Element\FrontendLabelNotice">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="template" xsi:type="string">Aheadworks_OnSale/ui/form/components/rule/notice-container</item>
+                    <item name="tooltipTpl" xsi:type="string">Aheadworks_OnSale/ui/form/element/helper/tooltip/as-array</item>
+                    <item name="label" xsi:type="string" translate="true">Hover over the question mark to find variable options. Click it to get more details in user guide.</item>
+                    <item name="tooltip" xsi:type="array">
+                        <item name="link" xsi:type="string">http://confluence.aheadworks.com/display/EUDOC/Product+Labels+-+Magento+2#ProductLabels-Magento2-HowtouseVariables</item>
+                    </item>
+                </item>
+            </argument>
+        </container>
+        <dynamicRows name="frontend_label_text_store_values" class="Aheadworks\OnSale\Ui\Component\Form\Rule\Element\DynamicRows">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="componentType" xsi:type="string">dynamicRows</item>
+                    <item name="component" xsi:type="string">Magento_Ui/js/dynamic-rows/dynamic-rows</item>
+                    <item name="template" xsi:type="string">ui/dynamic-rows/templates/default</item>
+                    <item name="addButtonLabel" xsi:type="string" translate="true">Add</item>
+                    <item name="defaultRecord" xsi:type="boolean">true</item>
+                    <item name="pageSize" xsi:type="string">100</item>
+                    <item name="dndConfig" xsi:type="array">
+                        <item name="enabled" xsi:type="boolean">false</item>
+                    </item>
+                    <item name="additionalClasses" xsi:type="string">admin__field-wide aw-onsale dynamic-rows</item>
+                </item>
+            </argument>
+            <container name="record">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="isTemplate" xsi:type="boolean">true</item>
+                        <item name="is_collection" xsi:type="boolean">true</item>
+                        <item name="component" xsi:type="string">Aheadworks_OnSale/js/ui/form/rule/dynamic-rows/record</item>
+                        <item name="componentType" xsi:type="string">container</item>
+                    </item>
+                </argument>
+                <field name="store_id" class="Aheadworks\OnSale\Ui\Component\Form\Rule\Element\Store">
+                    <argument name="options" xsi:type="object">Aheadworks\OnSale\Ui\Component\Listing\Rule\Column\Store\Options</argument>
+                    <argument name="data" xsi:type="array">
+                        <item name="config" xsi:type="array">
+                            <item name="dataType" xsi:type="string">text</item>
+                            <item name="label" xsi:type="string" translate="true">Store View</item>
+                            <item name="formElement" xsi:type="string">select</item>
+                            <item name="component" xsi:type="string">Magento_Ui/js/form/element/select</item>
+                            <item name="template" xsi:type="string">ui/form/field</item>
+                            <item name="elementTmpl" xsi:type="string">ui/form/element/select</item>
+                            <item name="source" xsi:type="string">rule</item>
+                            <item name="sortOrder" xsi:type="number">10</item>
+                            <item name="dataScope" xsi:type="string">store_id</item>
+                            <item name="disableForDefaultRecord" xsi:type="boolean">false</item>
+                            <item name="default" xsi:type="string">0</item>
+                            <item name="additionalClasses" xsi:type="string">select_field</item>
+                        </item>
+                    </argument>
+                </field>
+                <field name="value_large">
+                    <argument name="data" xsi:type="array">
+                        <item name="config" xsi:type="array">
+                            <item name="dataType" xsi:type="string">text</item>
+                            <item name="formElement" xsi:type="string">input</item>
+                            <item name="dataScope" xsi:type="string">value_large</item>
+                            <item name="sortOrder" xsi:type="number">20</item>
+                            <item name="label" xsi:type="string" translate="true">Large Label Text</item>
+                        </item>
+                    </argument>
+                </field>
+                <field name="value_medium">
+                    <argument name="data" xsi:type="array">
+                        <item name="config" xsi:type="array">
+                            <item name="dataType" xsi:type="string">text</item>
+                            <item name="formElement" xsi:type="string">input</item>
+                            <item name="dataScope" xsi:type="string">value_medium</item>
+                            <item name="sortOrder" xsi:type="number">30</item>
+                            <item name="label" xsi:type="string" translate="true">Medium Label Text</item>
+                        </item>
+                    </argument>
+                </field>
+                <field name="value_small">
+                    <argument name="data" xsi:type="array">
+                        <item name="config" xsi:type="array">
+                            <item name="dataType" xsi:type="string">text</item>
+                            <item name="formElement" xsi:type="string">input</item>
+                            <item name="dataScope" xsi:type="string">value_small</item>
+                            <item name="sortOrder" xsi:type="number">40</item>
+                            <item name="label" xsi:type="string" translate="true">Small Label Text</item>
+                        </item>
+                    </argument>
+                </field>
+                <actionDelete>
+                    <argument name="data" xsi:type="array">
+                        <item name="config" xsi:type="array">
+                            <item name="sortOrder" xsi:type="number">50</item>
+                            <item name="dataType" xsi:type="string">text</item>
+                            <item name="disableForDefaultRecord" xsi:type="boolean">true</item>
+                            <item name="additionalClasses" xsi:type="string">action_delete_button</item>
+                        </item>
+                    </argument>
+                </actionDelete>
+            </container>
+        </dynamicRows>
+    </fieldset>
+    <fieldset name="product_conditions">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="label" xsi:type="string" translate="true">Product Conditions</item>
+                <item name="collapsible" xsi:type="boolean">true</item>
+                <item name="opened" xsi:type="boolean">true</item>
+                <item name="sortOrder" xsi:type="number">30</item>
+                <item name="template" xsi:type="string">ui/form/fieldset</item>
+                <item name="additionalClasses" xsi:type="string">aw-onsale product-conditions</item>
+            </item>
+        </argument>
+        <container name="rule_product_conditions" >
+            <htmlContent name="html_content">
+                <argument name="block" xsi:type="object">Aheadworks\OnSale\Block\Adminhtml\Rule\Edit\Tab\Conditions</argument>
+            </htmlContent>
+        </container>
+    </fieldset>
+</form>

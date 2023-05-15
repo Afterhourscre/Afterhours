@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+	<menu>
+		<add id="MageCloud::top_level" title="MageCloud" module="MageCloud_PayByLink" sortOrder="9999" resource="Magento_Backend::content"/>
+		<add id="MageCloud_PayByLink::index_index" title="Barclaycard Pay By Link" module="MageCloud_PayByLink" sortOrder="9999" resource="MageCloud_PayByLink::index_index" parent="MageCloud::top_level" action="adminhtml/system_config/edit/section/payment"/>
+	</menu>
+</config>

@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the commercial license
+ * that is bundled with this package in the file LICENSE.txt.
+ *
+ * @category Extait
+ * @package Extait_Cookie
+ * @copyright Copyright (c) 2016-2018 Extait, Inc. (http://www.extait.com)
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <extait_cookie>
+            <general>
+                <enable>0</enable>
+                <show_cookie_in_category>1</show_cookie_in_category>
+                <message><![CDATA[<p><strong>This site uses data saved in the cookie files and other technologies
+                </strong> to help with navigation and give you an opportunity to provide feedback, analyse your use of
+                our products and services. Also, help us with promotional and marketing efforts, and provide content
+                from third parties. Click <a href="/privacy-policy-cookie-restriction-mode">here</a> for more
+                information about Privacy Policy. If you agree to use cookie files click 'Allow Cookies'. Otherwise,
+                click ‘Cookie Settings’ to allow or prohibit some cookie categories.</p>]]></message>
+            </general>
+        </extait_cookie>
+    </default>
+</config>

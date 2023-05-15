@@ -1,0 +1,84 @@
+<?php
+/**
+ * Copyright 2019 aheadWorks. All rights reserved.
+ * See LICENSE.txt for license details.
+ */
+
+namespace Aheadworks\RewardPoints\Test\Unit\Ui\DataProvider\EarnRule\DataProcessor;
+
+use Aheadworks\RewardPoints\Ui\DataProvider\EarnRule\DataProcessor\CustomerGroup;
+use Aheadworks\RewardPoints\Api\Data\EarnRuleInterface;
+use PHPUnit\Framework\TestCase;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+
+/**
+ * Test for \Aheadworks\RewardPoints\Ui\DataProvider\EarnRule\DataProcessor\CustomerGroup
+ */
+class CustomerGroupTest extends TestCase
+{
+    /**
+     * @var CustomerGroup
+     */
+    private $processor;
+
+    /**
+     * Init mocks for tests
+     *
+     * @return void
+     */
+    public function setUp()
+    {
+        $objectManager = new ObjectManager($this);
+
+        $this->processor = $objectManager->getObject(CustomerGroup::class, []);
+    }
+
+    /**
+     * Test process method
+     *
+     * @param array $data
+     * @param array $result
+     * @dataProvider processDataProvider
+     */
+    public function testProcess($data, $result)
+    {
+        $this->assertSame($result, $this->processor->process($data));
+    }
+
+    /**
+     * @return array
+     */
+    public function processDataProvider()
+    {
+        return [
+            [
+                'data' => [],
+                'result' => []
+            ],
+            [
+                'data' => [
+                    EarnRuleInterface::CUSTOMER_GROUP_IDS => []
+                ],
+                'result' => [
+                    EarnRuleInterface::CUSTOMER_GROUP_IDS => []
+                ]
+            ],
+            [
+                'data' => [
+                    EarnRuleInterface::CUSTOMER_GROUP_IDS => [10]
+                ],
+                'result' => [
+                    EarnRuleInterface::CUSTOMER_GROUP_IDS => ['10']
+                ]
+            ],
+            [
+                'data' => [
+                    EarnRuleInterface::CUSTOMER_GROUP_IDS => [1, '2', 3]
+                ],
+                'result' => [
+                    EarnRuleInterface::CUSTOMER_GROUP_IDS => ['1', '2', '3']
+                ]
+            ],
+        ];
+    }
+}

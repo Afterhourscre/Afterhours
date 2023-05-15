@@ -1,0 +1,206 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_Worldpay
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <mpworldpay>
+            <general>
+                <merchant_country>UK</merchant_country>
+                <settlement_currency>GBP</settlement_currency>
+                <language_code>EN</language_code>
+                <display_logo>1</display_logo>
+            </general>
+        </mpworldpay>
+        <payment>
+            <mpworldpay_cards>
+                <active>0</active>
+                <model>MpWorldpayCardsFacade</model>
+                <title>Worldpay Cards</title>
+                <order_status>processing</order_status>
+                <payment_action>authorize</payment_action>
+                <paymentInfoKeys>txn_id,mpworldpay_card_type,mpworldpay_card_last4,mpworldpay_expiry_date</paymentInfoKeys>
+                <cctypes>VI,MC,MI,AE</cctypes>
+                <display_checkout>magento</display_checkout>
+                <allowspecific>0</allowspecific>
+                <can_capture>1</can_capture>
+                <can_authorize>1</can_authorize>
+                <can_refund>1</can_refund>
+                <can_use_checkout>1</can_use_checkout>
+                <can_review_payment>1</can_review_payment>
+                <can_capture_vault>1</can_capture_vault>
+                <can_authorize_vault>1</can_authorize_vault>
+                <is_gateway>1</is_gateway>
+                <useccv>1</useccv>
+                <use3ds>1</use3ds>
+            </mpworldpay_cards>
+            <mpworldpay_cards_vault>
+                <active>1</active>
+                <model>MpWorldpayCardsVaultFacade</model>
+                <title>Stored Worldpay Cards</title>
+                <can_use_internal>1</can_use_internal>
+            </mpworldpay_cards_vault>
+            <mpworldpay_paypal>
+                <active>0</active>
+                <model>MpWorldpayPayPalFacade</model>
+                <title>Worldpay PayPal</title>
+                <payment_action>authorize_capture</payment_action>
+                <paymentInfoKeys>mpworldpay_type,mpworldpay_apm,txn_id,mpworldpay_token</paymentInfoKeys>
+                <allowspecific>0</allowspecific>
+                <can_capture>1</can_capture>
+                <can_authorize>1</can_authorize>
+                <can_refund>1</can_refund>
+                <can_use_checkout>1</can_use_checkout>
+                <is_gateway>1</is_gateway>
+            </mpworldpay_paypal>
+            <mpworldpay_alipay>
+                <active>0</active>
+                <model>MpWorldpayAlipayFacade</model>
+                <title>Worldpay Alipay</title>
+                <payment_action>authorize_capture</payment_action>
+                <paymentInfoKeys>mpworldpay_type,mpworldpay_apm,txn_id,mpworldpay_token</paymentInfoKeys>
+                <allowspecific>0</allowspecific>
+                <can_capture>1</can_capture>
+                <can_authorize>1</can_authorize>
+                <can_refund>1</can_refund>
+                <can_use_checkout>1</can_use_checkout>
+                <is_gateway>1</is_gateway>
+            </mpworldpay_alipay>
+            <mpworldpay_giropay>
+                <active>0</active>
+                <model>MpWorldpayGiropayFacade</model>
+                <title>Worldpay Giropay</title>
+                <payment_action>authorize_capture</payment_action>
+                <paymentInfoKeys>mpworldpay_type,mpworldpay_apm,txn_id,mpworldpay_token</paymentInfoKeys>
+                <allowspecific>0</allowspecific>
+                <can_capture>1</can_capture>
+                <can_authorize>1</can_authorize>
+                <can_refund>1</can_refund>
+                <can_use_checkout>1</can_use_checkout>
+                <is_gateway>1</is_gateway>
+            </mpworldpay_giropay>
+            <mpworldpay_ideal>
+                <active>0</active>
+                <model>MpWorldpayIdealFacade</model>
+                <title>Worldpay iDeal</title>
+                <payment_action>authorize_capture</payment_action>
+                <paymentInfoKeys>mpworldpay_type,mpworldpay_apm,txn_id,mpworldpay_token</paymentInfoKeys>
+                <allowspecific>0</allowspecific>
+                <can_capture>1</can_capture>
+                <can_authorize>1</can_authorize>
+                <can_refund>1</can_refund>
+                <can_use_checkout>1</can_use_checkout>
+                <is_gateway>1</is_gateway>
+            </mpworldpay_ideal>
+            <mpworldpay_mistercash>
+                <active>0</active>
+                <model>MpWorldpayMistercashFacade</model>
+                <title>Worldpay Mistercash</title>
+                <payment_action>authorize_capture</payment_action>
+                <paymentInfoKeys>mpworldpay_type,mpworldpay_apm,txn_id,mpworldpay_token</paymentInfoKeys>
+                <allowspecific>0</allowspecific>
+                <can_capture>1</can_capture>
+                <can_authorize>1</can_authorize>
+                <can_refund>1</can_refund>
+                <can_use_checkout>1</can_use_checkout>
+                <is_gateway>1</is_gateway>
+            </mpworldpay_mistercash>
+            <mpworldpay_paysafecard>
+                <active>0</active>
+                <model>MpWorldpayPaysafecardFacade</model>
+                <title>Worldpay PaySafeCard</title>
+                <payment_action>authorize_capture</payment_action>
+                <paymentInfoKeys>mpworldpay_type,mpworldpay_apm,txn_id,mpworldpay_token</paymentInfoKeys>
+                <allowspecific>0</allowspecific>
+                <can_capture>1</can_capture>
+                <can_authorize>1</can_authorize>
+                <can_refund>1</can_refund>
+                <can_use_checkout>1</can_use_checkout>
+                <is_gateway>1</is_gateway>
+            </mpworldpay_paysafecard>
+            <mpworldpay_postepay>
+                <active>0</active>
+                <model>MpWorldpayPostepayFacade</model>
+                <title>Worldpay Postepay</title>
+                <payment_action>authorize_capture</payment_action>
+                <paymentInfoKeys>mpworldpay_type,mpworldpay_apm,txn_id,mpworldpay_token</paymentInfoKeys>
+                <allowspecific>0</allowspecific>
+                <can_capture>1</can_capture>
+                <can_authorize>1</can_authorize>
+                <can_refund>1</can_refund>
+                <can_use_checkout>1</can_use_checkout>
+                <is_gateway>1</is_gateway>
+            </mpworldpay_postepay>
+            <mpworldpay_przelewy24>
+                <active>0</active>
+                <model>MpWorldpayPrzelewy24Facade</model>
+                <title>Worldpay Przelewy24</title>
+                <payment_action>authorize_capture</payment_action>
+                <paymentInfoKeys>mpworldpay_type,mpworldpay_apm,txn_id,mpworldpay_token</paymentInfoKeys>
+                <allowspecific>0</allowspecific>
+                <can_capture>1</can_capture>
+                <can_authorize>1</can_authorize>
+                <can_refund>1</can_refund>
+                <can_use_checkout>1</can_use_checkout>
+                <is_gateway>1</is_gateway>
+            </mpworldpay_przelewy24>
+            <mpworldpay_qiwi>
+                <active>0</active>
+                <model>MpWorldpayQiwiFacade</model>
+                <title>Worldpay Qiwi</title>
+                <payment_action>authorize_capture</payment_action>
+                <paymentInfoKeys>mpworldpay_type,mpworldpay_apm,txn_id,mpworldpay_token</paymentInfoKeys>
+                <allowspecific>0</allowspecific>
+                <can_capture>1</can_capture>
+                <can_authorize>1</can_authorize>
+                <can_refund>1</can_refund>
+                <can_use_checkout>1</can_use_checkout>
+                <is_gateway>1</is_gateway>
+            </mpworldpay_qiwi>
+            <mpworldpay_sofort>
+                <active>0</active>
+                <model>MpWorldpaySofortFacade</model>
+                <title>Worldpay Sofort</title>
+                <payment_action>authorize_capture</payment_action>
+                <paymentInfoKeys>mpworldpay_type,mpworldpay_apm,txn_id,mpworldpay_token</paymentInfoKeys>
+                <allowspecific>0</allowspecific>
+                <can_capture>1</can_capture>
+                <can_authorize>1</can_authorize>
+                <can_refund>1</can_refund>
+                <can_use_checkout>1</can_use_checkout>
+                <is_gateway>1</is_gateway>
+            </mpworldpay_sofort>
+            <mpworldpay_yandex>
+                <active>0</active>
+                <model>MpWorldpayYandexFacade</model>
+                <title>Worldpay Yandex</title>
+                <payment_action>authorize_capture</payment_action>
+                <paymentInfoKeys>mpworldpay_type,mpworldpay_apm,txn_id,mpworldpay_token</paymentInfoKeys>
+                <allowspecific>0</allowspecific>
+                <can_capture>1</can_capture>
+                <can_authorize>1</can_authorize>
+                <can_refund>1</can_refund>
+                <can_use_checkout>1</can_use_checkout>
+                <is_gateway>1</is_gateway>
+            </mpworldpay_yandex>
+        </payment>
+    </default>
+</config>

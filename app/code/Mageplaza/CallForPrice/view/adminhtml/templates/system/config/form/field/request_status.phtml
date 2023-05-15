@@ -1,0 +1,160 @@
+<?php
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_CallForPrice
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+
+$_htmlId  = $block->getHtmlId() ? $block->getHtmlId() : '_' . uniqid();
+$_colspan = $block->isAddAfter() ? 2 : 1;
+?>
+<div class="design_theme_ua_regexp" id="grid<?= $_htmlId ?>">
+    <div class="admin__control-table-wrapper">
+        <table class="admin__control-table" id="<?= $block->getElement()->getId() ?>">
+            <thead>
+            <tr>
+                <?php foreach ($block->getColumns() as $columnName => $column): ?>
+                    <th colspan="<?php echo $columnName == 'access_key' ? '2' : ''; ?>"><?= $column['label'] ?></th>
+                <?php endforeach; ?>
+                <th class="col-actions" colspan="<?= $_colspan++ ?>"><?php echo __("Delete"); ?></th>
+            </tr>
+            </thead>
+            <tfoot>
+            <tr>
+                <td colspan="<?= count($block->getColumns()) + $_colspan ?>" class="col-actions-add">
+                    <button id="addToEndBtn" class="action-add" title="<?= __('Add') ?>" type="button">
+                        <span><?= $block->getAddButtonLabel() ?></span>
+                    </button>
+                </td>
+            </tr>
+            </tfoot>
+            <tbody id="addRow<?= $_htmlId ?>"></tbody>
+        </table>
+    </div>
+    <input type="hidden" name="<?= $block->getElement()->getName() ?>[__empty]" value=""/>
+    <script>
+        require([
+            'jquery',
+            'mage/template',
+            'prototype'
+        ], function (_$, mageTemplate) {
+            // create row creator
+            window.arrayRow<?=  $_htmlId ?> = {
+                // define row prototypeJS template
+                template: mageTemplate(
+                    '<tr id="<%- _id %>">'
+                    <?php foreach ($block->getColumns() as $columnName => $column): ?>
+                    + '<td>'
+                    + '<?=  $block->renderCellTemplate($columnName) ?>'
+                    + '<\/td>'
+                    <?php endforeach; ?>
+                    <?php if ($block->isAddAfter()): ?>
+                    + '<td><button class="action-add" type="button" id="addAfterBtn<%- _id %>"><span><?=  __('Add after') ?><\/span><\/button><\/td>'
+                    <?php endif; ?>
+                    + '<td class="col-actions"><button onclick="arrayRow<?=  $_htmlId ?>.del(\'<%- _id %>\')" class="action-delete" type="button"><span><?=  __('Delete') ?><\/span><\/button><\/td>'
+                    + '<\/tr>'
+                ),
+
+                add: function (rowData, insertAfterId) {
+                    // generate default template data
+                    var templateValues;
+
+                    // Prepare template values
+                    if (rowData) {
+                        templateValues = rowData;
+                    } else {
+                        var d = new Date();
+                        templateValues = {
+                        <?php foreach ($block->getColumns() as $columnName => $column): ?>
+                            <?=  $columnName ?>: <?php if ($columnName == 'access_key') : ?>this.change()<?php else: ?>''<?php endif; ?>,
+                            'option_extra_attrs':{},
+                        <?php endforeach; ?>
+                            _id: '_' + d.getTime() + '_' + d.getMilliseconds()
+                        };
+                    }
+
+                    // Insert new row after specified row or at the bottom
+                    if (insertAfterId) {
+                        Element.insert($(insertAfterId), {after: this.template(templateValues)});
+                    } else {
+                        Element.insert($('addRow<?= $_htmlId ?>'), {bottom: this.template(templateValues)});
+                    }
+
+                    // Fill controls with data
+                    if (rowData) {
+                        var rowInputElementNames = Object.keys(rowData.column_values);
+                        for (var i = 0; i < rowInputElementNames.length; i++) {
+                            if ($(rowInputElementNames[i])) {
+                                $(rowInputElementNames[i]).setValue(rowData.column_values[rowInputElementNames[i]]);
+                            }
+                        }
+                    }
+
+                    // Add event for {addAfterBtn} button
+                    <?php if ($block->isAddAfter()): ?>
+                    Event.observe('addAfterBtn' + templateValues._id, 'click', this.add.bind(this, false, templateValues._id));
+                    <?php endif; ?>
+                },
+
+                del: function (rowId) {
+                    /** action del row*/
+                    /** if have minimum request status*/
+                    if (_$('input[type=radio]', '#mpcallforprice_general_request_status').length > 1) {
+                        $(rowId).remove();
+                    }
+                    var allRadiosInListRequestState = _$('#mpcallforprice_general_request_status input[type=radio]'),
+                        hasChecked = _$('input[type=radio]:checked', '#mpcallforprice_general_request_status').val();
+                    /** if has not default status */
+                    if (!hasChecked) {
+                        _$(allRadiosInListRequestState).first().attr('checked', true);
+                    }
+                }
+            };
+
+            // bind add action to "Add" button in last row
+            Event.observe('addToEndBtn', 'click', arrayRow<?=  $_htmlId ?>.add.bind(arrayRow<?=  $_htmlId ?>, false, false));
+
+            // add existing rows
+            <?php
+            foreach ($block->getArrayRows() as $_rowId => $_row) {
+                echo "arrayRow{$_htmlId}.add(" . $_row->toJson() . ");\n";
+            }
+            ?>
+        });
+    </script>
+</div>
+<script type="text/javascript">
+    //<![CDATA[
+    require([
+        'jquery'
+    ], function ($) {
+        "use strict";
+
+        $(function () {
+            /** event click choose radio*/
+            $("#mpcallforprice_general_request_status").on("click", "input[type=radio]", function () {
+                var allRadiosInList = $('#mpcallforprice_general_request_status input[type=radio]');
+                $.each(allRadiosInList, function () {
+                    $('#mpcallforprice_general_request_status input[type=radio]').attr('checked', false);
+                });
+
+                $('#mpcallforprice_general_request_status input[type=radio][id=' + this.id + ']').attr('checked', true);
+            });
+        });
+    });
+    //]]>
+</script>

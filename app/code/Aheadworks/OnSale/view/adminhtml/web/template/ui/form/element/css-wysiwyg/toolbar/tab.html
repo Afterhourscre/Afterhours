@@ -1,0 +1,10 @@
+<div class="admin__action-dropdown-wrap" visible="visible" collapsible>
+    <button class="admin__action-dropdown" type="button" toggleCollapsible>
+        <span class="admin__action-dropdown-text" text="label"/>
+    </button>
+    <div class="admin__action-dropdown-menu">
+        <each args="data: elems, as: 'element'">
+            <render if="hasTemplate()"/>
+        </each>
+    </div>
+</div>

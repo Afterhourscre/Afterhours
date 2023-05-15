@@ -1,0 +1,73 @@
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_Barclaycard
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+
+.fieldset > .field.cvv:not(.choice) > .control {
+    width: auto !important;
+}
+
+.payment-method-barclaycard {
+    margin-bottom: 15px;
+}
+
+.payment-method-barclaycard .payment-icon {
+    max-height: 30px;
+}
+
+.vault-option-barclaycard {
+    margin-top: 20px;
+}
+
+.mpbarclaycard-method-form .control.has_error input,
+.mpbarclaycard-method-form .control.has_error select {
+    border-color: #ed8380;
+}
+
+.mpbarclaycard-method-form .control .mage-error {
+    margin-top: 7px;
+    color: #e02b27;
+    font-size: 1.2rem;
+    display: none;
+}
+
+.mpbarclaycard-method-form .control.has_error .mage-error {
+    display: block;
+}
+
+.checkout-payment-method .credit-card-types .item {
+    opacity: 0.4;
+    -webkit-filter: grayscale(100%);
+    -webkit-transition: all .6s ease
+}
+
+.checkout-payment-method .credit-card-types .item._active {
+    opacity: 1;
+    -webkit-filter: grayscale(0%);
+}
+
+.field-tooltip .field-tooltip-action > span {
+    border: 0;
+    clip: rect(0, 0, 0, 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+}

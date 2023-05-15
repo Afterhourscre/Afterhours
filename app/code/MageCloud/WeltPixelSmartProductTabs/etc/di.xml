@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="WeltPixel\SmartProductTabs\Block\SmartProductTabs" type="MageCloud\WeltPixelSmartProductTabs\Block\SmartProductTabs" />
+    <preference for="WeltPixel\SmartProductTabs\Helper\Data" type="MageCloud\WeltPixelSmartProductTabs\Helper\Data" />
+    <preference for="WeltPixel\SmartProductTabs\Model\Config\Source\AttributeCollection" type="MageCloud\WeltPixelSmartProductTabs\Model\Config\Source\AttributeCollection" />
+</config>

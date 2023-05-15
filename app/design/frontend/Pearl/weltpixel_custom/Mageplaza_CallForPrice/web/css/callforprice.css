@@ -1,0 +1,134 @@
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license sliderConfig is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_CallForPrice
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+
+.mpcpf_request_quote_popup {
+    margin-top: 22px;
+}
+
+.mp_modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0, 0, 0);
+    background-color: rgba(0, 0, 0, 0.4);
+    overflow: initial;
+}
+
+.mp_popupquote-content {
+    background-color: #fefefe;
+    margin: 10% auto;
+    padding: 5px 20px 20px 20px;
+    border: 1px solid #888;
+    width: 20%;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    position: relative;
+    z-index: 9;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#mp_message.success {
+    color: green;
+}
+
+#mp_message.error {
+    color: #a32b1c;
+}
+
+.mp_popupquote-content .actions-toolbar{
+    margin-top: 20px;
+}
+.mp_popupquote-content .popup-loading-request{
+    margin: 10px 0;
+    width: 100%;
+    height: auto;
+}
+
+.callforprice-action {
+    float: inherit;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.column.main .products-grid .product-item .product-item-info .callforprice-action {
+    display: none;
+}
+
+.mp_modal {
+    overflow: scroll;
+}
+
+/*Reponsive screen monitor 768px*/
+@media all and (max-width: 1300px) {
+    .mp_popupquote-content{
+        width: 30%;
+    }
+}
+
+/*Reponsive screen monitor 768px*/
+@media all and (max-width: 1024px) {
+    .mp_popupquote-content{
+        width: 35%;
+    }
+}
+
+/*Reponsive screen monitor 768px*/
+@media all and (max-width: 768px) {
+    .mp_popupquote-content{
+        width: 45%;
+    }
+}
+
+/*Reponsive screen monitor 500px*/
+@media all and (max-width: 500px) {
+    .mp_popupquote-content{
+        width: 80%;
+    }
+    .mpcpf_request_quote_popup {
+        left: 0;
+    }
+}
+
+/*Reponsive screen monitor 320px*/
+@media all and (max-width: 320px) {
+    .mpcpf_request_quote_popup {
+        left: -6px;
+    }
+    #mp_request_button_submit {
+        text-align: center;
+        padding: 6px;
+    }
+}

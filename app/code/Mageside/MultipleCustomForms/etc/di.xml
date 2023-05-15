@@ -1,0 +1,149 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Mageside\MultipleCustomForms\Model\CustomForm\Field\Settings">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="digits" xsi:type="array">
+                    <item name="title" xsi:type="string">Integer Number</item>
+                    <item name="condition" xsi:type="array">
+                        <item name="validate-digits" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="validator" xsi:type="array">
+                        <item name="class" xsi:type="string">Digits</item>
+                        <item name="errorMessage" xsi:type="string">Please enter a correct number for field %1.</item>
+                    </item>
+                </item>
+                <item name="number" xsi:type="array">
+                    <item name="title" xsi:type="string">Decimal Number</item>
+                    <item name="condition" xsi:type="array">
+                        <item name="validate-number" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="validator" xsi:type="array">
+                        <item name="class" xsi:type="string">Float</item>
+                        <item name="errorMessage" xsi:type="string">Please enter a correct decimal number for field %1.</item>
+                        <item name="arguments" xsi:type="array">
+                            <item name="locale" xsi:type="boolean">true</item>
+                        </item>
+                    </item>
+                </item>
+                <item name="email" xsi:type="array">
+                    <item name="title" xsi:type="string">Email</item>
+                    <item name="condition" xsi:type="array">
+                        <item name="validate-email" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="validator" xsi:type="array">
+                        <item name="class" xsi:type="string">Mageside\MultipleCustomForms\Model\CustomForm\Field\Validator\Email</item>
+                        <item name="errorMessage" xsi:type="string">Please enter a correct email address for field %1.</item>
+                    </item>
+                </item>
+                <item name="emails" xsi:type="array">
+                    <item name="title" xsi:type="string">Emails</item>
+                    <item name="condition" xsi:type="array">
+                        <item name="validate-emails" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="validator" xsi:type="array">
+                        <item name="class" xsi:type="string">Mageside\MultipleCustomForms\Model\CustomForm\Field\Validator\Email</item>
+                        <item name="errorMessage" xsi:type="string">Please enter a correct email addresses for field %1.</item>
+                    </item>
+                </item>
+                <item name="url" xsi:type="array">
+                    <item name="title" xsi:type="string">URL</item>
+                    <item name="condition" xsi:type="array">
+                        <item name="validate-url" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="validator" xsi:type="array">
+                        <item name="class" xsi:type="string">Mageside\MultipleCustomForms\Model\CustomForm\Field\Validator\Url</item>
+                        <item name="errorMessage" xsi:type="string">Please enter a correct URL for field %1.</item>
+                        <item name="arguments" xsi:type="array">
+                            <item name="allowedSchemes" xsi:type="array">
+                                <item name="0" xsi:type="string">http</item>
+                                <item name="1" xsi:type="string">https</item>
+                                <item name="2" xsi:type="string">ftp</item>
+                            </item>
+                        </item>
+                    </item>
+                </item>
+                <item name="alpha" xsi:type="array">
+                    <item name="title" xsi:type="string">Letters</item>
+                    <item name="condition" xsi:type="array">
+                        <item name="validate-alpha" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="validator" xsi:type="array">
+                        <item name="class" xsi:type="string">Alpha</item>
+                        <item name="errorMessage" xsi:type="string">Please enter a correct value for field %1. Only letters are allowed.</item>
+                    </item>
+                </item>
+                <item name="alphanum" xsi:type="array">
+                    <item name="title" xsi:type="string">Letters (a-z, A-Z) or Numbers (0-9)</item>
+                    <item name="condition" xsi:type="array">
+                        <item name="validate-alphanum" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="validator" xsi:type="array">
+                        <item name="class" xsi:type="string">Alnum</item>
+                        <item name="errorMessage" xsi:type="string">Please enter a correct value for field %1. Only letters and numbers are allowed.</item>
+                    </item>
+                </item>
+                <item name="alphanum_with_spaces" xsi:type="array">
+                    <item name="title" xsi:type="string">Letters (a-z, A-Z) or Numbers (0-9) with spaces</item>
+                    <item name="condition" xsi:type="array">
+                        <item name="validate-alphanum-with-spaces" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="validator" xsi:type="array">
+                        <item name="class" xsi:type="string">Alnum</item>
+                        <item name="errorMessage" xsi:type="string">Please enter a correct value for field %1. Only letters and numbers are allowed.</item>
+                        <item name="arguments" xsi:type="array">
+                            <item name="allowWhiteSpace" xsi:type="boolean">true</item>
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+                <item name="custom_form_listing_data_source" xsi:type="string">Mageside\MultipleCustomForms\Model\ResourceModel\CustomForm\Grid\Collection</item>
+                <item name="submission_listing_data_source" xsi:type="string">Mageside\MultipleCustomForms\Model\ResourceModel\Submission\Grid\Collection</item>
+                <item name="custom_filters_listing_data_source" xsi:type="string">Mageside\MultipleCustomForms\Model\ResourceModel\CustomForm\Field\Grid\Collection</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <virtualType name="Mageside\MultipleCustomForms\Ui\DataProvider\Form\Modifier\FilterPoolVirtual" type="Magento\Ui\DataProvider\Modifier\Pool">
+        <arguments>
+            <argument name="modifiers" xsi:type="array">
+                <item name="inputs_data" xsi:type="array">
+                    <item name="class" xsi:type="string">Mageside\MultipleCustomForms\Ui\DataProvider\Form\Modifier\InputsDataModifier</item>
+                    <item name="sortOrder" xsi:type="number">10</item>
+                </item>
+                <item name="fieldsets_data" xsi:type="array">
+                    <item name="class" xsi:type="string">Mageside\MultipleCustomForms\Ui\DataProvider\Form\Modifier\FieldsetsDataModifier</item>
+                    <item name="sortOrder" xsi:type="number">20</item>
+                </item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="Mageside\MultipleCustomForms\Ui\DataProvider\Form\FormDataProvider">
+        <arguments>
+            <argument name="pool" xsi:type="object">Mageside\MultipleCustomForms\Ui\DataProvider\Form\Modifier\FilterPoolVirtual</argument>
+        </arguments>
+    </type>
+
+    <virtualType name="Mageside\MultipleCustomForms\Ui\DataProvider\Form\Modifier\InputPoolVirtual" type="Magento\Ui\DataProvider\Modifier\Pool">
+        <arguments>
+            <argument name="modifiers" xsi:type="array" />
+        </arguments>
+    </virtualType>
+    <type name="Mageside\MultipleCustomForms\Ui\DataProvider\Form\FormInputDataProvider">
+        <arguments>
+            <argument name="pool" xsi:type="object">Mageside\MultipleCustomForms\Ui\DataProvider\Form\Modifier\InputPoolVirtual</argument>
+        </arguments>
+    </type>
+</config>

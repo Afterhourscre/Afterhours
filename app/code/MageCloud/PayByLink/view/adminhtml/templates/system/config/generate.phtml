@@ -1,0 +1,23 @@
+<?php
+
+/** @var \MageCloud\PayByLink\Block\Adminhtml\Generate $block */
+?>
+
+<?= $block->getButtonHtml() ?>
+
+<span class="no-display" id="paybylink-spinner">
+    <img alt="spinner" src="<?= $block->escapeUrl($block->getViewFileUrl('images/process_spinner.gif')) ?>"/>
+</span>
+
+<div id="paybylink-messages"></div>
+
+<script type="text/x-magento-init">
+{
+    "*": {
+        "MageCloud_PayByLink/js/view/generate": {
+            "country": "<?= $block->escapeJs($block->getMerchantCountry()) ?>",
+            "url": "<?= $block->escapeJs($block->escapeUrl($block->getAjaxUrl())) ?>"
+        }
+    }
+}
+</script>

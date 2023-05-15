@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+* See LICENSE.txt for license details.
+*/
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="aheadworks_faq_api_data_categoryinterface_save_before">
+        <observer name="legacy_model_faq_category_before_save" instance="Magento\Framework\EntityManager\Observer\BeforeEntitySave" />
+    </event>
+    <event name="aheadworks_faq_api_data_categoryinterface_save_after">
+        <observer name="legacy_model_faq_category_after_save" instance="Magento\Framework\EntityManager\Observer\AfterEntitySave" />
+    </event>
+    <event name="aheadworks_faq_api_data_categoryinterface_delete_before">
+        <observer name="legacy_model_faq_category_before_delete" instance="Magento\Framework\EntityManager\Observer\BeforeEntityDelete" />
+    </event>
+    <event name="aheadworks_faq_api_data_categoryinterface_delete_after">
+        <observer name="legacy_model_faq_category_after_delete" instance="Magento\Framework\EntityManager\Observer\AfterEntityDelete" />
+    </event>
+    <event name="aheadworks_faq_api_data_categoryinterface_load_after">
+        <observer name="legacy_model_faq_category_after_load" instance="Magento\Framework\EntityManager\Observer\AfterEntityLoad" />
+    </event>
+    <event name="aheadworks_faq_api_data_articleinterface_save_before">
+        <observer name="legacy_model_faq_article_before_save" instance="Magento\Framework\EntityManager\Observer\BeforeEntitySave" />
+    </event>
+    <event name="aheadworks_faq_api_data_articleinterface_save_after">
+        <observer name="legacy_model_faq_article_after_save" instance="Magento\Framework\EntityManager\Observer\AfterEntitySave" />
+    </event>
+    <event name="aheadworks_faq_api_data_articleinterface_delete_before">
+        <observer name="legacy_model_faq_article_before_delete" instance="Magento\Framework\EntityManager\Observer\BeforeEntityDelete" />
+    </event>
+    <event name="aheadworks_faq_api_data_articleinterface_delete_after">
+        <observer name="legacy_model_faq_article_after_delete" instance="Magento\Framework\EntityManager\Observer\AfterEntityDelete" />
+    </event>
+    <event name="aheadworks_faq_api_data_articleinterface_load_after">
+        <observer name="legacy_model_faq_article_after_load" instance="Magento\Framework\EntityManager\Observer\AfterEntityLoad" />
+    </event>
+    <event name="aw_sitemap_items_init">
+        <observer name="aheadworks_faq_add_sitemap_items" instance="Aheadworks\Faq\Observer\AddSitemapItemsObserver" />
+    </event>
+    <event name="depersonalize_clear_session">
+        <observer name="aheadworks_faq_clear_session" instance="Aheadworks\Faq\Observer\BeforeClearSession" />
+    </event>
+</config>

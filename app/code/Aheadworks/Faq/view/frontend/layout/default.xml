@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+* See LICENSE.txt for license details.
+*/
+-->
+
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <css src="Aheadworks_Faq::css/style.css" />
+    </head>
+    <body>
+        <referenceBlock name="footer_links">
+            <block class="Aheadworks\Faq\Block\Link" name="footer_faq_link" ifconfig="faq/general/footer_menu_link_enabled" template="Aheadworks_Faq::link.phtml"/>
+        </referenceBlock>
+        <referenceBlock name="header.links">
+            <block class="Aheadworks\Faq\Block\Link" name="top_faq_link" ifconfig="faq/general/top_menu_link_enabled" template="Aheadworks_Faq::link.phtml"/>
+        </referenceBlock>
+    </body>
+</page>

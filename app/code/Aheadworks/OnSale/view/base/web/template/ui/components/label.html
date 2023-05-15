@@ -1,0 +1,12 @@
+<div class="label-wrap label-inline-block" css="labelClasses" data-bind="attr: {id: uid}">
+    <render if="getBlockTmplInLabel('before')" args="getBlockTmplInLabel('before')"/>
+    <div css="labelTextClasses">
+        <div class="position-block">
+            <div class="label-text" html="_text"/>
+        </div>
+    </div>
+    <render if="getBlockTmplInLabel('after')" args="getBlockTmplInLabel('after')"/>
+</div>
+<style type="text/css" data-bind="text: getCustomCss()">
+
+</style>

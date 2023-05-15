@@ -1,0 +1,30 @@
+{
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Aheadworks\\Faq\\": ""
+        }
+    },
+    "description": "Implements FAQ functionality on Magento 2 store",
+    "license": [
+        "proprietary"
+    ],
+    "name": "aheadworks/module-faq",
+    "require": {
+        "magento/module-store": ">100.0",
+        "magento/module-eav": ">100.0",
+        "magento/module-backend": ">100.0",
+        "magento/module-theme": ">100.0",
+        "magento/module-media-storage": ">100.0",
+        "magento/module-ui": ">100.0",
+        "magento/module-sitemap": ">100.0"
+    },
+    "support": {
+        "email": "support@aheadworks.com",
+        "docs": "http://confluence.aheadworks.com/display/EUDOC/Documentation+Home"
+    },
+    "type": "magento2-module",
+    "version": "1.1.1"
+}

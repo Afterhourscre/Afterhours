@@ -1,0 +1,822 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_Worldpay
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="Mageplaza\Worldpay\Api\PaymentInterface" type="Mageplaza\Worldpay\Model\Api\Payment"/>
+    <preference for="Mageplaza\Worldpay\Api\GuestPaymentInterface" type="Mageplaza\Worldpay\Model\Api\GuestPayment"/>
+    <preference for="Mageplaza\Worldpay\Api\Data\OrderResponseInterface" type="Mageplaza\Worldpay\Model\Api\OrderResponse"/>
+
+    <!-- Fix bug magento 2.3.1 when preparing invoice item -->
+    <type name="Magento\Sales\Model\Service\InvoiceService">
+        <plugin name="mpworldpay_invoice_service" type="Mageplaza\Worldpay\Plugin\Model\InvoiceServicePlugin"/>
+    </type>
+
+    <!-- ========================================== CARDS INTEGRATION ========================================== -->
+
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="MpWorldpayCardsFacade" type="Mageplaza\Worldpay\Model\Payment\Cards">
+        <arguments>
+            <argument name="code" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Cards::CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">MpWorldpayCardsInfoBlock</argument>
+            <argument name="valueHandlerPool" xsi:type="object">MpWorldpayCardsValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">MpWorldpayCardsValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">MpWorldpayCardsCommandPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration for Vault payments -->
+    <virtualType name="MpWorldpayCardsVaultPaymentConfig" type="Magento\Payment\Gateway\Config\Config">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Cards::VAULT</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayCardsVaultPaymentValueHandler" type="VaultPaymentDefaultValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">MpWorldpayCardsVaultPaymentConfig</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayCardsVaultPaymentValueHandlerPool" type="VaultPaymentValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">MpWorldpayCardsVaultPaymentValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayCardsVaultFacade" type="Magento\Vault\Model\Method\Vault">
+        <arguments>
+            <argument name="config" xsi:type="object">MpWorldpayCardsVaultPaymentConfig</argument>
+            <argument name="valueHandlerPool" xsi:type="object">MpWorldpayCardsVaultPaymentValueHandlerPool</argument>
+            <argument name="vaultProvider" xsi:type="object">MpWorldpayCardsFacade</argument>
+            <argument name="code" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Cards::VAULT</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <type name="Mageplaza\Worldpay\Gateway\Config\Cards">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Cards::CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="MpWorldpayCardsCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Cards</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayCardsValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">MpWorldpayCardsCountryValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Logger, initialized with Worldpay Cards Config -->
+    <virtualType name="MpWorldpayCardsLog" type="Magento\Payment\Model\Method\Logger">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Cards</argument>
+        </arguments>
+    </virtualType>
+    <type name="Mageplaza\Worldpay\Gateway\Http\Client\ClientMock">
+        <arguments>
+            <argument name="logger" xsi:type="object">MpWorldpayCardsLog</argument>
+        </arguments>
+    </type>
+    <type name="Mageplaza\Worldpay\Model\Api\Payment">
+        <arguments>
+            <argument name="paymentLogger" xsi:type="object">MpWorldpayCardsLog</argument>
+        </arguments>
+    </type>
+    <type name="Mageplaza\Worldpay\Controller\PlaceOrder">
+        <arguments>
+            <argument name="paymentLogger" xsi:type="object">MpWorldpayCardsLog</argument>
+        </arguments>
+    </type>
+
+    <!-- Commands infrastructure -->
+    <virtualType name="MpWorldpayCardsCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="authorize" xsi:type="string">MpWorldpayCardsAuthorizeCommand</item>
+                <item name="capture" xsi:type="string">MpWorldpayCardsCaptureCommand</item>
+                <item name="refund" xsi:type="string">MpWorldpayCardsRefundCommand</item>
+                <item name="vault_authorize" xsi:type="string">MpWorldpayCardsVaultAuthorizeCommand</item>
+                <item name="vault_capture" xsi:type="string">MpWorldpayCardsVaultCaptureCommand</item>
+                <item name="vault_sale" xsi:type="string">MpWorldpayCardsVaultCaptureCommand</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Command managers section -->
+    <virtualType name="MpWorldpayCardsCommandManager" type="Magento\Payment\Gateway\Command\CommandManager">
+        <arguments>
+            <argument name="commandPool" xsi:type="object">MpWorldpayCardsCommandPool</argument>
+        </arguments>
+    </virtualType>
+    <type name="Magento\Payment\Gateway\Command\CommandManagerPool">
+        <arguments>
+            <argument name="executors" xsi:type="array">
+                <item name="mpworldpay_cards" xsi:type="string">MpWorldpayCardsCommandManager</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Authorize command -->
+    <virtualType name="MpWorldpayCardsAuthorizeCommand" type="Mageplaza\Worldpay\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">Mageplaza\Worldpay\Gateway\Request\AuthorizationRequest</argument>
+            <argument name="transferFactory" xsi:type="object">Mageplaza\Worldpay\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">Mageplaza\Worldpay\Gateway\Http\Client\ClientMock</argument>
+            <argument name="validator" xsi:type="object">Mageplaza\Worldpay\Gateway\Validator\ResponseCodeValidator</argument>
+            <argument name="handler" xsi:type="object">MpWorldpayAuthorizationHandler</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Capture command -->
+    <virtualType name="MpWorldpayCardsCaptureCommand" type="Mageplaza\Worldpay\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">Mageplaza\Worldpay\Gateway\Request\CaptureRequest</argument>
+            <argument name="transferFactory" xsi:type="object">Mageplaza\Worldpay\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">Mageplaza\Worldpay\Gateway\Http\Client\ClientMock</argument>
+            <argument name="validator" xsi:type="object">Mageplaza\Worldpay\Gateway\Validator\ResponseCodeValidator</argument>
+            <argument name="handler" xsi:type="object">MpWorldpayCaptureHandler</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Refund command -->
+    <virtualType name="MpWorldpayCardsRefundCommand" type="Mageplaza\Worldpay\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">Mageplaza\Worldpay\Gateway\Request\RefundRequest</argument>
+            <argument name="transferFactory" xsi:type="object">Mageplaza\Worldpay\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">Mageplaza\Worldpay\Gateway\Http\Client\ClientMock</argument>
+            <argument name="validator" xsi:type="object">Mageplaza\Worldpay\Gateway\Validator\ResponseCodeValidator</argument>
+            <argument name="handler" xsi:type="object">Mageplaza\Worldpay\Gateway\Response\RefundResponseHandler</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Vault Authorize command -->
+    <virtualType name="MpWorldpayCardsVaultAuthorizeCommand" type="Mageplaza\Worldpay\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">Mageplaza\Worldpay\Gateway\Request\AuthorizationRequest</argument>
+            <argument name="handler" xsi:type="object">Mageplaza\Worldpay\Gateway\Response\AuthorizeResponseHandler</argument>
+            <argument name="transferFactory" xsi:type="object">Mageplaza\Worldpay\Gateway\Http\TransferFactory</argument>
+            <argument name="validator" xsi:type="object">Mageplaza\Worldpay\Gateway\Validator\ResponseCodeValidator</argument>
+            <argument name="client" xsi:type="object">Mageplaza\Worldpay\Gateway\Http\Client\ClientMock</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Vault Capture command -->
+    <virtualType name="MpWorldpayCardsVaultCaptureCommand" type="Mageplaza\Worldpay\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">Mageplaza\Worldpay\Gateway\Request\CaptureRequest</argument>
+            <argument name="handler" xsi:type="object">Mageplaza\Worldpay\Gateway\Response\CaptureResponseHandler</argument>
+            <argument name="transferFactory" xsi:type="object">Mageplaza\Worldpay\Gateway\Http\TransferFactory</argument>
+            <argument name="validator" xsi:type="object">Mageplaza\Worldpay\Gateway\Validator\ResponseCodeValidator</argument>
+            <argument name="client" xsi:type="object">Mageplaza\Worldpay\Gateway\Http\Client\ClientMock</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="MpWorldpayCardsValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">MpWorldpayCardsConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayCardsConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Cards</argument>
+        </arguments>
+    </virtualType>
+    <type name="Mageplaza\Worldpay\Gateway\Response\VaultDetailsHandler">
+        <arguments>
+            <argument name="paymentTokenFactory" xsi:type="object">Magento\Vault\Model\CreditCardTokenFactory</argument>
+        </arguments>
+    </type>
+    <virtualType name="MpWorldpayAuthorizationHandler" type="Magento\Payment\Gateway\Response\HandlerChain">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="vault_details" xsi:type="string">Mageplaza\Worldpay\Gateway\Response\VaultDetailsHandler</item>
+                <item name="payment_details" xsi:type="string">Mageplaza\Worldpay\Gateway\Response\AuthorizeResponseHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayCaptureHandler" type="Magento\Payment\Gateway\Response\HandlerChain">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="vault_details" xsi:type="string">Mageplaza\Worldpay\Gateway\Response\VaultDetailsHandler</item>
+                <item name="payment_details" xsi:type="string">Mageplaza\Worldpay\Gateway\Response\CaptureResponseHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <!-- END Value handlers infrastructure -->
+
+    <virtualType name="MpWorldpayCardsInfoBlock" type="Mageplaza\Worldpay\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Cards</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- ========================================== PAYPAL INTEGRATION ========================================== -->
+
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="MpWorldpayPayPalFacade" type="Mageplaza\Worldpay\Model\Payment\PayPal">
+        <arguments>
+            <argument name="code" xsi:type="const">Mageplaza\Worldpay\Model\Payment\PayPal::CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">MpWorldpayPayPalInfoBlock</argument>
+            <argument name="valueHandlerPool" xsi:type="object">MpWorldpayPayPalValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">MpWorldpayPayPalValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">MpWorldpayCardsCommandPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <type name="Mageplaza\Worldpay\Gateway\Config\PayPal">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Mageplaza\Worldpay\Model\Payment\PayPal::CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="MpWorldpayPayPalCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\PayPal</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayPayPalValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">MpWorldpayPayPalCountryValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="MpWorldpayPayPalValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">MpWorldpayPayPalConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayPayPalConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\PayPal</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="MpWorldpayPayPalInfoBlock" type="Mageplaza\Worldpay\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\PayPal</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- ========================================== ALIPAY INTEGRATION ========================================== -->
+
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="MpWorldpayAlipayFacade" type="Mageplaza\Worldpay\Model\Payment\Alipay">
+        <arguments>
+            <argument name="code" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Alipay::CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">MpWorldpayAlipayInfoBlock</argument>
+            <argument name="valueHandlerPool" xsi:type="object">MpWorldpayAlipayValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">MpWorldpayAlipayValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">MpWorldpayCardsCommandPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <type name="Mageplaza\Worldpay\Gateway\Config\Alipay">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Alipay::CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="MpWorldpayAlipayCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Alipay</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayAlipayValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">MpWorldpayAlipayCountryValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="MpWorldpayAlipayValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">MpWorldpayAlipayConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayAlipayConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Alipay</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="MpWorldpayAlipayInfoBlock" type="Mageplaza\Worldpay\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Alipay</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- ========================================== GIROPAY INTEGRATION ========================================== -->
+
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="MpWorldpayGiropayFacade" type="Mageplaza\Worldpay\Model\Payment\Giropay">
+        <arguments>
+            <argument name="code" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Giropay::CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">MpWorldpayGiropayInfoBlock</argument>
+            <argument name="valueHandlerPool" xsi:type="object">MpWorldpayGiropayValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">MpWorldpayGiropayValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">MpWorldpayCardsCommandPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <type name="Mageplaza\Worldpay\Gateway\Config\Giropay">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Giropay::CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="MpWorldpayGiropayCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Giropay</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayGiropayValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">MpWorldpayGiropayCountryValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="MpWorldpayGiropayValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">MpWorldpayGiropayConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayGiropayConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Giropay</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="MpWorldpayGiropayInfoBlock" type="Mageplaza\Worldpay\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Giropay</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- ========================================== IDEAL INTEGRATION ========================================== -->
+
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="MpWorldpayIdealFacade" type="Mageplaza\Worldpay\Model\Payment\Ideal">
+        <arguments>
+            <argument name="code" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Ideal::CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">MpWorldpayIdealInfoBlock</argument>
+            <argument name="valueHandlerPool" xsi:type="object">MpWorldpayIdealValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">MpWorldpayIdealValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">MpWorldpayCardsCommandPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <type name="Mageplaza\Worldpay\Gateway\Config\Ideal">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Ideal::CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="MpWorldpayIdealCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Ideal</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayIdealValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">MpWorldpayIdealCountryValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="MpWorldpayIdealValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">MpWorldpayIdealConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayIdealConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Ideal</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="MpWorldpayIdealInfoBlock" type="Mageplaza\Worldpay\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Ideal</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- ========================================== MISTERCASH INTEGRATION ========================================== -->
+
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="MpWorldpayMistercashFacade" type="Mageplaza\Worldpay\Model\Payment\Mistercash">
+        <arguments>
+            <argument name="code" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Mistercash::CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">MpWorldpayMistercashInfoBlock</argument>
+            <argument name="valueHandlerPool" xsi:type="object">MpWorldpayMistercashValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">MpWorldpayMistercashValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">MpWorldpayCardsCommandPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <type name="Mageplaza\Worldpay\Gateway\Config\Mistercash">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Mistercash::CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="MpWorldpayMistercashCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Mistercash</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayMistercashValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">MpWorldpayMistercashCountryValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="MpWorldpayMistercashValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">MpWorldpayMistercashConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayMistercashConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Mistercash</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="MpWorldpayMistercashInfoBlock" type="Mageplaza\Worldpay\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Mistercash</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- ========================================== PAYSAFECARD INTEGRATION ========================================== -->
+
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="MpWorldpayPaysafecardFacade" type="Mageplaza\Worldpay\Model\Payment\Paysafecard">
+        <arguments>
+            <argument name="code" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Paysafecard::CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">MpWorldpayPaysafecardInfoBlock</argument>
+            <argument name="valueHandlerPool" xsi:type="object">MpWorldpayPaysafecardValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">MpWorldpayPaysafecardValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">MpWorldpayCardsCommandPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <type name="Mageplaza\Worldpay\Gateway\Config\Paysafecard">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Paysafecard::CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="MpWorldpayPaysafecardCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Paysafecard</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayPaysafecardValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">MpWorldpayPaysafecardCountryValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="MpWorldpayPaysafecardValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">MpWorldpayPaysafecardConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayPaysafecardConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Paysafecard</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="MpWorldpayPaysafecardInfoBlock" type="Mageplaza\Worldpay\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Paysafecard</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- ========================================== POSTEPAY INTEGRATION ========================================== -->
+
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="MpWorldpayPostepayFacade" type="Mageplaza\Worldpay\Model\Payment\Postepay">
+        <arguments>
+            <argument name="code" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Postepay::CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">MpWorldpayPostepayInfoBlock</argument>
+            <argument name="valueHandlerPool" xsi:type="object">MpWorldpayPostepayValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">MpWorldpayPostepayValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">MpWorldpayCardsCommandPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <type name="Mageplaza\Worldpay\Gateway\Config\Postepay">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Postepay::CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="MpWorldpayPostepayCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Postepay</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayPostepayValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">MpWorldpayPostepayCountryValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="MpWorldpayPostepayValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">MpWorldpayPostepayConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayPostepayConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Postepay</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="MpWorldpayPostepayInfoBlock" type="Mageplaza\Worldpay\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Postepay</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- ========================================== PRZELEWY24 INTEGRATION ========================================== -->
+
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="MpWorldpayPrzelewy24Facade" type="Mageplaza\Worldpay\Model\Payment\Przelewy24">
+        <arguments>
+            <argument name="code" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Przelewy24::CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">MpWorldpayPrzelewy24InfoBlock</argument>
+            <argument name="valueHandlerPool" xsi:type="object">MpWorldpayPrzelewy24ValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">MpWorldpayPrzelewy24ValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">MpWorldpayCardsCommandPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <type name="Mageplaza\Worldpay\Gateway\Config\Przelewy24">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Przelewy24::CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="MpWorldpayPrzelewy24CountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Przelewy24</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayPrzelewy24ValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">MpWorldpayPrzelewy24CountryValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="MpWorldpayPrzelewy24ValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">MpWorldpayPrzelewy24ConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayPrzelewy24ConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Przelewy24</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="MpWorldpayPrzelewy24InfoBlock" type="Mageplaza\Worldpay\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Przelewy24</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- ========================================== QIWI INTEGRATION ========================================== -->
+
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="MpWorldpayQiwiFacade" type="Mageplaza\Worldpay\Model\Payment\Qiwi">
+        <arguments>
+            <argument name="code" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Qiwi::CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">MpWorldpayQiwiInfoBlock</argument>
+            <argument name="valueHandlerPool" xsi:type="object">MpWorldpayQiwiValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">MpWorldpayQiwiValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">MpWorldpayCardsCommandPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <type name="Mageplaza\Worldpay\Gateway\Config\Qiwi">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Qiwi::CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="MpWorldpayQiwiCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Qiwi</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayQiwiValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">MpWorldpayQiwiCountryValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="MpWorldpayQiwiValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">MpWorldpayQiwiConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayQiwiConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Qiwi</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="MpWorldpayQiwiInfoBlock" type="Mageplaza\Worldpay\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Qiwi</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- ========================================== SOFORT INTEGRATION ========================================== -->
+
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="MpWorldpaySofortFacade" type="Mageplaza\Worldpay\Model\Payment\Sofort">
+        <arguments>
+            <argument name="code" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Sofort::CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">MpWorldpaySofortInfoBlock</argument>
+            <argument name="valueHandlerPool" xsi:type="object">MpWorldpaySofortValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">MpWorldpaySofortValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">MpWorldpayCardsCommandPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <type name="Mageplaza\Worldpay\Gateway\Config\Sofort">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Sofort::CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="MpWorldpaySofortCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Sofort</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpaySofortValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">MpWorldpaySofortCountryValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="MpWorldpaySofortValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">MpWorldpaySofortConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpaySofortConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Sofort</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="MpWorldpaySofortInfoBlock" type="Mageplaza\Worldpay\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Sofort</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- ========================================== YANDEX INTEGRATION ========================================== -->
+
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="MpWorldpayYandexFacade" type="Mageplaza\Worldpay\Model\Payment\Yandex">
+        <arguments>
+            <argument name="code" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Yandex::CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">MpWorldpayYandexInfoBlock</argument>
+            <argument name="valueHandlerPool" xsi:type="object">MpWorldpayYandexValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">MpWorldpayYandexValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">MpWorldpayCardsCommandPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <type name="Mageplaza\Worldpay\Gateway\Config\Yandex">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Mageplaza\Worldpay\Model\Payment\Yandex::CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="MpWorldpayYandexCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Yandex</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayYandexValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">MpWorldpayYandexCountryValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="MpWorldpayYandexValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">MpWorldpayYandexConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MpWorldpayYandexConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Yandex</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="MpWorldpayYandexInfoBlock" type="Mageplaza\Worldpay\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">Mageplaza\Worldpay\Gateway\Config\Yandex</argument>
+        </arguments>
+    </virtualType>
+</config>

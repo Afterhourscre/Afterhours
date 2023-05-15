@@ -1,0 +1,156 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+* See LICENSE.txt for license details.
+*/
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="Aheadworks\Acr\Api\Data\RuleInterface" type="Aheadworks\Acr\Model\Rule" />
+    <preference for="Aheadworks\Acr\Api\Data\RuleSearchResultsInterface" type="Magento\Framework\Api\SearchResults" />
+    <preference for="Aheadworks\Acr\Api\Data\CouponRuleInterface" type="Aheadworks\Acr\Model\Rule\Coupon" />
+    <preference for="Aheadworks\Acr\Api\RuleManagementInterface" type="Aheadworks\Acr\Model\RuleManagement" />
+    <preference for="Aheadworks\Acr\Api\RuleRepositoryInterface" type="Aheadworks\Acr\Model\ResourceModel\RuleRepository" />
+    <preference for="Aheadworks\Acr\Api\Data\QueueInterface" type="Aheadworks\Acr\Model\Queue" />
+    <preference for="Aheadworks\Acr\Api\Data\QueueSearchResultsInterface" type="Magento\Framework\Api\SearchResults" />
+    <preference for="Aheadworks\Acr\Api\QueueManagementInterface" type="Aheadworks\Acr\Model\QueueManagement" />
+    <preference for="Aheadworks\Acr\Api\QueueRepositoryInterface" type="Aheadworks\Acr\Model\ResourceModel\QueueRepository" />
+    <preference for="Aheadworks\Acr\Api\Data\PreviewInterface" type="Aheadworks\Acr\Model\Preview" />
+    <preference for="Aheadworks\Acr\Api\Data\CartHistoryInterface" type="Aheadworks\Acr\Model\CartHistory" />
+    <preference for="Aheadworks\Acr\Api\Data\CartRestoreInterface" type="Aheadworks\Acr\Model\CartRestore" />
+    <preference for="Aheadworks\Acr\Api\Data\CartHistorySearchResultsInterface" type="Magento\Framework\Api\SearchResults" />
+    <preference for="Aheadworks\Acr\Api\Data\CartRestoreSearchResultsInterface" type="Magento\Framework\Api\SearchResults" />
+    <preference for="Aheadworks\Acr\Api\CartHistoryRepositoryInterface" type="Aheadworks\Acr\Model\ResourceModel\CartHistoryRepository" />
+    <preference for="Aheadworks\Acr\Api\CartRestoreRepositoryInterface" type="Aheadworks\Acr\Model\ResourceModel\CartRestoreRepository" />
+    <preference for="Aheadworks\Acr\Api\CartHistoryManagementInterface" type="Aheadworks\Acr\Model\CartHistoryManagement" />
+    <preference for="Aheadworks\Acr\Api\CartRestoreManagementInterface" type="Aheadworks\Acr\Model\CartRestoreManagement" />
+    <preference for="Aheadworks\Acr\Api\Data\CouponVariableInterface" type="Aheadworks\Acr\Model\Rule\Coupon\Variable" />
+    <preference for="Aheadworks\Acr\Api\CouponVariableManagementInterface" type="Aheadworks\Acr\Model\CouponVariableManagement" />
+    <preference for="Magento\Framework\Mail\TemplateInterface" type="Aheadworks\Acr\Model\Template" />
+    <preference for="Magento\Email\Model\Template" type="Aheadworks\Acr\Model\Template" />
+    <preference for="Aheadworks\Acr\Model\Email\UrlInterface" type="Magento\Framework\Url" />
+
+    <type name="Aheadworks\Acr\Model\Email\UrlBuilder">
+        <arguments>
+            <argument name="urlBuilders" xsi:type="array">
+                <item name="frontend" xsi:type="object">Aheadworks\Acr\Model\Email\UrlInterface</item>
+                <item name="adminhtml" xsi:type="object">Magento\Backend\Model\UrlInterface</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Framework\EntityManager\MetadataPool">
+        <arguments>
+            <argument name="metadata" xsi:type="array">
+                <item name="Aheadworks\Acr\Api\Data\RuleInterface" xsi:type="array">
+                    <item name="entityTableName" xsi:type="string">aw_acr_rule</item>
+                    <item name="identifierField" xsi:type="string">id</item>
+                </item>
+                <item name="Aheadworks\Acr\Api\Data\QueueInterface" xsi:type="array">
+                    <item name="entityTableName" xsi:type="string">aw_acr_queue</item>
+                    <item name="identifierField" xsi:type="string">id</item>
+                </item>
+                <item name="Aheadworks\Acr\Api\Data\CartHistoryInterface" xsi:type="array">
+                    <item name="entityTableName" xsi:type="string">aw_acr_cart_history</item>
+                    <item name="identifierField" xsi:type="string">id</item>
+                </item>
+                <item name="Aheadworks\Acr\Api\Data\CartRestoreInterface" xsi:type="array">
+                    <item name="entityTableName" xsi:type="string">aw_acr_cart_restore</item>
+                    <item name="identifierField" xsi:type="string">entity_id</item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Framework\EntityManager\HydratorPool">
+        <arguments>
+            <argument name="hydrators" xsi:type="array">
+                <item name="Aheadworks\Acr\Api\Data\RuleInterface" xsi:type="string">Aheadworks\Acr\Model\ResourceModel\Rule\Hydrator</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Aheadworks\Acr\Model\Template\VariableProcessor">
+        <arguments>
+            <argument name="processors" xsi:type="array">
+                <item name="cart_restore_link" xsi:type="object">Aheadworks\Acr\Model\Template\VariableProcessor\CartRestoreLink</item>
+                <item name="quote" xsi:type="object">Aheadworks\Acr\Model\Template\VariableProcessor\Quote</item>
+                <item name="quote_data" xsi:type="object">Aheadworks\Acr\Model\Template\VariableProcessor\QuoteData</item>
+                <item name="customer" xsi:type="object">Aheadworks\Acr\Model\Template\VariableProcessor\Customer</item>
+                <item name="customer_data" xsi:type="object">Aheadworks\Acr\Model\Template\VariableProcessor\CustomerData</item>
+                <item name="store" xsi:type="object">Aheadworks\Acr\Model\Template\VariableProcessor\Store</item>
+                <item name="coupon" xsi:type="object">Aheadworks\Acr\Model\Template\VariableProcessor\Coupon</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Framework\EntityManager\Operation\ExtensionPool">
+        <arguments>
+            <argument name="extensionActions" xsi:type="array">
+                <item name="Aheadworks\Acr\Api\Data\RuleInterface" xsi:type="array">
+                    <item name="read" xsi:type="array">
+                        <item name="storeReader" xsi:type="string">Aheadworks\Acr\Model\ResourceModel\Rule\Relation\Store\ReadHandler</item>
+                        <item name="couponReader" xsi:type="string">Aheadworks\Acr\Model\ResourceModel\Rule\Relation\Coupon\ReadHandler</item>
+                    </item>
+                    <item name="create" xsi:type="array">
+                        <item name="storeCreator" xsi:type="string">Aheadworks\Acr\Model\ResourceModel\Rule\Relation\Store\SaveHandler</item>
+                        <item name="couponCreator" xsi:type="string">Aheadworks\Acr\Model\ResourceModel\Rule\Relation\Coupon\SaveHandler</item>
+                    </item>
+                    <item name="update" xsi:type="array">
+                        <item name="storeUpdater" xsi:type="string">Aheadworks\Acr\Model\ResourceModel\Rule\Relation\Store\SaveHandler</item>
+                        <item name="couponUpdater" xsi:type="string">Aheadworks\Acr\Model\ResourceModel\Rule\Relation\Coupon\SaveHandler</item>
+                    </item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+                <item name="aw_acr_rules_listing_data_source" xsi:type="string">Aheadworks\Acr\Model\ResourceModel\Rule\Grid\Collection</item>
+                <item name="aw_acr_queue_listing_data_source" xsi:type="string">Aheadworks\Acr\Model\ResourceModel\Queue\Grid\Collection</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Aheadworks\Acr\Model\ResourceModel\Rule\Grid\Collection">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">aw_acr_rule</argument>
+            <argument name="eventPrefix" xsi:type="string">aw_acr_rules_grid_collection</argument>
+            <argument name="eventObject" xsi:type="string">rules_grid_collection</argument>
+            <argument name="resourceModel" xsi:type="string">Aheadworks\Acr\Model\ResourceModel\Rule</argument>
+        </arguments>
+    </type>
+    <type name="Aheadworks\Acr\Model\ResourceModel\Queue\Grid\Collection">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">aw_acr_queue</argument>
+            <argument name="eventPrefix" xsi:type="string">aw_acr_queue_grid_collection</argument>
+            <argument name="eventObject" xsi:type="string">queue_grid_collection</argument>
+            <argument name="resourceModel" xsi:type="string">Aheadworks\Acr\Model\ResourceModel\Queue</argument>
+        </arguments>
+    </type>
+    <virtualType name="AwAcrGridFilterPool" type="Magento\Framework\View\Element\UiComponent\DataProvider\FilterPool">
+        <arguments>
+            <argument name="appliers" xsi:type="array">
+                <item name="regular" xsi:type="object">Magento\Framework\View\Element\UiComponent\DataProvider\RegularFilter</item>
+                <item name="fulltext" xsi:type="object">Magento\Framework\View\Element\UiComponent\DataProvider\FulltextFilter</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="AwAcrRulesDataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider">
+        <arguments>
+            <argument name="collection" xsi:type="object" shared="false">Aheadworks\Acr\Model\ResourceModel\Rule\Collection</argument>
+            <argument name="filterPool" xsi:type="object" shared="false">AwAcrGridFilterPool</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="AwAcrQueueDataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider">
+        <arguments>
+            <argument name="collection" xsi:type="object" shared="false">Aheadworks\Acr\Model\ResourceModel\Queue\Collection</argument>
+            <argument name="filterPool" xsi:type="object" shared="false">AwAcrGridFilterPool</argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Magento\Quote\Model\Quote">
+        <plugin name="aw-acr-quote-plugin" type="Aheadworks\Acr\Model\Quote\QuotePlugin" sortOrder="10" disabled="false" />
+    </type>
+    <type name="Magento\Customer\Model\AccountManagement">
+        <plugin name="save-guest-email-plugin" type="Aheadworks\Acr\Plugin\Customer\Model\AccountManagementPlugin" sortOrder="10" disabled="false" />
+    </type>
+</config>

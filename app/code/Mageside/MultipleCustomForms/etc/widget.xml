@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<!--
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+-->
+<widgets xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Widget:etc/widget.xsd">
+    <widget class="Mageside\MultipleCustomForms\Block\Widget\CustomForm" id="multiple_custom_forms">
+        <label>Multiple Custom Form</label>
+        <description>Multiple Custom Form</description>
+        <parameters>
+            <parameter xsi:type="select"
+                       name="form_id"
+                       sort_order="10"
+                       required="true"
+                       visible="true"
+                       source_model="Mageside\MultipleCustomForms\Model\Source\Widget\FormList">
+                <label translate="true">Custom Form</label>
+            </parameter>
+            <parameter xsi:type="select"
+                       name="form_display"
+                       sort_order="20"
+                       required="true"
+                       visible="true"
+                       source_model="Mageside\MultipleCustomForms\Model\Source\Widget\FormTemplate">
+                <label translate="true">Display Template</label>
+                <description translate="true">"Popup" template is designed for developers. Form can be opened in popup by running follow code: jQuery('body').trigger('showCustomForm_{formCode}'); where {formCode} is the Form Code value of form assigned to this widget.</description>
+            </parameter>
+            <parameter name="button_title" xsi:type="text" visible="true" sort_order="30">
+                <label translate="true">Button Title</label>
+                <depends>
+                    <parameter name="form_display" value="popup_with_button" />
+                </depends>
+                <value translate="true">Show custom form</value>
+            </parameter>
+        </parameters>
+    </widget>
+</widgets>

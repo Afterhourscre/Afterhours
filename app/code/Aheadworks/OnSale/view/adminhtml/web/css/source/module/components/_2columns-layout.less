@@ -1,0 +1,30 @@
+.aw-onsale__2columns-layout {
+    margin-left: ~'calc((100%) * .25 + 8px)';
+
+    .left-block {
+        margin-right: 15px;
+    }
+
+    .right-block {
+        display: inline-block;
+        width: ~'calc((100%) * 0.5 - 70px)';
+    }
+
+    .admin__field {
+        >.admin__field-label {
+            line-height: 2.5rem;
+
+            span {
+                vertical-align: top;
+            }
+        }
+
+        >.admin__field-control {
+            &:after {
+                clear: both;
+                content: '';
+                display: table;
+            }
+        }
+    }
+}

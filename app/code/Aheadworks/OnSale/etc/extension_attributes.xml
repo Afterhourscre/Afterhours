@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+See LICENSE.txt for license details.
+*/
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Api/etc/extension_attributes.xsd">
+    <extension_attributes for="Magento\Quote\Api\Data\TotalsItemInterface">
+        <attribute code="aw_onsale_label" type="string" />
+    </extension_attributes>
+    <extension_attributes for="Magento\Catalog\Api\Data\ProductRender\ImageInterface">
+        <attribute code="aw_onsale_label" type="string" />
+    </extension_attributes>
+</config>

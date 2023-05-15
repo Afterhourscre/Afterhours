@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+* See LICENSE.txt for license details.
+*/
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="Magento\Sitemap\Model\Sitemap" type="Aheadworks\Faq\Model\Sitemap" />
+    <preference for="Aheadworks\Faq\Api\Data\CategorySearchResultsInterface" type="Magento\Framework\Api\SearchResults" />
+    <preference for="Aheadworks\Faq\Api\Data\ArticleSearchResultsInterface" type="Magento\Framework\Api\SearchResults" />
+    <preference for="Aheadworks\Faq\Api\Data\CategoryInterface" type="Aheadworks\Faq\Model\Category" />
+    <preference for="Aheadworks\Faq\Api\Data\ArticleInterface" type="Aheadworks\Faq\Model\Article" />
+    <preference for="Aheadworks\Faq\Api\Data\VoteResultInterface" type="Aheadworks\Faq\Model\VoteResult" />
+    <preference for="Aheadworks\Faq\Api\CategoryRepositoryInterface" type="Aheadworks\Faq\Model\CategoryRepository" />
+    <preference for="Aheadworks\Faq\Api\ArticleRepositoryInterface" type="Aheadworks\Faq\Model\ArticleRepository" />
+    <preference for="Aheadworks\Faq\Api\SearchManagementInterface" type="Aheadworks\Faq\Model\Search" />
+    <preference for="Aheadworks\Faq\Api\HelpfulnessManagementInterface" type="Aheadworks\Faq\Model\HelpfulnessManagement" />
+    <preference for="Aheadworks\Faq\Model\Email\EmailMetadataInterface" type="Aheadworks\Faq\Model\Email\EmailMetadata" />
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+                <item name="faq_category_listing_data_source" xsi:type="string">Aheadworks\Faq\Model\ResourceModel\Category\Grid\Collection</item>
+                <item name="faq_article_listing_data_source" xsi:type="string">Aheadworks\Faq\Model\ResourceModel\Article\Grid\Collection</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Aheadworks\Faq\Model\ResourceModel\Category\Grid\Collection">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">aw_faq_category</argument>
+            <argument name="eventPrefix" xsi:type="string">faq_category_grid_collection</argument>
+            <argument name="eventObject" xsi:type="string">category_grid_collection</argument>
+            <argument name="resourceModel" xsi:type="string">Aheadworks\Faq\Model\ResourceModel\Category</argument>
+        </arguments>
+    </type>
+    <type name="Aheadworks\Faq\Model\ResourceModel\Article\Grid\Collection">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">aw_faq_article</argument>
+            <argument name="eventPrefix" xsi:type="string">faq_article_grid_collection</argument>
+            <argument name="eventObject" xsi:type="string">article_grid_collection</argument>
+            <argument name="resourceModel" xsi:type="string">Aheadworks\Faq\Model\ResourceModel\Article</argument>
+        </arguments>
+    </type>
+    <virtualType name="FaqGridDataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider">
+        <arguments>
+            <argument name="collection" xsi:type="object" shared="false">Aheadworks\Faq\Model\ResourceModel\Article\Collection</argument>
+            <argument name="filterPool" xsi:type="object" shared="false">FaqGirdFilterPool</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="FaqGirdFilterPool" type="Magento\Framework\View\Element\UiComponent\DataProvider\FilterPool">
+        <arguments>
+            <argument name="appliers" xsi:type="array">
+                <item name="regular" xsi:type="object">Magento\Framework\View\Element\UiComponent\DataProvider\RegularFilter</item>
+                <item name="fulltext" xsi:type="object">Magento\Framework\View\Element\UiComponent\DataProvider\FulltextFilter</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="Magento\Framework\Model\Entity\RepositoryFactory">
+        <arguments>
+            <argument name="entities" xsi:type="array">
+                <item name="Aheadworks\Faq\Api\Data\CategoryInterface" xsi:type="string">Aheadworks\Faq\Api\CategoryRepositoryInterface</item>
+                <item name="Aheadworks\Faq\Api\Data\ArticleInterface" xsi:type="string">Aheadworks\Faq\Api\ArticleRepositoryInterface</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Framework\EntityManager\MetadataPool">
+        <arguments>
+            <argument name="metadata" xsi:type="array">
+                <item name="Aheadworks\Faq\Api\Data\CategoryInterface" xsi:type="array">
+                    <item name="entityTableName" xsi:type="string">aw_faq_category</item>
+                    <item name="identifierField" xsi:type="string">category_id</item>
+                </item>
+                <item name="Aheadworks\Faq\Api\Data\ArticleInterface" xsi:type="array">
+                    <item name="entityTableName" xsi:type="string">aw_faq_article</item>
+                    <item name="identifierField" xsi:type="string">article_id</item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Framework\EntityManager\Operation\ExtensionPool">
+        <arguments>
+            <argument name="extensionActions" xsi:type="array">
+                <item name="Aheadworks\Faq\Api\Data\ArticleInterface" xsi:type="array">
+                    <item name="read" xsi:type="array">
+                        <item name="storeReader" xsi:type="string">Aheadworks\Faq\Model\ResourceModel\Article\Relation\Store\ReadHandler</item>
+                    </item>
+                    <item name="create" xsi:type="array">
+                        <item name="storeCreator" xsi:type="string">Aheadworks\Faq\Model\ResourceModel\Article\Relation\Store\SaveHandler</item>
+                    </item>
+                    <item name="update" xsi:type="array">
+                        <item name="storeUpdater" xsi:type="string">Aheadworks\Faq\Model\ResourceModel\Article\Relation\Store\SaveHandler</item>
+                    </item>
+                </item>
+                <item name="Aheadworks\Faq\Api\Data\CategoryInterface" xsi:type="array">
+                    <item name="read" xsi:type="array">
+                        <item name="storeReader" xsi:type="string">Aheadworks\Faq\Model\ResourceModel\Category\Relation\Store\ReadHandler</item>
+                    </item>
+                    <item name="create" xsi:type="array">
+                        <item name="storeCreator" xsi:type="string">Aheadworks\Faq\Model\ResourceModel\Category\Relation\Store\SaveHandler</item>
+                    </item>
+                    <item name="update" xsi:type="array">
+                        <item name="storeUpdater" xsi:type="string">Aheadworks\Faq\Model\ResourceModel\Category\Relation\Store\SaveHandler</item>
+                    </item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Framework\EntityManager\HydratorPool">
+        <arguments>
+            <argument name="hydrators" xsi:type="array">
+                <item name="Aheadworks\Faq\Api\Data\CategoryInterface" xsi:type="string">Magento\Framework\EntityManager\AbstractModelHydrator</item>
+                <item name="Aheadworks\Faq\Api\Data\ArticleInterface" xsi:type="string">Magento\Framework\EntityManager\AbstractModelHydrator</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Aheadworks\Faq\Model\Email\Processor">
+        <arguments>
+            <argument name="variablesProcessors" xsi:type="array">
+                <item name="questionFormProcessor" xsi:type="object">Aheadworks\Faq\Model\Email\Processors\QuestionFormProcessor</item>
+            </argument>
+        </arguments>
+    </type>
+</config>

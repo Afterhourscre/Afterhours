@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+-->
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">dependency_input_form.dependency_input_form_data_source</item>
+            <item name="deps" xsi:type="string">dependency_input_form.dependency_input_form_data_source</item>
+            <item name="namespace" xsi:type="string">dependency_input_form</item>
+        </item>
+        <item name="buttons" xsi:type="array">
+            <item name="dependency" xsi:type="string">Mageside\MultipleCustomForms\Block\Adminhtml\Edit\SaveDependency</item>
+        </item>
+        <item name="template" xsi:type="string">templates/form/collapsible</item>
+        <item name="config" xsi:type="array">
+            <item name="ajaxSaveType" xsi:type="string">simple</item>
+        </item>
+    </argument>
+    <dataSource name="dependency_input_form_data_source">
+        <argument name="dataProvider" xsi:type="configurableObject">
+            <argument name="class" xsi:type="string">Mageside\MultipleCustomForms\Ui\DataProvider\Form\DependencyInputDataProvider</argument>
+            <argument name="name" xsi:type="string">dependency_input_form_data_source</argument>
+            <argument name="primaryFieldName" xsi:type="string">id</argument>
+            <argument name="requestFieldName" xsi:type="string">id</argument>
+            <!--<argument name="data" xsi:type="array">-->
+                <!--<item name="config" xsi:type="array">-->
+                    <!--<item name="submit_url" xsi:type="url" path="customform/form/dependency"/>-->
+                    <!--<item name="update_url" xsi:type="url" path="mui/index/render" />-->
+                <!--</item>-->
+            <!--</argument>-->
+        </argument>
+        <argument name="data" xsi:type="array">
+            <item name="js_config" xsi:type="array">
+                <item name="component" xsi:type="string">Magento_Ui/js/form/provider</item>
+            </item>
+        </argument>
+    </dataSource>
+    <fieldset name="fields">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="label" xsi:type="string"/>
+                <item name="collapsible" xsi:type="boolean">false</item>
+            </item>
+        </argument>
+        <!--<container name="messages">-->
+            <!--<argument name="data" xsi:type="array">-->
+                <!--<item name="config" xsi:type="array">-->
+                    <!--<item name="label" xsi:type="string"/>-->
+                    <!--<item name="component" xsi:type="string">Magento_Catalog/js/components/messages</item>-->
+                <!--</item>-->
+            <!--</argument>-->
+        <!--</container>-->
+    </fieldset>
+</form>

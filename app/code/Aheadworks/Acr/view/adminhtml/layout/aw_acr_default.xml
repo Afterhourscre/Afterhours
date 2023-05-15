@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!--
+/**
+* Copyright 2019 aheadWorks. All rights reserved.
+* See LICENSE.txt for license details.
+*/
+-->
+
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <css src="Aheadworks_Acr::css/style.css"/>
+    </head>
+    <body>
+        <referenceContainer name="page.main.actions">
+            <block class="Aheadworks\Acr\Block\Adminhtml\Page\Menu" name="aw_acr_menu">
+                <block class="Aheadworks\Acr\Block\Adminhtml\Page\Menu\Item" name="aw_acr_menu_item.rules">
+                    <arguments>
+                        <argument name="path" xsi:type="string">*/rule/index</argument>
+                        <argument name="label" xsi:type="string">Rules</argument>
+                        <argument name="resource" xsi:type="string">Aheadworks_Acr::rules</argument>
+                        <argument name="controller" xsi:type="string">rule</argument>
+                    </arguments>
+                </block>
+                <block class="Aheadworks\Acr\Block\Adminhtml\Page\Menu\Item" name="aw_acr_menu_item.mail_log">
+                    <arguments>
+                        <argument name="path" xsi:type="string">*/queue/index</argument>
+                        <argument name="label" xsi:type="string">Mail Log</argument>
+                        <argument name="resource" xsi:type="string">Aheadworks_Acr::mail_log</argument>
+                        <argument name="controller" xsi:type="string">queue</argument>
+                    </arguments>
+                </block>
+                <block class="Aheadworks\Acr\Block\Adminhtml\Page\Menu\Item" name="aw_acr_menu_item.settings">
+                    <arguments>
+                        <argument name="path" xsi:type="string">adminhtml/system_config/edit/section/aw_acr</argument>
+                        <argument name="label" xsi:type="string">Settings</argument>
+                        <argument name="resource" xsi:type="string">Aheadworks_Acr::config_aw_acr</argument>
+                    </arguments>
+                </block>
+                <block class="Aheadworks\Acr\Block\Adminhtml\Page\Menu\Item" name="aw_acr_menu_item.readme">
+                    <arguments>
+                        <argument name="label" xsi:type="string">Readme</argument>
+                        <argument name="link_attributes" xsi:type="array">
+                            <item name="href" xsi:type="string">http://confluence.aheadworks.com/display/EUDOC/Abandoned+Cart+Reminder+-+Magento+2</item>
+                            <item name="target" xsi:type="string">_blank</item>
+                            <item name="class" xsi:type="string">separator</item>
+                        </argument>
+                    </arguments>
+                </block>
+                <block class="Aheadworks\Acr\Block\Adminhtml\Page\Menu\Item" name="aw_acr_menu_item.support">
+                    <arguments>
+                        <argument name="label" xsi:type="string">Get Support</argument>
+                        <argument name="link_attributes" xsi:type="array">
+                            <item name="href" xsi:type="string">http://ecommerce.aheadworks.com/contacts/</item>
+                            <item name="target" xsi:type="string">_blank</item>
+                        </argument>
+                    </arguments>
+                </block>
+            </block>
+        </referenceContainer>
+    </body>
+</page>

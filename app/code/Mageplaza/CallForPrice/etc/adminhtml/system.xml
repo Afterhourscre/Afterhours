@@ -1,0 +1,112 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Mageplaza
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Mageplaza.com license that is
+ * available through the world-wide-web at this URL:
+ * https://www.mageplaza.com/LICENSE.txt
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category    Mageplaza
+ * @package     Mageplaza_CallForPrice
+ * @copyright   Copyright (c) Mageplaza (https://www.mageplaza.com/)
+ * @license     https://www.mageplaza.com/LICENSE.txt
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="mpcallforprice" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+            <label>Call For Price</label>
+            <tab>mageplaza</tab>
+            <resource>Mageplaza_CallForPrice::configuration</resource>
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>General Configuration</label>
+                <field id="enabled" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Enable</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Select <strong>Yes</strong> to enable this module]]></comment>
+                </field>
+                <field id="request_status" translate="label" type="select" sortOrder="49" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Request Status</label>
+                    <frontend_model>Mageplaza\CallForPrice\Block\Adminhtml\System\Config\RequestStatus</frontend_model>
+                    <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                    <comment><![CDATA[Can't delete all request statuses. Please keep one status for request]]></comment>
+                </field>
+            </group>
+            <group id="terms_conditions" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Terms and Conditions</label>
+                <field id="checked_by_default" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Checked by default</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Select Yes to have the Term and Condition check box ticked by default]]></comment>
+                </field>
+                <field id="terms_required" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Is Required</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="title" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Title</label>
+                    <comment><![CDATA[Template label. The "%anchor" will be replaced with text with an inserted link as below]]></comment>
+                </field>
+                <field id="anchor" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Anchor Text</label>
+                    <comment><![CDATA[The label for the link "%anchor"]]></comment>
+                </field>
+                <field id="url" translate="label comment" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Anchor URL</label>
+                    <validate>validate-url</validate>
+                    <comment><![CDATA[The URL for the link "%anchor". If empty, the anchor will be generated as text only.]]></comment>
+                </field>
+            </group>
+            <group id="disable_default_function" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Disable Default Functions</label>
+                <field id="disable_compare_wishlist" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Disable Add to compare, Wishlist</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="disable_register_customer" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Disable Register Customer Account</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="disable_cart_by_group" translate="label comment" type="multiselect" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Disable Shopping cart by Customer groups</label>
+                    <source_model>Mageplaza\CallForPrice\Model\Config\Source\CustomerGroup</source_model>
+                </field>
+                <field id="disable_checkout_by_group" translate="label comment" type="multiselect" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Disable Checkout page by Customer groups</label>
+                    <source_model>Mageplaza\CallForPrice\Model\Config\Source\CustomerGroup</source_model>
+                    <comment><![CDATA[Compatible with <a href="https://www.mageplaza.com/magento-2-one-step-checkout-extension/?utm_source=extension&utm_medium=link&utm_campaign=call-for-price" target="_blank">One Step Checkout</a>]]></comment>
+                </field>
+            </group>
+            <group id="admin_email" translate="label" type="text" sortOrder="99" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Admin Email Notification</label>
+                <field id="enabled" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Enable</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[To avoid sending to spam box, you should install <a href="https://www.mageplaza.com/magento-2-smtp/?utm_source=free-extensions&utm_medium=link&utm_campaign=call-for-price" target="_blank">SMTP</a>]]></comment>
+                </field>
+                <field id="sender" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Sender Email</label>
+                    <source_model>Magento\Config\Model\Config\Source\Email\Identity</source_model>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                </field>
+                <field id="sendto" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Send To</label>
+                    <comment><![CDATA[Separated by commas (,)]]></comment>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

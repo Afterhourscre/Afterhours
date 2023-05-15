@@ -1,0 +1,57 @@
+<?php
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+
+/** @var Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\FileType $block */
+
+$field = $block->getField();
+?>
+<div class="field input file <?= /* @noEscape */ $field->getRequired() ? 'required' : ''; ?>">
+    <label class="label" for="<?= $block->escapeHtmlAttr($block->getFieldHtmlId()); ?>">
+        <span><?= $block->escapeHtml($field->getTitle()); ?></span>
+    </label>
+    <div class="control validation-block">
+        <div class="upload-wrapper-<?= $block->escapeHtmlAttr($field->getId()); ?>"
+             data-bind="scope: 'uploader-<?= $block->escapeHtmlAttr($field->getId()); ?>'">
+            <!-- ko template: getTemplate() --><!-- /ko -->
+        </div>
+    </div>
+    <?php if ($block->getComment()) : ?>
+        <p class="note"><span><?= $block->escapeHtml($block->getComment()); ?></span></p>
+    <?php endif; ?>
+</div>
+
+<script type="text/x-magento-init">
+    {
+        ".upload-wrapper-<?= $block->escapeJs($block->escapeHtmlAttr($field->getId())); ?>": {
+            "Mageside_MultipleCustomForms/js/form/field-upload-files": {
+                "formSelector": "#<?= $block->escapeJs($block->escapeHtmlAttr($block->getFormHtmlId())); ?>",
+                "formId": "<?= $block->escapeJs($field->getFormId()); ?>",
+                "uploaderConfig": {
+                   "components": {
+                       "uploader-<?= $block->escapeJs($block->escapeHtmlAttr($field->getId())); ?>": {
+                           "component": "Mageside_MultipleCustomForms/js/form/file-uploader",
+                           "template": "Mageside_MultipleCustomForms/form/uploader/uploader",
+                           "previewTmpl": "Mageside_MultipleCustomForms/form/uploader/preview",
+                           "inputName": "files",
+                           "required": "<?= $block->escapeJs($block->isRequired()); ?>",
+                           "fieldName": "<?= $block->escapeJs($block->getFieldHtmlId()); ?>",
+                           "maxUploads": "<?= $block->escapeJs($block->getAllowedMaxUploads()); ?>",
+                           "uid": "<?= $block->escapeJs($block->getFieldHtmlId()); ?>",
+                           "maxFileSize": "<?= $block->escapeJs($block->getMaxFileSize()); ?>",
+                           "allowedExtensions": "<?= $block->escapeJs($block->getAllowedExtensions()); ?>",
+                           "uploaderConfig": {
+                                "url": "<?= $block->escapeJs($block->escapeUrl($block->getUrl(
+                                    'customform/form/upload',
+                                    ['field_id' => $field->getId()]
+                                ))); ?>"
+                           }
+                       }
+                   }
+                }
+            }
+        }
+    }
+</script>

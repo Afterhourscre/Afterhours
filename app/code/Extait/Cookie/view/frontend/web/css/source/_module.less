@@ -1,0 +1,183 @@
+/**
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the commercial license
+ * that is bundled with this package in the file LICENSE.txt.
+ *
+ * @category Extait
+ * @package Extait_Cookie
+ * @copyright Copyright (c) 2016-2018 Extait, Inc. (http://www.extait.com)
+ */
+
+& when (@media-common = true) {
+  #btn-cookie-settings a, #btn-cookie-settings a:hover {
+    color: inherit;
+    text-decoration: inherit;
+  }
+
+  .cookie-settings {
+    .cookie-settings-form-wrapper {
+      margin-bottom: 30px;
+
+      .checkbox-nav {
+        background-color: #f0f0f0;
+
+        .item {
+          padding: 5px 18px 5px 15px;
+          margin: 0;
+
+          &:first-child {
+            margin-top: 1rem;
+            padding-top: 15px;
+          }
+
+          &:last-child {
+            margin-bottom: 1rem;
+            padding-bottom: 15px;
+          }
+        }
+      }
+
+      .actions {
+        .save-cookie-btn {
+          width: 100%;
+          border-radius: 0;
+        }
+      }
+    }
+
+    .cookie-settings-content {
+      padding-bottom: 60px;
+      h2 {
+        margin-top: 0;
+        padding-left: 65px;
+      }
+
+      .data-table {
+        margin: 0;
+
+        td.desc {
+          font-weight: normal;
+        }
+      }
+    }
+  }
+  .cookie-settings-index {
+    .cookie-settings-content {
+      .cookie-category-desc {
+        padding-top: 40px;
+      }
+      .filter-options-item {
+        padding-bottom: 0;
+        border-bottom: 1px solid #000;
+      }
+      .filter-options-item.allow.active:before,
+      .filter-options-item.allow.active:after {
+        display: none;
+      }
+      .filter-options-title {
+        font-weight: 400;
+        word-break: normal;
+      }
+
+      .cookie-category-table {
+        margin-top: 20px;
+      }
+
+      .toggle {
+        float: left;
+        position: relative;
+        input[type=checkbox] {
+          height: 0;
+          width: 0;
+          visibility: hidden;
+        }
+        label {
+          cursor: pointer;
+          width: 55px;
+          height: 25px;
+          background: #1979c3;
+          display: block;
+          border-radius: 25px;
+          position: absolute;
+          top: 2px;
+        }
+        label:after {
+          content: '';
+          position: absolute;
+          top: 2px;
+          left: 2px;
+          width: 21px;
+          height: 21px;
+          background: #fff;
+          border-radius: 21px;
+          transition: 0.4s;
+        }
+        input:checked + label {
+          background: #1979c3;
+        }
+        input:disabled + label {
+          background: #bfbfbf;
+        }
+        input:checked + label:after {
+          left: calc(100% - 5px);
+          transform: translateX(-100%);
+        }
+        label:active:after {
+          width: 30px;
+        }
+
+        input:checked + label {
+          span.off {
+            display: none;
+          }
+        }
+        input + label {
+          span.off {
+            display: block;
+            color: white;
+            position: absolute;
+            right: 0;
+            padding: 2px 8px;
+          }
+          span.on {
+            display: none;
+            color: white;
+            position: absolute;
+            left: 0;
+            padding: 2px 8px;
+          }
+        }
+        input:checked + label {
+          span.on {
+            display: block;
+          }
+        }
+      }
+    }
+  }
+
+  h1.page-title {
+    margin-bottom: 15px;
+  }
+}
+
+@media all and (min-width: @screen__s) {
+  .cookie-settings {
+    .cookie-settings-form-wrapper {
+      float: left;
+      width: 22.3%;
+      max-width: 277px;
+
+      &.fixed {
+        position: fixed;
+        top: 0;
+      }
+    }
+
+    .cookie-settings-content {
+      box-sizing: border-box;
+      float: right;
+    }
+  }
+}

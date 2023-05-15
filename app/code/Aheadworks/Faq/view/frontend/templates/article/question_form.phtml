@@ -1,0 +1,87 @@
+<?php
+/**
+ * Copyright 2019 aheadWorks. All rights reserved.
+ * See LICENSE.txt for license details.
+ */
+
+// @codingStandardsIgnoreFile
+
+/** @var \Aheadworks\Faq\Block\Article\QuestionForm $block */
+?>
+<div class="faq-question-from-container">
+    <form class="form faq-question-form"
+          action="<?= $block->escapeUrl($block->getFormAction()) ?>"
+          id="faq-question-form"
+          method="post"
+          data-hasrequired="<?= /* @noEscape */ __('* Required Fields') ?>"
+          data-mage-init='{"validation":{}}'>
+        <fieldset class="fieldset" data-bind="scope: 'awFaqCustomer'">
+            <legend class="legend"><span><?= $block->escapeHtml(__('Ask a question')) ?></span></legend><br />
+            <input name="article_title" type="hidden" value="<?= $block->escapeHtml($block->getArticleTitle()) ?>"/>
+            <div class="field name required">
+                <label class="label" for="name"><span><?= $block->escapeHtml(__('Name')) ?></span></label>
+                <div class="control">
+                    <input
+                            name="name"
+                            id="aw-faq-name"
+                            title="<?= /* @noEscape */ __('Name') ?>"
+                            class="input-text"
+                            type="text"
+                            data-validate="{required:true}"
+                            data-bind="value: <?= 'awFaqCustomer().fullname' ?>"
+                    />
+                </div>
+            </div>
+            <div class="field email required">
+                <label class="label" for="email"><span><?= $block->escapeHtml(__('Email')) ?></span></label>
+                <div class="control">
+                    <input
+                            name="email"
+                            id="aw-faq-email"
+                            title="<?= /* @noEscape */ __('Email') ?>"
+                            class="input-text"
+                            type="email"
+                            data-validate="{required:true, 'validate-email':true}"
+                            data-bind="value: <?= 'awFaqCustomer().email' ?>"
+                    />
+                </div>
+            </div>
+            <div class="field question required">
+                <label class="label" for="question_content"><span><?= $block->escapeHtml(__('What is your question?')) ?></span></label>
+                <div class="control">
+                    <textarea
+                            name="question_content"
+                            id="aw-faq-question-content"
+                            title="<?= /* @noEscape */ __('What is your question?') ?>"
+                            placeholder="<?= $block->escapeHtml(__('Type your question here...')) ?>"
+                            class="input-text"
+                            cols="5" rows="3"
+                            data-validate="{required:true}"></textarea>
+                </div>
+            </div>
+        </fieldset>
+        <div class="actions-toolbar">
+            <div class="primary">
+                <button type="submit" title="<?= /* @noEscape */ __('Submit the question') ?>" class="action submit primary">
+                    <span><?= $block->escapeHtml(__('Submit the question')) ?></span>
+                </button>
+            </div>
+        </div>
+    </form>
+    <script type="text/x-magento-init">
+        {
+            "*": {
+                "Magento_Ui/js/core/app": {
+                    "components": {
+                        "awFaqCustomer": {
+                            "component": "Aheadworks_Faq/js/customer",
+                            "config": {
+                                "isLoggedIn": "<?php /* @noEscape */ echo $block->isLoggedIn() ?>"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</div>

@@ -1,0 +1,22 @@
+<?php
+/**
+ * Copyright © Mageside. All rights reserved.
+ * See MS-LICENSE.txt for license details.
+ */
+
+/** @var Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\SelectType $block */
+
+$field = $block->getField();
+?>
+<div class="field select <?= /* @noEscape */ $field->getRequired() ? 'required' : ''; ?>">
+    <label class="label"
+           for="<?= $block->escapeHtmlAttr($block->getFieldHtmlId()); ?>">
+        <span><?= $block->escapeHtml($field->getTitle()); ?></span>
+    </label>
+    <div class="control">
+        <?= /* @noEscape */ $block->getSelectHtml() ?>
+    </div>
+    <?php if ($block->getComment()) : ?>
+        <p class="note"><span><?= $block->escapeHtml($block->getComment()); ?></span></p>
+    <?php endif; ?>
+</div>

@@ -82,6 +82,8 @@ $portfolio = $this->getPortfolio();
             </div>
         <?php endif; ?>
         <!--        <div class="sharethis-inline-share-buttons"></div>-->
+		
+	
     </div>
 
     <div class="col-md-4 col-sm-5 col-xs-12">
@@ -90,34 +92,12 @@ $portfolio = $this->getPortfolio();
             <div class="description"><?php echo nl2br($portfolio->getDescription()) ?></div>
             <table class="table portfolio-table">
                 <tbody>
-                <?php $date = $portfolio->getPortfolioDate() ?>
-                <?php if($date != ''): ?>
-                    <tr>
-                        <td><?php echo __('Date:') ?></td>
-                        <td><?php echo date('F d, Y', strtotime($date))?></td>
-                    </tr>
-                <?php endif ?>
-
-                <?php $service = $portfolio->getServices() ?>
-                <?php if($service != ''): ?>
-                    <tr>
-                        <td><?php echo __('Project:') ?></td>
-                        <td><a href="<?php echo $portfolio->getProjectUrl() ?>" target="_blank"><?php echo $service ?></a></td>
-                    </tr>
-                <?php endif ?>
-
-                <?php $client = $portfolio->getClient() ?>
-                <?php if($client != ''): ?>
-                    <tr>
-                        <td><?php echo __('Client:') ?></td>
-                        <td><?php echo $client ?></td>
-                    </tr>
-                <?php endif ?>
+                
 
                 <?php $skills = $portfolio->getSkills() ?>
                 <?php if($skills != ''): ?>
                     <tr>
-                        <td><?php echo __('Skills:') ?></td>
+                        <td><?php echo __('Print Techniques:') ?></td>
                         <td><?php echo $skills ?></td>
                     </tr>
                 <?php endif ?>
@@ -130,21 +110,32 @@ $portfolio = $this->getPortfolio();
                 <?php endif ?>
                 </tbody>
             </table>
-            <div class="portfolio_item__back-to-gallery">
+			
+			
+
+            <div style="margin-top:40px" class="portfolio_item__back-to-gallery">
                 <a href="/portfolio" class="portfolio_item__back-to-gallery_a">Back to Gallery</a>
             </div>
         </div>
+				<div style="margin-top:60px" class="shareaholic-canvas" data-app="share_buttons" data-app-id="33137344"></div>
+
     </div>
 </div>
-<div class="portfolio-form-block">
-    <div class="portfolio-form-header">
-        <h2><?= /* @escapeNotVerified */ __('Look for something similar?') ?></h2>
-        <p><?= /* @escapeNotVerified */ __('Call us on UK ')?><a href="tel:01288350620"><?= __('01288 350620')?></a><?= __(' or use our contact form to get in touch.')?></p>
+<div class="clearfix"></div>
+	<div style="margin-top:50px" class="portfolio-form-block">
+	
+	
+    <div style-"margin-top:30px" class="portfolio-form-header">
+        <h2><?= /* @escapeNotVerified */ __('Looking for something similar?') ?></h2>
+        <p><?= /* @escapeNotVerified */ __('Call our UK based studio on ')?><a href="tel:01288350620"><?= __('01288 350620')?></a><?= __(' or use our contact form to get in touch.')?></p>
     </div>
-    <div class="portfolio-form-not-logged">
-        <button type="button" onclick="location.href='/contact'"  title="<?=  /* @escapeNotVerified */ __('Please Login') ?>" ><span><?php echo "Request Quote" ?></span></button>
+    <div style="padding-top:20px" class="portfolio-form-not-logged">
+        <button type="button" onclick="location.href='/contact'"  title="<?=  /* @escapeNotVerified */ __('Please Login') ?>" ><span><?php echo "Contact us" ?></span></button>
     </div>
+	
+
 </div>
+
 
 <script type="text/javascript">
     require([

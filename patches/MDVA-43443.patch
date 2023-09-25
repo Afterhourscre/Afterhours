@@ -1,0 +1,210 @@
+diff --git a/vendor/magento/module-email/Model/Template/Filter.php b/vendor/magento/module-email/Model/Template/Filter.php
+index ecbad4059..c45326a1a 100644
+--- a/vendor/magento/module-email/Model/Template/Filter.php
++++ b/vendor/magento/module-email/Model/Template/Filter.php
+@@ -373,14 +373,12 @@ class Filter extends \Magento\Framework\Filter\Template
+     }
+ 
+     /**
+-     * Retrieve Block html directive
+-     *
+      * @param array $construction
+      * @return string
+      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+      * @SuppressWarnings(PHPMD.NPathComplexity)
+      */
+-    public function blockDirective($construction)
++    private function resolveblockDirective($construction)
+     {
+         $skipParams = ['class', 'id', 'output'];
+         $blockParameters = $this->getParameters($construction[2]);
+@@ -420,13 +418,29 @@ class Filter extends \Magento\Framework\Filter\Template
+         return $block->{$method}();
+     }
+ 
++    /**
++    * Retrieve Block html directive
++    *
++    * @param array $construction
++    * @return string
++    * @SuppressWarnings(PHPMD.CyclomaticComplexity)
++    * @SuppressWarnings(PHPMD.NPathComplexity)
++    */
++    public function blockDirective($construction)
++    {
++        $result = $this->resolveBlockDirective($construction);
++
++        return preg_replace("/{{/", "&#123;&#123;", $result);
++    }
++
+     /**
+      * Retrieve layout html directive
+      *
+      * @param string[] $construction
++     *
+      * @return string
+      */
+-    public function layoutDirective($construction)
++    private function resolveLayoutDirective($construction)
+     {
+         $this->_directiveParams = $this->getParameters($construction[2]);
+         if (!isset($this->_directiveParams['area'])) {
+@@ -442,6 +456,19 @@ class Filter extends \Magento\Framework\Filter\Template
+         }
+     }
+ 
++    /**
++     * Retrieve layout html directive
++     *
++     * @param string[] $construction
++     * @return string
++     */
++    public function layoutDirective($construction)
++    {
++        $result = $this->resolveLayoutDirective($construction);
++
++        return preg_replace("/{{/", "&#123;&#123;", $result);
++    }
++
+     /**
+      * Retrieve layout html directive callback
+      *
+@@ -509,7 +536,7 @@ class Filter extends \Magento\Framework\Filter\Template
+     {
+         $params = $this->getParameters($construction[2]);
+         $url = $this->_assetRepo->getUrlWithParams($params['url'], $params);
+-        return $url;
++        return $this->sanitizeValue($url);
+     }
+ 
+     /**
+@@ -521,8 +548,12 @@ class Filter extends \Magento\Framework\Filter\Template
+     public function mediaDirective($construction)
+     {
+         $params = $this->getParameters($construction[2]);
+-        return $this->_storeManager->getStore()
+-            ->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . $params['url'];
++
++        return $this->sanitizeValue(
++            $this->_storeManager->getStore()
++            ->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . $params['url']
++        );
++
+     }
+ 
+     /**
+@@ -560,7 +591,7 @@ class Filter extends \Magento\Framework\Filter\Template
+             unset($params['url']);
+         }
+ 
+-        return $this->urlModel->getUrl($path, $params);
++        return $this->sanitizeValue($this->urlModel->getUrl($path, $params));
+     }
+ 
+     /**
+@@ -598,7 +629,8 @@ class Filter extends \Magento\Framework\Filter\Template
+         }
+ 
+         $text = __($text, $params)->render();
+-        return $this->applyModifiers($text, $modifiers);
++
++        return $this->applyModifiers($this->sanitizeValue($text), $modifiers);
+     }
+ 
+     /**
+@@ -639,7 +671,10 @@ class Filter extends \Magento\Framework\Filter\Template
+         }
+ 
+         list($directive, $modifiers) = $this->explodeModifiers($construction[2], 'escape');
+-        return $this->applyModifiers($this->getVariable($directive, ''), $modifiers);
++
++        $result = $this->sanitizeValue($this->getVariable($directive, ''));
++
++        return $this->applyModifiers($result, $modifiers);
+     }
+ 
+     /**
+@@ -717,20 +752,11 @@ class Filter extends \Magento\Framework\Filter\Template
+     }
+ 
+     /**
+-     * HTTP Protocol directive
+-     *
+-     * Usage:
+-     *
+-     *     {{protocol}} - current protocol http or https
+-     *     {{protocol url="www.domain.com/"}} - domain URL with current protocol
+-     *     {{protocol http="http://url" https="https://url"}}
+-     *     {{protocol store="1"}} - Optional parameter which gets protocol from provide store based on store ID or code
+-     *
+      * @param string[] $construction
+      * @throws \Magento\Framework\Exception\MailException
+      * @return string
+      */
+-    public function protocolDirective($construction)
++    private function resolveProtocolDirective($construction)
+     {
+         $params = $this->getParameters($construction[2]);
+         $store = null;
+@@ -757,6 +783,27 @@ class Filter extends \Magento\Framework\Filter\Template
+         return $protocol;
+     }
+ 
++    /**
++     * HTTP Protocol directive
++     *
++     * Usage:
++     *
++     *     {{protocol}} - current protocol http or https
++     *     {{protocol url="www.domain.com/"}} - domain URL with current protocol
++     *     {{protocol http="http://url" https="https://url"}}
++     *     {{protocol store="1"}} - Optional parameter which gets protocol from provide store based on store ID or code
++     *
++     * @param string[] $construction
++     * @throws \Magento\Framework\Exception\MailException
++     * @return string
++     */
++    public function protocolDirective($construction)
++    {
++        return $this->sanitizeValue(
++            $this->resolveProtocolDirective($construction)
++        );
++    }
++
+     /**
+      * Store config directive
+      *
+@@ -775,7 +822,7 @@ class Filter extends \Magento\Framework\Filter\Template
+                 $storeId
+             );
+         }
+-        return $configValue;
++        return $this->sanitizeValue($configValue);
+     }
+ 
+     /**
+@@ -816,7 +863,7 @@ class Filter extends \Magento\Framework\Filter\Template
+                 $customVarValue = $value;
+             }
+         }
+-        return $customVarValue;
++        return $this->sanitizeValue($customVarValue);
+     }
+ 
+     /**
+@@ -1044,4 +1091,15 @@ class Filter extends \Magento\Framework\Filter\Template
+         }
+         return $value;
+     }
++
++
++    /**
++     * @param string $value
++     *
++     * @return string|bool
++     */
++    private function sanitizeValue($value)
++    {
++        return is_bool($value) ? $value : str_replace(['{', '}'], '', (string) $value);
++    }
+ }

@@ -58,9 +58,12 @@ class Refresh extends \Magento\Framework\App\Action\Action
     public function execute()
     {
         $isAjax = false;
+        $currentUrl = false;
         $responseData = [];
         $params = $this->getRequest()->getParams();
-        $currentUrl = $params['current_url'];
+        if (isset($params['current_url'])) {
+            $currentUrl = $params['current_url'];
+        }
 
         if (isset($params['is_ajax']) && $params['is_ajax']) {
             $isAjax = true;

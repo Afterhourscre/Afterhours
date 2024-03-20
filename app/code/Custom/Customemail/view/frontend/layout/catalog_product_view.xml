@@ -14,6 +14,6 @@
 				</arguments>
 			</block>
 		</referenceBlock>
-		<move element="product.info.description" destination="product.info.media" after="-" />
+		<move element="product.info.description" destination="product.info.media" before="cms.block.under.description" />
     </body>
 </page>

@@ -4,5 +4,14 @@
         <referenceContainer name="before.body.end">
             <block class="Magento\Framework\View\Element\Template" name="welpixel.swatch.validation.fix" template="Magento_Catalog::validation_fix.phtml" />
         </referenceContainer>
+
+        <referenceContainer name="product.info.media">
+            <block class="Magento\Cms\Block\Block" name="cms.block.under.description" after="-">
+                <arguments>
+                    <argument name="block_id" xsi:type="string">product-under-description</argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+
     </body>
 </page>

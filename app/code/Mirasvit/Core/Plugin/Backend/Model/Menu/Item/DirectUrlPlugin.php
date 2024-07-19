@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -24,14 +24,26 @@ use Mirasvit\Core\Service\CompatibilityService;
 
 class DirectUrlPlugin
 {
+    /**
+     * @var MenuBlock
+     */
     private $menuBlock;
 
+    /**
+     * DirectUrlPlugin constructor.
+     * @param MenuBlock $menuBlock
+     */
     public function __construct(
         MenuBlock $menuBlock
     ) {
         $this->menuBlock = $menuBlock;
     }
 
+    /**
+     * @param Item $subject
+     * @param string $url
+     * @return mixed
+     */
     public function afterGetUrl(Item $subject, $url)
     {
         if (CompatibilityService::is20()

@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Model\Adapter\Category\Mysql\Aggregation;
 
@@ -12,7 +11,6 @@ use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\DB\Ddl\Table;
 use Magento\Framework\DB\Select;
-use Magento\Framework\Search\Adapter\Mysql\Aggregation\DataProviderInterface;
 use Magento\Framework\Search\Request\BucketInterface;
 
 /**
@@ -20,7 +18,7 @@ use Magento\Framework\Search\Request\BucketInterface;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class DataProvider implements DataProviderInterface
+class DataProvider
 {
     /**
      * @var AdapterInterface

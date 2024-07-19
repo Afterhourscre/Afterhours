@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -160,6 +160,7 @@ class SitemapGenerateCommand extends \Symfony\Component\Console\Command\Command
             $output->writeln('Finished generation process');
         }
 
+        return 0;
     }
 
     /**
@@ -171,10 +172,10 @@ class SitemapGenerateCommand extends \Symfony\Component\Console\Command\Command
      */
     protected function log($info)
     {
-        $writer = new \Zend\Log\Writer\Stream(BP . $this->logPath);
-        $logger = new \Zend\Log\Logger();
-        $logger->addWriter($writer);
-        $logger->info($info);
+//        $writer = new \Zend\Log\Writer\Stream(BP . $this->logPath);
+//        $logger = new \Zend\Log\Logger();
+//        $logger->addWriter($writer);
+//        $logger->info($info);
     }
 
 }

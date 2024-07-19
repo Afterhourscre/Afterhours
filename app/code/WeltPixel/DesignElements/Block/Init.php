@@ -11,10 +11,10 @@ class Init extends \Magento\Backend\Block\AbstractBlock {
     /**
      * Init constructor.
      * @param \Magento\Backend\Block\Context $context
-     * @param array $data
      * @param \Magento\Framework\View\Page\Config $page
+     * @param array $data
      */
-    public function __construct(\Magento\Backend\Block\Context $context, array $data = [], \Magento\Framework\View\Page\Config $page)
+    public function __construct(\Magento\Backend\Block\Context $context, \Magento\Framework\View\Page\Config $page, array $data = [])
     {
         parent::__construct($context, $data);
         $this->page = $page;

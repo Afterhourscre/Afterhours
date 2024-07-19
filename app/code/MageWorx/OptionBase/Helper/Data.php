@@ -500,6 +500,7 @@ class Data extends AbstractHelper
      */
     public function findOptionTypeIdByConditions($conditions)
     {
+
         if (empty($conditions['option_id']) || !is_array($conditions['option_id'])) {
             return [];
         }
@@ -518,7 +519,14 @@ class Data extends AbstractHelper
                                  ->distinct()
                                  ->where($whereCondition);
 
-        $optionTypeIds = $connection->fetchCol($sql, 'option_type_id');
+        try {
+            $optionTypeIds = $connection->fetchCol($sql, 'option_type_id');
+        } catch (\Exception $e) {
+            // echo "<pre>";
+            // print_r($whereCondition);
+            // echo $e->getMessage(); die;
+            $optionTypeIds = [];
+        }
         $this->optionTypeIdCache[sha1($whereCondition)] = $optionTypeIds;
         return $optionTypeIds;
     }

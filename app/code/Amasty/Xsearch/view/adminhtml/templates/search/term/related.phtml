@@ -1,15 +1,16 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 ?>
 <?php
-
-/** @var \Amasty\Xsearh\Block\Adminhtml\RelatedTerms $block */
-
-/** @var \Amasty\Xsearch\Block\Adminhtml\RelatedTerms\Grid $blockGrid */
+/**
+ * @var \Amasty\Xsearch\Block\Adminhtml\RelatedTerms $block
+ * @var \Amasty\Xsearch\Block\Adminhtml\RelatedTerms\Grid $blockGrid
+ * @var \Magento\Framework\Escaper $escaper
+ */
 
 $blockGrid = $block->getBlockGrid();
 $gridJsObjectName = $blockGrid->getJsObjectName();
@@ -17,18 +18,19 @@ $gridJsObjectName = $blockGrid->getJsObjectName();
 
 <fieldset class="fieldset admin__fieldset " id="grid_fieldset">
     <legend class="admin__legend legend">
-        <span><?= __('Related Terms')?></span>
-    </legend><br>
+        <span><?=  /* @noEscape */ __('Related Terms') ?></span>
+    </legend>
+    <br>
 
-<?= $block->getGridHtml() ?>
-<script type="text/x-magento-init">
-    {
-        "*": {
-            "Amasty_Xsearch/js/search/term/assign-related": {
-                "selectedTerms": <?= /* @escapeNotVerified */ $block->getTermsJson() ?>,
-                "gridJsObjectName": <?= /* @escapeNotVerified */ '"' . $gridJsObjectName . '"' ?: '{}' ?>
+    <?= $block->getGridHtml() ?>
+    <script type="text/x-magento-init">
+        {
+            "*": {
+                "Amasty_Xsearch/js/search/term/assign-related": {
+                    "selectedTerms": <?=  /* @noEscape */ $block->getTermsJson() ?>,
+                    "gridJsObjectName": "<?= $escaper->escapeHtml($gridJsObjectName) ?>"
+                }
             }
         }
-    }
-</script>
+    </script>
 </fieldset>

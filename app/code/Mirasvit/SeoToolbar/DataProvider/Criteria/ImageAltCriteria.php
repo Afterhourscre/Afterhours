@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -23,13 +23,17 @@ class ImageAltCriteria extends AbstractCriteria
 {
     const LABEL = 'Images';
 
+    /**
+     * @param string $content
+     * @return \Magento\Framework\DataObject|mixed
+     */
     public function handle($content)
     {
         $images = $this->getImages($content);
 
         $emptyAlt = [];
         foreach ($images as $img => $alt) {
-            if (trim($alt) == '') {
+            if (trim((string)$alt) == '' && preg_match('/http|https/',$img)) {
                 $emptyAlt[] = $img;
             }
         }
@@ -70,7 +74,14 @@ class ImageAltCriteria extends AbstractCriteria
 
                 if ($img) {
                     $src = isset($img[2][0]) ? $img[2][0] : '';
-                    $alt = isset($img[2][1]) ? $img[2][1] : '';
+
+		    $altIdx = array_search('alt', $img[1]);
+		    
+		    if($altIdx !== false) {
+        		$alt = $img[2][$altIdx];
+		    } else {
+                        $alt = isset($img[2][1]) ? $img[2][1] : '';
+		    }
 
                     if ($src) {
                         $result[$src] = $alt;

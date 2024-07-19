@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -69,6 +69,14 @@ class UrlRewrite extends AbstractHelper implements UrlRewriteHelperInterface
      */
     protected $configB = [];
 
+    /**
+     * UrlRewrite constructor.
+     * @param UrlRewriteFactory $urlRewriteFactory
+     * @param UrlRewriteCollectionFactory $urlRewriteCollectionFactory
+     * @param FilterManager $filter
+     * @param StoreManagerInterface $storeManager
+     * @param Context $context
+     */
     public function __construct(
         UrlRewriteFactory $urlRewriteFactory,
         UrlRewriteCollectionFactory $urlRewriteCollectionFactory,
@@ -139,7 +147,11 @@ class UrlRewrite extends AbstractHelper implements UrlRewriteHelperInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @param string $module
+     * @param string $type
+     * @param null|string $entity
+     * @return string
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getUrl($module, $type, $entity = null)
     {
@@ -312,7 +324,7 @@ class UrlRewrite extends AbstractHelper implements UrlRewriteHelperInterface
         } else {
             $url = $basePath;
         }
-        $configUrlSuffix = $this->getProductUrlSuffix();
+        $configUrlSuffix = (string) $this->getProductUrlSuffix();
         //user can enter .html or html suffix
         if ($configUrlSuffix != '' && $configUrlSuffix != '/' && $configUrlSuffix[0] != '.') {
             $configUrlSuffix = '.' . $configUrlSuffix;
@@ -346,7 +358,9 @@ class UrlRewrite extends AbstractHelper implements UrlRewriteHelperInterface
         }
 
         if ($configUrlSuffix != '/' && $configUrlSuffix !== $key) {
-            $key = str_replace($configUrlSuffix, '', $key);
+            if(!empty($key) && !empty($configUrlSuffix)) {
+                $key = str_replace($configUrlSuffix, '', $key);
+            }
         }
 
         return $key;
@@ -360,6 +374,7 @@ class UrlRewrite extends AbstractHelper implements UrlRewriteHelperInterface
      * @return bool|DataObject
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
     public function match($pathInfo)
     {
@@ -376,12 +391,22 @@ class UrlRewrite extends AbstractHelper implements UrlRewriteHelperInterface
 
         $configUrlSuffix = $this->getProductUrlSuffix();
 
+        $isStoreCodeIncluded = $this->scopeConfig->getValue(
+            'web/url/use_store',
+            ScopeInterface::SCOPE_STORE,
+            $this->storeManager->getStore()->getCode());
+
+        $storeCode = $isStoreCodeIncluded ? '/' . $this->storeManager->getStore()->getCode() : '';
+
         if ($configUrlSuffix && $pathInfo == $this->getUrlKeyWithoutSuffix($pathInfo)) {
             // if suffix already included in path
-            if (preg_match('/' . preg_quote($configUrlSuffix, '/') . '$/i', $pathInfo)) {
+            if (preg_match('/' . preg_quote($configUrlSuffix, '/') . '$/i', $pathInfo)
+            || ($configUrlSuffix === '/' && $this->configB[$parts[0]] == 'KBASE')) {
                 $configUrlSuffix = '';
             } else {
-                $result = new DataObject(['forwardUrl' => $this->getUrlKeyWithoutSuffix($pathInfo) . $configUrlSuffix]);
+                $result = new DataObject(['forwardUrl' => $storeCode
+                    . $this->getUrlKeyWithoutSuffix($pathInfo)
+                    . $configUrlSuffix]);
 
                 return $result;
             }
@@ -470,7 +495,7 @@ class UrlRewrite extends AbstractHelper implements UrlRewriteHelperInterface
             'à' => 'a', 'á' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'ae', 'å' => 'a', 'æ' => 'a', 'ç' => 'c',
             'è' => 'e', 'é' => 'e', 'ê' => 'e', 'ë' => 'e', 'ì' => 'i', 'í' => 'i', 'î' => 'i', 'ï' => 'i',
             'ð' => 'o', 'ñ' => 'n', 'ò' => 'o', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'oe', 'ø' => 'o',
-            'ù' => 'u', 'ú' => 'u', 'û' => 'u', 'ý' => 'y', 'ý' => 'y', 'þ' => 'b', 'ÿ' => 'y', 'Ŕ' => 'R',
+            'ù' => 'u', 'ú' => 'u', 'û' => 'u', 'ý' => 'y', 'þ' => 'b', 'ÿ' => 'y', 'Ŕ' => 'R',
             'ŕ' => 'r', 'ü' => 'ue', '/' => '', '&' => '', '(' => '', ')' => '',
         ];
         //@codingStandardsIgnoreStop
@@ -482,10 +507,10 @@ class UrlRewrite extends AbstractHelper implements UrlRewriteHelperInterface
     }
 
     /**
-     * @return string|null
+     * @return string
      */
     private function getProductUrlSuffix()
     {
-        return $this->scopeConfig->getValue('catalog/seo/product_url_suffix', ScopeInterface::SCOPE_STORE);
+        return (string)$this->scopeConfig->getValue('catalog/seo/product_url_suffix', ScopeInterface::SCOPE_STORE);
     }
 }

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -59,7 +59,7 @@ class Collection extends AbstractCollection
     }
 
     /**
-     * @param string $store
+     * @param \Magento\Store\Model\Store $store
      * @return $this
      */
     public function addStoreFilter($store)
@@ -93,7 +93,8 @@ class Collection extends AbstractCollection
                     AS `seo_canonical_rewrite_store_table`
                     WHERE main_table." . CanonicalRewriteStoreInterface::CANONICAL_REWRITE_ID
                     . " = seo_canonical_rewrite_store_table."
-                    . CanonicalRewriteStoreInterface::CANONICAL_REWRITE_ID . ")")]
+                    . CanonicalRewriteStoreInterface::CANONICAL_REWRITE_ID . ")"
+                )]
             );
 
         return $this;

@@ -23,7 +23,7 @@ namespace Mageplaza\CallForPrice\Ui\Component\MassAction\Status;
 
 use Magento\Framework\UrlInterface;
 use Mageplaza\CallForPrice\Model\RequestState;
-use Zend\Stdlib\JsonSerializable;
+use Laminas\Stdlib\JsonSerializable;
 
 /**
  * Class Options
@@ -96,7 +96,7 @@ class Options implements JsonSerializable
      * @return array|mixed
      * @throws \Zend_Serializer_Exception
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         
 die('123');

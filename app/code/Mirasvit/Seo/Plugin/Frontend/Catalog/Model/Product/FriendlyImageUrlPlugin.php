@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -18,7 +18,7 @@
 namespace Mirasvit\Seo\Plugin\Frontend\Catalog\Model\Product;
 
 use Mirasvit\Seo\Model\Config\ImageConfig;
-use  Mirasvit\Seo\Api\Service\FriendlyImageUrlServiceInterface;
+use Mirasvit\Seo\Api\Service\FriendlyImageUrlServiceInterface;
 
 class FriendlyImageUrlPlugin
 {
@@ -32,15 +32,27 @@ class FriendlyImageUrlPlugin
      */
     private $friendlyImageUrlService;
 
-
+    /**
+     * FriendlyImageUrlPlugin constructor.
+     *
+     * @param ImageConfig                      $imageConfig
+     * @param FriendlyImageUrlServiceInterface $friendlyImageUrlService
+     */
     public function __construct(
         ImageConfig $imageConfig,
         FriendlyImageUrlServiceInterface $friendlyImageUrlService
     ) {
-        $this->imageConfig           = $imageConfig;
-        $this->friendlyImageUrlService         = $friendlyImageUrlService;
+        $this->imageConfig             = $imageConfig;
+        $this->friendlyImageUrlService = $friendlyImageUrlService;
     }
 
+    /**
+     * @param mixed $subject
+     * @param null  $key
+     * @param null  $value
+     *
+     * @return array
+     */
     public function beforeSetData($subject, $key = null, $value = null)
     {
         if (!$key || !is_scalar($key)) {
@@ -49,39 +61,60 @@ class FriendlyImageUrlPlugin
 
         if (in_array($key, ['image', 'small_image'])) {
             if ($this->imageConfig->isFriendlyUrlEnabled()) {
-                \Magento\Framework\Profiler::start(__METHOD__."#getFriendlyImageName");
+                \Magento\Framework\Profiler::start(__METHOD__ . "#getFriendlyImageName");
                 $value = $this->friendlyImageUrlService->getFriendlyImageName($subject, $value);
-                \Magento\Framework\Profiler::stop(__METHOD__."#getFriendlyImageName");
+                \Magento\Framework\Profiler::stop(__METHOD__ . "#getFriendlyImageName");
             }
         } elseif ($key === 'media_gallery') {
-            \Magento\Framework\Profiler::start(__METHOD__."#updateGallery");
+            \Magento\Framework\Profiler::start(__METHOD__ . "#updateGallery");
             $value = $this->updateGallery($subject, $value);
-            \Magento\Framework\Profiler::stop(__METHOD__."#updateGallery");
+            \Magento\Framework\Profiler::stop(__METHOD__ . "#updateGallery");
         }
 
         return [$key, $value];
     }
 
+    /**
+     * @param mixed  $subject
+     * @param string $value
+     * @param null   $key
+     *
+     * @return string
+     */
     public function afterGetData($subject, $value, $key = null)
     {
         if (!$key) {
             return $value;
         }
-        if (in_array($key, ['image_label', 'small_image_label'])) {
+
+        if (in_array($key, ['image', 'small_image', 'swatch_image'])) {
+            if ($this->imageConfig->isFriendlyUrlEnabled()) {
+                \Magento\Framework\Profiler::start(__METHOD__ . "#getFriendlyImageName");
+                $value = $this->friendlyImageUrlService->getFriendlyImageName($subject, $value);
+                \Magento\Framework\Profiler::stop(__METHOD__ . "#getFriendlyImageName");
+            }
+        } elseif (in_array($key, ['image_label', 'small_image_label'])) {
             \Magento\Framework\Profiler::start(__METHOD__);
             if ($this->imageConfig->isFriendlyAltEnabled()) {
                 $value = $this->friendlyImageUrlService->getFriendlyImageAlt($subject);
             }
             \Magento\Framework\Profiler::stop(__METHOD__);
+        } elseif (in_array($key, ['image_title'])) {
+            \Magento\Framework\Profiler::start(__METHOD__);
+            if ($this->imageConfig->isFriendlyAltEnabled()) {
+                $value = $this->friendlyImageUrlService->getFriendlyImageTitle($subject);
+            }
+            \Magento\Framework\Profiler::stop(__METHOD__);
         }
+
         return $value;
     }
 
-
     /**
      * @param \Magento\Catalog\Model\Product $product
-     * @param string $fileName
-     * @return string
+     * @param string                         $value
+     *
+     * @return string|array
      */
     public function updateGallery($product, $value)
     {
@@ -90,21 +123,22 @@ class FriendlyImageUrlPlugin
         }
 
         foreach ($value['images'] as $idx => $imageData) {
-            if ($this->imageConfig->isFriendlyUrlEnabled()) {
-                \Magento\Framework\Profiler::start(__METHOD__."#getFriendlyImageName");
-                $value['images'][$idx]['file'] = $this->friendlyImageUrlService->getFriendlyImageName($product, $imageData['file']);
-                \Magento\Framework\Profiler::stop(__METHOD__."#getFriendlyImageName");
-            }
+            if ($imageData['media_type'] === 'image') {
+                if ($this->imageConfig->isFriendlyUrlEnabled()) {
+                    \Magento\Framework\Profiler::start(__METHOD__ . "#getFriendlyImageName");
+                    $value['images'][$idx]['file'] = $this->friendlyImageUrlService->getFriendlyImageName($product, $imageData['file']);
+                    \Magento\Framework\Profiler::stop(__METHOD__ . "#getFriendlyImageName");
+                }
 
-            if ($this->imageConfig->isFriendlyAltEnabled()) {
-                \Magento\Framework\Profiler::start(__METHOD__."#getFriendlyImageAlt");
-                $value['images'][$idx]['label'] = $this->friendlyImageUrlService->getFriendlyImageAlt($product);
-                \Magento\Framework\Profiler::stop(__METHOD__."#getFriendlyImageAlt");
+                if ($this->imageConfig->isFriendlyAltEnabled()) {
+                    \Magento\Framework\Profiler::start(__METHOD__ . "#getFriendlyImageAlt");
+                    $value['images'][$idx]['label'] = $this->friendlyImageUrlService->getFriendlyImageAlt($product);
+                    $value['images'][$idx]['title'] = $this->friendlyImageUrlService->getFriendlyImageTitle($product);
+                    \Magento\Framework\Profiler::stop(__METHOD__ . "#getFriendlyImageAlt");
+                }
             }
         }
 
         return $value;
     }
-
-
 }

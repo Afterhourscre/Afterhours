@@ -9,27 +9,27 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoAutolink\Controller\Adminhtml\Import;
 
+use Magento\Backend\Model\View\Result\Page;
 use Magento\Framework\Controller\ResultFactory;
+use Mirasvit\SeoAutolink\Controller\Adminhtml\Import;
 
-class Index extends \Mirasvit\SeoAutolink\Controller\Adminhtml\Import
+class Index extends Import
 {
-    /**
-     * @return \Magento\Backend\Model\View\Result\Page
-     */
-    public function execute()
+    public function execute(): Page
     {
-        /** @var \Magento\Backend\Model\View\Result\Page $resultPage */
+        /** @var Page $resultPage */
         $resultPage = $this->resultFactory->create(ResultFactory::TYPE_PAGE);
 
-        $resultPage->getConfig()->getTitle()->prepend(__('Import Links'));
+        $resultPage->getConfig()->getTitle()->prepend(__('Import/Export Links'));
         $this->_initAction();
         $this->_addContent($resultPage->getLayout()
             ->createBlock('\Mirasvit\SeoAutolink\Block\Adminhtml\Import\Edit'));

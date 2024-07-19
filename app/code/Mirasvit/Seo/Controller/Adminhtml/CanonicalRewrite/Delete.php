@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -32,6 +32,14 @@ class Delete extends CanonicalRewrite
      */
     private $filter;
 
+    /**
+     * Delete constructor.
+     * @param CompatibilityServiceInterface $compatibilityService
+     * @param Filter $filter
+     * @param Registry $registry
+     * @param CanonicalRewriteRepositoryInterface $canonicalRewriteRepository
+     * @param Context $context
+     */
     public function __construct(
         CompatibilityServiceInterface $compatibilityService,
         Filter $filter,

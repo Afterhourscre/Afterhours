@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Model;
 
@@ -12,9 +11,9 @@ use Amasty\Xsearch\Model\ResourceModel\UserSearch\Collection;
 
 class QueryInfo extends \Magento\Framework\Model\AbstractModel
 {
-    const MONTHS = 12;
+    public const MONTHS = 12;
 
-    const LIMIT_ROWS = 10;
+    public const LIMIT_ROWS = 10;
 
     /**
      * @var int
@@ -27,11 +26,13 @@ class QueryInfo extends \Magento\Framework\Model\AbstractModel
     private $dateFormat;
 
     /**
+     * @param $timePeriod
+     * @param bool $isNeedLimit
      * @return array
      */
     public function getAnalyticsData($timePeriod, $isNeedLimit = true)
     {
-        $isMonthPeriod = $timePeriod == Collection::GROUP_BY_MOUNTH;
+        $isMonthPeriod = $timePeriod == Collection::GROUP_BY_MONTH_PATTERN;
         $this->dateFormat = $isMonthPeriod ? 'F Y' : 'd F Y';
         if ($isMonthPeriod) {
             $this->limit = self::MONTHS;

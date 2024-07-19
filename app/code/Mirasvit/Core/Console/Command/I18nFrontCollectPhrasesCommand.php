@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -47,6 +47,12 @@ class I18nFrontCollectPhrasesCommand extends Command
      */
     private $optionResolverFactory;
 
+    /**
+     * I18nFrontCollectPhrasesCommand constructor.
+     * @param DirectoryList $directoryList
+     * @param I18nFactory $factory
+     * @param ResolverFactory $optionResolverFactory
+     */
     public function __construct(
         DirectoryList $directoryList,
         I18nFactory $factory,
@@ -86,7 +92,7 @@ class I18nFrontCollectPhrasesCommand extends Command
     /**
      * {@inheritdoc}
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $withContext = false;
         $modulePath = $input->getArgument(self::INPUT_KEY_MODULE_PATH);
@@ -117,6 +123,8 @@ class I18nFrontCollectPhrasesCommand extends Command
             $this->getDictionaryWriter($outputFilename)->write($phrase);
         }
         $this->writer = null;
+
+        return 0;
     }
 
     /**

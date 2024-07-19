@@ -49,6 +49,20 @@
     </listingToolbar>
 
     <columns name="seo_content_rewrite_columns">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="childDefaults" xsi:type="array">
+                    <item name="fieldAction" xsi:type="array">
+                        <item name="provider" xsi:type="string">seo_content_rewrite_listing.seo_content_rewrite_listing.seo_content_rewrite_columns.actions</item>
+                        <item name="target" xsi:type="string">applyAction</item>
+                        <item name="params" xsi:type="array">
+                            <item name="0" xsi:type="string">edit</item>
+                            <item name="1" xsi:type="string">${ $.$data.rowIndex }</item>
+                        </item>
+                    </item>
+                </item>
+            </item>
+        </argument>
         <column name="rewrite_id">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
@@ -143,7 +157,7 @@
             </argument>
         </column>
 
-        <actionsColumn name="actions" class="Mirasvit\SeoContent\Ui\Rewrite\Listing\Column\ActionsColumn">
+        <actionsColumn name="actions" class="Mirasvit\SeoContent\Ui\Rewrite\Listing\Columns\ActionsColumn">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
                     <item name="indexField" xsi:type="string">rewrite_id</item>

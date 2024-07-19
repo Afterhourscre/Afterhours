@@ -9,15 +9,17 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoMarkup\Plugin\Frontend\Framework\Controller\Result;
 
 use Magento\Framework\App\ResponseInterface;
+use Magento\Store\Model\StoreManagerInterface;
 use Mirasvit\Seo\Api\Service\StateServiceInterface;
 use Mirasvit\SeoMarkup\Model\Config\ProductConfig;
 use Mirasvit\SeoMarkup\Model\Config\CategoryConfig;
@@ -35,88 +37,53 @@ class RemoveNativeRsPlugin
 
     private $response;
 
+    private $storeManager;
+
     public function __construct(
         StateServiceInterface $stateService,
-        ProductConfig $productConfig,
-        CategoryConfig $categoryConfig,
-        PageConfig $pageConfig,
-        ResponseInterface $response
+        ProductConfig         $productConfig,
+        CategoryConfig        $categoryConfig,
+        PageConfig            $pageConfig,
+        ResponseInterface     $response,
+        StoreManagerInterface $storeManager
     ) {
-        $this->stateService     = $stateService;
-        $this->productConfig    = $productConfig;
-        $this->categoryConfig   = $categoryConfig;
-        $this->pageConfig       = $pageConfig;
-        $this->response         = $response;
+        $this->stateService   = $stateService;
+        $this->productConfig  = $productConfig;
+        $this->categoryConfig = $categoryConfig;
+        $this->pageConfig     = $pageConfig;
+        $this->response       = $response;
+        $this->storeManager   = $storeManager;
     }
 
+    /**
+     * @param mixed $subject
+     * @param mixed $result
+     *
+     * @return mixed
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     public function afterRenderResult($subject, $result)
     {
-        $this->removeProductSnippets($this->response);
-        $this->removeCategorySnippets($this->response);
-        $this->removeHomeSnippets($this->response);
+        $storeId = (int)$this->storeManager->getStore()->getId();
+
+        if (
+            ($this->stateService->isProductPage() && $this->productConfig->isRemoveNativeRs($storeId))
+            || ($this->stateService->isCategoryPage() && $this->categoryConfig->isRemoveNativeRs($storeId))
+            || ($this->stateService->isHomePage() && $this->pageConfig->isRemoveNativeRs($storeId))
+        ) {
+            $body = $this->response->getBody();
+            $body = $this->deleteWrongSnippets($body);
+            $this->response->setBody($body);
+        }
 
         return $result;
     }
 
-    private function removeProductSnippets(ResponseInterface $response)
-    {
-        if (!$this->stateService->isProductPage()) {
-            return;
-        }
-
-        if (!$this->productConfig->isRemoveNativeRs()) {
-            return;
-        }
-
-        $body = $response->getBody();
-
-        $body = $this->deleteWrongSnippets($body);
-
-        $response->setBody($body);
-    }
-
-    private function removeCategorySnippets(ResponseInterface $response)
-    {
-        if (!$this->stateService->isCategoryPage()) {
-            return;
-        }
-
-        if (!$this->categoryConfig->isRemoveNativeRs()) {
-            return;
-        }
-
-        $body = $response->getBody();
-
-        $body = $this->deleteWrongSnippets($body);
-
-        $response->setBody($body);
-    }
-
-    private function removeHomeSnippets(ResponseInterface $response)
-    {
-        if (!$this->stateService->isHomePage()) {
-            return;
-        }
-
-        if (!$this->pageConfig->isRemoveNativeRs()) {
-            return;
-        }
-
-        $body = $response->getBody();
-
-        $body = $this->deleteWrongSnippets($body);
-
-        $response->setBody($body);
-    }
-
     /**
      * Remove itemprop, itemscope from breadcrumbs html
-     *
-     * @param string $html
-     *
      * @return array|string|null
      */
-    public function deleteWrongSnippets($html)
+    public function deleteWrongSnippets(string $html)
     {
         $crumbsPattern = '/\\<span class="breadcrumbsbefore"\\>\\<\\/span\\>(.*?)'
             . '\\<span class="breadcrumbsafter"\\>\\<\\/span\\>/ims';

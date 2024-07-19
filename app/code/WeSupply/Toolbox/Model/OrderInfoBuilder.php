@@ -678,7 +678,7 @@ class OrderInfoBuilder implements \WeSupply\Toolbox\Api\OrderInfoBuilderInterfac
      * @param string $shippingTracking
      * @return array
      */
-    protected function getItemSpecificInformation($itemFeeShipping = 0, $itemTotal, $taxTotal, $discountTotal, $qtyOrdered, $qty, $status, $shippingService = '', $shippingTracking = '', $carrierCode)
+    protected function getItemSpecificInformation($itemTotal, $taxTotal, $discountTotal, $qtyOrdered, $qty, $status, $carrierCode, $shippingService = '', $shippingTracking = '', $itemFeeShipping = 0)
     {
         $information = [];
 

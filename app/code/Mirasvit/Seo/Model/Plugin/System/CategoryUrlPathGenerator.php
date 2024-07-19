@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -47,28 +47,27 @@ class CategoryUrlPathGenerator
     protected $scopeConfig;
 
     /**
-     * @param \Mirasvit\Seo\Model\Config                                $config
-     * @param \\Magento\Store\Model\StoreManagerInterface               $storeManager
+     * @param \Mirasvit\Seo\Model\Config $config
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator $urlPathGenerator
-     * @param \\Magento\Framework\App\Config\ScopeConfigInterface       $scopeConfig
+     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
      */
     public function __construct(
-       \Mirasvit\Seo\Model\Config $config,
-       \Magento\Store\Model\StoreManagerInterface $storeManager,
-       \Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator $urlPathGenerator,
-       \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+        \Mirasvit\Seo\Model\Config $config,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator $urlPathGenerator,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
     ) {
         $this->config = $config;
         $this->storeManager = $storeManager;
         $this->urlPathGenerator = $urlPathGenerator;
         $this->scopeConfig = $scopeConfig;
-
     }
 
     /**
      * Get category url path
      *
-     * @param \Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator\Interceptor subject
+     * @param \Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator\Interceptor $subject
      * @param callable $proceed
      * @param \Magento\Catalog\Model\Category $category
      * @param int $storeId
@@ -82,7 +81,7 @@ class CategoryUrlPathGenerator
 
         $categoryUrlPath = $this->urlPathGenerator->getUrlPath($category);
 
-        if ($this->config->isEnabledRemoveParentCategoryPath($storeId)
+        if ($this->config->isEnabledRemoveParentCategoryPath((int)$storeId)
             && $categoryUrlPath && strpos($categoryUrlPath, '/') !== false) {
                 $path = explode('/', $categoryUrlPath);
                 $categoryUrlPath = $path[count($path) - 1];

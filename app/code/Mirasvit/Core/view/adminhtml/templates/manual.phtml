@@ -1,9 +1,11 @@
 <?php
-/** @var Mirasvit\Core\Block\Adminhtml\Manual $block */
+/** @var \Mirasvit\Core\Block\Adminhtml\Manual $block */
 ?>
 <div class="mst-core__manual">
-    <a href="<?= $block->getManualUrl() ?>" id="m__manual_link" title="<?= $block->getTitle() ?>"
-       onclick="this.target='_blank'"><?= $block->getTitle() ?>
+    <a href="<?= $block->escapeUrl($block->getManualUrl()) ?>"
+       id="m__manual_link"
+       title="<?= $block->escapeHtmlAttr($block->getTitle()) ?>"
+       onclick="this.target='_blank'"><?= $block->escapeHtml($block->getTitle()) ?>
     </a>
 </div>
 <?php if ($block->getPosition() == 'bottom'): ?>

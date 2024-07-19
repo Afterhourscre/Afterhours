@@ -6,19 +6,21 @@
             </argument>
         </arguments>
     </type>
+
     <type name="Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator">
         <plugin name="dispatch" type="Mirasvit\Seo\Model\Plugin\System\CategoryUrlPathGenerator" sortOrder="1000"/>
     </type>
-    <type name="Magento\Catalog\Controller\Adminhtml\Product\Save">
-        <plugin name="dispatch" type="Mirasvit\Seo\Plugin\UrlKeyTemplate\ProductSave" sortOrder="1000"/>
+
+    <type name="Magento\CatalogUrlRewrite\Model\ProductScopeRewriteGenerator">
+        <plugin name="Mirasvit_Seo::productUrlKey" type="Mirasvit\Seo\Plugin\Adminhtml\ProductUrlKeyPlugin" sortOrder="1000"/>
     </type>
-    <type name="Magento\Framework\Notification\MessageList">
-        <arguments>
-            <argument name="messages" xsi:type="array">
-                <item name="WarmerCompatibility" xsi:type="string">Mirasvit\Seo\Model\System\Message\Compatibility</item>
-            </argument>
-        </arguments>
+    <type name="Magento\CatalogUrlRewrite\Service\V1\StoreViewService">
+        <plugin name="Mirasvit_Seo::productUrlKeyRegeneratePlugin" type="Mirasvit\Seo\Plugin\Adminhtml\ProductUrlKeyAfterVisibilityChangePlugin" sortOrder="1000"/>
     </type>
+    <type name="Magento\Config\Model\Config">
+        <plugin name="Mirasvit_Seo::configPlugin" type="Mirasvit\Seo\Plugin\Adminhtml\ConfigPlugin"/>
+    </type>
+
     <type name="Magento\Framework\View\Element\Message\MessageConfigurationsPool">
         <arguments>
             <argument name="configurationsMap" xsi:type="array">
@@ -31,6 +33,7 @@
             </argument>
         </arguments>
     </type>
+
     <type name="Mirasvit\Seo\Controller\Adminhtml\Template\CategoryImageUpload">
         <arguments>
             <argument name="imageUploader" xsi:type="object">Mirasvit\Seo\CategoryImageUpload</argument>

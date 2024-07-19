@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -20,34 +20,52 @@ namespace Mirasvit\SeoContent\Controller\Adminhtml;
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\Registry;
-use Mirasvit\Seo\Helper\Serializer;
 use Mirasvit\SeoContent\Api\Data\TemplateInterface;
 use Mirasvit\SeoContent\Api\Repository\TemplateRepositoryInterface;
 use Mirasvit\SeoContent\Service\ContentService;
 
 abstract class Template extends Action
 {
-    protected $serializer;
-
+    /**
+     * @var TemplateRepositoryInterface
+     */
     protected $templateRepository;
 
-    private   $registry;
+    /**
+     * @var Registry
+     */
+    private $registry;
 
+    /**
+     * @var Context
+     */
     protected $context;
 
+    /**
+     * @var \Magento\Framework\Controller\ResultFactory
+     */
     protected $resultFactory;
+    /**
+     * @var ContentService
+     */
+    protected $contentService;
 
+    /**
+     * Template constructor.
+     * @param TemplateRepositoryInterface $templateRepository
+     * @param Registry $registry
+     * @param Context $context
+     * @param ContentService $contentService
+     */
     public function __construct(
         TemplateRepositoryInterface $templateRepository,
         Registry $registry,
         Context $context,
-        Serializer $serializer,
         ContentService $contentService
     ) {
         $this->templateRepository = $templateRepository;
         $this->registry           = $registry;
         $this->context            = $context;
-        $this->serializer         = $serializer;
         $this->contentService     = $contentService;
         $this->resultFactory      = $context->getResultFactory();
 
@@ -84,6 +102,9 @@ abstract class Template extends Action
         return $resultPage;
     }
 
+    /**
+     * @return bool
+     */
     protected function _isAllowed()
     {
         return $this->context->getAuthorization()->isAllowed('Mirasvit_SeoContent::seo_content_template');

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -110,7 +110,7 @@ class Text extends AbstractHelper implements TextHelperInterface
     public function splitWords($str, $uniqueOnly = false, $maxWordLength = 0, $wordSeparatorRegexp = '\s')
     {
         $result = [];
-        $split  = preg_split('#' . $wordSeparatorRegexp . '#siu', $str, null, PREG_SPLIT_NO_EMPTY);
+        $split  = preg_split('#' . $wordSeparatorRegexp . '#siu', $str, 0, PREG_SPLIT_NO_EMPTY);
         foreach ($split as $word) {
             if ($uniqueOnly) {
                 $result[$word] = $word;
@@ -132,7 +132,7 @@ class Text extends AbstractHelper implements TextHelperInterface
      * @param string $string
      * @param int    $length
      * @param string $etc
-     * @param string &$remainder
+     * @param string $remainder
      * @param bool   $breakWords
      *
      * @return string
@@ -144,10 +144,10 @@ class Text extends AbstractHelper implements TextHelperInterface
             return '';
         }
 
-        $originalLength = strlen($string);
+        $originalLength = strlen((string) $string);
 
         if ($originalLength > $length) {
-            $length -= strlen($etc);
+            $length -= strlen((string) $etc);
             if ($length <= 0) {
                 return '';
             }
@@ -155,11 +155,11 @@ class Text extends AbstractHelper implements TextHelperInterface
             $preparedLength = $length;
             if (!$breakWords) {
                 $preparedString = preg_replace('/\s+?(\S+)?$/u', '', substr($string, 0, $length + 1));
-                $preparedLength = strlen($preparedString);
+                $preparedLength = strlen((string) $preparedString);
             }
-            $remainder = substr($string, $preparedLength, $originalLength);
+            $remainder = substr((string) $string, $preparedLength, $originalLength);
 
-            return substr($preparedString, 0, $length) . $etc;
+            return substr((string) $preparedString, 0, $length) . $etc;
         }
 
         return $string;

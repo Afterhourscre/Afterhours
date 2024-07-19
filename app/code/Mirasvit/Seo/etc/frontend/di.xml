@@ -25,4 +25,32 @@
     <type name="Magento\Catalog\Block\Product\View\Gallery">
         <plugin name="mstSeoProductViewGallery" type="Mirasvit\Seo\Plugin\Frontend\Catalog\Block\Product\View\Gallery\SetMainImagePlugin" sortOrder="1000"/>
     </type>
+
+    <type name="Magento\Framework\App\Action\Action">
+        <plugin name="Mirasvit_Seo::correctUrlPlugin" type="Mirasvit\Seo\Plugin\Frontend\CorrectUrlPlugin"/>
+    </type>
+
+    <type name="Magento\UrlRewrite\Controller\Router">
+        <plugin name="mstSeoUrlRewriteRouterApplyTrailingSlashPlugin" type="Mirasvit\Seo\Plugin\Frontend\UrlRewriteRouterApplyTrailingSlashPlugin"/>
+    </type>
+
+    <type name="Magento\Framework\View\Page\Config">
+        <plugin name="mstSeoRobotsPlugin" type="Mirasvit\Seo\Plugin\Frontend\Framework\View\Page\ModifyRobotsPlugin"/>
+    </type>
+
+    <type name="Magento\Catalog\Block\Product\ImageFactory">
+        <plugin name="mstSeoImageFactoryPlugin" type="Mirasvit\Seo\Plugin\Frontend\Catalog\Block\Product\ImageFactoryPlugin" sortOrder="1000"/>
+    </type>
+
+    <type name="Mirasvit\Seo\Helper\Data">
+        <plugin name="m-brand-seo-compatibility" disabled="true"/>
+    </type>
+
+    <type name="Mirasvit\GdprCookie\Model\Config\RequiredCookieList">
+        <arguments>
+            <argument name="cookies" xsi:type="array">
+                <item name="info_bypass_cookie" xsi:type="string">info_bypass_cookie</item>
+            </argument>
+        </arguments>
+    </type>
 </config>

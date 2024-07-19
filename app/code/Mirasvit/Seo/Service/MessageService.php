@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -23,7 +23,12 @@ use Magento\Framework\Message\ManagerInterface;
 class MessageService implements SeoMessageInterface
 {
     /**
-     * @param Version $version
+     * @var ManagerInterface
+     */
+    private $messageManager;
+
+    /**
+     * @param ManagerInterface $messageManager
      */
     public function __construct(
         ManagerInterface $messageManager
@@ -36,7 +41,8 @@ class MessageService implements SeoMessageInterface
      */
     public function addNoticeWithUrl($notice, $url)
     {
-        $this->messageManager->addComplexNoticeMessage(SeoMessageInterface::NOTICE_URL_IDENTIFIER,
+        $this->messageManager->addComplexNoticeMessage(
+            SeoMessageInterface::NOTICE_URL_IDENTIFIER,
             [
                 'seo_notice' => $notice,
                 'seo_url' => $url
@@ -68,4 +74,3 @@ class MessageService implements SeoMessageInterface
         $this->addNoticeWithUrl($notice, $url);
     }
 }
-

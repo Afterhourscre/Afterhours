@@ -1,31 +1,28 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Block\Adminhtml\Form\Field;
 
-class Attributes extends \Magento\Framework\View\Element\Html\Select
+use Amasty\Xsearch\Helper\Data;
+use Magento\Framework\View\Element\Context;
+use Magento\Framework\View\Element\Html\Select;
+
+class Attributes extends Select
 {
-    const EXCLUDED_ATTRIBUTES = ['category_ids', 'visibility'];
+    public const EXCLUDED_ATTRIBUTES = ['category_ids', 'visibility'];
 
     /**
-     * @var \Amasty\Xsearch\Helper\Data
+     * @var Data
      */
     private $xSearchHelper;
 
-    /**
-     * Attributes constructor.
-     * @param \Amasty\Xsearch\Helper\Data $xSearchHelper
-     * @param \Magento\Framework\View\Element\Context $context
-     * @param array $data
-     */
     public function __construct(
-        \Amasty\Xsearch\Helper\Data $xSearchHelper,
-        \Magento\Framework\View\Element\Context $context,
+        Data $xSearchHelper,
+        Context $context,
         array $data = []
     ) {
         parent::__construct($context, $data);
@@ -40,7 +37,10 @@ class Attributes extends \Magento\Framework\View\Element\Html\Select
         $productAttributes = $this->xSearchHelper->getProductAttributes();
         foreach ($productAttributes as $attribute) {
             if (!in_array($attribute->getAttributeCode(), self::EXCLUDED_ATTRIBUTES)) {
-                $this->addOption($attribute->getAttributeCode(), $this->escapeQuote($attribute->getFrontendLabel()));
+                $this->addOption(
+                    $attribute->getAttributeCode(),
+                    $this->escapeQuote((string) $attribute->getFrontendLabel())
+                );
             }
         }
 

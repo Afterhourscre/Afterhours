@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\TemplateEngine\Data;
 
@@ -21,6 +22,8 @@ use Magento\Catalog\Model\Layer\Resolver as LayerResolver;
 
 class FilterData extends AbstractData
 {
+    private $pageFilters = [];
+
     private $layerResolver;
 
     public function __construct(
@@ -31,12 +34,12 @@ class FilterData extends AbstractData
         parent::__construct();
     }
 
-    public function getTitle()
+    public function getTitle(): string
     {
-        return __('Filter Data');
+        return (string)__('Filter Data');
     }
 
-    public function getVariables()
+    public function getVariables(): array
     {
         return [
             'selected_options',
@@ -44,7 +47,7 @@ class FilterData extends AbstractData
         ];
     }
 
-    public function getValue($attribute, $additionalData = [])
+    public function getValue(string $attribute, array $additionalData = []): ?string
     {
         if (class_exists('Manadev\LayeredNavigation\EngineFilter')) {
             $filters = $this->getManaDevFilters();
@@ -73,12 +76,25 @@ class FilterData extends AbstractData
         }
     }
 
-    /**
-     * @return array
-     */
-    private function getFilters()
+    public function setPageFilters(array $filters): array
     {
-        $filters = $this->layerResolver->get()->getState()->getFilters();
+        $this->pageFilters = $filters;
+
+        return $filters;
+    }
+
+    public function getPageFilters(): array
+    {
+        if (!$this->pageFilters) {
+            return $this->layerResolver->get()->getState()->getFilters();
+        }
+
+        return $this->pageFilters;
+    }
+
+    private function getFilters(): array
+    {
+        $filters = $this->getPageFilters();
         if (!is_array($filters)) {
             $filters = [];
         }
@@ -96,8 +112,9 @@ class FilterData extends AbstractData
 
             $name = $filter->getName();
 
-            if (is_scalar($filter->getData('label'))) {
-                $selected = strip_tags($filter->getData('label'));
+            if (is_scalar($filter->getData('label')) ||
+                $this->isPriceFilter($filter)) {
+                $selected = strip_tags((string)$filter->getData('label'));
 
                 $result[$name][] = $selected;
             }
@@ -106,10 +123,11 @@ class FilterData extends AbstractData
         return $result;
     }
 
-    private function getManaDevFilters()
+    private function getManaDevFilters(): array
     {
         $filters = [];
         foreach ($this->layerResolver->get()->getState()->getFilters() as $filter) {
+            /** @var mixed $filter */
             if ($filter->isApplied()) {
                 $filters[] = $filter;
             }
@@ -126,7 +144,6 @@ class FilterData extends AbstractData
             }
 
             if ($filter->getFilter()->getData('param_name') != 'price') {
-
                 $attribute = $productResource->getAttribute($filter->getFilter()->getData('param_name'));
 
                 $name = $filter->getName();
@@ -142,5 +159,18 @@ class FilterData extends AbstractData
         }
 
         return $result;
+    }
+
+    /**
+     * @param object $filter
+     *
+     * @return bool
+     */
+    private function isPriceFilter($filter)
+    {
+        if ($filter->getData('filter') instanceof \Magento\CatalogSearch\Model\Layer\Filter\Price ||
+            strpos(get_class($filter->getData('filter')), '\Mirasvit\LayeredNavigation\Model\Layer\Filter\Price') !== false) {
+            return true;
+        }
     }
 }

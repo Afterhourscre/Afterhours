@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -78,7 +78,7 @@ class Store extends \Magento\Backend\Block\Widget\Grid\Column\Renderer\Store
                     []
                 )
                 ->where('store_table.link_id in (?)', [$origStores])
-                ->reset(\Zend_Db_Select::COLUMNS)
+                ->reset(\Magento\Framework\DB\Select::COLUMNS)
                 ->columns('store_id', 'store_table');
 
         $origStores = [];

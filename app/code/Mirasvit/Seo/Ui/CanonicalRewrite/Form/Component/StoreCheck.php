@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -25,10 +25,24 @@ use Mirasvit\Seo\Api\Data\CanonicalRewriteStoreInterface;
 class StoreCheck
 {
     /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
+    /**
+     * @var CanonicalRewriteRepositoryInterface
+     */
+    private $canonicalRewriteRepository;
+    /**
+     * @var RequestInterface
+     */
+    private $request;
+
+    /**
      * Constructor
      *
      * @param RequestInterface $request
-     * @param LinkCollection $linkCollection
+     * @param CanonicalRewriteRepositoryInterface $canonicalRewriteRepository
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         RequestInterface $request,

@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Block\Adminhtml\Form\Field;
 
@@ -13,12 +12,12 @@ use Magento\Config\Block\System\Config\Form\Field\FieldArray\AbstractFieldArray;
 class AttributesWeight extends AbstractFieldArray
 {
     /**
-     * @var null
+     * @var Attributes
      */
     protected $attributeRenderer = null;
 
     /**
-     * @var null
+     * @var Weight
      */
     protected $weightRenderer = null;
 
@@ -54,7 +53,7 @@ class AttributesWeight extends AbstractFieldArray
     {
         if (!$this->attributeRenderer) {
             $this->attributeRenderer = $this->getLayout()->createBlock(
-                '\Amasty\Xsearch\Block\Adminhtml\Form\Field\Attributes',
+                Attributes::class,
                 '',
                 ['data' => ['is_render_to_js_template' => true]]
             );
@@ -71,7 +70,7 @@ class AttributesWeight extends AbstractFieldArray
     {
         if (!$this->weightRenderer) {
             $this->weightRenderer = $this->getLayout()->createBlock(
-                '\Amasty\Xsearch\Block\Adminhtml\Form\Field\Weight',
+                Weight::class,
                 '',
                 ['data' => ['is_render_to_js_template' => true]]
             );

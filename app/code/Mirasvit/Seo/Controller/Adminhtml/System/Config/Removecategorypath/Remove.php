@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -25,6 +25,10 @@ class Remove extends \Mirasvit\Seo\Controller\Adminhtml\System\Config\Removecate
      * @var JsonFactory
      */
     protected $resultJsonFactory;
+    /**
+     * @var \Magento\Backend\App\Action\Context
+     */
+    private $context;
 
     /**
      * @param \Magento\Backend\App\Action\Context $context
@@ -74,6 +78,5 @@ class Remove extends \Mirasvit\Seo\Controller\Adminhtml\System\Config\Removecate
     {
         return $this->_objectManager->get('Mirasvit\Seo\Model\Removecategorypath\Remove')
                                     ->removeParentCategoryPath();
-
     }
 }

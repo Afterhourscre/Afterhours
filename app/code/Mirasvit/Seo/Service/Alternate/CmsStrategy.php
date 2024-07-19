@@ -9,92 +9,63 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\Alternate;
 
+use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\App\Request\Http as HttpRequest;
+use Magento\Cms\Model\Page as CmsPage;
+use Magento\Cms\Model\ResourceModel\Page\CollectionFactory as CmsPageCollectionFactory;
+use Magento\Store\Model\StoreManagerInterface;
 use Mirasvit\Seo\Api\Config\AlternateConfigInterface as AlternateConfig;
+use Mirasvit\Seo\Api\Service\Alternate\UrlInterface;
+use Mirasvit\Seo\Helper\Version as VersionHelper;
 
 class CmsStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyInterface
 {
-    /**
-     * @var \Mirasvit\Seo\Api\Service\Alternate\UrlInterface
-     */
     protected $url;
 
-    /**
-     * @var \Magento\Cms\Model\Page
-     */
     protected $page;
 
-    /**
-     * @var \Magento\Cms\Model\ResourceModel\Page\CollectionFactory
-     */
     protected $pageCollectionFactory;
 
-    /**
-     * @var \Magento\Framework\App\Request\Http
-     */
     protected $request;
 
-    /**
-     * @var \Mirasvit\Seo\Helper\Version
-     */
     protected $version;
 
-    /**
-     * @var \Magento\Framework\App\ResourceConnection
-     */
     protected $resource;
 
-    /**
-     * @var \Mirasvit\Seo\Api\Config\AlternateConfigInterface
-     */
     protected $alternateConfig;
 
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
     protected $storeManager;
 
-    /**
-     * @param \Mirasvit\Seo\Api\Service\Alternate\UrlInterface $url
-     * @param \Magento\Cms\Model\Page $page
-     * @param \Magento\Cms\Model\ResourceModel\Page\CollectionFactory $pageCollectionFactory
-     * @param \Magento\Framework\App\Request\Http $request
-     * @param \Mirasvit\Seo\Helper\Version $version
-     * @param \Magento\Framework\App\ResourceConnection $resource
-     * @param \Mirasvit\Seo\Api\Config\AlternateConfigInterface $alternateConfig
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     */
     public function __construct(
-        \Mirasvit\Seo\Api\Service\Alternate\UrlInterface $url,
-        \Magento\Cms\Model\Page $page,
-        \Magento\Cms\Model\ResourceModel\Page\CollectionFactory $pageCollectionFactory,
-        \Magento\Framework\App\Request\Http $request,
-        \Mirasvit\Seo\Helper\Version $version,
-        \Magento\Framework\App\ResourceConnection $resource,
-        \Mirasvit\Seo\Api\Config\AlternateConfigInterface $alternateConfig,
-        \Magento\Store\Model\StoreManagerInterface $storeManager
+        UrlInterface $url,
+        CmsPage $page,
+        CmsPageCollectionFactory $pageCollectionFactory,
+        HttpRequest $request,
+        VersionHelper $version,
+        ResourceConnection $resource,
+        AlternateConfig $alternateConfig,
+        StoreManagerInterface $storeManager
     ) {
-        $this->url = $url;
-        $this->page = $page;
+        $this->url                   = $url;
+        $this->page                  = $page;
         $this->pageCollectionFactory = $pageCollectionFactory;
-        $this->request = $request;
-        $this->version = $version;
-        $this->resource = $resource;
-        $this->alternateConfig = $alternateConfig;
-        $this->storeManager = $storeManager;
+        $this->request               = $request;
+        $this->version               = $version;
+        $this->resource              = $resource;
+        $this->alternateConfig       = $alternateConfig;
+        $this->storeManager          = $storeManager;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getStoreUrls()
+    public function getStoreUrls(): array
     {
         $storeUrls = $this->url->getStoresCurrentUrl();
         $storeUrls = $this->getAlternateUrl($storeUrls);
@@ -103,14 +74,14 @@ class CmsStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyInterfa
     }
 
     /**
-     * {@inheritdoc}
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    public function getAlternateUrl($storeUrls)
+    public function getAlternateUrl(array $storeUrls): array
     {
         $cmsPageId = $this->page->getPageId();
         $alternateGroupInstalled = false;
+        /** @var array $cmsStoresIds */
         $cmsStoresIds = $this->page->getStoreId();
 
         //check if alternate_group exist in cms_page table
@@ -133,7 +104,7 @@ class CmsStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyInterfa
 
         if ($cmsStoresIds[0] == 0 //use if alternate groups configured and use alternate configuration
             && $alternateGroup
-            && ($storeId = $this->storeManager->getStore()->getStoreId())
+            && ($storeId = (int)$this->storeManager->getStore()->getStoreId())
             && $this->alternateConfig->getAlternateHreflang($storeId) == AlternateConfig::ALTERNATE_CONFIGURABLE
             && ($stores = $this->alternateConfig->getAlternateManualConfig($storeId, false))) {
                 $cmsPages = $this->getCmsPages($alternateGroup);
@@ -173,28 +144,34 @@ class CmsStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyInterfa
                     }
                 }
             }
+        } elseif (!$alternateGroup && $cmsStoresIds[0] != 0) {
+            foreach ($storeUrls as $storeId => $url) {
+                if (!in_array($storeId, $cmsStoresIds)) {
+                    unset($storeUrls[$storeId]); // remove links to non-exist pages
+                }
+            }
+
+            if (count($storeUrls) == 1) {
+                $storeUrls = []; // page doesn't have variations
+            }
         }
 
         return $storeUrls;
     }
 
-    /**
-     * @param string $alternateGroup
-     * @return array
-     */
-    protected function getCmsPages($alternateGroup)
+    protected function getCmsPages(string $alternateGroup): array
     {
         $cmsCollection = $this->pageCollectionFactory->create()
             ->addFieldToSelect(['alternate_group', 'identifier'])
             ->addFieldToFilter('alternate_group', ['eq' => $alternateGroup])
             ->addFieldToFilter('is_active', true);
         $table = $this->resource->getTableName('cms_page_store');
-        $storeTablePageId = ($this->version->isEe()) ? 'row_id' : 'page_id';
+        $storeTablePageId = ($this->version->isEe() || $this->version->isB2b()) ? 'row_id' : 'page_id';
         $cmsCollection->getSelect()
             ->join(
                 [
                     'storeTable' => $table],
-                'main_table.page_id = storeTable.' . $storeTablePageId,
+                'main_table.'  . $storeTablePageId . ' = storeTable.' . $storeTablePageId,
                 ['store_id' => 'storeTable.store_id']
             );
         $cmsPages = $cmsCollection->getData();

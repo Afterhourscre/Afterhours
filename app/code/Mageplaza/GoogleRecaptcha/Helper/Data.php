@@ -24,6 +24,7 @@ namespace Mageplaza\GoogleRecaptcha\Helper;
 use Exception;
 use Magento\Checkout\Helper\Data as CheckoutData;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\HTTP\Adapter\CurlFactory;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Store\Model\StoreManagerInterface;
@@ -37,8 +38,8 @@ use ReCaptcha\ReCaptcha;
  */
 class Data extends CoreHelper
 {
-    const CONFIG_MODULE_PATH     = 'googlerecaptcha';
-    const BACKEND_CONFIGURATION  = '/backend';
+    const CONFIG_MODULE_PATH = 'googlerecaptcha';
+    const BACKEND_CONFIGURATION = '/backend';
     const FRONTEND_CONFIGURATION = '/frontend';
 
     /**
@@ -52,6 +53,11 @@ class Data extends CoreHelper
     protected $_formPaths;
 
     /**
+     * @var EncryptorInterface
+     */
+    protected $encryptor;
+
+    /**
      * Data constructor.
      *
      * @param Context $context
@@ -59,16 +65,19 @@ class Data extends CoreHelper
      * @param StoreManagerInterface $storeManager
      * @param CurlFactory $curlFactory
      * @param DefaultFormsPaths $formPaths
+     * @param EncryptorInterface $encryptor
      */
     public function __construct(
         Context $context,
         ObjectManagerInterface $objectManager,
         StoreManagerInterface $storeManager,
         CurlFactory $curlFactory,
-        DefaultFormsPaths $formPaths
+        DefaultFormsPaths $formPaths,
+        EncryptorInterface $encryptor
     ) {
         $this->_curlFactory = $curlFactory;
-        $this->_formPaths   = $formPaths;
+        $this->_formPaths = $formPaths;
+        $this->encryptor = $encryptor;
 
         parent::__construct($context, $objectManager, $storeManager);
     }
@@ -84,7 +93,7 @@ class Data extends CoreHelper
      */
     public function getVisibleKey($storeId = null)
     {
-        return $this->getConfigGeneral('visible/api_key', $storeId);
+        return $this->encryptor->decrypt($this->getConfigGeneral('visible/api_key', $storeId));
     }
 
     /**
@@ -94,7 +103,7 @@ class Data extends CoreHelper
      */
     public function getVisibleSecretKey($storeId = null)
     {
-        return $this->getConfigGeneral('visible/api_secret', $storeId);
+        return $this->encryptor->decrypt($this->getConfigGeneral('visible/api_secret', $storeId));
     }
 
     /**
@@ -226,7 +235,7 @@ class Data extends CoreHelper
      */
     public function getInvisibleKey($storeId = null)
     {
-        return $this->getConfigGeneral('invisible/api_key', $storeId);
+        return $this->encryptor->decrypt($this->getConfigGeneral('invisible/api_key', $storeId));
     }
 
     /**
@@ -236,7 +245,7 @@ class Data extends CoreHelper
      */
     public function getInvisibleSecretKey($storeId = null)
     {
-        return $this->getConfigGeneral('invisible/api_secret', $storeId);
+        return $this->encryptor->decrypt($this->getConfigGeneral('invisible/api_secret', $storeId));
     }
 
     /**
@@ -252,7 +261,7 @@ class Data extends CoreHelper
                 $data[] = $value;
             }
         }
-        $custom = explode("\n", str_replace("\r", '', $this->getConfigFrontend('custom/paths', $storeId)));
+        $custom = explode("\n", str_replace("\r", '', $this->getConfigFrontend('custom/paths', $storeId)?:''));
         if (!$custom) {
             return $data;
         }
@@ -267,8 +276,8 @@ class Data extends CoreHelper
      */
     public function getCssSelectors($storeId = null)
     {
-        $data  = $this->getConfigFrontend('custom/css', $storeId);
-        $forms = explode("\n", str_replace("\r", '', $data));
+        $data = $this->getConfigFrontend('custom/css', $storeId);
+        $forms = explode("\n", str_replace("\r", '', $data?:''));
         foreach ($forms as $key => $value) {
             $forms[$key] = trim($value, ' ');
         }
@@ -307,7 +316,7 @@ class Data extends CoreHelper
     public function verifyResponse($end = null, $recaptcha = null)
     {
         $result['success'] = false;
-        $recaptcha         = $recaptcha ?: $this->_request->getParam('g-recaptcha-response');
+        $recaptcha = $recaptcha ?: $this->_request->getParam('g-recaptcha-response');
         if (empty($recaptcha)) {
             $result['message'] = __('The response parameter is missing.');
 
@@ -315,7 +324,7 @@ class Data extends CoreHelper
         }
         try {
             $recaptchaClass = new ReCaptcha($end === 'visible' ? $this->getVisibleSecretKey() : $this->getInvisibleSecretKey());
-            $resp           = $recaptchaClass->verify($recaptcha, $this->_request->getClientIp());
+            $resp = $recaptchaClass->verify($recaptcha, $this->_request->getClientIp());
             if ($resp && $resp->isSuccess()) {
                 $result['success'] = true;
             } else {

@@ -51,7 +51,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getCustomCSS()
     {
-        return trim($this->_quickviewOptions['general']['custom_css']);
+        $customCss = $this->_quickviewOptions['general']['custom_css'] ?? '';
+        return trim((string)$customCss);
     }
 
     /**

@@ -9,39 +9,23 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoMarkup\Model\Config;
 
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Store\Model\ScopeInterface;
+use Mirasvit\SeoMarkup\Model\Config;
 
-class BreadcrumbListConfig
+class BreadcrumbListConfig extends Config
 {
     const REGISTER_KEY = 'BreadcrumbListRegister';
 
-    private $scopeConfig;
-
-    public function __construct(
-        ScopeConfigInterface $scopeConfig
-    ) {
-        $this->scopeConfig = $scopeConfig;
-    }
-
-    /**
-     * @param string $store
-     * @return bool
-     */
-    public function isRsEnabled($store)
+    public function isRsEnabled(): bool
     {
-        return $this->scopeConfig->getValue(
-            'seo/seo_markup/breadcrumb_list/is_rs_enabled',
-            ScopeInterface::SCOPE_STORE,
-            $store
-        );
+        return $this->scopeConfig->isSetFlag('seo/seo_markup/breadcrumb_list/is_rs_enabled');
     }
 }

@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Model\Search\Category;
 
@@ -13,21 +12,16 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Select;
 use Magento\Framework\Search\Adapter\Mysql\ConditionManager;
-use Magento\Framework\Search\Adapter\Mysql\IndexBuilderInterface;
 use Magento\Framework\Search\Request\Dimension;
-use Magento\Framework\Search\Request\Filter\BoolExpression;
-use Magento\Framework\Search\Request\FilterInterface;
-use Magento\Framework\Search\Request\QueryInterface as RequestQueryInterface;
 use Magento\Framework\Search\RequestInterface;
 use Magento\Framework\Indexer\ScopeResolver\IndexScopeResolver;
-use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * Build base Query for Index
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class IndexBuilder implements IndexBuilderInterface
+class IndexBuilder
 {
     /**
      * @var Resource
@@ -59,14 +53,6 @@ class IndexBuilder implements IndexBuilderInterface
      */
     private $tableMapper;
 
-    /**
-     * @param \Magento\Framework\App\ResourceConnection $resource
-     * @param ScopeConfigInterface $config
-     * @param StoreManagerInterface $storeManager
-     * @param ConditionManager $conditionManager
-     * @param IndexScopeResolver $scopeResolver
-     * @param TableMapper $tableMapper
-     */
     public function __construct(
         ResourceConnection $resource,
         ScopeConfigInterface $config,

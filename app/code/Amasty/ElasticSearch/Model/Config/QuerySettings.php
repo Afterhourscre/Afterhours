@@ -5,7 +5,6 @@
  * @package Amasty_ElasticSearch
  */
 
-
 namespace Amasty\ElasticSearch\Model\Config;
 
 use Amasty\ElasticSearch\Model\Config as ElasticConfig;
@@ -30,6 +29,7 @@ class QuerySettings extends \Magento\Framework\App\Config\Value
         parent::_construct();
         $this->fulltextAttributesSource = $this->getData('fulltext_attributes');
     }
+    
     /**
      * @inheritdoc
      */
@@ -126,7 +126,7 @@ class QuerySettings extends \Magento\Framework\App\Config\Value
     {
         $result = [];
         if (is_string($value) && !empty($value)) {
-            $result = \Zend_Json::decode($value);
+            $result = json_decode($value, true); // Add 'true' to get an associative array
         }
 
         return $result;

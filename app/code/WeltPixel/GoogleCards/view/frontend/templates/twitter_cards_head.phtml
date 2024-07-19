@@ -4,8 +4,8 @@ $_product = $block->getProduct();
 <!--  twitter product cards-->
 <meta name="twitter:card" content="<?php /* @escapeNotVerified */ echo $block->getTwitterCardType() ?>" />
 <meta name="twitter:domain" content="<?php /* @escapeNotVerified */ echo $block->getBaseUrl(); ?>" />
-<meta name="twitter:site" content="<?php echo  (strlen(trim($block->getTwitterSite()))) ? /* @escapeNotVerified */ "@" . $block->getTwitterSite() : '' ?>" />
-<meta name="twitter:creator" content="<?php echo (strlen(trim($block->getTwitterCreator()))) ? /* @escapeNotVerified */ "@" . $block->getTwitterCreator() : '' ?>" />
+<meta name="twitter:site" content="<?php echo (!empty($block->getTwitterSite()) ? /* @escapeNotVerified */ "@" . trim($block->getTwitterSite()) : '') ?>" />
+<meta name="twitter:creator" content="<?php echo (!empty($block->getTwitterCreator()) ? /* @escapeNotVerified */ "@" . trim($block->getTwitterCreator()) : '') ?>" />
 <meta name="twitter:title" content="<?php /* @escapeNotVerified */ echo $block->escapeQuote($block->stripTags($_product->getName())); ?>" />
 <meta name="twitter:description" content="<?php /* @escapeNotVerified */ echo $block->escapeQuote($block->stripTags($block->getDescription($_product))); ?>" />
 <meta name="twitter:image" content="<?php /* @escapeNotVerified */ echo $block->stripTags($block->getImage($_product, 'product_base_image')->getImageUrl()); ?>" />

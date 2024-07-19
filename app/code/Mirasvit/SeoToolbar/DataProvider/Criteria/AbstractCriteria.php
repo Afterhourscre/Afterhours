@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoToolbar\DataProvider\Criteria;
 
@@ -21,10 +22,20 @@ use Magento\Framework\DataObject;
 
 abstract class AbstractCriteria
 {
-    abstract public function handle($content);
+    /**
+     * @param string $content
+     *
+     * @return mixed
+     */
+    abstract public function handle(string $content);
 
-    protected function getItem($title, $status, $description, $note, $action = '')
-    {
+    protected function getItem(
+        string  $title,
+        string  $status,
+        ?string $description,
+        ?string $note,
+        string  $action = ''
+    ): DataObject {
         return new DataObject([
             'title'       => $title,
             'status'      => $status,
@@ -35,12 +46,9 @@ abstract class AbstractCriteria
     }
 
     /**
-     * @param string $content
-     * @param string $tag
-     *
      * @return string|false
      */
-    protected function getMetaTag($content, $tag)
+    protected function getMetaTag(string $content, string $tag)
     {
         $meta = [];
 
@@ -73,6 +81,6 @@ abstract class AbstractCriteria
             $meta['canonical'] = $matches[1][0];
         }
 
-        return isset($meta[$tag]) ? $meta[$tag] : false;
+        return $meta[$tag] ?? false;
     }
 }

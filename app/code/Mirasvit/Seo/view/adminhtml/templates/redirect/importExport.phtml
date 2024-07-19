@@ -1,5 +1,7 @@
 <?php
 // @codingStandardsIgnoreFile
+
+/** @var \Mirasvit\Seo\Block\Adminhtml\RedirectImportExport\ImportExport $block */
 ?>
 <div class="import-export-redirect">
     <?php if (!$block->getIsReadonly()): ?>
@@ -47,7 +49,7 @@
                 <div class="fieldset admin__field">
                     <span class="admin__field-label"><span><?php /* @escapeNotVerified */ echo __('Export Redirects(.csv)') ?></span></span>
                     <div class="admin__field-control">
-                        <?php echo $block->getButtonHtml(__('Export Redirects'), "this.form.submit()") ?>
+                        <?php echo $block->getButtonHtml(__('Export Redirects'), "this.closest('#export_form').submit()") ?>
                     </div>
                 </div>
             <?php if ($block->getUseContainer()): ?>

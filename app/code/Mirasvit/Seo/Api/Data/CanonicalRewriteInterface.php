@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -123,12 +123,12 @@ interface CanonicalRewriteInterface
     public function setComments($value);
 
     /**
-     * @return \Mirasvit\Seo\Model\Template\Rule\Condition\Combine
+     * @return \Mirasvit\SeoContent\Model\Template\Rule\Condition\Combine
      */
     public function getConditionsInstance();
 
     /**
-     * @return Template\Rule\Action\Collection
+     * @return \Mirasvit\SeoContent\Model\Template\Rule\Action\Collection
      */
     public function getActionsInstance();
 
@@ -138,5 +138,4 @@ interface CanonicalRewriteInterface
      * @return \Magento\Rule\Model\Condition\Combine
      */
     public function getConditions();
-
 }

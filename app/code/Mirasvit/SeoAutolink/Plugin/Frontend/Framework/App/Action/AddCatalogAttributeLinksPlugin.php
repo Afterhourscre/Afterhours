@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -25,14 +25,33 @@ use Mirasvit\SeoAutolink\Service\TextProcessorService;
 
 class AddCatalogAttributeLinksPlugin
 {
+    /**
+     * @var CatalogOutputHelper
+     */
     private $catalogOutputHelper;
 
+    /**
+     * @var StateServiceInterface
+     */
     private $stateService;
 
+    /**
+     * @var Config
+     */
     private $config;
 
+    /**
+     * @var TextProcessorService
+     */
     private $textProcessorService;
 
+    /**
+     * AddCatalogAttributeLinksPlugin constructor.
+     * @param CatalogOutputHelper $catalogOutputHelper
+     * @param StateServiceInterface $stateService
+     * @param Config $config
+     * @param TextProcessorService $textProcessorService
+     */
     public function __construct(
         CatalogOutputHelper $catalogOutputHelper,
         StateServiceInterface $stateService,

@@ -9,55 +9,43 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\Alternate;
 
+use Mirasvit\Seo\Api\Service\Alternate\UrlInterface as AlternateUrlInterface;
+use Magento\Framework\UrlInterface;
+use Magento\Store\Model\StoreManagerInterface;
+
 class DefaultPagesStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyInterface
 {
-    /**
-     * @var \Mirasvit\Seo\Api\Service\Alternate\UrlInterface
-     */
     protected $url;
 
-    /**
-     * @var \Magento\Framework\UrlInterface
-     */
     protected $urlInterface;
 
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
     protected $storeManager;
 
-    /**
-     * @param \Mirasvit\Seo\Api\Service\Alternate\UrlInterface $url
-     * @param \Magento\Framework\UrlInterface $urlInterface
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     */
     public function __construct(
-        \Mirasvit\Seo\Api\Service\Alternate\UrlInterface $url,
-        \Magento\Framework\UrlInterface $urlInterface,
-        \Magento\Store\Model\StoreManagerInterface $storeManager
+        AlternateUrlInterface $url,
+        UrlInterface $urlInterface,
+        StoreManagerInterface $storeManager
     ) {
         $this->url = $url;
         $this->urlInterface = $urlInterface;
         $this->storeManager = $storeManager;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getStoreUrls()
+    public function getStoreUrls(): array
     {
         $storeUrls = $this->url->getStoresCurrentUrl();
         // To prevent "Exception #0 (Exception): Warning: Invalid argument supplied for foreach()" for some stores BEGIN
         if (!$storeUrls) {
-            return false;
+            return [];
         }
         // To prevent "Exception #0 (Exception): Warning: Invalid argument supplied for foreach()" for some stores END
         $storeUrls = $this->getAlternateUrl($storeUrls);
@@ -65,10 +53,7 @@ class DefaultPagesStrategy implements \Mirasvit\Seo\Api\Service\Alternate\Strate
         return $storeUrls;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getAlternateUrl($storeUrls)
+    public function getAlternateUrl(array $storeUrls): array
     {
         $baseUrl = $this->storeManager->getStore()->getBaseUrl();
         $currentUrl = $this->urlInterface->getCurrentUrl();

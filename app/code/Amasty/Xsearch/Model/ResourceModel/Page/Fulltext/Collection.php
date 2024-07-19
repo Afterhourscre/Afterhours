@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Model\ResourceModel\Page\Fulltext;
 
@@ -12,8 +11,6 @@ use Zend_Db_Expr;
 
 class Collection extends \Magento\Cms\Model\ResourceModel\Page\Collection
 {
-    const FULLTEXT_SPECIAL_CHAR_LIST = '+-*"';
-
     /** @var string */
     private $queryText;
 
@@ -29,6 +26,11 @@ class Collection extends \Magento\Cms\Model\ResourceModel\Page\Collection
        'title' => 3,
        'content' => 2
     ];
+
+    /**
+     * @var array
+     */
+    private $fullTextSpecialChars = ['$', '@', '*', '<', '>', '(', ')', '-', '+', '~', '"'];
 
     /**
      * @param string $query
@@ -107,7 +109,7 @@ class Collection extends \Magento\Cms\Model\ResourceModel\Page\Collection
      */
     private function getMatchCondition()
     {
-        $query = trim($this->queryText, self::FULLTEXT_SPECIAL_CHAR_LIST);
+        $query = trim(str_replace($this->fullTextSpecialChars, ' ', $this->queryText));
         $columns = $this->getFulltextIndexColumns($this, $this->getMainTable());
         $matchMode = (strlen($query) > 2) ? ' IN BOOLEAN MODE' : '';
 
@@ -119,7 +121,7 @@ class Collection extends \Magento\Cms\Model\ResourceModel\Page\Collection
      */
     private function getSearchQuery()
     {
-        $query = trim($this->queryText, self::FULLTEXT_SPECIAL_CHAR_LIST);
+        $query = trim(str_replace($this->fullTextSpecialChars, ' ', $this->queryText));
 
         if (strlen($query) > 2) {
             $query .= '*';

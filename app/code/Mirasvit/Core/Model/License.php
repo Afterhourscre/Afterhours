@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -83,14 +83,25 @@ class License
      */
     private $key;
 
+    /**
+     * License constructor.
+     *
+     * @param UrlInterface        $urlManager
+     * @param ModuleListInterface $moduleList
+     * @param CurlFactory         $curlFactory
+     * @param FlagFactory         $flagFactory
+     * @param ProductMetadata     $productMetadata
+     * @param DeploymentConfig    $deploymentConfig
+     * @param DirReader           $dirReader
+     */
     public function __construct(
-        UrlInterface $urlManager,
+        UrlInterface        $urlManager,
         ModuleListInterface $moduleList,
-        CurlFactory $curlFactory,
-        FlagFactory $flagFactory,
-        ProductMetadata $productMetadata,
-        DeploymentConfig $deploymentConfig,
-        DirReader $dirReader
+        CurlFactory         $curlFactory,
+        FlagFactory         $flagFactory,
+        ProductMetadata     $productMetadata,
+        DeploymentConfig    $deploymentConfig,
+        DirReader           $dirReader
     ) {
         $this->urlManager       = $urlManager;
         $this->moduleList       = $moduleList;
@@ -110,7 +121,7 @@ class License
     {
         $module = $this->getModuleByClass($className);
 
-        if ($module == 'Mirasvit_Blog' || $module == 'Mirasvit_Demo' || $module == 'Mirasvit_Profiler') {
+        if ($module == 'Mirasvit_SearchExtended' || $module == 'Mirasvit_Blog' || $module == 'Mirasvit_Demo' || $module == 'Mirasvit_Profiler') {
             return true;
         }
 
@@ -156,74 +167,17 @@ class License
 
         if ($this->isNeedUpdate()) {
             $this->request();
-            $data = $this->getFlagData($this->license);
+        }
 
-            if (isset($data['status']) && $data['status'] === self::STATUS_ACTIVE) {
-                return true;
-            }
-            if (isset($data['message'])) {
-                return $data['message'];
-            }
+        $data = $this->getFlagData($this->license);
+        if (isset($data['status']) && $data['status'] === self::STATUS_ACTIVE) {
+            return true;
+        }
+        if (isset($data['message'])) {
+            return $data['message'];
         }
 
         return true;
-    }
-
-    /**
-     * @param string $className
-     *
-     * @return false|string
-     */
-    private function getModuleDirByClass($className)
-    {
-        $module = $this->getModuleByClass($className);
-
-        if ($module) {
-            return $this->dirReader->getModuleDir("", $module);
-        }
-
-        return false;
-    }
-
-    /**
-     * @param string $className
-     *
-     * @return false|string
-     */
-    private function getModuleByClass($className)
-    {
-        $class = explode('\\', $className);
-        if (isset($class[1])) {
-            $module = 'Mirasvit_' . $class[1];
-
-            return $module;
-        }
-
-        return false;
-    }
-
-    /**
-     * Send request with all required data
-     * @return $this
-     */
-    private function request()
-    {
-        $params        = [];
-        $params['v']   = 4;
-        $params['d']   = $this->getDomain();
-        $params['ip']  = $this->getIP();
-        $params['mv']  = $this->getVersion();
-        $params['me']  = $this->getEdition();
-        $params['l']   = $this->license;
-        $params['k']   = $this->key;
-        $params['uid'] = $this->getUID();
-
-        $result = $this->sendRequest('https://lc.mirasvit.com/lc/check/', $params);
-
-        $result['time'] = time();
-        $this->saveFlagData($this->license, $result);
-
-        return $this;
     }
 
     /**
@@ -257,18 +211,20 @@ class License
             return true;
         }
 
-        if ($data && isset($data['status'])) {
+        if (isset($data['status'])) {
             if ($data['status'] === self::STATUS_ACTIVE) {
                 if (abs(time() - $data['time']) > 24 * 60 * 60) {
                     return true;
                 }
             } else {
+                if (abs(time() - $data['time']) > 60 * 60) {
+                    return true;
+                }
+            }
+        } else {
+            if (abs(time() - $data['time']) > 60 * 60) {
                 return true;
             }
-        }
-
-        if ($data && !isset($data['status'])) {
-            return true;
         }
 
         return false;
@@ -280,6 +236,78 @@ class License
     public function getLicense()
     {
         return $this->license;
+    }
+
+    /**
+     * Remove flag data
+     * @return void
+     */
+    public function clear()
+    {
+        $flag = $this->flagFactory->create(['data' => ['flag_code' => 'm' . $this->license]])
+            ->loadSelf();
+
+        $flag->delete();
+    }
+
+    /**
+     * @param string $className
+     *
+     * @return false|string
+     */
+    private function getModuleDirByClass($className)
+    {
+        $module = $this->getModuleByClass($className);
+
+        if ($module) {
+            return $this->dirReader->getModuleDir("", $module);
+        }
+
+        return false;
+    }
+
+    /**
+     * @param string $className
+     *
+     * @return false|string
+     */
+    private function getModuleByClass($className)
+    {
+        $class = explode('\\', $className);
+        if (isset($class[1])) {
+            $module = 'Mirasvit_' . $class[1];
+
+            return $module;
+        }
+        if (count($class) == 1 && substr($className, 0, strlen('Mirasvit_')) === 'Mirasvit_') {
+            return $className;
+        }
+
+        return false;
+    }
+
+    /**
+     * Send request with all required data
+     * @return $this
+     */
+    private function request()
+    {
+        $params        = [];
+        $params['v']   = 4;
+        $params['d']   = $this->getDomain();
+        $params['ip']  = $this->getIP();
+        $params['mv']  = $this->getVersion();
+        $params['me']  = $this->getEdition();
+        $params['l']   = $this->license;
+        $params['k']   = $this->key;
+        $params['uid'] = $this->getUID();
+
+        $result = $this->sendRequest('https://lc.mirasvit.com/lc/check/', $params);
+
+        $result['time'] = time();
+        $this->saveFlagData($this->license, $result);
+
+        return $this;
     }
 
     /**
@@ -295,7 +323,7 @@ class License
         $flag = $this->flagFactory->create(['data' => ['flag_code' => "m" . $license]])
             ->loadSelf();
 
-        $flag->setFlagData(base64_encode(\Zend_Json::encode($data)))
+        $flag->setFlagData(base64_encode(json_encode($data)))
             ->save();
 
         return $this;
@@ -315,7 +343,7 @@ class License
 
         if ($flag->getFlagData()) {
             try {
-                $data = \Zend_Json::decode(base64_decode($flag->getFlagData()));
+                $data = json_decode(base64_decode($flag->getFlagData()), true);
 
                 if (is_array($data)) {
                     return $data;
@@ -326,18 +354,6 @@ class License
         }
 
         return [];
-    }
-
-    /**
-     * Remove flag data
-     * @return void
-     */
-    public function clear()
-    {
-        $flag = $this->flagFactory->create(['data' => ['flag_code' => "m" . $this->license]])
-            ->loadSelf();
-
-        $flag->delete();
     }
 
     /**
@@ -355,7 +371,7 @@ class License
 
         $curl->setConfig($config);
         $curl->write(
-            \Zend_Http_Client::POST,
+            'POST',
             $endpoint,
             '1.1',
             [],
@@ -366,7 +382,7 @@ class License
         $response = trim($response[1]);
 
         try {
-            $response = \Zend_Json::decode($response);
+            $response = json_decode($response, true);
 
             if (is_array($response)) {
                 return $response;

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -22,56 +22,120 @@ use Magento\Framework\App\ObjectManager;
 
 class CompatibilityService
 {
+    private static $version;
+
+    /**
+     * @return bool
+     */
+    public static function isMarketplace()
+    {
+        $flag = true;
+
+        /** mp comment start */
+
+        $flag = false;
+
+        /** mp comment end */
+
+        return $flag;
+    }
+
+    /**
+     * @return bool
+     */
     public static function is20()
     {
-        list($a, $b,) = explode('.', self::getVersion());
+        list($a, $b) = explode('.', self::getVersion());
 
         return $a == 2 && $b == 0;
     }
 
+    /**
+     * @return string
+     */
+    public static function getVersion()
+    {
+        if (empty(self::$version)) {
+            /** @var CacheInterface $cache */
+            $cache   = self::getObjectManager()->get(CacheInterface::class);
+            $version = $cache->load(__CLASS__);
+
+            if (!$version) {
+                /** @var \Magento\Framework\App\ProductMetadata $metadata */
+                $metadata = self::getObjectManager()->get('Magento\Framework\App\ProductMetadata');
+
+                $version = $metadata->getVersion();
+                if (strpos($version, "no-version") !== false) {
+                    $version = "10.0.0"; //only for beta versions of magento
+                }
+
+                $cache->save($version, __CLASS__);
+            }
+            self::$version = $version;
+        }
+
+        return self::$version;
+    }
+
+    /**
+     * @return ObjectManager
+     */
+    public static function getObjectManager()
+    {
+        return ObjectManager::getInstance();
+    }
+
+    /**
+     * @return bool
+     */
     public static function is21()
     {
-        list($a, $b,) = explode('.', self::getVersion());
+        list($a, $b) = explode('.', self::getVersion());
 
         return $a == 2 && $b == 1;
     }
 
+    /**
+     * @return bool
+     */
     public static function is22()
     {
-        list($a, $b,) = explode('.', self::getVersion());
+        list($a, $b) = explode('.', self::getVersion());
 
         return $a == 2 && $b == 2;
     }
 
+    /**
+     * @return bool
+     */
     public static function is23()
     {
-        list($a, $b,) = explode('.', self::getVersion());
+        list($a, $b) = explode('.', self::getVersion());
 
         return $a == 2 && $b == 3;
     }
 
+    /**
+     * @return bool
+     */
+    public static function is24()
+    {
+        list($a, $b) = explode('.', self::getVersion());
+
+        return $a == 2 && $b == 4;
+    }
+
+    /**
+     * @return bool
+     */
     public static function isEnterprise()
     {
         return self::getEdition() === 'Enterprise';
     }
 
-    public static function getVersion()
-    {
-        /** @var CacheInterface $cache */
-        $cache   = self::getObjectManager()->get(CacheInterface::class);
-        $version = $cache->load(__CLASS__);
-
-        if (!$version) {
-            /** @var \Magento\Framework\App\ProductMetadata $metadata */
-            $metadata = self::getObjectManager()->get('Magento\Framework\App\ProductMetadata');
-
-            $version = $metadata->getVersion();
-            $cache->save($version, __CLASS__);
-        }
-
-        return $version;
-    }
-
+    /**
+     * @return string
+     */
     public static function getEdition()
     {
         /** @var \Magento\Framework\App\ProductMetadata $metadata */
@@ -84,19 +148,16 @@ class CompatibilityService
         return $metadata->getEdition();
     }
 
+    /**
+     * @param string $moduleName
+     *
+     * @return bool
+     */
     public static function hasModule($moduleName)
     {
         /** @var \Magento\Framework\Module\FullModuleList $list */
         $list = self::getObjectManager()->get('Magento\Framework\Module\FullModuleList');
 
         return $list->has($moduleName);
-    }
-
-    /**
-     * @return ObjectManager
-     */
-    public static function getObjectManager()
-    {
-        return ObjectManager::getInstance();
     }
 }

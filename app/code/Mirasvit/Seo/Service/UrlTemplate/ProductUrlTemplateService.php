@@ -9,18 +9,23 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\UrlTemplate;
 
-use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
+use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Model\Product;
+use Magento\Catalog\Model\ProductFactory as ProductFactory;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute as EavAttribute;
 use Magento\Framework\App\ResourceConnection;
+use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\UrlRewrite\Model\ResourceModel\UrlRewriteCollection;
 use Magento\UrlRewrite\Model\UrlPersistInterface;
 use Mirasvit\Seo\Api\Data\SuffixInterface as Suffix;
 use Mirasvit\Seo\Helper\Version as VersionHelper;
@@ -43,7 +48,7 @@ class ProductUrlTemplateService
 
     private $versionHelper;
 
-    private $productCollectionFactory;
+    private $productFactory;
 
     private $templateEngineService;
 
@@ -54,7 +59,7 @@ class ProductUrlTemplateService
         ResourceConnection $resource,
         EavAttribute $eavAttribute,
         VersionHelper $versionHelper,
-        ProductCollectionFactory $productCollectionFactory,
+        productFactory $productFactory,
         TemplateEngineService $templateEngineService,
         StoreManagerInterface $storeManager
     ) {
@@ -64,21 +69,18 @@ class ProductUrlTemplateService
         $this->resource                 = $resource;
         $this->eavAttribute             = $eavAttribute;
         $this->versionHelper            = $versionHelper;
-        $this->productCollectionFactory = $productCollectionFactory;
+        $this->productFactory           = $productFactory;
         $this->templateEngineService    = $templateEngineService;
         $this->storeManager             = $storeManager;
     }
 
-    /**
-     * @return array
-     */
-    public function getUrlKeyTemplates()
+    public function getUrlKeyTemplates(): array
     {
         $urlTemplate = [];
 
         /** @var \Magento\Store\Model\Store $store */
         foreach ($this->storeManager->getStores() as $store) {
-            $productUrlKey = $this->productUrlTemplateConfig->getProductUrlKey($store->getId());
+            $productUrlKey = $this->productUrlTemplateConfig->getProductUrlKey((int)$store->getId());
 
             if ($store->getIsActive() && $productUrlKey && strpos($productUrlKey, '[') !== false) {
                 $urlTemplate[$store->getId()] = $productUrlKey;
@@ -90,34 +92,48 @@ class ProductUrlTemplateService
         return $urlTemplate;
     }
 
-    public function processUrlRewriteCollection($urlRewriteCollection, $urlKeyTemplate, $dryRun)
+    public function message(string $message, int $pid, int $sid, string $key): string
     {
-        function message($message, $pid, $sid, $key)
-        {
-            return $message . ':: Product ID: ' . $pid . ' Store ID: ' . $sid . ' Url Key: ' . $key;
-        }
+        return $message . ':: Product ID: ' . $pid . ' Store ID: ' . $sid . ' Url Key: ' . $key;
+    }
 
+    public function processUrlRewriteCollection(
+        UrlRewriteCollection $urlRewriteCollection,
+        array $urlKeyTemplate,
+        bool $dryRun,
+        int $inputStoreId = null,
+        int $inputProductId = null
+    ): \Generator {
         /** @var \Magento\UrlRewrite\Model\UrlRewrite $rewrite */
         foreach ($urlRewriteCollection as $rewrite) {
-            $storeId = $rewrite->getStoreId();
+            $storeId = (int)$rewrite->getStoreId();
+
+            if ($inputStoreId && $inputStoreId != $storeId) {
+                continue;
+            }
 
             if (!isset($urlKeyTemplate[$storeId]) || !$urlKeyTemplate[$storeId]) {
                 continue;
             }
 
-            $productId = $rewrite->getEntityId();
-            $product   = $this->getProduct($productId, $storeId);
-            $store     = $this->storeManager->getStore($storeId);
+            $productId = (int)$rewrite->getEntityId();
 
+            if ($inputProductId && $inputProductId != $productId) {
+                continue;
+            }
+
+            $product   = $this->getProduct($productId, $storeId);
+
+            $store     = $this->storeManager->getStore($storeId);
             $urlKey = $this->getUrlKey($product, $store, $urlKeyTemplate[$storeId]);
 
             if ($urlKey === $product->getUrlKey()) {
-                yield message("Already used url key", $productId, $storeId, $urlKey);
+                yield $this->message("Already used url key", $productId, $storeId, $urlKey);
 
                 continue;
             }
 
-            $isUnique = $this->inUniqueUrlKey($urlKey, $productId, $storeId);
+            $isUnique = $this->isUniqueUrlKey($urlKey, $productId, $storeId);
 
             /**
              * We set url_path, because
@@ -125,9 +141,9 @@ class ProductUrlTemplateService
              * public function getUrlPath($product, $category = null) use url_path to generate urls
              */
             if (!$urlKey) {
-                yield message("Empty url key", $productId, $storeId, $urlKey);
+                yield $this->message("Empty url key", $productId, $storeId, $urlKey);
             } elseif (!$isUnique) {
-                yield message("Duplicate used url key", $productId, $storeId, $urlKey);
+                yield $this->message("Duplicate used url key", $productId, $storeId, $urlKey);
             } else {
                 if ($storeId && $product->getData('url_path')) {
                     $product->setData('url_path', $urlKey);
@@ -139,19 +155,12 @@ class ProductUrlTemplateService
                     $this->applyUrlKey($urlKey, $product);
                 }
 
-                yield message("Updated url key", $productId, $storeId, $urlKey);
+                yield $this->message("Updated url key", $productId, $storeId, $urlKey);
             }
         }
     }
 
-    /**
-     * @param string $urlKey
-     * @param int    $productId
-     * @param int    $storeId
-     *
-     * @return bool|array
-     */
-    private function inUniqueUrlKey($urlKey, $productId, $storeId)
+    private function isUniqueUrlKey(string $urlKey, int $productId, int $storeId): bool
     {
         $isUniqueUrlKey = true;
         $url            = $urlKey;
@@ -173,24 +182,18 @@ class ProductUrlTemplateService
         $selectData = $connection->fetchAll($select);
 
         if ($selectData) {
-            $isUniqueUrlKey = $selectData;
+            $isUniqueUrlKey = false;
         }
 
         return $isUniqueUrlKey;
     }
 
-    /**
-     * @param string $urlKey
-     * @param object $product
-     *
-     * @return void
-     */
-    private function applyUrlKey($urlKey, $product)
+    private function applyUrlKey(string $urlKey, ProductInterface $product): void
     {
+        /** @var Product $product */
         $product->setUrlKey($urlKey);
 
         if ($product->isVisibleInSiteVisibility()) {
-
             //setup::install compatibility
             $productUrlRewriteGenerator = \Magento\Framework\App\ObjectManager::getInstance()->get(
                 \Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator::class
@@ -202,13 +205,7 @@ class ProductUrlTemplateService
         }
     }
 
-    /**
-     * @param string $urlKey
-     * @param object $product
-     *
-     * @return void
-     */
-    private function updateEntityUrlKey($urlKey, $product)
+    public function updateEntityUrlKey(string $urlKey, ProductInterface $product): void
     {
         $connection = $this->resource->getConnection();
 
@@ -221,7 +218,7 @@ class ProductUrlTemplateService
             ->where('eav.attribute_id = ?', $attributeId)
             ->where('eav.store_id = ?', $storeId);
 
-        if ($this->versionHelper->isEe()) {
+        if ($this->versionHelper->isEe() || $this->versionHelper->isB2b()) {
             $select->join(
                 ['e' => $this->resource->getTableName('catalog_product_entity')],
                 'eav.row_id = e.row_id',
@@ -247,7 +244,7 @@ class ProductUrlTemplateService
                 'value'        => $urlKey,
             ];
 
-            if ($this->versionHelper->isEe()) {
+            if ($this->versionHelper->isEe() || $this->versionHelper->isB2b()) {
                 unset($bind['entity_id']);
 
                 $bind['row_id'] = $product->load($product->getId())->getData('row_id');
@@ -260,31 +257,17 @@ class ProductUrlTemplateService
         }
     }
 
-    /**
-     * @param int $productId
-     * @param int $storeId
-     *
-     * @return \Magento\Catalog\Model\Product
-     */
-    private function getProduct($productId, $storeId)
+    private function getProduct(int $productId, int $storeId): ProductInterface
     {
-        return $this->productCollectionFactory->create()
-            ->addAttributeToSelect('*')
-            ->addFieldToFilter('entity_id', $productId)
-            ->setStoreId($storeId)
-            ->getFirstItem()
-            ->setStoreId($storeId);
+        return $this->productFactory->create()
+                    ->setStoreId($storeId)
+                    ->load($productId);
     }
 
-    /**
-     * @param \Magento\Catalog\Model\Product         $product
-     * @param \Magento\Store\Api\Data\StoreInterface $store
-     * @param string                                 $template
-     *
-     * @return string
-     */
-    private function getUrlKey($product, $store, $template)
+    private function getUrlKey(ProductInterface $product, StoreInterface $store, string $template): string
     {
+        /** @var Product $product */
+
         $urlKey = $this->templateEngineService->render(
             $template,
             [
@@ -298,4 +281,3 @@ class ProductUrlTemplateService
         return $urlKey;
     }
 }
-

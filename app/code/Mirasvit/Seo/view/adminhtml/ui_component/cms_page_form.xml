@@ -16,6 +16,9 @@
                     <item name="formElement" xsi:type="string">input</item>
                     <item name="source" xsi:type="string">page</item>
                     <item name="dataScope" xsi:type="string">alternate_group</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-no-html-tags" xsi:type="boolean">true</item>
+                    </item>
                 </item>
             </argument>
         </field>
@@ -39,7 +42,10 @@
                     <item name="additionalInfo" xsi:type="string"><![CDATA[
                        If empty Open Graph will use logo image url
                         ]]>
-                </item>
+                    </item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-no-html-tags" xsi:type="boolean">true</item>
+                    </item>
                 </item>
             </argument>
         </field>

@@ -151,7 +151,7 @@
                         <item name="url" xsi:type="url" path="seo/redirect/massDelete"/>
                         <item name="confirm" xsi:type="array">
                             <item name="title" xsi:type="string" translate="true">Delete items</item>
-                            <item name="message" xsi:type="string" translate="true">Are you sure you wan't to delete selected items?</item>
+                            <item name="message" xsi:type="string" translate="true">Are you sure you want to delete the selected items?</item>
                         </item>
                     </item>
                 </argument>
@@ -237,7 +237,7 @@
                     <item name="filter" xsi:type="string">select</item>
                     <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
                     <item name="dataType" xsi:type="string">select</item>
-                    <item name="label" xsi:type="string" translate="true">Redirect only if request URL can't be found (404)</item>
+                    <item name="label" xsi:type="string" translate="true">Redirect only if the request URL can't be found (404)</item>
                     <item name="sortOrder" xsi:type="number">40</item>
                 </item>
             </argument>

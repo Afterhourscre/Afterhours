@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -21,18 +21,25 @@ use Mirasvit\SeoToolbar\Api\Data\DataProviderItemInterface;
 
 class SeoAutolinksCriteria extends AbstractCriteria
 {
-    const LABEL = 'SEO Autolinks';
+    const LABEL = 'SEO Cross Links';
 
+    /**
+     * @param string $content
+     * @return \Magento\Framework\DataObject|mixed
+     */
     public function handle($content)
     {
         $autoLinks = $this->getAutoLinks($content);
 
-        if (!$autoLinks){
-            return $this->getItem( self::LABEL, DataProviderItemInterface::STATUS_NONE, __('No autolinks detected'), '');
+        if (!$autoLinks) {
+            return $this->getItem(self::LABEL, DataProviderItemInterface::STATUS_NONE, __('No cross links detected'), '');
         } else {
-            return $this->getItem(self::LABEL, DataProviderItemInterface::STATUS_SUCCESS, __('Autolinks successfully applied'),
-                implode(PHP_EOL, $autoLinks));
-        
+            return $this->getItem(
+                self::LABEL,
+                DataProviderItemInterface::STATUS_SUCCESS,
+                __('Cross Links successfully applied'),
+                implode(PHP_EOL, $autoLinks)
+            );
         }
     }
 
@@ -63,7 +70,7 @@ class SeoAutolinksCriteria extends AbstractCriteria
                     $tmpData[] = $data;
                 }
 
-                if(!isset($counter[$autoLinkTitle[1]])){
+                if (!isset($counter[$autoLinkTitle[1]])) {
                     $counter[$autoLinkTitle[1]] = 1 ;
                 } else {
                     $counter[$autoLinkTitle[1]] += 1 ;
@@ -74,7 +81,7 @@ class SeoAutolinksCriteria extends AbstractCriteria
         }
 
         foreach ($counter as $key => $qty) {
-            if($qty > 1){
+            if ($qty > 1) {
                 $result[$key] .= ', ' . $qty .' replacements';
             }
         }

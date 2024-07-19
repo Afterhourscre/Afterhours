@@ -9,28 +9,26 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoMarkup\Block\Rs;
 
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
+use Mirasvit\Core\Service\SerializeService;
 use Mirasvit\SeoMarkup\Model\Config\SearchboxConfig;
 
 class Searchbox extends Template
 {
-    private $context;
-
     private $searchboxConfig;
 
-    private $data = [];
-
     public function __construct(
-        Context $context,
+        Context         $context,
         SearchboxConfig $searchboxConfig
     ) {
         $this->searchboxConfig = $searchboxConfig;
@@ -38,20 +36,23 @@ class Searchbox extends Template
         parent::__construct($context);
     }
 
+    /**
+     * @return string|false
+     */
     protected function _toHtml()
     {
-        if (!$this->searchboxConfig->getSearchBoxType($this->_storeManager->getStore())) {
+        if (!$this->searchboxConfig->getSearchBoxType((int)$this->_storeManager->getStore()->getId())) {
             return false;
         }
 
         $data = $this->getJsonData();
 
-        return '<script type="application/ld+json">' . \Zend_Json::encode($data) . '</script>';
+        return '<script type="application/ld+json">' . SerializeService::encode($data) . '</script>';
     }
 
-    private function getJsonData()
+    private function getJsonData(): array
     {
-        $data = [
+        return [
             "@context"        => "https://schema.org",
             "@type"           => "WebSite",
             "url"             => $this->getBaseUrl(),
@@ -61,13 +62,11 @@ class Searchbox extends Template
                 "query-input" => "required name=search_term_string",
             ],
         ];
-
-        return $data;
     }
 
-    private function getTarget()
+    private function getTarget(): string
     {
-        $searchboxType = $this->searchboxConfig->getSearchBoxType();
+        $searchboxType = $this->searchboxConfig->getSearchBoxType((int)$this->_storeManager->getStore()->getId());
 
         switch ($searchboxType) {
             case (SearchboxConfig::SEARCH_BOX_TYPE_CATALOG_SEARCH):
@@ -79,6 +78,6 @@ class Searchbox extends Template
                 break;
         }
 
-        return $target;
+        return $target ?? '';
     }
 }

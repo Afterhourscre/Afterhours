@@ -88,12 +88,12 @@ class Forgot implements ObserverInterface
         ActionFlag $actionFlag,
         UrlInterface $urlInterface
     ) {
-        $this->_helperData        = $helperData;
-        $this->_request           = $httpRequest;
-        $this->_messageManager    = $messageManager;
+        $this->_helperData = $helperData;
+        $this->_request = $httpRequest;
+        $this->_messageManager = $messageManager;
         $this->_responseInterface = $responseInterface;
-        $this->_actionFlag        = $actionFlag;
-        $this->_urlInterface      = $urlInterface;
+        $this->_actionFlag = $actionFlag;
+        $this->_urlInterface = $urlInterface;
     }
 
     /**
@@ -103,12 +103,13 @@ class Forgot implements ObserverInterface
     {
         if ($this->_helperData->isCaptchaBackend()
             && $this->_request->getParam('g-recaptcha-response') !== null
-            && in_array('backend_forgotpassword', $this->_helperData->getFormsBackend(), true)
+            && (in_array('backend_forgotpassword', $this->_helperData->getFormsBackend(), true))
+            && ($this->_helperData->getVisibleKey() !== null && $this->_helperData->getVisibleSecretKey() !== null)
         ) {
             $controller = $this->_urlInterface->getCurrentUrl();
             try {
                 $response = $this->_helperData->verifyResponse('visible');
-                if (!array_key_exists('success', $response)) {
+                if (!array_key_exists('success', $response) || empty($response['success'])) {
                     $this->redirectError($controller, $response['message']);
                 }
             } catch (Exception $e) {

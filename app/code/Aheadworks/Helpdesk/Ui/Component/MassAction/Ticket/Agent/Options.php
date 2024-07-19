@@ -8,7 +8,7 @@ See LICENSE.txt for license details.
 namespace Aheadworks\Helpdesk\Ui\Component\MassAction\Ticket\Agent;
 
 use Magento\Framework\UrlInterface;
-use Zend\Stdlib\JsonSerializable;
+use JsonSerializable;
 use Aheadworks\Helpdesk\Model\Source\Ticket\Agent as TicketAgentSourceModel;
 
 /**
@@ -85,7 +85,7 @@ class Options implements JsonSerializable
      *
      * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         if ($this->options === null) {
             $options = $this->agentSource->getAvailableOptions();

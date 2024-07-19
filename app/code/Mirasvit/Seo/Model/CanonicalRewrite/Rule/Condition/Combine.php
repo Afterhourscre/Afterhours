@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -58,6 +58,18 @@ class Combine extends \Magento\Rule\Model\Condition\Combine
             // 'percent_discount',
         ],
     ];
+    /**
+     * @var \Mirasvit\Seo\Model\CanonicalRewrite\Rule\Condition\ValidateFactory
+     */
+    private $ruleConditionValidateFactory;
+    /**
+     * @var RequestInterface
+     */
+    private $request;
+    /**
+     * @var Registry
+     */
+    private $registry;
 
     /**
      * @param Context $context
@@ -119,7 +131,7 @@ class Combine extends \Magento\Rule\Model\Condition\Combine
                 'value' => $attributes['base'],
             ],
             [
-                'label' => __('Products Attributes'),
+                'label' => __('Product Attributes'),
                 'value' => $attributes['attributes'],
             ],
             [

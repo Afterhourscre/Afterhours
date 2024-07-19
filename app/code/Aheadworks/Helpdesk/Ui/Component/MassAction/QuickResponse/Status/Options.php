@@ -8,7 +8,7 @@ namespace Aheadworks\Helpdesk\Ui\Component\MassAction\QuickResponse\Status;
 
 use Aheadworks\Helpdesk\Model\Source\QuickResponse\Status as StatusSource;
 use Magento\Framework\UrlInterface;
-use Zend\Stdlib\JsonSerializable;
+use JsonSerializable;
 
 /**
  * Class Options
@@ -79,7 +79,7 @@ class Options implements JsonSerializable
      *
      * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         if ($this->options === null) {
             $statusArray = $this->statusSource->toOptionArrayForMassStatus();

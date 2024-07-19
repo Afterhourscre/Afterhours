@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo-filter
- * @version   1.0.16
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   1.3.22
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoFilter\Model\ResourceModel;
 
@@ -22,10 +23,7 @@ use Mirasvit\SeoFilter\Api\Data\RewriteInterface;
 
 class Rewrite extends AbstractDb
 {
-    /**
-     * {@inheritdoc}
-     */
-    protected function _construct()
+    protected function _construct(): void
     {
         $this->_init(RewriteInterface::TABLE_NAME, RewriteInterface::ID);
     }

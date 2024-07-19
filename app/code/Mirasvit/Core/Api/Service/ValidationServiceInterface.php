@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -24,7 +24,7 @@ interface ValidationServiceInterface
      *
      * @param string[] $modules - name of modules to run validation for. E.g. Mirasvit_Email
      *
-     * @return string[] - result of validation
+     * @return array - result of validation
      */
     public function runValidation(array $modules = []);
 

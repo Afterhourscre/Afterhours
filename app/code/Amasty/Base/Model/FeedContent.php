@@ -12,7 +12,8 @@ use Magento\Framework\HTTP\Adapter\Curl;
 use Magento\Framework\HTTP\Adapter\CurlFactory;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Store\Model\StoreManagerInterface;
-
+use Laminas\Http\Client as HttpClient;
+use Laminas\Http\Request as HttpRequest;
 /**
  * Class FeedContent for read file content by url
  */
@@ -65,7 +66,7 @@ class FeedContent
                     . ' (' . $this->productMetadata->getEdition() . ')'
             ]
         );
-        $curlObject->write(\Zend_Http_Client::GET, $url, '1.0');
+        $curlObject->write(HttpRequest::METHOD_GET, $url, '1.0');
         $result = $curlObject->read();
 
         if ($result === false || $result === '') {
@@ -133,7 +134,7 @@ class FeedContent
     {
         if ($this->baseUrlObject === null) {
             $url = $this->storeManager->getStore()->getBaseUrl();
-            $this->baseUrlObject = \Zend\Uri\UriFactory::factory($url);
+            $this->baseUrlObject = \Laminas\Uri\UriFactory::factory($url);
         }
 
         return $this->baseUrlObject;

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -33,6 +33,23 @@ use Mirasvit\Seo\Model\ResourceModel\CanonicalRewrite\Collection as CanonicalRew
  */
 class Collection extends CanonicalRewriteCollection implements SearchResultInterface
 {
+    /**
+     * @var \Magento\Framework\Api\Search\AggregationInterface
+     */
+    private $aggregations;
+
+    /**
+     * Collection constructor.
+     * @param EntityFactory $entityFactory
+     * @param Logger $logger
+     * @param FetchStrategy $fetchStrategy
+     * @param EventManager $eventManager
+     * @param AdapterInterface|null $connection
+     * @param AbstractDb|null $resource
+     * @param string $mainTable
+     * @param string $resourceModel
+     * @param string $model
+     */
     public function __construct(
         EntityFactory $entityFactory,
         Logger $logger,
@@ -57,7 +74,7 @@ class Collection extends CanonicalRewriteCollection implements SearchResultInter
     }
 
     /**
-     * @return AggregationInterface
+     * @return \Magento\Framework\Api\Search\AggregationInterface
      */
     public function getAggregations()
     {
@@ -65,7 +82,7 @@ class Collection extends CanonicalRewriteCollection implements SearchResultInter
     }
 
     /**
-     * @param AggregationInterface $aggregations
+     * @param \Magento\Framework\Api\Search\AggregationInterface $aggregations
      *
      * @return void
      */

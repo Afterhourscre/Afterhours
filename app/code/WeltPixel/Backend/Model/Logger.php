@@ -2,8 +2,9 @@
 namespace WeltPixel\Backend\Model;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Logger\Monolog;
 
-class Logger extends \Magento\Framework\Logger\Monolog
+class Logger extends Monolog
 {
     const XML_PATH_WELTPIXEL_DEVELOPER_LOGGING = 'weltpixel_backend_developer/logging/disable_broken_reference';
 
@@ -14,17 +15,23 @@ class Logger extends \Magento\Framework\Logger\Monolog
 
     /**
      * Logger constructor.
-     * @param ScopeConfigInterface $scopeConfig
-     * @param array $name
+     * @param string $name
      * @param array $handlers
      * @param array $processors
      */
-    public function __construct(ScopeConfigInterface $scopeConfig, $name, array $handlers = [], array $processors = [])
+    public function __construct($name, array $handlers = [], array $processors = [])
+    {
+        parent::__construct($name, $handlers, $processors);
+    }
+
+    /**
+     * Set scope config.
+     * 
+     * @param ScopeConfigInterface $scopeConfig
+     */
+    public function setScopeConfig(ScopeConfigInterface $scopeConfig): void
     {
         $this->scopeConfig = $scopeConfig;
-        $handlers = array_values($handlers);
-
-        parent::__construct($name, $handlers, $processors);
     }
 
     /**
@@ -34,15 +41,14 @@ class Logger extends \Magento\Framework\Logger\Monolog
      *
      * @param  string  $message The log message
      * @param  array   $context The log context
-     * @return Boolean Whether the record has been processed
+     * @return void
      */
-    public function warning($message, array $context = array())
+    public function warning($message, array $context = []): void
     {
         $result = $this->_parseLogMessage($message, $context);
         if ($result !== false) {
-            return parent::warning($message, $context);
+            parent::warning($message, $context);
         }
-        return $result;
     }
 
     /**
@@ -52,27 +58,30 @@ class Logger extends \Magento\Framework\Logger\Monolog
      *
      * @param  string  $message The log message
      * @param  array   $context The log context
-     * @return Boolean Whether the record has been processed
+     * @return void
      */
-    public function info($message, array $context = array())
+    public function info($message, array $context = []): void
     {
         $result = $this->_parseLogMessage($message, $context);
         if ($result !== false) {
-            return parent::info($message, $context);
+            parent::info($message, $context);
         }
-        return $result;
     }
 
     /**
-     * @param $message
+     * @param string $message
      * @param array $context
-     * @return Boolean
+     * @return bool
      */
-    protected function _parseLogMessage($message, $context)
+    protected function _parseLogMessage($message, array $context): bool
     {
+        if ($this->scopeConfig === null) {
+            return true;
+        }
+
         $isLogEnabled = $this->scopeConfig->getValue(self::XML_PATH_WELTPIXEL_DEVELOPER_LOGGING, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
         $pos = strpos($message, 'Broken reference');
-        if (!$isLogEnabled && ($pos !== false) ) {
+        if (!$isLogEnabled && ($pos !== false)) {
             return false;
         }
 

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -31,16 +31,23 @@ class Config
      */
     protected $context;
 
+    /**
+     * Config constructor.
+     *
+     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+     * @param \Magento\Framework\Model\Context                   $context
+     */
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Framework\Model\Context $context
     ) {
         $this->scopeConfig = $scopeConfig;
-        $this->context = $context;
+        $this->context     = $context;
     }
 
     /**
      * @param null $store
+     *
      * @return string
      */
     public function getFrontendSitemapBaseUrl($store = null)
@@ -54,6 +61,7 @@ class Config
 
     /**
      * @param null|string $store
+     *
      * @return string
      */
     public function getFrontendSitemapMetaTitle($store = null)
@@ -67,6 +75,7 @@ class Config
 
     /**
      * @param null|string $store
+     *
      * @return string
      */
     public function getFrontendSitemapMetaKeywords($store = null)
@@ -80,6 +89,7 @@ class Config
 
     /**
      * @param null|string $store
+     *
      * @return string
      */
     public function getFrontendSitemapMetaDescription($store = null)
@@ -93,6 +103,7 @@ class Config
 
     /**
      * @param null|string $store
+     *
      * @return string
      */
     public function getFrontendSitemapH1($store = null)
@@ -106,6 +117,7 @@ class Config
 
     /**
      * @param null|string $store
+     *
      * @return bool|int
      */
     public function getIsShowProducts($store = null)
@@ -119,6 +131,21 @@ class Config
 
     /**
      * @param null|string $store
+     *
+     * @return bool|int
+     */
+    public function getIsShowCategories($store = null)
+    {
+        return $this->scopeConfig->getValue(
+            'seositemap/frontend/is_show_categories',
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * @param null|string $store
+     *
      * @return bool|int
      */
     public function getIsShowNonSalableProducts($store = null)
@@ -132,6 +159,7 @@ class Config
 
     /**
      * @param null|string $store
+     *
      * @return bool|int
      */
     public function getIsShowStores($store = null)
@@ -145,6 +173,7 @@ class Config
 
     /**
      * @param null|string $store
+     *
      * @return int
      */
     public function getFrontendLinksLimit($store = null)
@@ -158,6 +187,35 @@ class Config
 
     /**
      * @param null|string $store
+     *
+     * @return int
+     */
+    public function getFrontendSitemapColumnCount($store = null)
+    {
+        return (int)$this->scopeConfig->getValue(
+            'seositemap/frontend/column_count',
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * @param null $store
+     *
+     * @return mixed
+     */
+    public function isCapitalLettersEnabled($store = null)
+    {
+        return $this->scopeConfig->getValue(
+            'seositemap/frontend/is_capital_letters_enabled',
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * @param null|string $store
+     *
      * @return bool|int
      */
     public function getIsAddProductImages($store = null)
@@ -171,6 +229,7 @@ class Config
 
     /**
      * @param null|string $store
+     *
      * @return bool|int
      */
     public function getIsEnableImageFriendlyUrls($store = null)
@@ -184,6 +243,7 @@ class Config
 
     /**
      * @param null|string $store
+     *
      * @return string
      */
     public function getImageUrlTemplate($store = null)
@@ -197,6 +257,7 @@ class Config
 
     /**
      * @param null|string $store
+     *
      * @return int
      */
     public function getImageSizeWidth($store = null)
@@ -210,6 +271,7 @@ class Config
 
     /**
      * @param null|string $store
+     *
      * @return int
      */
     public function getImageSizeHeight($store = null)
@@ -223,6 +285,7 @@ class Config
 
     /**
      * @param null|string $store
+     *
      * @return bool|int
      */
     public function getIsAddProductTags($store = null)
@@ -236,6 +299,7 @@ class Config
 
     /**
      * @param null|string $store
+     *
      * @return int
      */
     public function getProductTagsChangefreq($store = null)
@@ -249,6 +313,7 @@ class Config
 
     /**
      * @param null|string $store
+     *
      * @return int
      */
     public function getProductTagsPriority($store = null)
@@ -262,6 +327,7 @@ class Config
 
     /**
      * @param null|string $store
+     *
      * @return int
      */
     public function getLinkChangefreq($store = null)
@@ -275,6 +341,7 @@ class Config
 
     /**
      * @param null|string $store
+     *
      * @return int
      */
     public function getLinkPriority($store = null)
@@ -288,6 +355,7 @@ class Config
 
     /**
      * @param null|string $store
+     *
      * @return int
      */
     public function getSplitSize($store = null)
@@ -301,6 +369,7 @@ class Config
 
     /**
      * @param null|string $store
+     *
      * @return int
      */
     public function getMaxLinks($store = null)
@@ -312,8 +381,20 @@ class Config
         );
     }
 
+    /**
+     * @return mixed
+     */
     public function canShowBreadcrumbs()
     {
         return $this->scopeConfig->getValue('web/default/show_cms_breadcrumbs', ScopeInterface::SCOPE_STORE);
+    }
+
+    public function getIsPingSitemap(int $storeId = null): bool
+    {
+        return (bool)$this->scopeConfig->getValue(
+            'seositemap/xml/is_ping_after_update',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 }

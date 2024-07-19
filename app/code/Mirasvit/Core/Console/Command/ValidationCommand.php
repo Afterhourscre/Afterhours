@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -44,6 +44,11 @@ class ValidationCommand extends Command
      */
     private $validationService;
 
+    /**
+     * ValidationCommand constructor.
+     * @param AppState $appState
+     * @param ValidationService $validationService
+     */
     public function __construct(
         AppState $appState,
         ValidationService $validationService
@@ -69,7 +74,7 @@ class ValidationCommand extends Command
     /**
      * {@inheritdoc}
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
             $this->appState->setAreaCode('global');
@@ -79,7 +84,7 @@ class ValidationCommand extends Command
 
         if (!$this->validationService->getValidators()) {
             $output->writeln('No validation available for installed modules');
-            return;
+            return 0;
         }
 
         if ($input->getOption(self::INPUT_KEY_INFO)) {
@@ -87,6 +92,8 @@ class ValidationCommand extends Command
         } else {
             $this->execValidation($input, $output);
         }
+
+        return 0;
     }
 
     /**

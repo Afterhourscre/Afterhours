@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -21,7 +21,7 @@ interface ManualServiceInterface
     const MANUAL_FILE_PATH = 'etc';
     const MANUAL_FILE_NAME = 'manual.xml';
 
-    const DOCS_URL = 'http://docs.mirasvit.com/';
+    const DOCS_URL = 'http://mirasvit.com/docs/';
     const TOP_TEMPLATE = '/view/adminhtml/templates/pageactions.phtml';
     const BOTTOM_TEMPLATE = '/view/adminhtml/templates/page/copyright.phtml';
     const GRID_AFTER_TEMPLATE = 'templates/listing/default.xhtml';

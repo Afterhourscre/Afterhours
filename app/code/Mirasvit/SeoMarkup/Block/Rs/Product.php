@@ -9,16 +9,18 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoMarkup\Block\Rs;
 
 use Magento\Framework\Registry;
 use Magento\Framework\View\Element\Template\Context;
+use Mirasvit\Core\Service\SerializeService;
 use Mirasvit\SeoMarkup\Model\Config\ProductConfig;
 use Magento\Framework\View\Element\Template;
 use Mirasvit\SeoMarkup\Service\ProductRichSnippetsService;
@@ -27,20 +29,17 @@ class Product extends Template
 {
     private $registry;
 
-    private $context;
-
     private $productConfig;
 
     private $productSnippetService;
 
     public function __construct(
-        ProductConfig $productConfig,
-        Registry $registry,
-        Context $context,
+        ProductConfig              $productConfig,
+        Registry                   $registry,
+        Context                    $context,
         ProductRichSnippetsService $productSnippetService
-    ){
+    ) {
         $this->productSnippetService = $productSnippetService;
-        $this->store                 = $context->getStoreManager()->getStore();
         $this->registry              = $registry;
         $this->productConfig         = $productConfig;
 
@@ -49,7 +48,7 @@ class Product extends Template
 
     protected function _toHtml()
     {
-        if (!$this->productConfig->isRsEnabled($this->store)) {
+        if (!$this->productConfig->isRsEnabled((int)$this->_storeManager->getStore()->getId())) {
             return false;
         }
 
@@ -61,6 +60,6 @@ class Product extends Template
             return false;
         }
 
-        return '<script type="application/ld+json">' . \Zend_Json::encode($data) . '</script>';
+        return '<script type="application/ld+json">' . SerializeService::encode($data) . '</script>';
     }
 }

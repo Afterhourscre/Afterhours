@@ -13,4 +13,9 @@
             <argument name="imageUploader" xsi:type="object">Magento\Catalog\CategoryImageUpload</argument>
         </arguments>
     </type>
+
+    <type name="Magento\Variable\Model\Variable\Data">
+        <plugin name="mstSeoContentExtendVariables" type="Mirasvit\SeoContent\Plugin\Variable\DataPlugin" sortOrder="500"/>
+    </type>
+
 </config>

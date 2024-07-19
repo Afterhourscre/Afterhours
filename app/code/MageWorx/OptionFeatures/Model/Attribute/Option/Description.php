@@ -181,7 +181,7 @@ class Description extends AbstractAttribute implements AttributeInterface
     public function prepareDataForFrontend($object)
     {
         $storeId         = $this->systemHelper->resolveCurrentStoreId();
-        $decodedJsonData = json_decode($object->getData($this->getName()), true);
+        $decodedJsonData  = !empty($object->getData($this->getName())) ? json_decode($object->getData($this->getName()), true) : null;
         if (empty($decodedJsonData) || !is_array($decodedJsonData)) {
             return [$this->getName() => ''];
         }

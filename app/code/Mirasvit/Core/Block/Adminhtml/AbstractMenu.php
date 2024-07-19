@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -87,7 +87,7 @@ abstract class AbstractMenu extends Template
     }
 
     /**
-     * @param $force
+     * @param bool $force
      *
      * @return $this
      */
@@ -182,7 +182,7 @@ abstract class AbstractMenu extends Template
     /**
      * @param null|array $items
      *
-     * @return void
+     * @return \Generator
      */
     protected function getFlatTree($items = null)
     {

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -34,13 +34,18 @@ class ParseVariables extends AbstractHelper implements ParseVariablesHelperInter
      * @var EavConfig
      */
     protected $eavConfig;
+    /**
+     * @var \Magento\Framework\Escaper
+     */
+    private $escaper;
 
     /**
      * Constructor
      *
-     * @param Context       $context
+     * @param Context $context
      * @param PricingHelper $pricingHelper
-     * @param EavConfig     $eavConfig
+     * @param EavConfig $eavConfig
+     * @param \Magento\Framework\Escaper $escaper
      */
     public function __construct(
         Context $context,
@@ -70,7 +75,7 @@ class ParseVariables extends AbstractHelper implements ParseVariablesHelperInter
      */
     public function parse($str, $objects, $additional = [], $storeId = false)
     {
-        if (trim($str) == '') {
+        if (trim((string)$str) == '') {
             return $str;
         }
 
@@ -158,6 +163,11 @@ class ParseVariables extends AbstractHelper implements ParseVariablesHelperInter
             $str = str_replace($k, $v, $str);
         }
 
+        $str = str_replace($bAOpen, '[', $str);
+        $str = str_replace($bAClose, ']', $str);
+        $str = str_replace($bBOpen, '{', $str);
+        $str = str_replace($bBClose, '}', $str);
+
         return $str;
     }
 
@@ -210,7 +220,7 @@ class ParseVariables extends AbstractHelper implements ParseVariablesHelperInter
             } else {
                 switch ($dataKey) {
                     case 'final_price':
-                        $value = $this->pricingHelper->currency($value, true, false);
+                        $value = $this->pricingHelper->currency((float)$value, true, false);
                         break;
                 }
             }

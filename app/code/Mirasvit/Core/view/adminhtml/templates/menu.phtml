@@ -1,5 +1,5 @@
 <?php
-/** @var Mirasvit\Core\Block\Adminhtml\Menu $block */
+/** @var \Mirasvit\Core\Block\Adminhtml\Menu $block */
 ?>
 <style>
     .page-title-wrapper .page-title {
@@ -14,8 +14,7 @@
         data-toggle="dropdown"
         aria-haspopup="true">
         <i class="fa fa-bars"></i>
-        <span class="admin__action-dropdown-text"><?php /* @escapeNotVerified */
-            echo $block->getActiveTitle() ?></span>
+        <span class="admin__action-dropdown-text"><?php echo $block->escapeHtml($block->getActiveTitle()) ?></span>
     </button>
 
     <ul class="admin__action-dropdown-menu">
@@ -25,7 +24,9 @@
                 <?php continue; endif; ?>
 
             <li>
-                <a href="<?php echo $item->getUrl() ?>">
+                <?php $target = $item->getTarget() ? 'target="' . $item->getTarget() . '"' : ''; ?>
+
+                <a href="<?= $block->escapeUrl($item->getUrl()) ?>" <?= $block->escapeHtmlAttr($target) ?> >
                     <?php echo $block->escapeHtml($item->getTitle()) ?>
                 </a>
 
@@ -33,7 +34,7 @@
                     <ul>
                         <?php foreach ($item->getItems() as $child): ?>
                             <li>
-                                <a href="<?= $child->getUrl() ?>">
+                                <a href="<?= $block->escapeUrl($child->getUrl()) ?>">
                                     <?= $block->escapeHtml($child->getTitle()) ?>
                                 </a>
                             </li>

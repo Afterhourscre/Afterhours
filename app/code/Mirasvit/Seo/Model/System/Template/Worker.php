@@ -9,104 +9,84 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Model\System\Template;
 
+
+use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\DB\Adapter\AdapterInterface;
+use Magento\Framework\Model\Context;
+use Magento\Store\Model\StoreManagerInterface;
+use Mirasvit\Seo\Model\Config;
+use Mirasvit\Seo\Model\SeoObject\ProducturlFactory;
+
+
 class Worker extends \Magento\Framework\DataObject
 {
-    /**
-     * @var \Mirasvit\Seo\Model\SeoObject\ProducturlFactory
-     */
     protected $objectProducturlFactory;
 
-    /**
-     * @var \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory
-     */
     protected $productCollectionFactory;
 
-    /**
-     * @var \Mirasvit\Seo\Model\Config
-     */
     protected $config;
 
     /**
-     * @var \Magento\Catalog\Helper\Product\Url
+     * @var mixed
      */
     protected $catalogProductUrl;
 
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
     protected $storeManager;
 
-    /**
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface
-     */
     protected $scopeConfig;
 
-    /**
-     * @var \Magento\Framework\App\ResourceConnection
-     */
     protected $dbResource;
 
-    /**
-     * @var \Magento\Framework\Model\Context
-     */
     protected $context;
-
-    /**
-     * @param \Mirasvit\Seo\Model\SeoObject\ProducturlFactory                $objectProducturlFactory
-     * @param \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory
-     * @param \Mirasvit\Seo\Model\Config                                     $config
-     * @param \Magento\Store\Model\StoreManagerInterface                     $storeManager
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface             $scopeConfig
-     * @param \Magento\Framework\App\ResourceConnection                      $dbResource
-     * @param \Magento\Framework\Model\Context                               $context
-     * @param array                                                          $data
-     */
-    public function __construct(
-        \Mirasvit\Seo\Model\SeoObject\ProducturlFactory $objectProducturlFactory,
-        \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory,
-        \Mirasvit\Seo\Model\Config $config,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Framework\App\ResourceConnection $dbResource,
-        \Magento\Framework\Model\Context $context,
-        array $data = []
-    ) {
-        $this->objectProducturlFactory = $objectProducturlFactory;
-        $this->productCollectionFactory = $productCollectionFactory;
-        $this->config = $config;
-
-        $this->storeManager = $storeManager;
-        $this->scopeConfig = $scopeConfig;
-        $this->dbResource = $dbResource;
-        $this->context = $context;
-        parent::__construct($data);
-    }
 
     /**
      * @var int
      */
     protected $maxPerStep = 500;
+
     /**
      * @var int
      */
     protected $totalNumber;
+
     /**
      * @var bool
      */
     protected $isEnterprise = false;
 
-    /**
-     * @return bool
-     */
-    public function run()
+    public function __construct(
+        ProducturlFactory $objectProducturlFactory,
+        CollectionFactory $productCollectionFactory,
+        Config $config,
+        StoreManagerInterface $storeManager,
+        ScopeConfigInterface $scopeConfig,
+        ResourceConnection $dbResource,
+        Context $context,
+        array $data = []
+    ) {
+        $this->objectProducturlFactory  = $objectProducturlFactory;
+        $this->productCollectionFactory = $productCollectionFactory;
+        $this->config                   = $config;
+        $this->storeManager             = $storeManager;
+        $this->scopeConfig              = $scopeConfig;
+        $this->dbResource               = $dbResource;
+        $this->context                  = $context;
+
+        parent::__construct($data);
+    }
+
+    public function run(): bool
     {
         $this->totalNumber = $this->getTotalProductNumber();
         if (($this->getStep() - 1) * $this->maxPerStep >= $this->totalNumber) {
@@ -117,29 +97,23 @@ class Worker extends \Magento\Framework\DataObject
         return true;
     }
 
-    /**
-     * @return string
-     */
-    protected function getTotalProductNumber()
+    protected function getTotalProductNumber(): int
     {
         $connection = $this->dbResource->getConnection('core_write');
         $select = $connection->select()->from($this->dbResource->getTableName('catalog_product_entity'));
-        $select->reset(\Zend_Db_Select::ORDER);
-        $select->reset(\Zend_Db_Select::LIMIT_COUNT);
-        $select->reset(\Zend_Db_Select::LIMIT_OFFSET);
-        $select->reset(\Zend_Db_Select::COLUMNS);
+        $select->reset(\Magento\Framework\DB\Select::ORDER);
+        $select->reset(\Magento\Framework\DB\Select::LIMIT_COUNT);
+        $select->reset(\Magento\Framework\DB\Select::LIMIT_OFFSET);
+        $select->reset(\Magento\Framework\DB\Select::COLUMNS);
         $select->columns('COUNT(*)');
         $number = $connection->fetchOne($select);
 
-        return $number;
+        return (int)$number;
     }
 
-    /**
-     * @param string $str
-     * @return string
-     */
-    public function formatUrlKey($str)
+    public function formatUrlKey(string $str): string
     {
+        /** fixme $this->catalogProductUrl is null */
         $urlKey = preg_replace('#[^0-9a-z]+#i', '-', $this->catalogProductUrl->format($str));
         $urlKey = strtolower($urlKey);
         $urlKey = trim($urlKey, '-');
@@ -147,18 +121,12 @@ class Worker extends \Magento\Framework\DataObject
         return $urlKey;
     }
 
-    /**
-     * @return int
-     */
-    public function getMaxPerStep()
+    public function getMaxPerStep(): int
     {
         return $this->maxPerStep;
     }
 
-    /**
-     * @return int
-     */
-    public function getCurrentNumber()
+    public function getCurrentNumber(): int
     {
         $c = $this->getStep() * $this->getMaxPerStep();
         if ($c > $this->totalNumber) {
@@ -168,21 +136,12 @@ class Worker extends \Magento\Framework\DataObject
         }
     }
 
-    /**
-     * @return int
-     */
-    public function getTotalNumber()
+    public function getTotalNumber(): int
     {
         return $this->totalNumber;
     }
 
-    /**
-     * @param string $connection
-     * @param string $urlKey
-     * @param string $urlKeyTable
-     * @return bool|string
-     */
-    public function prepareUrlKeys($connection, $urlKey, $urlKeyTable)
+    public function prepareUrlKeys(AdapterInterface $connection, string $urlKey, string $urlKeyTable): ?string
     {
         //for Magento Enterprise only
         if ($urlKey) {
@@ -213,16 +172,14 @@ class Worker extends \Magento\Framework\DataObject
             }
         }
 
-        return false;
+        return null;
     }
 
     /**
-     * @return void
-     *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public function process()
+    public function process(): void
     {
         $connection = $this->dbResource->getConnection('core_write');
 
@@ -252,7 +209,7 @@ class Worker extends \Magento\Framework\DataObject
                         ->setPageSize($this->maxPerStep)
                         ->setStore($store);
             foreach ($products as $product) {
-                $urlKeyTemplate = $config->getProductUrlKey($store);
+                $urlKeyTemplate = $config->getProductUrlKey((int)$store->getId());
                 if ($this->isEnterprise) {
                     if (empty($urlKeyTemplate)) {
                         // if "Product URL Key Template" is empty we will create [product_name] template

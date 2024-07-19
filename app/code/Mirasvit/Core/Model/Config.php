@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -72,5 +72,29 @@ class Config
     public function isLessCompilationEnabled()
     {
         return (bool)$this->scopeConfig->getValue('mst_core/css/is_less_compilation_enabled');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCustomAdminUrl()
+    {
+        return (bool)$this->scopeConfig->getValue('admin/url/use_custom');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isMarketplace()
+    {
+        $flag = true;
+
+        /** mp comment start */
+
+        $flag = false;
+
+        /** mp comment end */
+
+        return $flag;
     }
 }

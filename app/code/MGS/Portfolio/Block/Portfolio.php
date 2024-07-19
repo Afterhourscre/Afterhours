@@ -38,18 +38,18 @@ class Portfolio extends Template
      * @param \Magento\Framework\View\Page\Config $pageConfig
      */
     public function __construct(
-		Template\Context $context, array $data = [], 
 		\Magento\Framework\ObjectManagerInterface $objectManager,
 		\Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-		\Magento\Framework\View\Page\Config $pageConfig
+		\Magento\Framework\View\Page\Config $pageConfig,
+		Template\Context $context, array $data = []
 	)
     {
-        parent::__construct($context, $data);
 		$this->_objectManager = $objectManager;
 		$this->pageConfig = $pageConfig;
 		$this->_storeManager = $storeManager;
 		$this->_scopeConfig = $scopeConfig;
+		parent::__construct($context, $data);
     }
 	
 	/**

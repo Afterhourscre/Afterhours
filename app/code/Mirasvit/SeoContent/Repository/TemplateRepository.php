@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -25,12 +25,27 @@ use Mirasvit\SeoContent\Model\ResourceModel\Template\CollectionFactory;
 
 class TemplateRepository implements TemplateRepositoryInterface
 {
+    /**
+     * @var TemplateFactory
+     */
     private $factory;
 
+    /**
+     * @var CollectionFactory
+     */
     private $collectionFactory;
 
+    /**
+     * @var EntityManager
+     */
     private $entityManager;
 
+    /**
+     * TemplateRepository constructor.
+     * @param TemplateFactory $factory
+     * @param CollectionFactory $collectionFactory
+     * @param EntityManager $entityManager
+     */
     public function __construct(
         TemplateFactory $factory,
         CollectionFactory $collectionFactory,
@@ -41,6 +56,9 @@ class TemplateRepository implements TemplateRepositoryInterface
         $this->entityManager = $entityManager;
     }
 
+    /**
+     * @return TemplateInterface[]|\Mirasvit\SeoContent\Model\ResourceModel\Template\Collection
+     */
     public function getCollection()
     {
         return $this->collectionFactory->create();
@@ -54,6 +72,10 @@ class TemplateRepository implements TemplateRepositoryInterface
         return $this->factory->create();
     }
 
+    /**
+     * @param int $id
+     * @return bool|false|TemplateInterface|\Mirasvit\SeoContent\Model\Template|mixed
+     */
     public function get($id)
     {
         $template = $this->create();
@@ -66,11 +88,21 @@ class TemplateRepository implements TemplateRepositoryInterface
         return $template;
     }
 
+    /**
+     * @param TemplateInterface $template
+     * @return TemplateInterface|object
+     * @throws \Exception
+     */
     public function save(TemplateInterface $template)
     {
         return $this->entityManager->save($template);
     }
 
+    /**
+     * @param TemplateInterface $template
+     * @return bool
+     * @throws \Exception
+     */
     public function delete(TemplateInterface $template)
     {
         $this->entityManager->delete($template);

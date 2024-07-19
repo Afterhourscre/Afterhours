@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -53,13 +53,25 @@ class CmsPage extends \Magento\Framework\View\Element\Template
      * @var array
      */
     private $additionalLinksCollection;
+    /**
+     * @var PageCollectionFactory
+     */
+    private $pageCollectionFactory;
 
+    /**
+     * CmsPage constructor.
+     * @param CmsSitemapConfig $cmsSitemapConfig
+     * @param LinkSitemapConfig $linkSitemapConfig
+     * @param PageCollectionFactory $pageCollectionFactory
+     * @param Context $context
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
     public function __construct(
         CmsSitemapConfig $cmsSitemapConfig,
         LinkSitemapConfig $linkSitemapConfig,
         PageCollectionFactory $pageCollectionFactory,
         Context $context
-    ){
+    ) {
         $this->cmsSitemapConfig         = $cmsSitemapConfig;
         $this->linkSitemapConfig        = $linkSitemapConfig;
         $this->pageCollectionFactory    = $pageCollectionFactory;
@@ -67,11 +79,17 @@ class CmsPage extends \Magento\Framework\View\Element\Template
         $this->store                    = $context->getStoreManager()->getStore();
     }
 
+    /**
+     * @return \Magento\Framework\Phrase
+     */
     public function getTitle()
     {
         return __('Pages');
     }
 
+    /**
+     * @return bool
+     */
     public function canShowCmsPages()
     {
         $result = false;
@@ -84,6 +102,9 @@ class CmsPage extends \Magento\Framework\View\Element\Template
         return $result;
     }
 
+    /**
+     * @return array
+     */
     public function getCollection()
     {
         if (empty($this->cmsPagesCollection)) {
@@ -91,7 +112,7 @@ class CmsPage extends \Magento\Framework\View\Element\Template
             $collection = $this->pageCollectionFactory->create()
                 ->addStoreFilter($this->store)
                 ->addFieldToFilter('is_active', true)
-                ->addFieldToFilter('main_table.identifier', ['nin' => $ignore]);
+                ->addFieldToFilter('main_table.page_id', ['nin' => $ignore]);
 
             $this->cmsPagesCollection = $this->prepareCmsCollection($collection);
         }
@@ -99,6 +120,9 @@ class CmsPage extends \Magento\Framework\View\Element\Template
         return $this->cmsPagesCollection;
     }
 
+    /**
+     * @return array
+     */
     public function getAdditionalCollection()
     {
         if (empty($this->additionalLinksCollection)) {
@@ -108,6 +132,10 @@ class CmsPage extends \Magento\Framework\View\Element\Template
         return $this->additionalLinksCollection;
     }
 
+    /**
+     * @param mixed $collection
+     * @return array
+     */
     private function prepareCmsCollection($collection)
     {
         $result = [];
@@ -122,6 +150,10 @@ class CmsPage extends \Magento\Framework\View\Element\Template
         return $result;
     }
 
+    /**
+     * @param mixed $page
+     * @return string
+     */
     private function getCmsPageUrl($page)
     {
         $pageIdentifier = ($page->getHierarchyRequestUrl()) ? $page->getHierarchyRequestUrl() :

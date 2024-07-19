@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Model\Config;
 
@@ -30,19 +31,24 @@ class ProductUrlTemplateConfig
         $this->scopeConfig = $scopeConfig;
     }
 
-    /**
-     * @param null|string $store
-     *
-     * @return string
-     */
-    public function getProductUrlKey($store)
+    public function getProductUrlKey(int $store = null): string
     {
-        $productUrlKey = $this->scopeConfig->getValue(
+        $productUrlKey = (string)$this->scopeConfig->getValue(
             'seo/url/product_url_key',
             ScopeInterface::SCOPE_STORE,
             $store
         );
 
         return trim($productUrlKey);
+    }
+
+    public function getRegenerateUrlKeyOnVisibilityChange(int $store = null): bool
+    {
+        return $this->getProductUrlKey($store)
+            && (bool)$productUrlKey = (string)$this->scopeConfig->getValue(
+                'seo/url/regenerate_url_key_after_visibility_changed',
+                ScopeInterface::SCOPE_STORE,
+                $store
+            );
     }
 }

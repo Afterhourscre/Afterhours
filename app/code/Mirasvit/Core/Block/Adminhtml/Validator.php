@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -24,6 +24,9 @@ use Mirasvit\Core\Api\Service\ValidatorInterface;
 
 class Validator extends Template
 {
+    /**
+     * @var string
+     */
     protected $_template = 'Mirasvit_Core::validator.phtml';
 
     /**
@@ -32,10 +35,16 @@ class Validator extends Template
     private $validationService;
 
     /**
-     * @var array[]
+     * @var array
      */
     private $results = [];
 
+    /**
+     * Validator constructor.
+     * @param ValidationServiceInterface $validationService
+     * @param Context $context
+     * @param array $data
+     */
     public function __construct(
         ValidationServiceInterface $validationService,
         Context $context,

@@ -9,29 +9,25 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Api\Service\Alternate;
 
 interface StrategyInterface
 {
     /**
-     * Get stores urls.
-     *
-     * @return array
+     * Get stores urls
      */
-    public function getStoreUrls();
+    public function getStoreUrls(): array;
 
     /**
      * Get alternate urls
-     *
-     * @param array $storeUrls
-     * @return array
      */
-    public function getAlternateUrl($storeUrls);
+    public function getAlternateUrl(array $storeUrls): array;
 
 }

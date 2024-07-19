@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -20,6 +20,13 @@ namespace Mirasvit\SeoContent\Model\Template\Rule\Action;
 class Collection extends \Magento\Rule\Model\Action\Collection
 {
 
+    /**
+     * Collection constructor.
+     * @param \Magento\Framework\View\Asset\Repository $assetRepo
+     * @param \Magento\Framework\View\LayoutInterface $layout
+     * @param \Magento\Rule\Model\ActionFactory $actionFactory
+     * @param array $data
+     */
     public function __construct(
         \Magento\Framework\View\Asset\Repository $assetRepo,
         \Magento\Framework\View\LayoutInterface $layout,

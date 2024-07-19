@@ -9,7 +9,8 @@ namespace MageWorx\Info\Helper;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Store\Model\ScopeInterface;
-
+use Laminas\Http\Client as HttpClient;
+use Laminas\Http\Request as HttpRequest;
 
 class Data extends AbstractHelper
 {
@@ -305,7 +306,7 @@ class Data extends AbstractHelper
             ]
         );
 
-        $curl->write(\Zend_Http_Client::GET, self::EXTENSION_LIST_URL . '?date=' . date('Y-m-d'), '1.0');
+        $curl->write(HttpRequest::METHOD_GET, self::EXTENSION_LIST_URL . '?date=' . date('Y-m-d'), '1.0');
         $data = $curl->read();
         if ($data === false) {
             return false;

@@ -9,43 +9,29 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo-filter
- * @version   1.0.16
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   1.3.22
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoFilter\Repository;
 
 use Magento\Framework\EntityManager\EntityManager;
 use Mirasvit\SeoFilter\Api\Data\RewriteInterface;
 use Mirasvit\SeoFilter\Api\Data\RewriteInterfaceFactory;
-use Mirasvit\SeoFilter\Api\Repository\RewriteRepositoryInterface;
+use Mirasvit\SeoFilter\Model\ResourceModel\Rewrite\Collection;
 use Mirasvit\SeoFilter\Model\ResourceModel\Rewrite\CollectionFactory;
 
-class RewriteRepository implements RewriteRepositoryInterface
+class RewriteRepository
 {
-    /**
-     * @var RewriteInterfaceFactory
-     */
     private $factory;
 
-    /**
-     * @var CollectionFactory
-     */
     private $collectionFactory;
 
-    /**
-     * @var EntityManager
-     */
     private $entityManager;
 
-    /**
-     * RewriteRepository constructor.
-     * @param RewriteInterfaceFactory $factory
-     * @param CollectionFactory $collectionFactory
-     * @param EntityManager $entityManager
-     */
     public function __construct(
         RewriteInterfaceFactory $factory,
         CollectionFactory $collectionFactory,
@@ -56,47 +42,33 @@ class RewriteRepository implements RewriteRepositoryInterface
         $this->entityManager     = $entityManager;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function create()
+    public function create(): RewriteInterface
     {
         return $this->factory->create();
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getCollection()
+    /** @return RewriteInterface[]|Collection */
+    public function getCollection(): Collection
     {
         return $this->collectionFactory->create();
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function get($id)
+    public function get(int $id): ?RewriteInterface
     {
         $model = $this->create();
 
         $this->entityManager->load($model, $id);
 
-        return $model->getId() ? $model : false;
+        return $model->getId() ? $model : null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function save(RewriteInterface $model)
+    public function save(RewriteInterface $model): RewriteInterface
     {
         return $this->entityManager->save($model);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function delete(RewriteInterface $model)
+    public function delete(RewriteInterface $model): void
     {
-        return $this->entityManager->delete($model);
+        $this->entityManager->delete($model);
     }
 }

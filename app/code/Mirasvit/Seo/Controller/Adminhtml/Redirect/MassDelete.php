@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -22,6 +22,23 @@ use Mirasvit\Seo\Model\ResourceModel\Redirect\CollectionFactory;
 
 class MassDelete extends \Mirasvit\Seo\Controller\Adminhtml\Redirect
 {
+    /**
+     * @var CollectionFactory
+     */
+    private $collectionFactory;
+    /**
+     * @var Filter
+     */
+    private $filter;
+
+    /**
+     * MassDelete constructor.
+     * @param \Mirasvit\Seo\Model\RedirectFactory $redirectFactory
+     * @param \Magento\Framework\Registry $registry
+     * @param \Magento\Backend\App\Action\Context $context
+     * @param Filter $filter
+     * @param CollectionFactory $collectionFactory
+     */
     public function __construct(
         \Mirasvit\Seo\Model\RedirectFactory $redirectFactory,
         \Magento\Framework\Registry $registry,

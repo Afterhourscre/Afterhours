@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -28,10 +28,22 @@ use Magento\Rule\Model\Condition\Context;
  */
 class CategoryCondition extends AbstractCondition
 {
+    /**
+     * @var UrlInterface
+     */
     private $urlManager;
 
+    /**
+     * @var Context
+     */
     private $context;
 
+    /**
+     * CategoryCondition constructor.
+     * @param UrlInterface $urlManager
+     * @param Context $context
+     * @param array $data
+     */
     public function __construct(
         UrlInterface $urlManager,
         Context $context,
@@ -43,6 +55,9 @@ class CategoryCondition extends AbstractCondition
         parent::__construct($context, $data);
     }
 
+    /**
+     * @return $this|AbstractCondition
+     */
     public function loadAttributeOptions()
     {
         $attributes = [

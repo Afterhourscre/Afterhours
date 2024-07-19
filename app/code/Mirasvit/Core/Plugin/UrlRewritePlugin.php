@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -26,6 +26,10 @@ class UrlRewritePlugin
      */
     private $eventManager;
 
+    /**
+     * UrlRewritePlugin constructor.
+     * @param EventManagerInterface $eventManager
+     */
     public function __construct(
         EventManagerInterface $eventManager
     ) {
@@ -34,7 +38,8 @@ class UrlRewritePlugin
 
     /**
      * Dispatch our event before dispatch Frontend Controller
-     * {@inheritdoc}
+     * @param mixed $subject
+     * @param mixed $request
      */
     public function beforeDispatch($subject, $request)
     {

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -32,6 +32,11 @@ class PageAuditDataProvider implements DataProviderInterface
      */
     private $criteriaPool;
 
+    /**
+     * PageAuditDataProvider constructor.
+     * @param ResponseInterface $response
+     * @param array $criteriaPool
+     */
     public function __construct(
         ResponseInterface $response,
         array $criteriaPool
@@ -40,11 +45,17 @@ class PageAuditDataProvider implements DataProviderInterface
         $this->criteriaPool = $criteriaPool;
     }
 
+    /**
+     * @return \Magento\Framework\Phrase|string
+     */
     public function getTitle()
     {
         return __('Page analysis');
     }
 
+    /**
+     * @return array|\Mirasvit\SeoToolbar\Api\Data\DataProviderItemInterface
+     */
     public function getItems()
     {
         $content = $this->response->getContent();

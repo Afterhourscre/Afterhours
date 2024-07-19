@@ -9,45 +9,54 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoAutolink\Controller\Adminhtml\Import;
 
-class Save extends \Mirasvit\SeoAutolink\Controller\Adminhtml\Import
+use Exception;
+use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\DataObject;
+use Magento\Framework\File\Csv;
+use Magento\Framework\Filesystem\Driver\File;
+use Mirasvit\SeoAutolink\Controller\Adminhtml\Import;
+
+class Save extends Import
 {
+    /** @var string[] */
+    private $targets = ['_self', '_blank', '_parent', '_top'];
+
     /**
-     * @return void
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function execute()
     {
-        /** @var $uploader \Magento\MediaStorage\Model\File\Uploader */
-        $uploader = $this->fileUploaderFactory->create(['fileId' => 'file']);
+        $uploader = $this->fileUploaderFactory->create(['fileId' => 'import_file']);
         $uploader->setAllowedExtensions(['csv']);
         $uploader->setAllowRenameFiles(true);
-        $path = $this->filesystem->getDirectoryRead(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR)
-                ->getAbsolutePath().'/import';
+        $path = $this->filesystem->getDirectoryRead(DirectoryList::VAR_DIR)
+                ->getAbsolutePath() . '/import';
         if (!file_exists($path)) {
             mkdir($path, 0777);
         }
 
         try {
             $existingStoreIds = [0];
-            $stores = $this->storeManager->getStores();
+            $stores           = $this->storeManager->getStores();
             foreach ($stores as $store) {
                 $existingStoreIds[] = $store->getId();
             }
 
-            $result = $uploader->save($path);
-            $fullPath = $result['path'].'/'.$result['file'];
+            $result   = $uploader->save($path);
+            $fullPath = $result['path'] . '/' . $result['file'];
 
-            $file = new \Magento\Framework\Filesystem\Driver\File;
+            $file = new File();
             $file->isFile($fullPath);
-            $csv = new \Magento\Framework\File\Csv($file);
+            $csv  = new Csv($file);
             $data = $csv->getData($fullPath);
 
             $items = [];
@@ -63,62 +72,59 @@ class Save extends \Mirasvit\SeoAutolink\Controller\Adminhtml\Import
                 }
             }
 
-            $resource = $this->resource;
+            $resource        = $this->resource;
             $writeConnection = $resource->getConnection('core_write');
-            $tableLink = $resource->getTableName('mst_seoautolink_link');
-            $tableLinkStore = $resource->getTableName('mst_seoautolink_link_store');
-            $i = 0;
+            $tableLink       = $resource->getTableName('mst_seoautolink_link');
+            $tableLinkStore  = $resource->getTableName('mst_seoautolink_link_store');
+            $i               = 0;
             foreach ($items as $item) {
                 if (!isset($item['keyword'])) {
                     continue;
                 }
-                $item = new \Magento\Framework\DataObject($item);
+
+                $item   = new DataObject($item);
+                $target = $item->getUrlTarget() && in_array($item->getUrlTarget(), $this->targets)
+                    ? $item->getUrlTarget()
+                    : '_self';
+
                 $query = "REPLACE {$tableLink} SET
-                    keyword = '".addslashes($item->getKeyword())."',
-                    url = '".addslashes($item->getUrl())."',
-                    url_title = '".addslashes($item->getUrlTitle())."',
-                    url_target = '".addslashes($item->getUrlTarget())."',
-                    is_nofollow = '".(int) ($item->getIsNofollow())."',
-                    max_replacements = '".(int) ($item->getMaxReplacements())."',
-                    sort_order = '".(int) ($item->getSortOrder())."',
-                    occurence = '".(int) ($item->getOccurence())."',
-                    is_active = '".(int) ($item->getIsActive())."',
-                    created_at = '".(date('Y-m-d H:i:s'))."',
-                    updated_at = '".(date('Y-m-d H:i:s'))."';
-                     ";
+		            link_id = '" . (int)$item->getLinkId() . "',
+                    keyword = '" . addslashes((string)$item->getKeyword()) . "',
+                    url = '" . addslashes((string)$item->getUrl()) . "',
+                    url_title = '" . addslashes((string)$item->getUrlTitle()) . "',
+                    url_target = '" . $target . "',
+                    is_nofollow = '" . (int)($item->getIsNofollow()) . "',
+                    max_replacements = '" . (int)($item->getMaxReplacements()) . "',
+                    sort_order = '" . (int)($item->getSortOrder()) . "',
+                    occurence = '" . (int)($item->getOccurence()) . "',
+                    is_active = '" . (int)($item->getIsActive()) . "',
+                    created_at = '" . (date('Y-m-d H:i:s')) . "',
+                    updated_at = '" . (date('Y-m-d H:i:s')) . "';
+                ";
+
                 $writeConnection->query($query);
-                $lastInsertId = $writeConnection->lastInsertId();
-                $storeId = ($item->getStoreId()) ? $item->getStoreId() : 0;
-                if (strpos($storeId, '/') !== false) { //we can use more than one store 1/2/3 etc.
-                    $storeIds = [];
-                    $storeIds = explode('/', $storeId);
-                    $storeIds = array_intersect($storeIds, $existingStoreIds);
+
+                $lastInsertId = $item->getLinkId() ?: $writeConnection->lastInsertId();
+                $storeIds     = ($item->getStoreId()) ? explode('/', (string)$item->getStoreId()) : [0];
+                $storeIds     = array_intersect($storeIds, $existingStoreIds);
+
+                if (!count($storeIds) || in_array(0, $storeIds)) {
+                    $storeIds = [0];
                 }
-                if ((!isset($storeIds) && !in_array($storeId, $existingStoreIds))
-                    || (isset($storeIds) && !$storeIds)
-                    || (isset($storeIds) && in_array(0, $storeIds)) ) {
-                        $storeId = 0;
-                        $storeIds = false;
-                }
-                if (isset($storeIds) && $storeIds) {
-                    foreach ($storeIds as $storeId) {
-                        $query = "REPLACE {$tableLinkStore} SET
-                                store_id = '" . $storeId . "',
-                                link_id = " . $lastInsertId . ";";
-                        $writeConnection->query($query);
-                    }
-                } else {
+
+                foreach ($storeIds as $storeId) {
                     $query = "REPLACE {$tableLinkStore} SET
                             store_id = '" . $storeId . "',
-                            link_id = LAST_INSERT_ID();";
+                            link_id = " . $lastInsertId . ";";
                     $writeConnection->query($query);
                 }
+
                 ++$i;
             }
 
-            $this->messageManager->addSuccess(''.$i.' records were inserted or updated');
-        } catch (\Exception $e) {
-            $this->messageManager->addError($e->getMessage());
+            $this->messageManager->addSuccessMessage(' ' . $i . ' records were inserted or updated');
+        } catch (Exception $e) {
+            $this->messageManager->addErrorMessage($e->getMessage());
         }
         $this->_redirect('*/*/');
     }

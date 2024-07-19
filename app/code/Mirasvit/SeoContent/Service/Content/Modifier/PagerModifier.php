@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoContent\Service\Content\Modifier;
 
@@ -48,7 +49,7 @@ class PagerModifier implements ModifierInterface
         $this->storeManager = $storeManager;
     }
 
-    public function modify(ContentInterface $content)
+    public function modify(ContentInterface $content, ?string $forceApplyTo = null): ContentInterface
     {
         $store = $this->storeManager->getStore();
         $page  = (int)$this->request->getParam('p', 1);
@@ -64,44 +65,44 @@ class PagerModifier implements ModifierInterface
         switch ($this->config->getMetaTitlePageNumber($store)) {
             case Config::PAGE_NUMBER_POSITION_AT_BEGIN:
                 if ($page > 1) {
-                    $content->setMetaTitle(__('Page %1 | %2', $page, $content->getMetaTitle()));
+                    $content->setMetaTitle((string)__('Page %1 | %2', $page, $content->getMetaTitle()));
                 }
                 break;
 
             case Config::PAGE_NUMBER_POSITION_AT_END:
                 if ($page > 1) {
-                    $content->setMetaTitle(__('%1 | Page %2', $content->getMetaTitle(), $page));
+                    $content->setMetaTitle((string)__('%1 | Page %2', $content->getMetaTitle(), $page));
                 }
                 break;
 
             case Config::PAGE_NUMBER_POSITION_AT_BEGIN_WITH_FIRST:
-                $content->setMetaTitle(__('Page %1 | %2', $page, $content->getMetaTitle()));
+                $content->setMetaTitle((string)__('Page %1 | %2', $page, $content->getMetaTitle()));
                 break;
 
             case Config::PAGE_NUMBER_POSITION_AT_END_WITH_FIRST:
-                $content->setMetaTitle(__('%1 | Page %2', $content->getMetaTitle(), $page));
+                $content->setMetaTitle((string)__('%1 | Page %2', $content->getMetaTitle(), $page));
                 break;
         }
 
         switch ($this->config->getMetaDescriptionPageNumber($store)) {
             case Config::PAGE_NUMBER_POSITION_AT_BEGIN:
                 if ($page > 1) {
-                    $content->setMetaDescription(__('Page %1 | %2', $page, $content->getMetaDescription()));
+                    $content->setMetaDescription((string)__('Page %1 | %2', $page, $content->getMetaDescription()));
                 }
                 break;
 
             case Config::PAGE_NUMBER_POSITION_AT_END:
                 if ($page > 1) {
-                    $content->setMetaDescription(__('%1 | Page %2', $content->getMetaDescription(), $page));
+                    $content->setMetaDescription((string)__('%1 | Page %2', $content->getMetaDescription(), $page));
                 }
                 break;
 
             case Config::PAGE_NUMBER_POSITION_AT_BEGIN_WITH_FIRST:
-                $content->setMetaDescription(__('Page %1 | %2', $page, $content->getMetaDescription()));
+                $content->setMetaDescription((string)__('Page %1 | %2', $page, $content->getMetaDescription()));
                 break;
 
             case Config::PAGE_NUMBER_POSITION_AT_END_WITH_FIRST:
-                $content->setMetaDescription(__('%1 | Page %2', $content->getMetaDescription(), $page));
+                $content->setMetaDescription((string)__('%1 | Page %2', $content->getMetaDescription(), $page));
                 break;
         }
 

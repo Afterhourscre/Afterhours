@@ -92,28 +92,34 @@ class BlockPlugin
      * @param string $html
      * @return boolean
      */
-    protected function isEnabled($block, $html)
-    {
-        if (PHP_SAPI === 'cli' || $this->request->isXmlHttpRequest()) {
-            return false;
-        }
-
-        if (!$this->config->getEnabled()) {
-            return false;
-        }
-
-        $blockName = $block->getBlockId() ?: $block->getNameInLayout();
-        $blockTemplate = $block->getTemplate();
-        $blocks = $this->config->getBlocks();
-
-        if (!in_array($blockName, $blocks)
-            && !in_array(get_class($block), $blocks)
-            && !in_array($blockTemplate, $blocks)
-            && (false === strpos($html, self::LAZY_TAG))
-        ) {
-            return false;
-        }
-
-        return true;
+   protected function isEnabled($block, $html)
+{
+    if (PHP_SAPI === 'cli' || $this->request->isXmlHttpRequest()) {
+        return false;
     }
+
+    if (!$this->config->getEnabled()) {
+        return false;
+    }
+
+    $blockName = $block->getBlockId() ?: $block->getNameInLayout();
+    $blockTemplate = $block->getTemplate();
+    $blocks = $this->config->getBlocks();
+
+    // Ensure $html is not null before using strpos
+    if ($html === null || !is_string($html)) {
+        return false;
+    }
+
+    if (!in_array($blockName, $blocks)
+        && !in_array(get_class($block), $blocks)
+        && !in_array($blockTemplate, $blocks)
+        && (false === strpos($html, self::LAZY_TAG))
+    ) {
+        return false;
+    }
+
+    return true;
+}
+
 }

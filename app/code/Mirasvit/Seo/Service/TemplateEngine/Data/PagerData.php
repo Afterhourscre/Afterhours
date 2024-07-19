@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\TemplateEngine\Data;
 
@@ -31,27 +32,27 @@ class PagerData extends AbstractData
         parent::__construct();
     }
 
-    public function getTitle()
+    public function getTitle(): string
     {
-        return __('Pagination');
+        return (string)__('Pagination');
     }
 
-    public function getVariables()
+    public function getVariables(): array
     {
         return [
             'page',
         ];
     }
 
-    public function getValue($attribute, $additionalData = [])
+    public function getValue(string $attribute, array $additionalData = []): ?string
     {
         $page = (int)$this->request->getParam('p');
 
         switch ($attribute) {
             case 'page':
-                return $page > 1 ? __('Page %1', $page) : false;
+                return $page > 1 ? (string)__('Page %1', $page) : null;
         }
 
-        return false;
+        return null;
     }
 }

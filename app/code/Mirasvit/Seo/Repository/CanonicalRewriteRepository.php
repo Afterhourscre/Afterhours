@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -23,17 +23,12 @@ use Mirasvit\Seo\Api\Repository\CanonicalRewriteRepositoryInterface;
 use Mirasvit\Seo\Api\Data\CanonicalRewriteInterfaceFactory;
 use Mirasvit\Seo\Model\ResourceModel\CanonicalRewrite\CollectionFactory;
 use Mirasvit\Seo\Api\Data\CanonicalRewriteStoreInterface;
-use Mirasvit\Seo\Helper\Serializer;
+use Mirasvit\Core\Service\SerializeService;
 
 class CanonicalRewriteRepository implements CanonicalRewriteRepositoryInterface
 {
     /**
-     * @var Serializer
-     */
-    private $serializer;
-
-    /**
-     * @var DomainInterfaceFactory
+     * @var CanonicalRewriteInterfaceFactory
      */
     private $factory;
 
@@ -46,19 +41,28 @@ class CanonicalRewriteRepository implements CanonicalRewriteRepositoryInterface
      * @var EntityManager
      */
     private $entityManager;
+    /**
+     * @var \Magento\Framework\App\ResourceConnection
+     */
+    private $resource;
 
+    /**
+     * CanonicalRewriteRepository constructor.
+     * @param CanonicalRewriteInterfaceFactory $factory
+     * @param CollectionFactory $collectionFactory
+     * @param EntityManager $entityManager
+     * @param \Magento\Framework\App\ResourceConnection $resource
+     */
     public function __construct(
         CanonicalRewriteInterfaceFactory $factory,
         CollectionFactory $collectionFactory,
         EntityManager $entityManager,
-        \Magento\Framework\App\ResourceConnection $resource,
-        Serializer $serializer
+        \Magento\Framework\App\ResourceConnection $resource
     ) {
         $this->factory = $factory;
         $this->collectionFactory = $collectionFactory;
         $this->entityManager = $entityManager;
         $this->resource = $resource;
-        $this->serializer = $serializer;
     }
 
     /**
@@ -122,22 +126,15 @@ class CanonicalRewriteRepository implements CanonicalRewriteRepositoryInterface
         // Serialize conditions
         if ($model->getConditions()
             && ($ruleData = $model->getData('rule'))) {
+            /** @var mixed $model */
             $model->loadPost($ruleData);
-            if ($this->serializer) {
-                $conditions = $this->serializer->serialize($model->getConditions()->asArray());
-            } else {
-                $conditions = $this->serializer->serialize($model->getConditions()->asArray());
-            }
+            $conditions = SerializeService::encode($model->getConditions()->asArray());
             $model->setConditionsSerialized($conditions);
         }
 
         // Serialize actions
         if ($model->getActions()) {
-            if ($this->serializer) {
-                $actions = $this->serializer->serialize($model->getActions()->asArray());
-            } else {
-                $actions = $this->serializer->serialize($model->getActions()->asArray());
-            }
+            $actions = SerializeService::encode($model->getActions()->asArray());
             $model->setActionsSerialized($actions);
         }
 
@@ -154,7 +151,8 @@ class CanonicalRewriteRepository implements CanonicalRewriteRepositoryInterface
         if ($model->getData('store_ids')) {
             $connection = $this->resource->getConnection();
             $condition = $connection->quoteInto(
-                CanonicalRewriteStoreInterface::CANONICAL_REWRITE_ID . ' = ?', $model->getId()
+                CanonicalRewriteStoreInterface::CANONICAL_REWRITE_ID . ' = ?',
+                $model->getId()
             );
             $connection->delete($this->resource->getTableName(CanonicalRewriteStoreInterface::TABLE_NAME), $condition);
             foreach ((array)$model->getData('store_ids') as $store) {

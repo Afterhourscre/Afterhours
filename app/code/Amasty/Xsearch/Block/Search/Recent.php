@@ -1,33 +1,30 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Block\Search;
 
+use Magento\Framework\DataObject;
+
 class Recent extends AbstractSearch
 {
-    const CATEGORY_BLOCK_RECENT = 'recent_searches';
+    public const CATEGORY_BLOCK_RECENT = 'recent_searches';
 
     public function getBlockType()
     {
         return self::CATEGORY_BLOCK_RECENT;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function getResults()
+    public function getItemData(DataObject $item): array
     {
-        $result = parent::getResults();
-        foreach ($this->getSearchCollection() as $index => $item) {
-            $result[$index]['num_results'] = $item->getNumResults();
-        }
+        $data = parent::getItemData($item);
+        $data['num_results'] = $item->getNumResults();
+        $data['full_match'] = strcasecmp($item->getQueryText(), $this->getQuery()->getQueryText()) === 0;
 
-        return $result;
+        return $data;
     }
 
     /**

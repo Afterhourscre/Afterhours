@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -71,7 +71,7 @@ interface TextHelperInterface
      * @param string $string
      * @param int    $length
      * @param string $etc
-     * @param string &$remainder
+     * @param string $remainder
      * @param bool   $breakWords
      * @return string
      */

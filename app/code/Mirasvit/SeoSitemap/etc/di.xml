@@ -14,8 +14,11 @@
                 <item name="mirasvit_kb" xsi:type="object">Mirasvit\SeoSitemap\Repository\Provider\Mirasvit\KbProvider</item>
                 <item name="fishpig_blog" xsi:type="object">Mirasvit\SeoSitemap\Repository\Provider\FishPig\BlogProvider</item>
                 <item name="mirasvit_blog" xsi:type="object">Mirasvit\SeoSitemap\Repository\Provider\Mirasvit\BlogProvider</item>
+                <item name="mirasvit_brand" xsi:type="object">Mirasvit\SeoSitemap\Repository\Provider\Mirasvit\BrandProvider</item>
+                <item name="mirasvit_landing_page" xsi:type="object">Mirasvit\SeoSitemap\Repository\Provider\Mirasvit\LandingPageProvider</item>
                 <item name="mageplaza_blog" xsi:type="object">Mirasvit\SeoSitemap\Repository\Provider\Mageplaza\BlogProvider</item>
                 <item name="magefan_blog" xsi:type="object">Mirasvit\SeoSitemap\Repository\Provider\Magefan\BlogProvider</item>
+                <item name="amasty_blog" xsi:type="object">Mirasvit\SeoSitemap\Repository\Provider\Amasty\BlogProvider</item>
             </argument>
         </arguments>
     </type>
@@ -36,5 +39,10 @@
     <!-- add home page in xml sitemap (from Magento 2.2.4) -->
     <type name="Magento\Cms\Model\GetUtilityPageIdentifiers">
         <plugin name="mstSeoSitemapHomePage" type="Mirasvit\SeoSitemap\Plugin\SitemapHomePagePlugin" sortOrder="1000"/>
+    </type>
+
+    <!-- ping sitemap to Google -->
+    <type name="Mirasvit\SeoSitemap\Model\Sitemap">
+        <plugin name="mstPingSitemap" type="Mirasvit\SeoSitemap\Plugin\PingSitemapPlugin" sortOrder="1000"/>
     </type>
 </config>

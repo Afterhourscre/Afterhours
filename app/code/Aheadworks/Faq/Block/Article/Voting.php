@@ -60,7 +60,7 @@ class Voting extends Template
             $this->jsLayout = $processor->process($this->jsLayout, $this->getArticle());
         }
 
-        return \Zend_Json::encode($this->jsLayout);
+        return json_encode($this->jsLayout);
     }
     
     /**

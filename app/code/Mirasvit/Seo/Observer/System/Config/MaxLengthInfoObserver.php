@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -39,7 +39,7 @@ class MaxLengthInfoObserver implements ObserverInterface
     /**
      * Info about Max Length for Meta Title and Max Length for Meta Description.
      *
-     * @param string $e
+     * @param \Magento\Framework\Event\Observer $e
      * @return $this
      */
     public function maxLengthInfo($e)
@@ -72,25 +72,26 @@ class MaxLengthInfoObserver implements ObserverInterface
      */
     protected function metaTitleMaxLengthInfo($seoSection, $data)
     {
-        if ($seoSection
-            && isset($data['extended']['fields']['meta_title_max_length']['value'])
-            && ($metaTitleMaxLength = trim($data['extended']['fields']['meta_title_max_length']['value']))) {
-            if (ctype_digit($metaTitleMaxLength) && (int) $metaTitleMaxLength < Config::META_TITLE_INCORRECT_LENGTH) {
-                $this->messageManager->addNotice(__('"Max Length for Meta Title" value: "'.$metaTitleMaxLength
-                        .'" less then '.Config::META_TITLE_INCORRECT_LENGTH
-                        .'. Will be used default value "'.Config::META_TITLE_MAX_LENGTH.'".'));
-            } elseif (!ctype_digit($metaTitleMaxLength)) {
-                $metaTitleInfo = 'Wrong "Max Length for Meta Title" value: "'.$metaTitleMaxLength.'".'
-                                        .' Have to be integer value.';
-                $metaTitleMaxLength = (int) $metaTitleMaxLength;
-                if ($metaTitleMaxLength <  Config::META_TITLE_INCORRECT_LENGTH) {
-                    $metaTitleInfo .= ' Will be used recommended value "'.Config::META_TITLE_MAX_LENGTH.'".';
-                } else {
-                    $metaTitleInfo .= ' Will be used value "'.$metaTitleMaxLength.'".';
-                }
-                $this->messageManager->addWarning(__($metaTitleInfo));
-            }
-        }
+        //@fixme
+//        if ($seoSection
+//            && isset($data['extended']['fields']['meta_title_max_length']['value'])
+//            && ($metaTitleMaxLength = trim($data['extended']['fields']['meta_title_max_length']['value']))) {
+//            if (ctype_digit($metaTitleMaxLength) && (int) $metaTitleMaxLength < Config::META_TITLE_INCORRECT_LENGTH) {
+//                $this->messageManager->addNotice(__('"Max Length for Meta Title" value: "'.$metaTitleMaxLength
+//                        .'" less then '.Config::META_TITLE_INCORRECT_LENGTH
+//                        .'. Will be used default value "'.Config::META_TITLE_MAX_LENGTH.'".'));
+//            } elseif (!ctype_digit($metaTitleMaxLength)) {
+//                $metaTitleInfo = 'Wrong "Max Length for Meta Title" value: "'.$metaTitleMaxLength.'".'
+//                                        .' Have to be integer value.';
+//                $metaTitleMaxLength = (int) $metaTitleMaxLength;
+//                if ($metaTitleMaxLength <  Config::META_TITLE_INCORRECT_LENGTH) {
+//                    $metaTitleInfo .= ' Will be used recommended value "'.Config::META_TITLE_MAX_LENGTH.'".';
+//                } else {
+//                    $metaTitleInfo .= ' Will be used value "'.$metaTitleMaxLength.'".';
+//                }
+//                $this->messageManager->addWarning(__($metaTitleInfo));
+//            }
+//        }
 
         return $this;
     }
@@ -104,32 +105,33 @@ class MaxLengthInfoObserver implements ObserverInterface
      */
     protected function metaDescriptionMaxLengthInfo($seoSection, $data)
     {
-        if ($seoSection
-            && isset($data['extended']['fields']['meta_description_max_length']['value'])
-            && ($metaDescriptionMaxLength = trim($data
-                ['extended']
-                ['fields']
-                ['meta_description_max_length']
-                ['value']))) {
-            if (ctype_digit($metaDescriptionMaxLength) && (int)
-                $metaDescriptionMaxLength < Config::META_DESCRIPTION_INCORRECT_LENGTH) {
-                $this->messageManager->addNotice(__('"Max Length for Meta Description" value: "'
-                        .$metaDescriptionMaxLength
-                        .'" less then '.Config::META_DESCRIPTION_INCORRECT_LENGTH
-                        .'. Will be used default value "'.Config::META_DESCRIPTION_MAX_LENGTH.'".'));
-            } elseif (!ctype_digit($metaDescriptionMaxLength)) {
-                $metaDescriptionInfo = 'Wrong "Max Length for Meta Description" value: "'.$metaDescriptionMaxLength.'".'
-                                            .' Have to be integer value.';
-                $metaDescriptionMaxLength = (int) $metaDescriptionMaxLength;
-                if ($metaDescriptionMaxLength <  Config::META_DESCRIPTION_INCORRECT_LENGTH) {
-                    $metaDescriptionInfo .= ' Will be used recommended value "'
-                        .Config::META_DESCRIPTION_MAX_LENGTH.'".';
-                } else {
-                    $metaDescriptionInfo .= ' Will be used value "'.$metaDescriptionMaxLength.'".';
-                }
-                $this->messageManager->addWarning(__($metaDescriptionInfo));
-            }
-        }
+        //@fixme
+//        if ($seoSection
+//            && isset($data['extended']['fields']['meta_description_max_length']['value'])
+//            && ($metaDescriptionMaxLength = trim($data
+//                ['extended']
+//                ['fields']
+//                ['meta_description_max_length']
+//                ['value']))) {
+//            if (ctype_digit($metaDescriptionMaxLength) && (int)
+//                $metaDescriptionMaxLength < Config::META_DESCRIPTION_INCORRECT_LENGTH) {
+//                $this->messageManager->addNotice(__('"Max Length for Meta Description" value: "'
+//                        .$metaDescriptionMaxLength
+//                        .'" less then '.Config::META_DESCRIPTION_INCORRECT_LENGTH
+//                        .'. Will be used default value "'.Config::META_DESCRIPTION_MAX_LENGTH.'".'));
+//            } elseif (!ctype_digit($metaDescriptionMaxLength)) {
+//                $metaDescriptionInfo = 'Wrong "Max Length for Meta Description" value: "'.$metaDescriptionMaxLength.'".'
+//                                            .' Have to be integer value.';
+//                $metaDescriptionMaxLength = (int) $metaDescriptionMaxLength;
+//                if ($metaDescriptionMaxLength <  Config::META_DESCRIPTION_INCORRECT_LENGTH) {
+//                    $metaDescriptionInfo .= ' Will be used recommended value "'
+//                        .Config::META_DESCRIPTION_MAX_LENGTH.'".';
+//                } else {
+//                    $metaDescriptionInfo .= ' Will be used value "'.$metaDescriptionMaxLength.'".';
+//                }
+//                $this->messageManager->addWarning(__($metaDescriptionInfo));
+//            }
+//        }
 
         return $this;
     }

@@ -9,34 +9,40 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\TemplateEngine\Data;
 
 use Magento\Cms\Model\Page;
+use Magento\Framework\Registry;
 
 class CmsPageData extends AbstractData
 {
     private $page;
 
+    private $registry;
+
     public function __construct(
-        Page $page
+        Page $page,
+        Registry $registry
     ) {
-        $this->page = $page;
+        $this->page     = $page;
+        $this->registry = $registry;
 
         parent::__construct();
     }
 
-    public function getTitle()
+    public function getTitle(): string
     {
-        return __('CMS Page Data');
+        return (string)__('CMS Page Data');
     }
 
-    public function getVariables()
+    public function getVariables(): array
     {
         return [
             'title',
@@ -49,12 +55,18 @@ class CmsPageData extends AbstractData
         ];
     }
 
-    public function getValue($attribute, $additionalData = [])
+    public function getValue(string $attribute, array $additionalData = []): ?string
     {
-        if (!$this->page->getIdentifier()) {
-            return false;
+        $page = $this->page;
+
+        if (!$this->page->getId() && $this->registry->registry('current_cms_page')) {
+            $page = $this->registry->registry('current_cms_page');
         }
 
-        return $this->page->getDataUsingMethod($attribute);
+        if (!$page->getIdentifier()) {
+            return null;
+        }
+
+        return $page->getDataUsingMethod($attribute) ?: null;
     }
 }

@@ -7,7 +7,8 @@ use Magento\Customer\Model\Url as CustomerUrl;
 use Magento\Framework\App\Action\Context;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Newsletter\Model\SubscriberFactory;
-use \Magento\Framework\Controller\Result\JsonFactory;
+use Magento\Newsletter\Model\SubscriptionManager;
+use Magento\Framework\Controller\Result\JsonFactory;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
@@ -33,6 +34,7 @@ class Subscribe extends \Magento\Newsletter\Controller\Subscriber\NewAction
      * @param StoreManagerInterface $storeManager
      * @param CustomerUrl $customerUrl
      * @param CustomerAccountManagement $customerAccountManagement
+     * @param SubscriptionManager $subscriptionManager
      * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param JsonFactory $resultJsonFactory
      */
@@ -43,6 +45,7 @@ class Subscribe extends \Magento\Newsletter\Controller\Subscriber\NewAction
         StoreManagerInterface $storeManager,
         CustomerUrl $customerUrl,
         CustomerAccountManagement $customerAccountManagement,
+        SubscriptionManager $subscriptionManager,
         \Magento\Checkout\Model\Session $checkoutSession,
         JsonFactory $resultJsonFactory
     ) {
@@ -54,10 +57,10 @@ class Subscribe extends \Magento\Newsletter\Controller\Subscriber\NewAction
             $customerSession,
             $storeManager,
             $customerUrl,
-            $customerAccountManagement
+            $customerAccountManagement,
+            $subscriptionManager
         );
     }
-
 
     /**
      * @param string $email
@@ -87,9 +90,8 @@ class Subscribe extends \Magento\Newsletter\Controller\Subscriber\NewAction
     public function execute()
     {
         if (!$this->getRequest()->isAjax()) {
-           return parent::execute();
+            return parent::execute();
         }
-
 
         if ($this->getRequest()->isPost() && $this->getRequest()->getPost('email')) {
 
@@ -142,7 +144,5 @@ class Subscribe extends \Magento\Newsletter\Controller\Subscriber\NewAction
                 ]
             );
         }
-
     }
-
 }

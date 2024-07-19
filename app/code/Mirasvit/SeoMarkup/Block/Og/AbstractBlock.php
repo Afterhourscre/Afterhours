@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoMarkup\Block\Og;
 
@@ -21,28 +22,25 @@ use Magento\Framework\View\Element\Template;
 
 abstract class AbstractBlock extends Template
 {
-    /**
-     * @return array|false
-     */
-    protected abstract function getMeta();
+    abstract protected function getMeta(): ?array;
 
-    protected function getMetaOptionKey()
+    protected function getMetaOptionKey(): string
     {
         return 'property';
     }
 
-    protected function _toHtml()
+    protected function _toHtml(): ?string
     {
         $meta = $this->getMeta();
 
         if (!$meta) {
-            return false;
+            return null;
         }
 
         $html = '' . PHP_EOL;
 
         foreach ($meta as $key => $value) {
-            $value   = trim(strip_tags($value));
+            $value   = htmlspecialchars(trim(strip_tags((string)$value)));
             $metaKey = $this->getMetaOptionKey();
 
             if ($value) {

@@ -22,6 +22,13 @@
                         </depends>
                     </field>
 
+                    <field id="is_price_enabled" translate="label" type="select" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Item Price</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <depends>
+                            <field id="is_rs_enabled">1</field>
+                        </depends>
+                    </field>
 
                     <field id="description_type" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Item Description</label>
@@ -72,10 +79,17 @@
                     </field>
 
                     <field id="is_mpn_enabled" translate="label" type="select" sortOrder="65" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>Manufacture part number</label>
+                        <label>Manufacture Part Number</label>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <depends>
                             <field id="is_rs_enabled">1</field>
+                        </depends>
+                    </field>
+
+                    <field id="mpn_attribute" translate="label" type="text" sortOrder="66" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Manufacture Part Number Attribute</label>
+                        <depends>
+                            <field id="is_mpn_enabled">1</field>
                         </depends>
                     </field>
 
@@ -95,6 +109,13 @@
 
                     <field id="color_attribute" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Color Attribute</label>
+                        <depends>
+                            <field id="is_rs_enabled">1</field>
+                        </depends>
+                    </field>
+
+                    <field id="size_attribute" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Size Attribute</label>
                         <depends>
                             <field id="is_rs_enabled">1</field>
                         </depends>
@@ -188,6 +209,14 @@
                         </depends>
                     </field>
 
+                    <field id="is_variants_enabled" translate="label" type="select" sortOrder="220" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Add Rich Snippets for Product Variants</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <depends>
+                            <field id="is_rs_enabled">1</field>
+                        </depends>
+                    </field>
+
                     <field id="gtin" translate="label" type="label" sortOrder="230" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label><![CDATA[<strong><u>Gtin configuration:</u></strong>]]></label>
                         <depends>
@@ -245,6 +274,22 @@
                     <field id="is_og_enabled" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Enable Opengraph</label>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+
+                    <field id="description_type" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Category Description</label>
+                        <source_model>Mirasvit\SeoMarkup\Model\Config\Source\Category\DescriptionType</source_model>
+                        <depends>
+                            <field id="is_rs_enabled">1</field>
+                        </depends>
+                    </field>
+
+                    <field id="is_image_enabled" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Category Image</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <depends>
+                            <field id="is_rs_enabled">1</field>
+                        </depends>
                     </field>
                 </group>
 
@@ -466,7 +511,7 @@
                         <source_model>Mirasvit\SeoMarkup\Model\Config\Source\Twitter\CardType</source_model>
                     </field>
 
-                    <field id="username" translate="label" type="text" sortOrder="20" showInDefault="1">
+                    <field id="username" translate="label" type="text" sortOrder="20" showInDefault="1"  showInWebsite="1" showInStore="1">
                         <label>Twitter Username</label>
 
                         <depends>

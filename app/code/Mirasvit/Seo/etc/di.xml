@@ -3,6 +3,7 @@
     <!--CONFIG-->
     <preference for="Mirasvit\Seo\Api\Config\AlternateConfigInterface" type="Mirasvit\Seo\Service\Config\AlternateConfig"/>
     <preference for="Mirasvit\Seo\Api\Config\InfoInterface" type="Mirasvit\Seo\Service\Config\InfoConfig"/>
+    <preference for="Magento\MediaStorage\App\Media" type="Mirasvit\Seo\Model\MediaStorage\Media"/>
 
     <!--SERVICE-->
      <preference for="Mirasvit\Seo\Api\Service\Template\SeoDescription\TemplateInterface" type="Mirasvit\Seo\Service\Template\SeoDescription\Template"/>
@@ -35,13 +36,13 @@
             </argument>
         </arguments>
     </type>
-    
+
     <type name="Mirasvit\Seo\Api\Service\FriendlyImageUrlServiceInterface">
         <arguments>
             <argument name="FriendlyImageUrlService" xsi:type="object">Mirasvit\Seo\Api\Service\FriendlyImageUrlServiceInterface\Proxy</argument>
         </arguments>
     </type>
-    
+
     <!--UI-->
     <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
         <arguments>
@@ -145,6 +146,8 @@
                 <item name="pager" xsi:type="object">Mirasvit\Seo\Service\TemplateEngine\Data\PagerData</item>
                 <item name="page" xsi:type="object">Mirasvit\Seo\Service\TemplateEngine\Data\PageData</item>
                 <item name="cmsPage" xsi:type="object">Mirasvit\Seo\Service\TemplateEngine\Data\CmsPageData</item>
+                <item name="blog" xsi:type="object">Mirasvit\Seo\Service\TemplateEngine\Data\BlogData</item>
+                <item name="brand" xsi:type="object">Mirasvit\Seo\Service\TemplateEngine\Data\BrandData</item>
             </argument>
         </arguments>
     </type>

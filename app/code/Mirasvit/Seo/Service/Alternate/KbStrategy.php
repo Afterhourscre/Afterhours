@@ -9,36 +9,43 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\Alternate;
 
-class KbStrategy
+use Magento\Framework\Module\Manager;
+use Magento\Framework\Registry;
+use Mirasvit\Core\Model\ResourceModel\UrlRewrite\CollectionFactory;
+use Mirasvit\Seo\Api\Service\Alternate\UrlInterface;
+
+class KbStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyInterface
 {
     private $collectionFactory;
+
     private $registry;
+
     private $url;
 
+    private $manager;
+
     public function __construct(
-        \Magento\Framework\Module\Manager $manager,
-        \Magento\Framework\Registry $registry,
-        \Mirasvit\Core\Model\ResourceModel\UrlRewrite\CollectionFactory $collectionFactory,
-        \Mirasvit\Seo\Api\Service\Alternate\UrlInterface $url
+        Manager $manager,
+        Registry $registry,
+        CollectionFactory $collectionFactory,
+        UrlInterface $url
     ) {
-        $this->manager = $manager;
+        $this->manager           = $manager;
         $this->collectionFactory = $collectionFactory;
-        $this->registry = $registry;
-        $this->url = $url;
+        $this->registry          = $registry;
+        $this->url               = $url;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getStoreUrls()
+    public function getStoreUrls(): array
     {
         if (!$this->manager->isEnabled('Mirasvit_Kb')) {
             return [];
@@ -47,13 +54,10 @@ class KbStrategy
         $config = $objectManager->create('Mirasvit\Kb\Model\Config');
         $storeUrls = $this->url->getStoresCurrentUrl();
         $currentKbUrl = $config->getBaseUrl();
-        
+
         if ($storeUrls) {
             foreach ($storeUrls as $storeId => $url) {
                 $storeKbUrl = $config->getBaseUrl($storeId);
-                if ($storeKbUrl == $currentKbUrl) {
-                    continue;
-                }
 
                 $type = 'CATEGORY';
                 $entity = $this->registry->registry('kb_current_category');
@@ -63,6 +67,7 @@ class KbStrategy
                 }
                 // skip comments
                 if (!$entity) {
+                    unset($storeUrls[$storeId]);
                     continue;
                 }
 
@@ -83,11 +88,8 @@ class KbStrategy
         return $storeUrls;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getAlternateUrl($storeUrls)
+    public function getAlternateUrl(array $storeUrls): array
     {
-
+        return [];
     }
 }

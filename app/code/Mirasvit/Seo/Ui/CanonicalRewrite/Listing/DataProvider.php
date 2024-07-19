@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -27,6 +27,11 @@ use Mirasvit\Seo\Api\Data\CanonicalRewriteStoreInterface;
 
 class DataProvider extends \Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider
 {
+    /**
+     * @var ResourceConnection
+     */
+    private $connection;
+
     /**
      * @param  ResourceConnection $resource
      * @param string $name
@@ -93,7 +98,6 @@ class DataProvider extends \Magento\Framework\View\Element\UiComponent\DataProvi
                 );
             }
             $arrItems['items'][] = $item->getData();
-
         }
 
         return $arrItems;
@@ -135,7 +139,7 @@ class DataProvider extends \Magento\Framework\View\Element\UiComponent\DataProvi
 
     /**
      * @param string $fieldStoreValue
-     * @return Mirasvit\Seo\Model\ResourceModel\CanonicalRewrite\Grid\Collection
+     * @return SearchResultInterface
      */
     protected function getPreparedCollection($fieldStoreValue)
     {
@@ -148,7 +152,6 @@ class DataProvider extends \Magento\Framework\View\Element\UiComponent\DataProvi
                     new \Zend_Db_Expr(CanonicalRewriteStoreInterface::CANONICAL_REWRITE_ID
                         . ' IN (' . implode(',', $linkIds) . ')')
                 );
-
         }
 
         return $collection;
@@ -176,5 +179,4 @@ class DataProvider extends \Magento\Framework\View\Element\UiComponent\DataProvi
 
         return $linkIds;
     }
-
 }

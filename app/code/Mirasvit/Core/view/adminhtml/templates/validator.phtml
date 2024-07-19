@@ -1,5 +1,5 @@
 <?php
-/** @var Mirasvit\Core\Block\Adminhtml\Validator $block */
+/** @var \Mirasvit\Core\Block\Adminhtml\Validator $block */
 
 use Mirasvit\Core\Api\Service\ValidatorInterface;
 
@@ -7,7 +7,7 @@ $results = $block->getResult();
 ?>
 <div class="section-config active" style="padding-top: 2rem;">
     <?php if ($block->isPassed()): ?>
-        <div class="message message-success"><?= __('All tests are passed') ?></div>
+        <div class="message message-success"><?= $block->escapeHtml(__('All tests have been passed')) ?></div>
     <?php endif ?>
 
     <?php if (count($results)): ?>
@@ -15,10 +15,10 @@ $results = $block->getResult();
             <table class="data-grid">
                 <thead>
                 <tr>
-                    <th class="data-grid-th" nowrap><?= __('Status') ?></th>
-                    <th class="data-grid-th"><?= __('Module') ?></th>
-                    <th class="data-grid-th"><?= __('Test') ?></th>
-                    <th class="data-grid-th" nowrap><?= __('How to fix') ?></th>
+                    <th class="data-grid-th" nowrap><?= $block->escapeHtml(__('Status')) ?></th>
+                    <th class="data-grid-th"><?= $block->escapeHtml(__('Module')) ?></th>
+                    <th class="data-grid-th"><?= $block->escapeHtml(__('Test')) ?></th>
+                    <th class="data-grid-th" nowrap><?= $block->escapeHtml(__('How to fix')) ?></th>
                 </tr>
                 </thead>
                 <?php foreach ($results as $result): ?>
@@ -35,12 +35,12 @@ $results = $block->getResult();
                             <?php endif ?>
                         </td>
 
-                        <td width="15%"><?= $result[ValidatorInterface::MODULE_NAME] ?></td>
+                        <td width="15%"><?= $block->escapeHtml($result[ValidatorInterface::MODULE_NAME]) ?></td>
 
-                        <td width="15%"><?= $result[ValidatorInterface::TEST_NAME] ?></td>
+                        <td width="15%"><?= $block->escapeHtml($result[ValidatorInterface::TEST_NAME]) ?></td>
 
                         <td>
-                            <?= $result[ValidatorInterface::MESSAGE] ?>
+                            <?= /* @noEscape */ $result[ValidatorInterface::MESSAGE] ?>
                         </td>
                     </tr>
                 <?php endforeach ?>

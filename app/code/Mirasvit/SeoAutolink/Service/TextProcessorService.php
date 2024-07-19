@@ -9,57 +9,50 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoAutolink\Service;
 
+use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Registry;
+use Magento\Store\Model\StoreManagerInterface;
+use Mirasvit\Core\Api\TextHelperInterface;
+use Mirasvit\SeoAutolink\Helper\Pattern;
+use Mirasvit\SeoAutolink\Model\Config;
 use Mirasvit\SeoAutolink\Model\Config\Source\Occurence;
 use Mirasvit\SeoAutolink\Model\Link;
+use Mirasvit\SeoAutolink\Model\LinkFactory;
+use Mirasvit\SeoAutolink\Model\ResourceModel\Link\Collection as LinksCollection;
 use Mirasvit\SeoAutolink\Service\TextProcessor\Strings;
 use Mirasvit\SeoAutolink\Service\TextProcessor\TextPlaceholder;
 
 class TextProcessorService
 {
-    /**
-     * @var \Mirasvit\SeoAutolink\Model\LinkFactory
-     */
+    const MAX_NUMBER = 999999;
+
     private $linkFactory;
 
-    /**
-     * @var \Mirasvit\SeoAutolink\Model\Config
-     */
     private $config;
 
-    /**
-     * @var \Mirasvit\Core\Helper\String
-     */
     private $coreString;
 
-    /**
-     * @var \Mirasvit\SeoAutolink\Helper\Pattern
-     */
     private $seoAutolinkPattern;
 
-    /**
-     * @var \Magento\Framework\App\Helper\Context
-     */
     private $context;
 
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
     private $storeManager;
 
-    /**
-     * @var \Magento\Framework\Registry
-     */
     private $registry;
 
-    const MAX_NUMBER = 999999;
+    /**
+     * @var array
+     */
+    private $cache = [];
 
     /**
      * @var bool
@@ -86,16 +79,14 @@ class TextProcessorService
      */
     protected $currentNumberOfLinks = 0;
 
-    private   $cache                = [];
-
     public function __construct(
-        \Mirasvit\SeoAutolink\Model\LinkFactory $linkFactory,
-        \Mirasvit\SeoAutolink\Model\Config $config,
-        \Mirasvit\Core\Api\TextHelperInterface $coreString,
-        \Mirasvit\SeoAutolink\Helper\Pattern $seoAutolinkPattern,
-        \Magento\Framework\App\Helper\Context $context,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Framework\Registry $registry
+        LinkFactory $linkFactory,
+        Config $config,
+        TextHelperInterface $coreString,
+        Pattern $seoAutolinkPattern,
+        Context $context,
+        StoreManagerInterface $storeManager,
+        Registry $registry
     ) {
         $this->linkFactory        = $linkFactory;
         $this->config             = $config;
@@ -106,16 +97,15 @@ class TextProcessorService
         $this->registry           = $registry;
     }
 
-
     /**
      * Main entry point. Inserts links into text.
-     *
-     * @param string $text
-     *
-     * @return string
      */
-    public function addLinks($text)
+    public function addLinks(string $text = null): ?string
     {
+        if (!$text) {
+            return $text;
+        }
+
         if (isset($this->cache[$text])) {
             return $this->cache[$text];
         }
@@ -140,22 +130,17 @@ class TextProcessorService
         return $processed;
     }
 
-
-    /**
-     * @return int
-     */
-    protected function getStoreId()
+    protected function getStoreId(): int
     {
-        return (!$this->storeManager->getStore()) ? 1 : $this->storeManager->getStore()->getId();
+        return (!$this->storeManager->getStore()) ? 1 : (int)($this->storeManager->getStore()->getId());
     }
 
     /**
      * Returns value of setting "Links limit per page"
-     * @return int
      */
-    public function getMaxLinkPerPage()
+    public function getMaxLinkPerPage(): int
     {
-        if ($max = $this->config->getLinksLimitPerPage($this->getStoreId())) {
+        if ($max = (int)$this->config->getLinksLimitPerPage($this->getStoreId())) {
             return $max;
         }
 
@@ -168,12 +153,8 @@ class TextProcessorService
      * try get links with newer query, if returns SQLERROR
      * (for older Magento like 1.4 and specific MySQL configurations) -
      * get links with older query for backward compatibility
-     *
-     * @param string $text
-     *
-     * @return Link[]
      */
-    public function getLinks($text)
+    public function getLinks(string $text): LinksCollection
     {
         $textArrayWithMaxSymbols = Strings::splitText($text);
 
@@ -183,10 +164,11 @@ class TextProcessorService
         }
 
         $links = $this->getLinksCollection();
-        $links->getSelect()->where(implode(' OR ', $where))->order('sort_order ASC');
+        $links->getSelect()->where(implode(' OR ', $where))
+            ->order(['sort_order ASC', 'LENGTH(main_table.keyword) desc']);
 
         try {
-            count($links); //need to load collection to catch SQLERROR if occured
+            $links->load(); //need to load collection to catch SQLERROR if occured
         } catch (\Exception $e) {
             $links = $this->getLinksCollection();
             $links->getSelect()->where("lower(?) LIKE CONCAT('%', lower(keyword), '%')", $text)
@@ -198,11 +180,12 @@ class TextProcessorService
 
     /**
      * Prepare collection acceptable for both variants of SQL queries.
-     * @return \Mirasvit\SeoAutolink\Model\ResourceModel\Link\Collection|\Mirasvit\SeoAutolink\Model\Link[]
      */
-    private function getLinksCollection()
+    private function getLinksCollection(): LinksCollection
     {
-        $links = $this->linkFactory->create()->getCollection()
+        $links = $this->linkFactory->create()->getCollection();
+        /** @var LinksCollection $links */
+        $links
             ->addActiveFilter()
             ->addStoreFilter($this->storeManager->getStore());
 
@@ -213,26 +196,32 @@ class TextProcessorService
     /**
      * Inserts links into text
      *
-     * @param string   $text
-     * @param array    $links
-     * @param array    $excludedTags
-     * @param bool|int $replacementCountForTests - max number of replaced words. used only for tests.
-     *
-     * @return string
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
-    public function _addLinks($text, $links, $excludedTags, $replacementCountForTests = false)
-    {
+    public function _addLinks(
+        string $text,
+        LinksCollection $links,
+        array $excludedTags,
+        bool $replacementCountForTests = false
+    ): string {
         if (!$links || count($links) == 0) {
             return $text;
         }
 
         $pregPatterns       = $this->getPatterns();
         $patternsForExclude = $this->convertTagsToPatterns($excludedTags);
-        $pregPatterns       = array_merge($pregPatterns, $patternsForExclude);
+        $pregPatterns       = array_merge($patternsForExclude, $pregPatterns);
+        $placeholder        = new TextPlaceholder($text, $pregPatterns);
+        $text               = $placeholder->getTokenizedText();
 
         foreach ($links as $link) {
+            $linkUrl = $this->_prepareLinkUrl($link->getUrl());
+
+            if ($this->context->getUrlBuilder()->getCurrentUrl() === $linkUrl) {
+                continue;
+            }
+
             if (strlen($link->getKeyword()) <= 1) { //one letter can't be in autolinks
                 continue;
             }
@@ -245,13 +234,13 @@ class TextProcessorService
             $replaceLimit = '';
             $limitPerPage = '';
 
-            $html = "<a class='mst_seo_autolink autolink' href='{$this->_prepareLinkUrl($link->getUrl())}'"
+            $html = "<a class='mst_seo_autolink autolink' href='{$linkUrl}'"
                 . " {$urltitle}{$target}{$nofollow}{$limitPerPage}{$replaceLimit}>"
                 . $link->getKeyword() . "</a>";
 
             $maxReplacements = self::MAX_NUMBER;
             if ($link->getMaxReplacements() > 0) {
-                $maxReplacements = $link->getMaxReplacements();
+                $maxReplacements = (int)$link->getMaxReplacements();
             }
             if ($replacementCountForTests) { //for tests
                 $maxReplacements = $replacementCountForTests;
@@ -270,25 +259,22 @@ class TextProcessorService
                     break;
             }
 
-            $placeholder = new TextPlaceholder($text, $pregPatterns);
-            $text        = $placeholder->getTokenizedText();
-
             $text = $this->replace($html, $text, $maxReplacements, $replaceKeyword, $direction);
-
-            $translationTable = $placeholder->getTranslationTableArray();
-
-            $text = $this->_restoreSourceByTranslationTable($translationTable, $text);
         }
+
+        $translationTable = $placeholder->getTranslationTableArray();
+
+        $text = $this->_restoreSourceByTranslationTable($translationTable, $text);
 
         return $text;
     }
 
-    protected function convertTagsToPatterns($excludedTags)
+    protected function convertTagsToPatterns(array $excludedTags): array
     {
         $patternsForExclude = [];
         foreach ($excludedTags as $tag) {
             $tag                  = str_replace(' ', '', $tag);
-            $patternsForExclude[] = '#' . '<' . $tag . '[^>]*>.*?</' . $tag . '>' . '#iU';
+            $patternsForExclude[] = '#' . '<' . $tag . '[^>]*>[\s\S]*</' . $tag . '>' . '#iU';
         }
 
         return $patternsForExclude;
@@ -296,12 +282,8 @@ class TextProcessorService
 
     /**
      * Returns link url with base url (need to get correct store code in url)
-     *
-     * @param string $url
-     *
-     * @return string
      */
-    protected function _prepareLinkUrl($url)
+    protected function _prepareLinkUrl(string $url): string
     {
         if (strpos($url, 'http://') === false && strpos($url, 'https://') === false) {
             $baseUrl = $this->storeManager->getStore()->getBaseUrl();
@@ -316,14 +298,14 @@ class TextProcessorService
 
     /**
      * Returns array of patterns, which will be used to find and replace keywords
-     * @return array
      */
-    protected function getPatterns()
+    protected function getPatterns(): array
     {
         // matches for these expressions will be replaced with a unique placeholder
         $pregPatterns = [
             '#<!--.*?-->#s'       // html comments
             , '#<a [^>]*>.*?<\/a>#iU' // html links
+            , '#<a(.+)((\s)+(.+))+\/a>#iU' // html links
         ];
 
         return $pregPatterns;
@@ -332,15 +314,14 @@ class TextProcessorService
 
     /**
      * Reconstruct the original text
-     *
-     * @param array  $translationTable
-     * @param string $source
-     *
-     * @return string
      */
-    protected function _restoreSourceByTranslationTable($translationTable, $source)
+    protected function _restoreSourceByTranslationTable(array $translationTable, string $source): string
     {
         foreach ($translationTable as $key => $value) {
+            foreach ($translationTable as $key2 => $value2) {
+                $value = str_replace($key2, $value2, $value);
+            }
+
             $source = str_replace($key, $value, $source);
         }
 
@@ -350,17 +331,14 @@ class TextProcessorService
     /**
      * Replace words and left the same cases
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     *
-     * @param string $replace - html which will replace the keyword
-     * @param string $source - initial text
-     * @param int    $maxReplacements - max number of replacements in this text.
-     * @param bool   $replaceKeyword - keyword which will be replaced
-     * @param bool   $direct - replace direction (from begin or from end of the text)
-     *
-     * @return string
      */
-    protected function replace($replace, $source, $maxReplacements, $replaceKeyword = false, $direct = false)
-    {
+    protected function replace(
+        string $replace,
+        string $source,
+        int $maxReplacements,
+        string $replaceKeyword = null,
+        int $direct = null
+    ): string {
         if ($this->currentNumberOfLinks >= $this->getMaxLinkPerPage()) { //Links limit per page
             return $source;
         }
@@ -370,11 +348,14 @@ class TextProcessorService
         }
 
         $maxReplacements -= $this->getRelpacementCount($replaceKeyword);
-        $pattern         = '/' . preg_quote($replaceKeyword, '/') . '/i';
-        preg_match_all($pattern,
+        $pattern         = '/' . preg_quote((string)$replaceKeyword, '/') . '/i';
+
+        preg_match_all(
+            $pattern,
             $source,
             $replaceKeywordVariations,
-            PREG_OFFSET_CAPTURE);
+            PREG_OFFSET_CAPTURE
+        );
 
         if (isset($replaceKeywordVariations[0])) {
             $keywordVariations = $replaceKeywordVariations[0];
@@ -390,10 +371,17 @@ class TextProcessorService
                     }
 
                     $replaceForVariation = preg_replace(
-                        '/(\\<a.*?\\>)(.*?)(\\<\\/a\\>)/', $this->prepareReplacement($keywordValue[0]), $replace
+                        '/(\\<a.*?\\>)(.*?)(\\<\\/a\\>)/',
+                        $this->prepareReplacement($keywordValue[0]),
+                        $replace
                     );
+
                     $source              = $this->addLinksToSource(
-                        $maxReplacements, $direct, $source, $keywordValue[0], $replaceForVariation
+                        $maxReplacements,
+                        $direct,
+                        $source,
+                        $keywordValue[0],
+                        $replaceForVariation
                     );
                 }
                 $this->_sizeExplode = 0;
@@ -403,13 +391,7 @@ class TextProcessorService
         return $source;
     }
 
-
-    /**
-     * @param string $keyword
-     *
-     * @return string
-     */
-    public function prepareReplacement($keyword)
+    public function prepareReplacement(string $keyword): string
     {
         if (is_numeric(Strings::substr($keyword))) {
             $replacement = "$1 $keyword $3";
@@ -420,21 +402,22 @@ class TextProcessorService
         return $replacement;
     }
 
-    /**
-     * @param int    $maxReplacements - maximum allowed number of replacements
-     * @param int    $direct - direction
-     * @param string $source - initial text
-     * @param string $replaceKeyword - this keyword will be replaced
-     * @param string $replace -  this text will replace the keyword
-     *
-     * @return string
-     */
-    public function addLinksToSource($maxReplacements, $direct, $source, $replaceKeyword, $replace)
-    {
+    public function addLinksToSource(
+        int $maxReplacements,
+        int $direct,
+        string $source,
+        string $replaceKeyword,
+        string $replace
+    ): string {
         $originalReplaceKeyword = $replaceKeyword;
         if ($this->currentNumberOfLinks > $this->getMaxLinkPerPage()) {
             return $source;
         }
+
+        $replacementPlaceholder = sha1($replace);
+
+        // replace previously replaced with hash placeholder
+        $source = preg_replace('#' . preg_quote($replace, '#') . '#i', $replacementPlaceholder, $source);
 
         if ($direct == 1) {
             $source         = strrev($source);
@@ -465,7 +448,6 @@ class TextProcessorService
                 $size < $sizeExplodeSource &&
                 $this->_sizeExplode < $maxReplacements
                 && !$replaceNumberOne) {
-
                 $lastSymbolBeforeReplacement = false;
                 if (!empty($valSource[strlen($valSource) - 1])) {
                     $lastSymbolBeforeReplacement = $valSource[strlen($valSource) - 1];
@@ -538,19 +520,19 @@ class TextProcessorService
 
         if ($direct == 1) {
             $prepareSourse = strrev($prepareSourse);
+            $replace       = strrev($replace);
         }
+
+        // return previously replaced part
+        $prepareSourse = preg_replace('#' . $replacementPlaceholder . '#i', $replace, $prepareSourse);
 
         return $prepareSourse;
     }
 
     /**
      * Get number of already done replacements for word on the page globally
-     *
-     * @param string $keyword
-     *
-     * @return int
      */
-    protected function getRelpacementCount($keyword)
+    protected function getRelpacementCount(string $keyword): int
     {
         if (!isset($this->_replacementsCountGlobal[strtolower($keyword)])) {
             $this->_replacementsCountGlobal[strtolower($keyword)] = 0;
@@ -561,13 +543,8 @@ class TextProcessorService
 
     /**
      * Increase number of already done replacements for word on the page globally
-     *
-     * @param string $keyword
-     * @param int    $cnt
-     *
-     * @return void
      */
-    protected function addReplacementCount($keyword, $cnt)
+    protected function addReplacementCount(string $keyword, int $cnt): void
     {
         if (!isset($this->_replacementsCountGlobal[strtolower($keyword)])) {
             $this->_replacementsCountGlobal[strtolower($keyword)] = 0;
@@ -575,17 +552,13 @@ class TextProcessorService
         $this->_replacementsCountGlobal[strtolower($keyword)] += $cnt;
     }
 
-
-    /**
-     * @return bool
-     */
-    public function checkSkipLinks()
+    public function checkSkipLinks(): bool
     {
         if ($this->_isSkipLinks === false) {
             return false;
         }
         if (!$skipLinks = $this->registry->registry('skip_auto_links')) {
-            $skipLinks = $this->config->getSkipLinks($this->storeManager->getStore()->getStoreId());
+            $skipLinks = $this->config->getSkipLinks((int)$this->storeManager->getStore()->getStoreId());
             if ($skipLinks) {
                 $this->registry->register('skip_auto_links', $skipLinks);
             } else {
@@ -607,10 +580,7 @@ class TextProcessorService
         return false;
     }
 
-    /**
-     * @return array|bool
-     */
-    public function getExcludedAutoTags()
+    public function getExcludedAutoTags(): array
     {
         if (!$this->registry->registry('excluded_auto_links_tags') && $this->_isExcludedTags) {
             $excludedTags = $this->config->getExcludedTags($this->getStoreId());

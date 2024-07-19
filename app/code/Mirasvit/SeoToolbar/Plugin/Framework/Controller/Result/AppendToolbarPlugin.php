@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -20,6 +20,7 @@ namespace Mirasvit\SeoToolbar\Plugin\Framework\Controller\Result;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\View\LayoutInterface;
+use Mirasvit\SeoToolbar\Model\Config;
 
 class AppendToolbarPlugin
 {
@@ -33,16 +34,33 @@ class AppendToolbarPlugin
      */
     private $response;
 
+    /**
+     * @var LayoutInterface
+     */
     private $layout;
 
+    /**
+     * @var Config
+     */
+    private $config;
+
+    /**
+     * AppendToolbarPlugin constructor.
+     *
+     * @param RequestInterface  $request
+     * @param ResponseInterface $response
+     * @param LayoutInterface   $layout
+     */
     public function __construct(
         RequestInterface $request,
         ResponseInterface $response,
-        LayoutInterface $layout
+        LayoutInterface $layout,
+        Config $config
     ) {
         $this->request  = $request;
         $this->response = $response;
         $this->layout   = $layout;
+        $this->config   = $config;
     }
 
     /**
@@ -53,25 +71,44 @@ class AppendToolbarPlugin
      */
     public function afterRenderResult($subject, $result)
     {
-        if (preg_match('/checkout|customer/', $this->request->getUri())) {
-            return $result;
-        }
+        if ($this->config->isToolbarAllowed()) {
+            if (preg_match('/checkout|customer|robots.txt|ajax/', $this->request->getUri())) {
+                return $result;
+            }
 
-        if ($this->response->getStatusCode() !== 200) {
-            return $result;
-        }
+            if ($this->request->getActionName() == 'download') {
+                return $result;
+            }
 
-        if ($this->request->getParam('_')
-            || $this->request->getParam('is_ajax')
-            || $this->request->getParam('isAjax')) {
-            return $result;
-        }
+            if ($this->response->getStatusCode() !== 200) {
+                return $result;
+            }
 
-        /** @var \Mirasvit\SeoToolbar\Block\Toolbar $toolbar */
-        if ($toolbar = $this->layout->createBlock(\Mirasvit\SeoToolbar\Block\Toolbar::class)) {
-            $this->response->appendBody($toolbar->toHtml());
+            if ($this->isAjax()) {
+                return $result;
+            }
+
+            if ($toolbar = $this->layout->createBlock(\Mirasvit\SeoToolbar\Block\Toolbar::class)) {
+                /** @var \Mirasvit\SeoToolbar\Block\Toolbar $toolbar */
+                $this->response->appendBody($toolbar->toHtml());
+            }
         }
 
         return $result;
+    }
+
+    /**
+     * @return bool
+     */
+    private function isAjax()
+    {
+        if ($this->request->getParam('_')
+            || $this->request->getParam('is_ajax')
+            || $this->request->getParam('isAjax')
+            || $this->request->isAjax()) {
+            return true;
+        }
+
+        return false;
     }
 }

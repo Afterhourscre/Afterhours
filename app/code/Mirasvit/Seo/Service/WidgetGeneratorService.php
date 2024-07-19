@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -25,6 +25,11 @@ use Magento\Widget\Model\Template\Filter as WidgetTemplateFilter;
  */
 class WidgetGeneratorService implements WidgetGeneratorServiceInterface
 {
+    /**
+     * @var WidgetTemplateFilter
+     */
+    private $widgetFilter;
+
     /**
      * WidgetGeneratorService constructor.
      * @param WidgetTemplateFilter $widgetFilter
@@ -42,10 +47,12 @@ class WidgetGeneratorService implements WidgetGeneratorServiceInterface
      */
     public function generateWidget($string)
     {
-        if (preg_match_all(\Magento\Framework\Filter\Template::CONSTRUCTION_PATTERN,
+        if (preg_match_all(
+            \Magento\Framework\Filter\Template::CONSTRUCTION_PATTERN,
             $string,
             $constructions,
-            PREG_SET_ORDER)
+            PREG_SET_ORDER
+        )
         ) {
             foreach ($constructions as $construction) {
                 $html = $this->widgetFilter->generateWidget($construction);
@@ -58,4 +65,3 @@ class WidgetGeneratorService implements WidgetGeneratorServiceInterface
         return $string;
     }
 }
-

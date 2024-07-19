@@ -9,36 +9,45 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoContent\Block;
 
+use Magento\Cms\Model\Template\FilterProvider;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
+use Magento\Widget\Block\BlockInterface;
 use Mirasvit\SeoContent\Service\ContentService;
 
-class DescriptionWidget  extends Template  implements \Magento\Widget\Block\BlockInterface
+class DescriptionWidget extends Template implements BlockInterface
 {
     protected $_template = "description.phtml";
 
+    private   $contentService;
+
+    private   $filterProvider;
+
     public function __construct(
         ContentService $contentService,
-        Context $context,
-        array $data = []
+        FilterProvider $filterProvider,
+        Context        $context,
+        array          $data = []
     ) {
         $this->contentService = $contentService;
+        $this->filterProvider = $filterProvider;
+
         parent::__construct($context, $data);
     }
 
-    public function getDescription()
+    public function getDescription(): string
     {
         $content = $this->contentService->getCurrentContent();
-        if ($content) {
-            return $content->getDescription();
-        }
+
+        return $this->filterProvider->getPageFilter()->filter($content->getDescription());
     }
 }

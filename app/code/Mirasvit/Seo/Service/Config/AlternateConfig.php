@@ -9,69 +9,49 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\Config;
 
-use \Magento\Store\Model\ScopeInterface as ScopeInterface;
-use Mirasvit\Seo\Helper\Serializer;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Store\Model\ScopeInterface as ScopeInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Mirasvit\Core\Service\SerializeService;
 
 class AlternateConfig implements \Mirasvit\Seo\Api\Config\AlternateConfigInterface
 {
-    /**
-     * @var Serializer
-     */
-    private $serializer;
-    /**
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface
-     */
     protected $scopeConfig;
 
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
     protected $storeManager;
 
-    /**
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     */
     public function __construct(
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        Serializer $serializer
+        ScopeConfigInterface $scopeConfig,
+        StoreManagerInterface $storeManager
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->storeManager = $storeManager;
-        $this->serializer = $serializer;
     }
 
-    /**
-     * @param int|\Magento\Store\Model\Store $store
-     * @return int
-     */
-    public function getAlternateHreflang($store)
+    public function getAlternateHreflang(int $storeId): int
     {
-        return $this->scopeConfig->getValue(
+        return (int)$this->scopeConfig->getValue(
             'seo/general/is_alternate_hreflang',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         );
     }
 
     /**
-     * @param int|\Magento\Store\Model\Store $store
-     * @param bool $hreflang
      * @return array|string
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
-    public function getAlternateManualConfig($store, $hreflang = false)
+    public function getAlternateManualConfig(int $storeId, bool $hreflang = false)
     {
-        $storeId = (is_object($store)) ? $store->getId() : $store;
         $config = $this->getPreparedAlternateManualConfig();
 
         if (!is_array($config)) {
@@ -98,12 +78,9 @@ class AlternateConfig implements \Mirasvit\Seo\Api\Config\AlternateConfigInterfa
             && in_array($storeId, $result[$storeGroup])) ? $result[$storeGroup] : [];
     }
 
-    /**
-     * @return array
-     */
-    protected function getPreparedAlternateManualConfig()
+    protected function getPreparedAlternateManualConfig(): array
     {
-        $config = $this->scopeConfig->getValue(
+        $config = (string)$this->scopeConfig->getValue(
             'seo/general/alternate_configurable',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
@@ -119,19 +96,26 @@ class AlternateConfig implements \Mirasvit\Seo\Api\Config\AlternateConfigInterfa
         }
 
         if (!is_array($config) && $config != '[]') {
-            $config = $this->serializer->unserialize($config);
+            $srcConfig = $config;
+            $config    = SerializeService::decode($config);
+            if (!$config) {
+                $config = [0 => $srcConfig];
+            }
+        }
+
+        if ($config == '[]' || !$config) {
+            $config = [];
         }
 
         return $config;
     }
 
     /**
-     * @param array $storeUrls
-     * @return string $xDefaultUrl
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    public function getAlternateManualXDefault($storeUrls)
+    public function getAlternateManualXDefault(array $storeUrls): ?string
     {
-        $xDefaultUrl = false;
+        $xDefaultUrl = null;
         $config = $this->scopeConfig->getValue('seo/general/configurable_hreflang_x_default');
         if ($config == '[]' || !$config) {
             $config = [];
@@ -146,7 +130,11 @@ class AlternateConfig implements \Mirasvit\Seo\Api\Config\AlternateConfigInterfa
                 }
             }
         } else {
-            $config = $this->serializer->unserialize($config);
+            $srcConfig = $config;
+            $config    = SerializeService::decode($config);
+            if (!$config) {
+                $config = [0 => $srcConfig];
+            }
         }
         $storeIds = array_keys($storeUrls);
         foreach ($config as $value) {
@@ -159,42 +147,31 @@ class AlternateConfig implements \Mirasvit\Seo\Api\Config\AlternateConfigInterfa
         return $xDefaultUrl;
     }
 
-    /**
-     * @return bool
-     */
-    public function isHreflangLocaleCodeAddAutomatical()
+    public function isHreflangLocaleCodeAddAutomatical(): bool
     {
-        return $this->scopeConfig->getValue('seo/general/is_hreflang_locale_code_automatical');
+        return (bool)$this->scopeConfig->getValue('seo/general/is_hreflang_locale_code_automatical');
     }
 
-    /**
-     * @return bool
-     */
-    public function isHreflangCutCategoryAdditionalData()
+    public function isHreflangCutCategoryAdditionalData(): bool
     {
-        return $this->scopeConfig->getValue('seo/general/is_hreflang_cut_category_additional_data');
+        return (bool)$this->scopeConfig->getValue('seo/general/is_hreflang_cut_category_additional_data');
     }
 
-    /**
-     * @return string|int
-     */
-    public function getXDefault()
+    public function getXDefault(): string
     {
-        return $this->scopeConfig->getValue('seo/general/is_hreflang_x_default',
+        return (string)$this->scopeConfig->getValue(
+            'seo/general/is_hreflang_x_default',
             ScopeInterface::SCOPE_WEBSITE,
-            $this->storeManager->getStore()->getWebsiteId());
+            $this->storeManager->getStore()->getWebsiteId()
+        );
     }
 
-    /**
-     * @param int|\Magento\Store\Model\Store $store
-     * @return string
-     */
-    public function getHreflangLocaleCode($store)
+    public function getHreflangLocaleCode(int $storeId): string
     {
-        return trim($this->scopeConfig->getValue(
+        return trim((string)$this->scopeConfig->getValue(
             'seo/general/hreflang_locale_code',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         ));
     }
 }

@@ -19,6 +19,23 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     </field>
 
+                    <field id="is_cms_meta_tags_used" translate="label" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Use meta tags from CMS pages if they are not empty</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+
+                    <field id="is_blog_meta_tags_used" translate="label" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Use meta tags from blog pages if they are not empty</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <tooltip>Works with the Mirasvit_BlogMx module</tooltip>
+                    </field>
+
+                    <field id="is_brand_meta_tags_used" translate="label" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Use meta tags from brand pages if they are not empty</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <tooltip>Works with the Mirasvit_Brand module</tooltip>
+                    </field>
+
                     <field id="is_add_prefix_suffix" translate="label" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Add "Page Title Prefix/Suffix" to custom Meta Title</label>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>

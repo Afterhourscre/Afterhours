@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -25,8 +25,16 @@ use Magento\Framework\Controller\Result\Json;
 
 class ImageUpload extends Action
 {
+    /**
+     * @var ImageUploader
+     */
     private $imageUploader;
 
+    /**
+     * ImageUpload constructor.
+     * @param ImageUploader $imageUploader
+     * @param Context $context
+     */
     public function __construct(
         ImageUploader $imageUploader,
         Context $context

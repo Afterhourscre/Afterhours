@@ -34,7 +34,10 @@ class SalesOrderLoadAfter implements ObserverInterface
             return $this;
         }
 
-        if ((abs($order->getAwRewardPointsInvoiced()) - abs($order->getAwRewardPointsRefunded())) > 0) {
+        $rewardPointsInvoiced = $order->getAwRewardPointsInvoiced() ?? 0;
+        $rewardPointsRefunded = $order->getAwRewardPointsRefunded() ?? 0;
+
+        if ((abs($rewardPointsInvoiced) - abs($rewardPointsRefunded)) > 0) {
             $order->setForcedCanCreditmemo(true);
         }
 

@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Api\Service;
 
@@ -24,10 +25,10 @@ interface TemplateEngineServiceInterface
      * @param array  $vars
      * @return string
      */
-    public function render($template, array $vars = []);
+    public function render(string $template = null, array $vars = []): string;
 
     /**
      * @return \Mirasvit\Seo\Service\TemplateEngine\Data\AbstractData[]
      */
-    public function getData();
+    public function getData(): array;
 }

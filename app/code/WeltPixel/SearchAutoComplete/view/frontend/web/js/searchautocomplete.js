@@ -1,4 +1,4 @@
-define(['jquery', 'jquery/ui', 'domReady'], function ($) {
+define(['jquery', 'domReady'], function ($) {
     "use strict";
     var xhr = null;
     var searchAutoComplete =
@@ -20,6 +20,7 @@ define(['jquery', 'jquery/ui', 'domReady'], function ($) {
                 xhr = $.ajax({
                     url: config.baseURL + 'searchautocomplete',
                     dataType: 'json',
+                    global: false,
                     type: 'post',
                     data: { q : q },
                     success: function(data) {
@@ -28,6 +29,11 @@ define(['jquery', 'jquery/ui', 'domReady'], function ($) {
                         $('.searchautocomplete').find('.cat-container').html(data.categoryResults);
                         $( ".wpx-footer" ).text(config.resultFooter);
                         if(data.suggestions > 0) {
+                            $('.wpx-search-autocomplete ul li').each(function() {
+                                if (!$.trim($(this).text())) {
+                                    $(this).remove();
+                                }
+                            });
                             $('.wpx-search-autocomplete ul li').css('cursor', 'pointer');
                             $('.wpx-search-autocomplete ul li').click(function(){
                                 $('#search').val($(this).find('.qs-option-name').text());

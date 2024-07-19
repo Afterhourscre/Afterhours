@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -19,6 +19,7 @@ namespace Mirasvit\Seo\Service\CanonicalRewrite;
 
 use Mirasvit\Seo\Api\Data\CanonicalRewriteInterface;
 use Mirasvit\Seo\Api\Service\CanonicalRewrite\CanonicalRewriteServiceInterface;
+use Mirasvit\Seo\Api\Service\StateServiceInterface;
 
 class CanonicalRewriteService implements CanonicalRewriteServiceInterface
 {
@@ -31,9 +32,63 @@ class CanonicalRewriteService implements CanonicalRewriteServiceInterface
      * @var int
      */
     protected $categoryId;
+    /**
+     * @var \Magento\Catalog\Model\CategoryFactory
+     */
+    private $categoryFactory;
+    /**
+     * @var \Magento\Framework\Model\ResourceModel\Iterator
+     */
+    private $resourceIterator;
+    /**
+     * @var \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory
+     */
+    private $categoryCollectionFactory;
+    /**
+     * @var \Magento\Catalog\Model\ProductFactory
+     */
+    private $productFactory;
+    /**
+     * @var \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory
+     */
+    private $productCollectionFactory;
+    /**
+     * @var \Mirasvit\Seo\Api\Repository\CanonicalRewriteRepositoryInterface
+     */
+    private $canonicalRewriteRepository;
+    /**
+     * @var \Magento\Framework\UrlInterface
+     */
+    private $urlInterface;
+    /**
+     * @var \Magento\Store\Model\StoreManagerInterface
+     */
+    private $storeManager;
+    /**
+     * @var \Magento\Framework\Registry
+     */
+    private $registry;
+    /**
+     * @var \Mirasvit\Seo\Api\Service\StateServiceInterface
+     */
+    private $stateService;
 
+    /**
+     * CanonicalRewriteService constructor.
+     * @param \Mirasvit\Seo\Api\Repository\CanonicalRewriteRepositoryInterface $canonicalRewriteRepository
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \Magento\Framework\Registry $registry
+     * @param \Magento\Catalog\Model\ProductFactory $productFactory
+     * @param \Magento\Catalog\Model\CategoryFactory $categoryFactory
+     * @param \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory
+     * @param \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $categoryCollectionFactory
+     * @param \Magento\Framework\Model\ResourceModel\Iterator $resourceIterator
+     * @param \Magento\Framework\UrlInterface $urlInterface
+     * @param \Mirasvit\Seo\Api\Service\StateServiceInterface $stateService
+     */
     public function __construct(
         \Mirasvit\Seo\Api\Repository\CanonicalRewriteRepositoryInterface $canonicalRewriteRepository,
+        \Mirasvit\Seo\Api\Service\StateServiceInterface $stateService,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\Registry $registry,
         \Magento\Catalog\Model\ProductFactory $productFactory,
@@ -44,6 +99,7 @@ class CanonicalRewriteService implements CanonicalRewriteServiceInterface
         \Magento\Framework\UrlInterface $urlInterface
     ) {
         $this->canonicalRewriteRepository = $canonicalRewriteRepository;
+        $this->stateService               = $stateService;
         $this->storeManager               = $storeManager;
         $this->registry                   = $registry;
         $this->productFactory             = $productFactory;
@@ -86,7 +142,8 @@ class CanonicalRewriteService implements CanonicalRewriteServiceInterface
             if (!empty($expression)) {
                 try {
                     $match = preg_match($expression, $uri);
-                } catch(\Exception $e){}
+                } catch (\Exception $e) {
+                }
             }
 
             if ($productId) {
@@ -99,6 +156,10 @@ class CanonicalRewriteService implements CanonicalRewriteServiceInterface
                 if ($this->isCategoryApplied($categoryId, $rule)) {
                     $categoryApplied = 1;
                 }
+            }
+
+            if ($this->isRewriteForHomePage($expression)) {
+                $canonicalRewriteRule = $item;
             }
 
             if (!empty($expression)) {
@@ -120,7 +181,7 @@ class CanonicalRewriteService implements CanonicalRewriteServiceInterface
                 }
             }
         }
-        
+
         return $canonicalRewriteRule;
     }
 
@@ -141,13 +202,14 @@ class CanonicalRewriteService implements CanonicalRewriteServiceInterface
 
     /**
      * @param string                              $productId
-     * @param Mirasvit\Seo\Model\CanonicalRewrite $rule
+     * @param \Mirasvit\Seo\Model\CanonicalRewrite $rule
      *
      * @return bool
      */
     public function isProductApplied($productId, $rule)
     {
         if ($this->productId === null) {
+            /** @var mixed $rule */
             $rule->setCollectedAttributes([]);
             $productCollection = $this->productCollectionFactory->create()->addFieldToFilter(
                 'entity_id',
@@ -175,9 +237,9 @@ class CanonicalRewriteService implements CanonicalRewriteServiceInterface
     }
 
     /**
-     * @param string $args
+     * @param array $args
      *
-     * @return void
+     * @return bool
      */
     public function callbackValidateProduct($args)
     {
@@ -228,9 +290,9 @@ class CanonicalRewriteService implements CanonicalRewriteServiceInterface
     }
 
     /**
-     * @param string $args
+     * @param array $args
      *
-     * @return void
+     * @return bool
      */
     public function callbackValidateCategory($args)
     {
@@ -242,6 +304,17 @@ class CanonicalRewriteService implements CanonicalRewriteServiceInterface
             }
         } else {
             return false;
+        }
+    }
+
+    /**
+     * @param string $expression
+     *
+     * @return bool
+     */
+    private function isRewriteForHomePage($expression) {
+        if ($this->stateService->isHomePage() && $expression == '/') {
+            return true;
         }
     }
 }

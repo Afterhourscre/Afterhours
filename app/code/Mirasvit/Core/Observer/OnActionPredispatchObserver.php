@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -21,11 +21,16 @@ use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
 use Mirasvit\Core\Model\NotificationFeedFactory;
 use Magento\Framework\Message\ManagerInterface;
+use Magento\Framework\Module\Manager as ModuleManager;
 use Mirasvit\Core\Model\LicenseFactory;
 
 class OnActionPredispatchObserver implements ObserverInterface
 {
+    /**
+     * @var bool
+     */
     public static $notified = false;
+
     /**
      * @var NotificationFeedFactory
      */
@@ -41,14 +46,25 @@ class OnActionPredispatchObserver implements ObserverInterface
      */
     private $licenseFactory;
 
+    private $moduleManager;
+
+    /**
+     * OnActionPredispatchObserver constructor.
+     *
+     * @param NotificationFeedFactory $feedFactory
+     * @param ManagerInterface        $manager
+     * @param LicenseFactory          $licenseFactory
+     */
     public function __construct(
         NotificationFeedFactory $feedFactory,
-        ManagerInterface $manager,
-        LicenseFactory $licenseFactory
+        ManagerInterface        $manager,
+        LicenseFactory          $licenseFactory,
+        ModuleManager           $moduleManager
     ) {
-        $this->feedFactory = $feedFactory;
-        $this->manager = $manager;
+        $this->feedFactory    = $feedFactory;
+        $this->manager        = $manager;
         $this->licenseFactory = $licenseFactory;
+        $this->moduleManager  = $moduleManager;
     }
 
     /**
@@ -67,12 +83,12 @@ class OnActionPredispatchObserver implements ObserverInterface
                     self::$notified = true;
                 }
                 $observer->getRequest()->setRouteName('no_route');
-//                print_r(get_class_methods($observer->getRequest()));
-//                die();
             }
         }
 
-        $feedModel = $this->feedFactory->create();
-        $feedModel->checkUpdate();
+        if ($this->moduleManager->isEnabled('Magento_AdminNotification')) {
+            $feedModel = $this->feedFactory->create();
+            $feedModel->checkUpdate();
+        }
     }
 }

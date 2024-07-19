@@ -9,106 +9,73 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoMarkup\Block\Rs\Product;
 
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Payment\Model\Config as PaymentConfig;
-use Magento\Shipping\Model\Config as ShippingConfig;
-use Mirasvit\Seo\Api\Service\TemplateEngineServiceInterface;
-use Mirasvit\SeoMarkup\Model\Config\ProductConfig;
+use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Pricing\Price\FinalPrice;
+use Magento\Framework\Pricing\Render;
+use Magento\Store\Api\Data\StoreInterface;
+use Mirasvit\SeoMarkup\Model\Config;
 use Magento\Catalog\Model\ProductRepository;
 use Magento\Framework\View\LayoutInterface;
 use Magento\Framework\Locale\FormatInterface;
 
 class AggregateOfferData
 {
-    /**
-     * @var \Magento\Catalog\Model\Product
-     */
-    private $product;
-
-    private $formatInterface;
-
-    /**
-     * @var \Magento\Store\Model\Store
-     */
-    private $store;
-
-    private $productConfig;
-
-    private $templateEngineService;
-
-    private $paymentConfig;
-
     private $offerData;
-
-    private $scopeConfig;
-
-    private $shippingConfig;
 
     private $productRepository;
 
+    private $layout;
+
+    private $formatInterface;
+
     public function __construct(
-        ProductConfig $productConfig,
-        OfferData $offerData,
-        TemplateEngineServiceInterface $templateEngineService,
-        PaymentConfig $paymentConfig,
-        ScopeConfigInterface $scopeConfig,
-        ShippingConfig $shippingConfig,
+        OfferData         $offerData,
         ProductRepository $productRepository,
-        LayoutInterface $layout,
-        FormatInterface $formatInterface
+        LayoutInterface   $layout,
+        FormatInterface   $formatInterface
     ) {
-        $this->productConfig         = $productConfig;
-        $this->offerData             = $offerData;
-        $this->templateEngineService = $templateEngineService;
-        $this->paymentConfig         = $paymentConfig;
-        $this->scopeConfig           = $scopeConfig;
-        $this->shippingConfig        = $shippingConfig;
-        $this->productRepository     = $productRepository;
-        $this->layout                = $layout;
-        $this->formatInterface       = $formatInterface;
+        $this->offerData         = $offerData;
+        $this->productRepository = $productRepository;
+        $this->layout            = $layout;
+        $this->formatInterface   = $formatInterface;
     }
 
-    /**
-     * @param object $product
-     * @param object $store
-     *
-     * @return array|false
-     */
-    public function getData($product, $store)
+    public function getData(ProductInterface $product, StoreInterface $store): array
     {
-        $this->product = $product;
-        $this->store   = $store;
+        $processingProduct = $product;
+        $processingStore   = $store;
 
         $values = [
             '@type'         => 'AggregateOffer',
             'lowPrice'      => 0,
             'highPrice'     => 0,
-            'priceCurrency' => $this->store->getCurrentCurrencyCode(),
+            'priceCurrency' => $processingStore->getCurrentCurrencyCode(),
             'offers'        => [],
         ];
 
         $minPrice = 0;
         $maxPrice = 0;
 
-        $type = $this->product->getTypeId();
-        $typeInstance = $this->product->getTypeInstance();
+        $type         = $processingProduct->getTypeId();
+        $typeInstance = $processingProduct->getTypeInstance();
 
         switch ($type) {
             case 'configurable':
-                $child = $typeInstance->getUsedProductCollection($this->product)
+                $child = $typeInstance->getUsedProductCollection($processingProduct)
                     ->addAttributeToSelect('visibility')
                     ->addPriceData();
 
                 foreach ($child as $item) {
-                    $offer = $this->offerData->getData($item, $this->store);
+                    $offer = $this->offerData->getData($item, $processingStore);
                     if (!$offer) {
                         continue;
                     }
@@ -117,13 +84,17 @@ class AggregateOfferData
                     $maxPrice = max($maxPrice, $offer['price']);
 
                     $values['offers'][] = $offer;
+                }
+
+                if (empty($values['offers'])) {
+                    $values['offers'][] = $this->getOutOfStockOffer();
                 }
 
                 break;
             case 'grouped':
-                $childrenIds = $typeInstance->getChildrenIds($this->product->getId());
+                $childrenIds = $typeInstance->getChildrenIds($processingProduct->getId());
                 foreach (array_values($childrenIds)[0] as $childId) {
-                    $offer = $this->offerData->getData($this->productRepository->getById($childId), $this->store);
+                    $offer = $this->offerData->getData($this->productRepository->getById($childId), $processingStore);
                     if (!$offer) {
                         continue;
                     }
@@ -134,36 +105,52 @@ class AggregateOfferData
                     $values['offers'][] = $offer;
                 }
 
+                if (empty($values['offers'])) {
+                    $values['offers'][] = $this->getOutOfStockOffer();
+                }
+
                 break;
-            default:
-                $offer = $this->offerData->getData($this->product, $this->store);
+            case 'bundle':
+                $offer = $this->offerData->getData($processingProduct, $processingStore);
+
                 if (!$offer) {
                     break;
                 }
 
-                $minPrice = $minPrice == 0 ? $offer['price'] : min($minPrice, $offer['price']);
-                $maxPrice = max($maxPrice, $offer['price']);
                 $values['offers'][] = $offer;
-                $priceData = $this->product->getPriceInfo()->getPrice('final_price');
-                $minPrice = $priceData->getMinimalPrice()->__toString();
-                $maxPrice = $priceData->getMaximalPrice()->__toString();
+                $includeTax         = $this->offerData->isIncludingTax();
+                $priceModel         = $processingProduct->getPriceModel();
+                $minPrice           = $priceModel->getTotalPrices($processingProduct, 'min', $includeTax);
+                $maxPrice           = $priceModel->getTotalPrices($processingProduct, 'max', $includeTax);
+
+                break;
+            default:
+                $offer = $this->offerData->getData($processingProduct, $processingStore);
+                if (!$offer) {
+                    break;
+                }
+
+                $values['offers'][] = $offer;
+                $priceData          = $processingProduct->getPriceInfo()->getPrice('final_price');
+                $minPrice           = $priceData->getMinimalPrice()->__toString();
+                $maxPrice           = $priceData->getMaximalPrice()->__toString();
 
                 break;
         }
 
-        $minPrice = strip_tags(html_entity_decode($this->getPrice($this->product)));
-        preg_match_all('/[0-9\.\,]+/', $minPrice, $matches);
+        if (!$minPrice) {
+            $minPrice = strip_tags(html_entity_decode($this->getPrice($processingProduct)));
+            preg_match_all('/[0-9\.\,]+/', $minPrice, $matches);
 
-        if(!isset($matches[0][0])) {
-            return;
+            if (isset($matches[0][0])) {
+                $minPrice = $matches[0][0];
+            }
         }
 
-        $minPrice = $matches[0][0];
         $minPrice = $this->formatInterface->getNumber($minPrice);
-        $minPrice = number_format($minPrice, 2, '.', '');
 
-        $values['lowPrice']   = $minPrice;
-        $values['highPrice']  = $maxPrice;
+        $values['lowPrice']   = number_format((float)$minPrice, 2, '.', '');
+        $values['highPrice']  = number_format((float)$maxPrice, 2, '.', '');
         $values['offerCount'] = count($values['offers']);
 
         if (!$values['lowPrice'] || !$values['offerCount']) {
@@ -173,12 +160,12 @@ class AggregateOfferData
         return $values;
     }
 
-    public function getPrice($product)
+    public function getPrice(ProductInterface $product): string
     {
         $priceRender = $this->layout->getBlock('product.price.render.default');
         if (!$priceRender) {
             $priceRender = $this->layout->createBlock(
-                \Magento\Framework\Pricing\Render::class,
+                Render::class,
                 'product.price.render.default',
                 ['data' => ['price_render_handle' => 'catalog_product_prices']]
             );
@@ -186,17 +173,26 @@ class AggregateOfferData
 
         $price = '';
         if ($priceRender) {
+            /** @var mixed $priceRender */
             $price = $priceRender->render(
-                \Magento\Catalog\Pricing\Price\FinalPrice::PRICE_CODE,
+                FinalPrice::PRICE_CODE,
                 $product,
                 [
                     'display_minimal_price'  => true,
                     'use_link_for_as_low_as' => true,
-                    'zone' => \Magento\Framework\Pricing\Render::ZONE_ITEM_LIST
+                    'zone'                   => Render::ZONE_ITEM_LIST,
                 ]
             );
         }
 
         return $price;
+    }
+
+    private function getOutOfStockOffer(): array
+    {
+        return [
+            '@type'        => 'Offer',
+            'availability' => Config::HTTP_SCHEMA_ORG . '/OutOfStock',
+        ];
     }
 }

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -24,10 +24,21 @@ use Mirasvit\SeoSitemap\Api\Repository\ProviderInterface;
 
 class ProductProvider implements ProviderInterface
 {
+    /**
+     * @var DataHelper
+     */
     private $dataHelper;
 
+    /**
+     * @var ProductFactory
+     */
     private $productFactory;
 
+    /**
+     * ProductProvider constructor.
+     * @param DataHelper $sitemapData
+     * @param ProductFactory $productFactory
+     */
     public function __construct(
         DataHelper $sitemapData,
         ProductFactory $productFactory
@@ -36,21 +47,37 @@ class ProductProvider implements ProviderInterface
         $this->productFactory = $productFactory;
     }
 
+    /**
+     * @return string
+     */
     public function getModuleName()
     {
         return 'Magento_Catalog';
     }
 
+    /**
+     * @return \Magento\Framework\Phrase|string
+     */
     public function getTitle()
     {
         return __('Products');
     }
 
+    /**
+     * @return bool
+     */
     public function isApplicable()
     {
         return true;
     }
 
+    /**
+     * @param int $storeId
+     * @return array|DataObject
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws \Zend_Db_Statement_Exception
+     */
     public function initSitemapItem($storeId)
     {
         return new DataObject([
@@ -60,6 +87,10 @@ class ProductProvider implements ProviderInterface
         ]);
     }
 
+    /**
+     * @param int $storeId
+     * @return array
+     */
     public function getItems($storeId)
     {
         return [];

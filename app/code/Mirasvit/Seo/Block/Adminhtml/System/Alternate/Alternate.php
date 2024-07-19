@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -25,7 +25,7 @@ class Alternate extends \Magento\Config\Block\System\Config\Form\Field\FieldArra
     protected $optionsRenderer;
 
     /**
-     * @return \Magento\Framework\View\Element\BlockInterface
+     * @return \Magento\Framework\View\Element\Html\Select
      * @throws \Magento\Framework\Exception\LocalizedException
      */
     protected function _getOptionsRenderer()

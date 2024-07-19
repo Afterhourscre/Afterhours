@@ -8,11 +8,7 @@
         <observer name="m_seo_observer_alternate" instance="Mirasvit\Seo\Observer\Alternate"/>
     </event>
     <event name="controller_action_postdispatch">
-        <observer name="m_seo_observer_robots" instance="Mirasvit\Seo\Observer\Robots"/>
         <observer name="m_seo_observer_canonical" instance="Mirasvit\Seo\Observer\Canonical"/>
         <observer name="m_seo_observer_alternate" instance="Mirasvit\Seo\Observer\Alternate"/>
-    </event>
-    <event name="controller_action_layout_render_before_catalogsearch_result_index">
-        <observer name="m_seo_observer_robots_catalogsearch" instance="Mirasvit\Seo\Observer\Robots"/>
     </event>
 </config>

@@ -9,39 +9,35 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoMarkup\Model\Config;
 
-use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Store\Model\ScopeInterface as ScopeInterface;
+use Mirasvit\SeoMarkup\Model\Config;
 
-class PageConfig
+class PageConfig extends Config
 {
-    private $scopeConfig;
-
-    public function __construct(
-        ScopeConfigInterface $scopeConfig
-    ) {
-        $this->scopeConfig = $scopeConfig;
+    public function isRemoveNativeRs(?int $storeId = null): bool
+    {
+        return $this->scopeConfig->isSetFlag(
+            'seo/seo_markup/page/is_remove_native_rs',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return bool
-     */
-    public function isRemoveNativeRs()
+    public function isOgEnabled(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/page/is_remove_native_rs');
-    }
-
-    /**
-     * @return bool
-     */
-    public function isOgEnabled()
-    {
-        return $this->scopeConfig->getValue('seo/seo_markup/page/is_og_enabled');
+        return $this->scopeConfig->isSetFlag(
+            'seo/seo_markup/page/is_og_enabled',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 }

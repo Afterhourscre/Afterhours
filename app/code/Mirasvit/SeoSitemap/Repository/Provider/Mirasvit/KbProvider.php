@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -20,13 +20,25 @@ namespace Mirasvit\SeoSitemap\Repository\Provider\Mirasvit;
 use Magento\Framework\Model\Context;
 use Magento\Framework\ObjectManagerInterface;
 use Mirasvit\SeoSitemap\Api\Repository\ProviderInterface;
+use Magento\Framework\DataObject;
 
 class KbProvider implements ProviderInterface
 {
+    /**
+     * @var ObjectManagerInterface
+     */
     private $objectManager;
 
+    /**
+     * @var \Magento\Framework\Event\ManagerInterface
+     */
     private $eventManager;
 
+    /**
+     * KbProvider constructor.
+     * @param ObjectManagerInterface $objectManager
+     * @param Context $context
+     */
     public function __construct(
         ObjectManagerInterface $objectManager,
         Context $context
@@ -35,21 +47,34 @@ class KbProvider implements ProviderInterface
         $this->eventManager  = $context->getEventDispatcher();
     }
 
+    /**
+     * @return string
+     */
     public function getModuleName()
     {
         return 'Mirasvit_Kb';
     }
 
+    /**
+     * @return bool
+     */
     public function isApplicable()
     {
         return interface_exists('Mirasvit\Kb\Api\Data\SitemapInterface');
     }
 
+    /**
+     * @return \Magento\Framework\Phrase|string
+     */
     public function getTitle()
     {
         return __('Knowledge Base');
     }
 
+    /**
+     * @param int $storeId
+     * @return array
+     */
     public function initSitemapItem($storeId)
     {
         $result = [];
@@ -71,8 +96,35 @@ class KbProvider implements ProviderInterface
         return $result;
     }
 
+    /**
+     * @param int $storeId
+     * @return array
+     */
     public function getItems($storeId)
     {
-        return [];
+        $items = [];
+        $sitemapData = $this->initSitemapItem($storeId);
+        foreach ($sitemapData as $data) {
+            $itemCollection = $data->getCollection();
+            foreach ($itemCollection as $item) {
+                if (empty($item->getName())) {
+                    continue;
+                }
+
+                $url = $item->getUrl();
+                $baseUrl = $this->objectManager->get('\Magento\Framework\UrlInterface')->getBaseUrl();
+
+                if (strpos($url, $baseUrl) === false) {
+                    $url = $baseUrl . $url;
+                }
+
+                $items[] = new DataObject([
+                    'url'        => $url,
+                    'title'      => $item->getName(),
+                ]);
+            }
+        }
+
+        return $items;
     }
 }

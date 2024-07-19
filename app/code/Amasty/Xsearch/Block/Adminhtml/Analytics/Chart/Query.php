@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Block\Adminhtml\Analytics\Chart;
 
@@ -67,7 +66,9 @@ class Query extends Template
      */
     public function getAnalyticsData()
     {
-        return $this->jsonEncoder->encode($this->queryInfo->getAnalyticsData(Collection::GROUP_BY_MOUNTH));
+        return $this->jsonEncoder->encode(
+            $this->queryInfo->getAnalyticsData(Collection::GROUP_BY_MONTH_PATTERN)
+        );
     }
 
     /**

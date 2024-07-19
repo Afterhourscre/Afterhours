@@ -9,27 +9,29 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoMarkup\Block\Rs;
 
 use Magento\Directory\Model\RegionFactory;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Locale\ListsInterface as LocaleListsInterface;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Store\Model\Information as StoreInformation;
+use Magento\Store\Model\Store;
 use Magento\Theme\Block\Html\Header\Logo;
+use Mirasvit\Core\Service\SerializeService;
+use Mirasvit\SeoMarkup\Model\Config;
 use Mirasvit\SeoMarkup\Model\Config\OrganizationConfig;
 
 class Organization extends Template
 {
-    /**
-     * @var \Magento\Store\Model\Store
-     */
     private $store;
 
     private $organizationConfig;
@@ -43,11 +45,11 @@ class Organization extends Template
     private $logo;
 
     public function __construct(
-        OrganizationConfig $organizationConfig,
+        OrganizationConfig   $organizationConfig,
         LocaleListsInterface $localeLists,
-        RegionFactory $regionFactory,
-        Logo $logo,
-        Context $context
+        RegionFactory        $regionFactory,
+        Logo                 $logo,
+        Context              $context
     ) {
         $this->organizationConfig = $organizationConfig;
         $this->localeLists        = $localeLists;
@@ -65,22 +67,22 @@ class Organization extends Template
      */
     protected function _toHtml()
     {
-        if (!$this->organizationConfig->isRsEnabled($this->store)) {
+        if (
+            !$this->organizationConfig->isRsEnabled($this->getStoreId())
+            || $this->getRequest()->getFullActionName() !== 'cms_index_index'
+        ) {
             return false;
         }
 
         $data = $this->getJsonData();
 
-        return '<script type="application/ld+json">' . \Zend_Json::encode($data) . '</script>';
+        return '<script type="application/ld+json">' . SerializeService::encode($data) . '</script>';
     }
 
-    /**
-     * @return array
-     */
-    private function getJsonData()
+    private function getJsonData(): array
     {
         $data = [
-            "@context" => "http://schema.org",
+            "@context" => Config::HTTP_SCHEMA_ORG,
             "@type"    => "Organization",
         ];
 
@@ -90,7 +92,7 @@ class Organization extends Template
             'name'      => $this->getName(),
             'telephone' => $this->getTelephone(),
             'faxNumber' => $this->getFaxNumber(),
-            'email'     => $this->getEmail()
+            'email'     => $this->getEmail(),
         ];
 
         foreach ($values as $key => $value) {
@@ -130,95 +132,71 @@ class Organization extends Template
         return $data;
     }
 
-    /**
-     * @return string
-     */
-    private function getName()
+    private function getName(): string
     {
-        if ($this->organizationConfig->isCustomName($this->store)) {
-            return $this->organizationConfig->getCustomName($this->store);
+        if ($this->organizationConfig->isCustomName($this->getStoreId())) {
+            return $this->organizationConfig->getCustomName($this->getStoreId());
         }
 
-        return $this->store->getConfig(StoreInformation::XML_PATH_STORE_INFO_NAME);
+        return (string)$this->store->getConfig(StoreInformation::XML_PATH_STORE_INFO_NAME);
     }
 
-    /**
-     * @return string
-     */
-    private function getTelephone()
+    private function getTelephone(): string
     {
-        if ($this->organizationConfig->isCustomTelephone($this->store)) {
-            return $this->organizationConfig->getCustomTelephone($this->store);
+        if ($this->organizationConfig->isCustomTelephone($this->getStoreId())) {
+            return $this->organizationConfig->getCustomTelephone($this->getStoreId());
         }
 
-        return $this->store->getConfig(StoreInformation::XML_PATH_STORE_INFO_PHONE);
+        return (string)$this->store->getConfig(StoreInformation::XML_PATH_STORE_INFO_PHONE);
     }
 
-    /**
-     * @return string
-     */
-    private function getFaxNumber()
+    private function getFaxNumber(): string
     {
-        return $this->organizationConfig->getCustomFaxNumber($this->store);
+        return $this->organizationConfig->getCustomFaxNumber($this->getStoreId());
     }
 
-    /**
-     * @return string
-     */
-    private function getEmail()
+    private function getEmail(): string
     {
-        if ($this->organizationConfig->isCustomEmail($this->store)) {
-            return $this->organizationConfig->getCustomEmail($this->store);
+        if ($this->organizationConfig->isCustomEmail($this->getStoreId())) {
+            return (string)$this->organizationConfig->getCustomEmail($this->getStoreId());
         }
 
-        return $this->context->getScopeConfig()->getValue('trans_email/ident_general/email');
+        return (string)$this->context->getScopeConfig()->getValue('trans_email/ident_general/email');
     }
 
-    /**
-     * @return string
-     */
-    public function getAddressCountry()
+    public function getAddressCountry(): string
     {
-        if ($this->organizationConfig->isCustomAddressCountry($this->store)) {
-            return $this->organizationConfig->getCustomAddressCountry($this->store);
+        if ($this->organizationConfig->isCustomAddressCountry($this->getStoreId())) {
+            return $this->organizationConfig->getCustomAddressCountry($this->getStoreId());
         }
 
-        return $this->localeLists->getCountryTranslation(
+        return (string)$this->localeLists->getCountryTranslation(
             $this->store->getConfig(StoreInformation::XML_PATH_STORE_INFO_COUNTRY_CODE)
         );
     }
 
-    /**
-     * @return string
-     */
-    public function getAddressLocality()
+    public function getAddressLocality(): string
     {
-        if ($this->organizationConfig->isCustomAddressLocality($this->store)) {
-            return $this->organizationConfig->getCustomAddressLocality($this->store);
+        if ($this->organizationConfig->isCustomAddressLocality($this->getStoreId())) {
+            return $this->organizationConfig->getCustomAddressLocality($this->getStoreId());
         }
 
-        return $this->store->getConfig(StoreInformation::XML_PATH_STORE_INFO_CITY);
+        return (string)$this->store->getConfig(StoreInformation::XML_PATH_STORE_INFO_CITY);
     }
 
-    /**
-     * @return string
-     */
-    public function getPostalCode()
+    public function getPostalCode(): string
     {
-        if ($this->organizationConfig->isCustomPostalCode($this->store)) {
-            return $this->organizationConfig->getCustomPostalCode($this->store);
+        if ($this->organizationConfig->isCustomPostalCode($this->getStoreId())) {
+            return $this->organizationConfig->getCustomPostalCode($this->getStoreId());
         }
 
-        return $this->store->getConfig(StoreInformation::XML_PATH_STORE_INFO_POSTCODE);
+        return (string)$this->store->getConfig(StoreInformation::XML_PATH_STORE_INFO_POSTCODE);
     }
 
-    /**
-     * @return string
-     */
-    public function getStreetAddress()
+    public function getStreetAddress(): string
     {
-        if ($this->organizationConfig->isCustomStreetAddress($this->store)) {
-            return $this->organizationConfig->getCustomStreetAddress($this->store);
+        if ($this->organizationConfig->isCustomStreetAddress($this->getStoreId())) {
+            return $this->organizationConfig->getCustomStreetAddress($this->getStoreId());
         }
 
         return $this->store->getConfig(StoreInformation::XML_PATH_STORE_INFO_STREET_LINE1)
@@ -226,41 +204,48 @@ class Organization extends Template
             . $this->store->getConfig(StoreInformation::XML_PATH_STORE_INFO_STREET_LINE2);
     }
 
-    /**
-     * @return string
-     */
-    public function getAddressRegion()
+    public function getAddressRegion(): string
     {
-        if ($this->organizationConfig->isCustomAddressRegion($this->store)) {
-            return $this->organizationConfig->getCustomAddressRegion($this->store);
+        if ($this->organizationConfig->isCustomAddressRegion($this->getStoreId())) {
+            return $this->organizationConfig->getCustomAddressRegion($this->getStoreId());
         }
 
         $regionId = $this->store->getConfig(StoreInformation::XML_PATH_STORE_INFO_REGION_CODE);
 
-        return $this->regionFactory->create()->load($regionId)->getCode();
+        return (string)$this->regionFactory->create()->load($regionId)->getCode();
     }
 
-    /**
-     * @return string
-     */
-    public function getLogoUrl()
+    public function getLogoUrl(): string
     {
-        return $this->logo->getLogoSrc();
+        // fix since Magento_Theme v101.1.4
+        if (class_exists('Magento\Theme\ViewModel\Block\Html\Header\LogoPathResolver') && !$this->logo->getData('logoPathResolver')) {
+            $logoPathResolver = ObjectManager::getInstance()->get('Magento\Theme\ViewModel\Block\Html\Header\LogoPathResolver');
+            $this->logo->setData('logoPathResolver', $logoPathResolver);
+        }
+
+        return (string)$this->logo->getLogoSrc();
     }
 
-    /**
-     * @return string
-     */
-    public function getBaseUrl()
+    public function getBaseUrl(): string
     {
-        return $this->context->getUrlBuilder()->getBaseUrl();
+        return (string)$this->context->getUrlBuilder()->getBaseUrl();
     }
-    
-    /**
-    * @return array
-    */
-    public function getSocialLinks()
+
+    public function getSocialLinks(): array
     {
-        return $this->organizationConfig->getSocialLinks($this->store);
+        return $this->organizationConfig->getSocialLinks($this->getStoreId());
+    }
+
+    private function getStoreId(): int
+    {
+        if (!isset($this->store)) {
+            return Store::DEFAULT_STORE_ID;
+        }
+
+        if (!isset($this->storeId)) {
+            $this->storeId = (int)$this->store->getStoreId();
+        }
+
+        return $this->storeId;
     }
 }

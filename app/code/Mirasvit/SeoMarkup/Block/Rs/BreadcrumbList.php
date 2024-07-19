@@ -9,20 +9,25 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoMarkup\Block\Rs;
 
+use Exception;
+use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Helper\Data as CatalogHelper;
 use Magento\Framework\Data\Collection;
 use Magento\Framework\Registry;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
+use Mirasvit\Core\Service\SerializeService;
 use Mirasvit\Seo\Api\Service\StateServiceInterface;
+use Mirasvit\SeoMarkup\Model\Config;
 use Mirasvit\SeoMarkup\Model\Config\BreadcrumbListConfig;
 
 class BreadcrumbList extends Template
@@ -38,11 +43,11 @@ class BreadcrumbList extends Template
     private $registry;
 
     public function __construct(
-        BreadcrumbListConfig $breadcrumbListConfig,
-        CatalogHelper $catalogHelper,
+        BreadcrumbListConfig  $breadcrumbListConfig,
+        CatalogHelper         $catalogHelper,
         StateServiceInterface $stateService,
-        Registry $registry,
-        Context $context
+        Registry              $registry,
+        Context               $context
     ) {
         $this->breadcrumbListConfig = $breadcrumbListConfig;
         $this->catalogHelper        = $catalogHelper;
@@ -53,26 +58,22 @@ class BreadcrumbList extends Template
         parent::__construct($context);
     }
 
-    protected function _toHtml()
+    protected function _toHtml(): string
     {
-        if (!$this->breadcrumbListConfig->isRsEnabled($this->store)) {
-            return false;
+        if (!$this->breadcrumbListConfig->isRsEnabled()) {
+            return '';
         }
 
         $data = $this->getJsonData();
 
         if (!$data) {
-            return false;
+            return '';
         }
 
-        return '<script type="application/ld+json">' . \Zend_Json::encode($data) . '</script>';
+        return '<script type="application/ld+json">' . SerializeService::encode($data) . '</script>';
     }
 
-
-    /**
-     * @return bool|array
-     */
-    public function getJsonData()
+    public function getJsonData(): ?array
     {
         $crumbs = $this->registry->registry(BreadcrumbListConfig::REGISTER_KEY);
 
@@ -81,9 +82,9 @@ class BreadcrumbList extends Template
 
             $crumbs = [];
             foreach ($path as $item) {
-                $url = isset($item['link']) ? $item['link'] : $this->_urlBuilder->getCurrentUrl();
+                $url = $item['link'] ?? $this->_urlBuilder->getCurrentUrl();
 
-                $crumbs[$url] = $item['label'];
+                $crumbs[$url] = (string)$item['label'];
             }
         }
 
@@ -92,7 +93,7 @@ class BreadcrumbList extends Template
         }
 
         $data = [
-            '@context'        => 'http://schema.org',
+            '@context'        => Config::HTTP_SCHEMA_ORG,
             '@type'           => 'BreadcrumbList',
             'itemListElement' => [],
         ];
@@ -114,14 +115,7 @@ class BreadcrumbList extends Template
         return $data;
     }
 
-    /**
-     * Returns current breadcrumb (if present) or Deepest category breadcrumb
-     *
-     * @param \Magento\Catalog\Model\Product $product
-     *
-     * @return array
-     */
-    private function getProductBreadcrumbPath($product)
+    private function getProductBreadcrumbPath(ProductInterface $product): array
     {
         $path = $this->catalogHelper->getBreadcrumbPath();
 
@@ -140,11 +134,13 @@ class BreadcrumbList extends Template
         $pool           = [];
         $targetCategory = null;
 
+        $rootCategoryId = $this->store->getRootCategoryId();
+
         /** @var \Magento\Catalog\Model\Category $category */
         foreach ($collection as $category) {
             $pool[$category->getId()] = $category;
 
-            if (!$category->getIsActive()) {
+            if (!$category->getIsActive() || !in_array($rootCategoryId, explode('/', $category->getPath()))) {
                 continue;
             }
 
@@ -154,6 +150,10 @@ class BreadcrumbList extends Template
                 while ($child->getLevel() > 1 && $parent = $child->getParentCategory()) {
                     $pool[$parent->getId()] = $parent;
 
+                    if ($parent->getId() == $rootCategoryId) {
+                        break;
+                    }
+
                     if (!$parent->getIsActive()) {
                         $category = null;
                         break;
@@ -161,7 +161,7 @@ class BreadcrumbList extends Template
 
                     $child = $parent;
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // Not found exception is possible (corrupted data in DB)
                 $category = null;
             }

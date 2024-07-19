@@ -1,36 +1,26 @@
 <?php
-/**
- * @category    WeltPixel
- * @package     WeltPixel_{Module}
- * @copyright   Copyright (c) 2018 Weltpixel
- * @author      Nagy Attila @ Weltpixel TEAM
- */
-
-
 namespace WeltPixel\SearchAutoComplete\Model\Autocomplete;
 
+use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Helper\Image;
+use Magento\Catalog\Model\Product\Visibility;
+use Magento\Catalog\Model\ResourceModel\Category\Collection as CategoryCollection;
 use Magento\Framework\Api\FilterBuilder;
 use Magento\Framework\Api\Search\FilterGroupBuilder;
 use Magento\Framework\Api\Search\SearchCriteriaFactory as FullTextSearchCriteriaFactory;
 use Magento\Framework\Api\Search\SearchInterface as FullTextSearchApi;
 use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\Api\SortOrder;
+use Magento\Framework\Api\SortOrderBuilder;
+use Magento\Framework\App\Config\ScopeConfigInterface as ScopeConfig;
 use Magento\Framework\Pricing\PriceCurrencyInterface;
-use Magento\Payment\Gateway\Http\Client\Zend;
 use Magento\Search\Model\Autocomplete\DataProviderInterface;
 use Magento\Search\Model\Autocomplete\ItemFactory;
 use Magento\Search\Model\QueryFactory;
-use Magento\Store\Model\StoreManagerInterface;
-use Magento\Framework\Api\SortOrderBuilder;
-use Magento\Framework\Api\SortOrder;
-use \WeltPixel\SearchAutoComplete\Helper\Data;
-use \Magento\Catalog\Model\Product\Visibility;
-use Magento\Framework\App\Config\ScopeConfigInterface as ScopeConfig;
 use Magento\Store\Model\ScopeInterface;
-use Magento\Catalog\Model\ResourceModel\Category\Collection as CategoryCollection;
-use Magento\Catalog\Api\CategoryRepositoryInterface;
-
+use Magento\Store\Model\StoreManagerInterface;
+use WeltPixel\SearchAutoComplete\Helper\Data;
 
 class SearchDataProvider implements DataProviderInterface
 {
@@ -115,6 +105,11 @@ class SearchDataProvider implements DataProviderInterface
     protected $_categoryRepository;
 
     /**
+     * @var \Magento\Catalog\Helper\Output
+     */
+    protected $_outputHelper;
+
+    /**
      * SearchDataProvider constructor.
      * @param QueryFactory $queryFactory
      * @param ItemFactory $itemFactory
@@ -133,6 +128,7 @@ class SearchDataProvider implements DataProviderInterface
      * @param Visibility $productVisibility
      * @param CategoryCollection $categoryFactory
      * @param CategoryRepositoryInterface $categoryRepository
+     * @param \Magento\Catalog\Helper\Output $outputHelper
      */
     public function __construct(
         QueryFactory $queryFactory,
@@ -151,9 +147,9 @@ class SearchDataProvider implements DataProviderInterface
         Data $helper,
         Visibility $productVisibility,
         CategoryCollection $categoryFactory,
-        CategoryRepositoryInterface $categoryRepository
-    )
-    {
+        CategoryRepositoryInterface $categoryRepository,
+        \Magento\Catalog\Helper\Output $outputHelper
+    ) {
         $this->queryFactory = $queryFactory;
         $this->itemFactory = $itemFactory;
         $this->fullTextSearchApi = $search;
@@ -170,6 +166,7 @@ class SearchDataProvider implements DataProviderInterface
         $this->_productVisibility = $productVisibility;
         $this->_categoryFactory = $categoryFactory;
         $this->_categoryRepository = $categoryRepository;
+        $this->_outputHelper = $outputHelper;
 
         $this->limit = (int) $scopeConfig->getValue(
             self::CONFIG_AUTOCOMPLETE_LIMIT,
@@ -202,13 +199,24 @@ class SearchDataProvider implements DataProviderInterface
             return ($this->limit) ? array_splice($result, 0, $this->limit) : $result;
         }
 
+        $maxItemsDisplayed = $this->_helper->getMaxNumberItemsDisplayed();
         $productIds = $this->searchProducts($query);
         $resultItem[] = $this->itemFactory->create([
             'title' => __('No suggestions found'),
             'num_results' => 0,
         ]);
 
+        $isPopularSuggestionEnabled = $this->_helper->isEnablePopularSuggestions();
+        $suggestionMaxItemsDisplayed = $this->_helper->getMaxNumberOfPopularSuggestionsDisplayed();
+        if ($isPopularSuggestionEnabled && $suggestionMaxItemsDisplayed) {
+            $collection->setPageSize($suggestionMaxItemsDisplayed)
+                ->setCurPage(1);
+        }
+
         if ($productIds) {
+            $irelevantProductIds = array_slice($productIds, $maxItemsDisplayed);
+            $productIds = array_slice($productIds, 0, $maxItemsDisplayed);
+
             $searchCriteria = $this->searchCriteriaBuilder->addFilter('entity_id', $productIds, 'in')->create();
             $products = $this->productRepository->getList($searchCriteria);
 
@@ -226,12 +234,17 @@ class SearchDataProvider implements DataProviderInterface
                     'final_price' => $this->priceCurrency->format($product->getPriceInfo()->getPrice('final_price')->getAmount()->getValue(), false),
                     'has_special_price' => $product->getSpecialPrice() > 0 ? true : false,
                     'image' => $image,
-                    'description' => $product->getDescription(),
+                    'description' => strip_tags($this->_outputHelper->productAttribute($product, $product->getDescription() ?? '', 'description' )),
                     'url' => $product->getProductUrl(),
                 ]);
                 $items[] = $resultItem;
             }
-
+            foreach ($irelevantProductIds as $productId) {
+                $resultItem = $this->itemFactory->create([
+                    'id' => $productId,
+                ]);
+                $items[] = $resultItem;
+            }
             $result[] = $resultItem;
 
             if ($collection->getSize() >= 1) {
@@ -257,7 +270,6 @@ class SearchDataProvider implements DataProviderInterface
             }
 
             $results = array_merge($items, $result);
-
         }
 
         $response = (!empty($results)) ? $results : $resultItem;
@@ -278,26 +290,29 @@ class SearchDataProvider implements DataProviderInterface
         $query = $queryFactory->getQueryText();
         $categoryCollection = $this->_categoryFactory;
         $categoryCollection->addAttributeToSelect('*');
-        if($size) {
+        if ($size) {
             $categoryCollection->setPageSize($size);
         }
-        $categoryCollection->addAttributeToFilter('name',['like' => '%'.$query.'%'])
-                           ->addAttributeToFilter('is_active',1)
+        $rootCatId = $this->storeManager->getStore()->getRootCategoryId();
+        $categoryCollection->addAttributeToFilter('name', ['like' => '%' . $query . '%'])
+                           ->addAttributeToFilter('is_active', 1)
+                           ->addAttributeToFilter('include_in_menu', 1)
+                           ->addAttributeToFilter('path', ['like' => '%/' . $rootCatId . '/%'])
                            ->setStore($this->storeManager->getStore());
 
-        if(!$categoryCollection->getSize()) {
+        if (!$categoryCollection->getSize()) {
             $results['nores'] = 1;
             return $results;
         }
 
-        foreach($categoryCollection as $catItem){
+        foreach ($categoryCollection as $catItem) {
             $category = $this->_categoryRepository->get($catItem->getId(), $this->storeManager->getStore()->getId());
-            if($category) {
+            if ($category) {
                 $parents = $category->getParentCategories();
                 $parentsArr = [];
 
-                foreach($parents as $parent) {
-                    if($parent->getId() != $category->getId()){
+                foreach ($parents as $parent) {
+                    if ($parent->getId() != $category->getId()) {
                         $parentsArr[] = $parent->getName();
                     }
                 }
@@ -343,9 +358,16 @@ class SearchDataProvider implements DataProviderInterface
      */
     private function _reOrderArr($ids, $collectionArr)
     {
+        if (!count($collectionArr)) {
+            return $collectionArr;
+        }
+
+        $result = [];
         foreach ($ids as $k => $v) {
-            $val = $collectionArr[$v];
-            $result[$v] = $val;
+            if (isset($collectionArr[$v])) {
+                $val = $collectionArr[$v];
+                $result[$v] = $val;
+            }
         }
 
         return $result;

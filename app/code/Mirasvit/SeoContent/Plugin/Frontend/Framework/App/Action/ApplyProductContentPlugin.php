@@ -9,49 +9,54 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoContent\Plugin\Frontend\Framework\App\Action;
 
 use Magento\Catalog\Helper\Output as CatalogOutputHelper;
+use Magento\Cms\Model\Template\FilterProvider;
+use Magento\Framework\App\Action\Forward;
+use Magento\Framework\App\FrontControllerInterface as Subject;
 use Mirasvit\Seo\Api\Service\StateServiceInterface;
 use Mirasvit\SeoContent\Api\Data\ContentInterface;
 use Mirasvit\SeoContent\Service\ContentService;
 
 class ApplyProductContentPlugin
 {
-    private $isShortDescriptionWasProcessed = false;
+    private $isShortDescriptionWasProcessed   = false;
 
-    private $isDescriptionWasProcessed      = false;
+    private $isOgShortDescriptionWasProcessed = false;
+
+    private $isDescriptionWasProcessed        = false;
 
     private $contentService;
 
     private $stateService;
 
+    private $filterProvider;
+
     private $catalogOutputHelper;
 
     public function __construct(
-        ContentService $contentService,
+        ContentService        $contentService,
         StateServiceInterface $stateService,
-        CatalogOutputHelper $catalogOutputHelper
+        FilterProvider        $filterProvider,
+        CatalogOutputHelper   $catalogOutputHelper
     ) {
         $this->contentService      = $contentService;
         $this->stateService        = $stateService;
+        $this->filterProvider      = $filterProvider;
         $this->catalogOutputHelper = $catalogOutputHelper;
     }
 
-    /**
-     * @param \Magento\Framework\App\ActionInterface $subject
-     * @param object                                 $response
-     * @return object
-     */
-    public function afterDispatch($subject, $response)
+    public function afterDispatch(Subject $subject, object $response): object
     {
-        if ($subject instanceof \Magento\Framework\App\Action\Forward) {
+        if ($subject instanceof Forward) {
             return $response;
         }
 
@@ -61,9 +66,12 @@ class ApplyProductContentPlugin
     }
 
     /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     *
      * @param CatalogOutputHelper $outputHelper
      * @param string              $outputHtml
      * @param array               $params
+     *
      * @return string
      */
     public function productAttribute($outputHelper, $outputHtml, $params)
@@ -72,11 +80,15 @@ class ApplyProductContentPlugin
             return $outputHtml;
         }
 
-        if (!in_array($params['attribute'], ['name', 'short_description', 'description'])) {
+        if (!in_array($params['attribute'], ['name', 'short_description', 'og:short_description', 'description'])) {
             return $outputHtml;
         }
 
         $product = $params['product'];
+
+        if ($product->getId() != $this->stateService->getProduct()->getId()) {
+            return $outputHtml;
+        }
 
         $content = $this->contentService->getCurrentContent();
 
@@ -97,7 +109,21 @@ class ApplyProductContentPlugin
                     );
                 } elseif ($content->getDescription()
                     && $content->getDescriptionPosition() == ContentInterface::DESCRIPTION_POSITION_UNDER_SHORT_DESCRIPTION) {
-                    $outputHtml .= $content->getDescription();
+                    $outputHtml .= $this->filterProvider->getPageFilter()->filter($content->getDescription());
+                }
+
+                break;
+
+            case 'og:short_description':
+                if ($content->getShortDescription() && !$this->isOgShortDescriptionWasProcessed) {
+                    $this->isOgShortDescriptionWasProcessed = true; #prevent recursive call
+
+                    $outputHtml = $this->catalogOutputHelper->productAttribute(
+                        $product,
+                        $content->getShortDescription(),
+                        'short_description'
+                    );
+                    $this->isShortDescriptionWasProcessed = false;
                 }
 
                 break;
@@ -113,7 +139,7 @@ class ApplyProductContentPlugin
                     );
                 } elseif ($content->getDescription()
                     && $content->getDescriptionPosition() == ContentInterface::DESCRIPTION_POSITION_UNDER_FULL_DESCRIPTION) {
-                    $outputHtml .= $content->getDescription();
+                    $outputHtml .= $this->filterProvider->getPageFilter()->filter($content->getDescription());
                 }
 
                 break;

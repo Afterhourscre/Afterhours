@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -21,6 +21,11 @@ use Magento\Backend\Model\Menu\Item;
 
 class MarketplaceUrlPlugin
 {
+    /**
+     * @param Item $subject
+     * @param string $url
+     * @return string
+     */
     public function afterGetUrl(Item $subject, $url)
     {
         if ($subject->getId() === 'Mirasvit_Core::marketplace') {

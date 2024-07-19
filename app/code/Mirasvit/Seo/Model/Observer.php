@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -28,11 +28,6 @@ class Observer
      * @var \Mirasvit\Seo\Model\RedirectFactory
      */
     protected $redirectFactory;
-
-    /**
-     * @var \Mirasvit\Seofilter\Model\ConfigFactory
-     */
-    protected $configFactory;
 
     /**
      * @var \Magento\Catalog\Model\LayerFactory
@@ -92,19 +87,9 @@ class Observer
     protected $systemTemplateWorker;
 
     /**
-     * @var \Mirasvit\Core\Helper\Version
-     */
-    protected $mstcoreVersion;
-
-    /**
-     * @var \Magento\Catalog\Helper\Product\Flat
+     * @var mixed
      */
     protected $catalogProductFlat;
-
-    /**
-     * @var \Mirasvit\Core\Helper\File\Storage\Database
-     */
-    protected $coreFileStorageDatabase;
 
     /**
      * @var \Mirasvit\Seo\Helper\Data
@@ -137,11 +122,6 @@ class Observer
     protected $moduleManager;
 
     /**
-     * @var \Magento\Framework\Registry
-     */
-    protected $registry;
-
-    /**
      * @var \Magento\Framework\Filesystem
      */
     protected $filesystem;
@@ -152,7 +132,7 @@ class Observer
     protected $design;
 
     /**
-     * @var \Magento\Framework\App\Resource
+     * @var \Magento\Framework\App\ResourceConnection
      */
     protected $dbResource;
 
@@ -167,14 +147,17 @@ class Observer
     protected $context;
 
     /**
-     * @var \Magento\Framework\ObjectManagerInterface
-     */
-    protected $objectManager;
-
-    /**
      * @var \Magento\Framework\Controller\ResultFactory
      */
     protected $resultFactory;
+    /**
+     * @var \Magento\Framework\App\ActionFlag
+     */
+    private $_actionFlag;
+    /**
+     * @var \Magento\Framework\App\Response\RedirectInterface
+     */
+    private $redirect;
 
     /**
      * @param \Mirasvit\Seo\Model\RedirectFactory               $redirectFactory
@@ -182,14 +165,10 @@ class Observer
      * @param \Mirasvit\Seo\Helper\Data                         $seoData
      * @param \Magento\Framework\App\Request\Http               $request
      * @param \Magento\Framework\Module\Manager                 $moduleManager
-     * @param \Magento\Framework\Registry                       $registry
      * @param \Magento\Framework\View\Element\Template\Context  $context
-     * @param \Magento\Framework\ObjectManagerInterface         $objectManager
-     * @param \Magento\Catalog\Helper\Output                    $catalogOutput
      * @param \Magento\Framework\Controller\ResultFactory       $resultFactory
      * @param \Magento\Framework\App\Response\RedirectInterface $redirect
      * @param \Magento\Framework\App\ActionFlag                 $actionFlag
-     * @param array                                             $data
      */
     public function __construct(
         \Mirasvit\Seo\Model\RedirectFactory $redirectFactory,
@@ -197,15 +176,10 @@ class Observer
         \Mirasvit\Seo\Helper\Data $seoData,
         \Magento\Framework\App\Request\Http $request,
         \Magento\Framework\Module\Manager $moduleManager,
-        \Magento\Framework\Registry $registry,
         \Magento\Framework\View\Element\Template\Context $context,
-        \Magento\Framework\ObjectManagerInterface $objectManager,
-        \Magento\Catalog\Helper\Output $catalogOutput,
         \Magento\Framework\Controller\ResultFactory $resultFactory,
         \Magento\Framework\App\Response\RedirectInterface $redirect,
-        \Magento\Framework\App\ActionFlag $actionFlag,
-
-        array $data = []
+        \Magento\Framework\App\ActionFlag $actionFlag
     ) {
         $this->redirectFactory = $redirectFactory;
         $this->resultFactory   = $resultFactory;
@@ -272,6 +246,7 @@ class Observer
                 $attributeId = $this->config->getAttribute('catalog_product', 'seo_category')->getAttributeId();
                 if ($attributeId) {
                     if ($this->catalogProductFlat->isEnabled()) {
+                        /** @var mixed $attrCollection */
                         $attrCollection = $this->productFactory->create()
                             ->setStoreId($storeId)
                             ->getCollection();
@@ -293,6 +268,7 @@ class Observer
                             }
                         }
                     } else {
+                        /** @var mixed $attrCollection */
                         $attrCollection = $this->productFactory->create()
                             ->setStoreId($storeId)
                             ->getCollection()
@@ -354,17 +330,17 @@ class Observer
         }
     }
 
-    /**
-     * @param string $observer
-     */
-    public function saveProductBefore($observer)
-    {
-        $product = $observer->getProduct();
-        if ($product->getStoreId() == 0
-            //~ && $product->getOrigData('url_key') != $product->getData('url_key')
-
-        ) {
-            $this->systemTemplateWorkerFactory->create()->processProduct($product);
-        }
-    }
+//    /**
+//     * @param string $observer
+//     */
+//    public function saveProductBefore($observer)
+//    {
+//        $product = $observer->getProduct();
+//        if ($product->getStoreId() == 0
+//            //~ && $product->getOrigData('url_key') != $product->getData('url_key')
+//
+//        ) {
+//            $this->systemTemplateWorkerFactory->create()->processProduct($product);
+//        }
+//    }
 }

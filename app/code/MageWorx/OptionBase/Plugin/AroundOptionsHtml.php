@@ -8,7 +8,7 @@ namespace MageWorx\OptionBase\Plugin;
 
 use \Magento\Catalog\Block\Product\View\Options;
 use \Magento\Catalog\Model\Product\Option;
-use \Zend\Stdlib\StringWrapper\MbString;
+use \Laminas\Stdlib\StringWrapper\MbString;
 use MageWorx\OptionBase\Model\Product\Option\AdditionalHtmlData;
 
 /**

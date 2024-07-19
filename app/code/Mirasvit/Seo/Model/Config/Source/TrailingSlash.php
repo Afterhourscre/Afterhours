@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -29,8 +29,8 @@ class TrailingSlash implements ArrayInterface
     {
         return [
             ['value' => 0, 'label' => __('Disabled')],
-            ['value' => Config::TRAILING_SLASH, 'label' => __('Redirect to same page with Trailing Slash')],
-            ['value' => Config::NO_TRAILING_SLASH, 'label' => __('Redirect to same page without Trailing Slash')],
+            ['value' => Config::TRAILING_SLASH, 'label' => __('Redirect to the same page with Trailing Slash')],
+            ['value' => Config::NO_TRAILING_SLASH, 'label' => __('Redirect to the same page without Trailing Slash')],
         ];
     }
 }

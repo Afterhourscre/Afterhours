@@ -1,23 +1,19 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Model\System\Config\Source;
 
 use \Magento\Framework\Option\ArrayInterface;
 
-/**
- * Class RelatedTerms
- */
 class RelatedTerms implements ArrayInterface
 {
-    const DISABLED = 0;
-    const SHOW_ALWAYS = 1;
-    const SHOW_ONLY_WITHOUT_RESULTS = 2;
+    public const DISABLED = 0;
+    public const SHOW_ALWAYS = 1;
+    public const SHOW_ONLY_WITHOUT_RESULTS = 2;
 
     /**
      * @return array

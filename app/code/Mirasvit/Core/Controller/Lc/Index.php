@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -19,27 +19,22 @@ namespace Mirasvit\Core\Controller\Lc;
 
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\RequestInterface;
 use Mirasvit\Core\Model\LicenseFactory;
-use Mirasvit\Core\Model\ModuleFactory;
+use Mirasvit\Core\Service\PackageService;
 
 class Index extends Action
 {
-    /**
-     * @var ModuleFactory
-     */
-    private $moduleFactory;
+    private $packageService;
 
-    /**
-     * @var LicenseFactory
-     */
     private $licenseFactory;
 
     public function __construct(
-        ModuleFactory $moduleFactory,
+        PackageService $packageService,
         LicenseFactory $licenseFactory,
-        Context $context
+        Context        $context
     ) {
-        $this->moduleFactory  = $moduleFactory;
+        $this->packageService = $packageService;
         $this->licenseFactory = $licenseFactory;
 
         parent::__construct($context);
@@ -51,30 +46,64 @@ class Index extends Action
      */
     public function execute()
     {
-        echo '<pre>';
+        $toJson = $this->_request->getParam('json') ? true : false;
 
-        $module = $this->moduleFactory->create();
-        foreach ($module->getInstalledModules() as $moduleName) {
-            $moduleName = str_replace('Mirasvit_', '', $moduleName);
-
-            echo $moduleName;
-
-            $info = $module->getComposerInformation('Mirasvit_' . $moduleName);
-            if ($info) {
-                echo ' ' . $info['version'];
-            }
-
-            $license = $this->licenseFactory->create();
-
-            echo ' ' . $license->load('\\' . $moduleName);
-
-            $license->clear();
-
-            echo ' = ' . $license->getStatus('\\' . $moduleName);
-
-            echo PHP_EOL;
+        if (!$toJson) {
+            echo '<pre>';
         }
 
-        exit;
+        $result = [];
+        foreach ($this->packageService->getPackageList() as $package) {
+            foreach ($package->getModuleList() as $moduleName) {
+                $license = $this->licenseFactory->create();
+
+                [, $name] = explode('_', $moduleName);
+                $license->load('\\' . $name);
+
+                $license->clear();
+
+                $data = [
+                    $moduleName,
+                    $license->load('\\' . $name),
+                    $license->getStatus('\\' . $name),
+                    str_replace($package->getVersion(), '', $package->getVersionTxt()),
+                ];
+
+                $result[] = $data;
+
+                if (!$toJson) {
+                    foreach ($data as $v) {
+                        echo $this->renderVal($v) . "\t";
+                    }
+
+                    echo PHP_EOL;
+                }
+            }
+        }
+
+        if ($toJson) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode($result, JSON_PRETTY_PRINT);
+        }
+    }
+
+    /**
+     * @param string|bool $value
+     *
+     * @return string
+     */
+    private function renderVal($value)
+    {
+        if (is_bool($value)) {
+            $value = $value ? 'T' : 'F';
+        } else {
+            $value = $value ? $value : '_';
+        }
+        $l = 20 - strlen($value);
+        if ($l < 0) {
+            $l = 0;
+        }
+
+        return '[ ' . $value . ' ]' . str_repeat(' ', $l);
     }
 }

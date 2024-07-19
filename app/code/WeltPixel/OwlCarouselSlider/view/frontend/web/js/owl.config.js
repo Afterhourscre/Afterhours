@@ -1,6 +1,5 @@
 var OWL = {
-    init: function () {
-    },
+    init: function () {},
 
     load: function () {
         this.arrows();
@@ -32,11 +31,9 @@ var OWL = {
         if (carouselContainer >= windowWidth) {
             carouselControls.addClass('fullscreen').find('.owl-prev').css({
                 'left': leftPosition
-                //'top': 0
             });
             carouselControls.addClass('fullscreen').find('.owl-next').css({
                 'right': rightPosition
-                //'top': 0
             });
         } else {
             carouselControls.find('.owl-prev').removeClass('fullscreen').removeAttr('style');
@@ -49,6 +46,7 @@ var OWL = {
             jQuery(this).fadeOut('slow');
         });
     },
+
     msieversion: function () {
         var ua = window.navigator.userAgent,
             msie = ua.indexOf("MSIE ");
@@ -66,25 +64,25 @@ var OWL = {
     }
 };
 
-require(['jquery'],
-    function ($) {
-        $(document).ready(function () {
-            OWL.init();
-            OWL.msieversion();
-        });
+require(['jquery'], function ($) {
+    $(document).ready(function () {
+        OWL.init();
+        OWL.msieversion();
+    });
 
-        $(window).load(function () {
-            OWL.load();
-        });
+    $(window).on('load', function () {
+        OWL.load();
+    });
 
-        $(document).ready(function(){
-            OWL.ajaxComplete();
-        });
+    $(document).ready(function () {
+        OWL.ajaxComplete();
+    });
 
-        var reinitTimer;
-        $(window).on('resize', function () {
-            clearTimeout(reinitTimer);
-            reinitTimer = setTimeout(OWL.resize(), 100);
-        });
-    }
-);
+    var reinitTimer;
+    $(window).on('resize', function () {
+        clearTimeout(reinitTimer);
+        reinitTimer = setTimeout(function() {
+            OWL.resize();
+        }, 100);
+    });
+});

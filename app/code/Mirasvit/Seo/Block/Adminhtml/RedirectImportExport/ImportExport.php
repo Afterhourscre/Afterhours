@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -20,6 +20,9 @@ namespace Mirasvit\Seo\Block\Adminhtml\RedirectImportExport;
 class ImportExport extends \Magento\Backend\Block\Widget
 {
 
+    /**
+     * @var string
+     */
     protected $_template = 'redirect/importExport.phtml';
 
     /**
@@ -32,6 +35,9 @@ class ImportExport extends \Magento\Backend\Block\Widget
         $this->setUseContainer(true);
     }
 
+    /**
+     * @return string
+     */
     public function getDownloadUrl()
     {
         return $this->getUrl('*/*/download', ['file' => 'seo_redirect_example']);

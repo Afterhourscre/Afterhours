@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -26,6 +26,10 @@ class GenericButton
      */
     protected $context;
 
+    /**
+     * GenericButton constructor.
+     * @param Context $context
+     */
     public function __construct(
         Context $context
     ) {
@@ -41,7 +45,9 @@ class GenericButton
     }
 
     /**
-     * {@inheritdoc}
+     * @param string $route
+     * @param array $params
+     * @return string
      */
     public function getUrl($route = '', $params = [])
     {

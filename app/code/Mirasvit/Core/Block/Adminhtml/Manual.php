@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -31,5 +31,8 @@ use Magento\Backend\Block\Template;
  */
 class Manual extends Template
 {
+    /**
+     * @var string
+     */
     protected $_template = 'Mirasvit_Core::manual.phtml';
 }

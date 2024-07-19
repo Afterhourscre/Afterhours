@@ -8,7 +8,7 @@ namespace Aheadworks\AdvancedReviews\Ui\Component\Listing\MassAction;
 
 use Magento\Framework\Data\OptionSourceInterface;
 use Magento\Framework\UrlInterface;
-use Zend\Stdlib\JsonSerializable;
+use Laminas\Stdlib\JsonSerializable;
 
 /**
  * Class SourceOptions
@@ -79,7 +79,7 @@ class SourceOptions implements JsonSerializable
      *
      * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         if ($this->options === null) {
             $optionSourceArray = $this->optionSource->toOptionArray();

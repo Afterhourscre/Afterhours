@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -20,7 +20,7 @@ namespace Mirasvit\SeoAutolink\Controller\Adminhtml;
 abstract class Import extends \Magento\Backend\App\Action
 {
     /**
-     * @var \Magento\Framework\App\Resource
+     * @var \Magento\Framework\App\ResourceConnection
      */
     protected $resource;
 
@@ -52,10 +52,11 @@ abstract class Import extends \Magento\Backend\App\Action
     protected $storeManager;
 
     /**
-     * @param \Magento\Framework\App\ResourceConnection        $resource
-     * @param \Magento\Framework\Filesystem                    $filesystem
+     * @param \Magento\Framework\App\ResourceConnection $resource
+     * @param \Magento\Framework\Filesystem $filesystem
      * @param \Magento\MediaStorage\Model\File\UploaderFactory $fileUploaderFactory
-     * @param \Magento\Backend\App\Action\Context              $context
+     * @param \Magento\Backend\App\Action\Context $context
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      */
     public function __construct(
         \Magento\Framework\App\ResourceConnection $resource,

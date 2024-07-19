@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Api\Config;
 
@@ -24,47 +25,20 @@ interface AlternateConfigInterface
     const X_DEFAULT_AUTOMATICALLY = 'AUTOMATICALLY';
     const AMASTY_XLANDING         = 'amasty_xlanding_page_view'; //amasty_xlanding page
 
-    /**
-     * @param int|\Magento\Store\Model\Store $store
-     *
-     * @return int
-     */
-    public function getAlternateHreflang($store);
+    public function getAlternateHreflang(int $storeId): int;
 
     /**
-     * @param int|\Magento\Store\Model\Store $store
-     * @param bool                           $hreflang
-     *
      * @return array|string
      */
-    public function getAlternateManualConfig($store, $hreflang);
+    public function getAlternateManualConfig(int $storeId, bool $hreflang = false);
 
-    /**
-     * @param array $storeUrls
-     *
-     * @return string
-     */
-    public function getAlternateManualXDefault($storeUrls);
+    public function getAlternateManualXDefault(array $storeUrls): ?string;
 
-    /**
-     * @return bool
-     */
-    public function isHreflangLocaleCodeAddAutomatical();
+    public function isHreflangLocaleCodeAddAutomatical(): bool;
 
-    /**
-     * @return bool
-     */
-    public function isHreflangCutCategoryAdditionalData();
+    public function isHreflangCutCategoryAdditionalData(): bool;
 
-    /**
-     * @return string|int
-     */
-    public function getXDefault();
+    public function getXDefault(): string;
 
-    /**
-     * @param int|\Magento\Store\Model\Store $store
-     *
-     * @return string
-     */
-    public function getHreflangLocaleCode($store);
+    public function getHreflangLocaleCode(int $storeId): string;
 }

@@ -7,11 +7,11 @@
 namespace Aheadworks\RewardPoints\Model\Filters\Transaction;
 
 use Aheadworks\RewardPoints\Api\Data\TransactionInterface;
-
+use Laminas\Filter\FilterInterface;
 /**
  * Class Aheadworks\RewardPoints\Model\Filters\Transaction\CustomerSelection
  */
-class CustomerSelection implements \Zend_Filter_Interface
+class CustomerSelection implements FilterInterface
 {
     /**#@+
      * Constant for default field name for customer selection

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -26,6 +26,23 @@ use Mirasvit\Seo\Api\Service\CompatibilityServiceInterface;
 
 abstract class CanonicalRewrite extends Action
 {
+    /**
+     * @var Context
+     */
+    protected $context;
+    /**
+     * @var Registry
+     */
+    protected $registry;
+    /**
+     * @var CanonicalRewriteRepositoryInterface
+     */
+    protected $canonicalRewriteRepository;
+    /**
+     * @var CompatibilityServiceInterface
+     */
+    protected $compatibilityService;
+
     /**
      * @param CompatibilityServiceInterface $compatibilityService
      * @param Registry $registry

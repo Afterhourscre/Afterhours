@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo-filter
- * @version   1.0.16
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   1.3.22
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 $registration = dirname(dirname(dirname(__DIR__))) . '/vendor/mirasvit/module-seo/src/SeoFilter/registration.php';
 if (file_exists($registration)) {
     # module was already installed via composer

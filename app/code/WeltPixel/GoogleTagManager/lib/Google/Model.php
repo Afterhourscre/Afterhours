@@ -249,50 +249,50 @@ class Model implements \ArrayAccess
     }
   }
 
-  public function offsetExists($offset)
-  {
-    return isset($this->$offset) || isset($this->modelData[$offset]);
-  }
-
-  public function offsetGet($offset)
-  {
-    return isset($this->$offset) ?
-        $this->$offset :
-        $this->__get($offset);
-  }
-
-  public function offsetSet($offset, $value)
-  {
-    if (property_exists($this, $offset)) {
-      $this->$offset = $value;
-    } else {
-      $this->modelData[$offset] = $value;
-      $this->processed[$offset] = true;
+   public function offsetExists($offset): bool
+    {
+        return isset($this->$offset) || isset($this->modelData[$offset]);
     }
-  }
 
-  public function offsetUnset($offset)
-  {
+  public function offsetGet(mixed $offset): mixed
+    {
+        return isset($this->$offset) ?
+            $this->$offset :
+            $this->__get($offset);
+    }
+
+ public function offsetSet($offset, $value): void
+{
+    if (property_exists($this, $offset)) {
+        $this->$offset = $value;
+    } else {
+        $this->modelData[$offset] = $value;
+        $this->processed[$offset] = true;
+    }
+}
+
+ public function offsetUnset($offset): void
+{
     unset($this->modelData[$offset]);
-  }
-
+}
+    
   protected function keyType($key)
-  {
-    return $key . "Type";
-  }
+    {
+        return $key . "Type";
+    }
 
-  protected function dataType($key)
-  {
-    return $key . "DataType";
-  }
+    protected function dataType($key)
+    {
+        return $key . "DataType";
+    }
 
-  public function __isset($key)
-  {
-    return isset($this->modelData[$key]);
-  }
+    public function __isset($key)
+    {
+        return isset($this->modelData[$key]);
+    }
 
-  public function __unset($key)
-  {
-    unset($this->modelData[$key]);
-  }
+    public function __unset($key)
+    {
+        unset($this->modelData[$key]);
+    }
 }

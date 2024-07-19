@@ -9,42 +9,38 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoMarkup\Model\Config;
 
-use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Store\Model\ScopeInterface as ScopeInterface;
+use Mirasvit\SeoMarkup\Model\Config;
 
-class TwitterConfig
+class TwitterConfig extends Config
 {
     const CARD_TYPE_SMALL_IMAGE = 1;
     const CARD_TYPE_LARGE_IMAGE = 2;
 
-    private $scopeConfig;
-
-    public function __construct(
-        ScopeConfigInterface $scopeConfig
-    ) {
-        $this->scopeConfig = $scopeConfig;
+    public function getCardType(?int $storeId = null): int
+    {
+        return (int)$this->scopeConfig->getValue(
+            'seo/seo_markup/twitter/card_type',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return string
-     */
-    public function getCardType()
+    public function getUsername(?int $storeId = null): ?string
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/twitter/card_type');
-    }
-
-    /**
-     * @return bool
-     */
-    public function getUsername()
-    {
-        return $this->scopeConfig->getValue('seo/seo_markup/twitter/username');
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/twitter/username',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 }

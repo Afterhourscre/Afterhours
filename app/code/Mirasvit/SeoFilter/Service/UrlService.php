@@ -9,16 +9,19 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo-filter
- * @version   1.0.16
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   1.3.22
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoFilter\Service;
 
+use Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Registry;
+use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Mirasvit\SeoFilter\Model\Context;
 
@@ -28,40 +31,21 @@ class UrlService
      * Cache for category rewrite suffix
      * @var array
      */
-    protected $categoryUrlSuffix = [];
+    private $categoryUrlSuffix = [];
 
-    /**
-     * @var ScopeConfigInterface
-     */
     private $scopeConfig;
 
-    /**
-     * @var StoreManagerInterface
-     */
     private $storeManager;
 
-    /**
-     * @var Registry
-     */
     private $registry;
 
-    /**
-     * @var Context
-     */
     private $context;
 
-    /**
-     * UrlService constructor.
-     * @param StoreManagerInterface $storeManager
-     * @param ScopeConfigInterface $scopeConfig
-     * @param Registry $registry
-     * @param Context $context
-     */
     public function __construct(
         StoreManagerInterface $storeManager,
-        ScopeConfigInterface $scopeConfig,
-        Registry $registry,
-        Context $context
+        ScopeConfigInterface  $scopeConfig,
+        Registry              $registry,
+        Context               $context
     ) {
         $this->storeManager = $storeManager;
         $this->scopeConfig  = $scopeConfig;
@@ -69,23 +53,17 @@ class UrlService
         $this->context      = $context;
     }
 
-    /**
-     * Retrieve category rewrite suffix for store
-     *
-     * @param null|int $storeId
-     *
-     * @return string
-     */
-    public function getCategoryUrlSuffix($storeId = null)
+
+    public function getCategoryUrlSuffix(int $storeId = null): string
     {
         if ($storeId === null) {
             $storeId = $this->storeManager->getStore()->getId();
         }
 
         if (!isset($this->categoryUrlSuffix[$storeId])) {
-            $this->categoryUrlSuffix[$storeId] = $this->scopeConfig->getValue(
-                \Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator::XML_PATH_CATEGORY_URL_SUFFIX,
-                \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $this->categoryUrlSuffix[$storeId] = (string)$this->scopeConfig->getValue(
+                CategoryUrlPathGenerator::XML_PATH_CATEGORY_URL_SUFFIX,
+                ScopeInterface::SCOPE_STORE,
                 $storeId
             );
         }
@@ -93,11 +71,18 @@ class UrlService
         return $this->categoryUrlSuffix[$storeId];
     }
 
-    /**
-     * @param string $url
-     * @return string|string[]
-     */
-    public function trimCategorySuffix($url)
+    public function getBrandUrlSuffix(int $storeId = null): string
+    {
+        if ($storeId === null) {
+            $storeId = $this->storeManager->getStore()->getId();
+        }
+
+        return (int)$this->scopeConfig->getValue('brand/general/url_suffix_category', ScopeInterface::SCOPE_STORE, $storeId) === 1
+            ? $this->getCategoryUrlSuffix()
+            : (string)$this->scopeConfig->getValue('brand/general/url_suffix', ScopeInterface::SCOPE_STORE, $storeId);
+    }
+
+    public function trimCategorySuffix(string $url): string
     {
         $suffix = $this->getCategoryUrlSuffix();
 
@@ -117,12 +102,7 @@ class UrlService
         return $this->registry->registry('current_category');
     }
 
-    /**
-     * @param bool|string $url
-     *
-     * @return string
-     */
-    public function getQueryParams($url = false)
+    public function getQueryParams(string $url = ''): string
     {
         $currentUrl = $this->context->getUrlBuilder()->getCurrentUrl();
 
@@ -133,13 +113,47 @@ class UrlService
         return strstr($currentUrl, '?', false);
     }
 
-    /**
-     * @param string $url
-     *
-     * @return string
-     */
-    public function addUrlParams($url)
+    public function getGetParams(): array
     {
-        return $url . $this->getQueryParams();
+        $currentUrl = (string)$this->context->getUrlBuilder()->getCurrentUrl();
+
+        if (parse_url($currentUrl, PHP_URL_QUERY) === null) {
+            return [];
+        }
+
+        $params = [];
+        parse_str((string)parse_url($currentUrl, PHP_URL_QUERY), $params);
+
+        return $params;
+    }
+
+    public function addUrlParams(string $url): string
+    {
+        return $this->mergeGetParams(
+            $url,
+            (string)$this->context->getUrlBuilder()->getCurrentUrl()
+        );
+    }
+
+    /** $urlA + GET($urlA) + GET($urlB) */
+    private function mergeGetParams(string $urlA, string $urlB): string
+    {
+        $aParams = [];
+        parse_str((string)parse_url($urlA, PHP_URL_QUERY), $aParams);
+
+        $bParams = [];
+        parse_str((string)parse_url($urlB, PHP_URL_QUERY), $bParams);
+
+        foreach ($aParams as $key => $value) {
+            $bParams[$key] = $value;
+        }
+
+        $query = '';
+
+        if (count($bParams)) {
+            $query = '?' . http_build_query($bParams);
+        }
+
+        return strtok($urlA, '?') . $query;
     }
 }

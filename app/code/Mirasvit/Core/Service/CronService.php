@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -26,50 +26,30 @@ use Magento\Framework\Message\ManagerInterface as MessageManagerInterface;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Mirasvit\Core\Api\Service\CronServiceInterface;
+use Magento\Framework\UrlInterface;
 
 class CronService implements CronServiceInterface
 {
-    const LIMIT_HOURS = 6;
+    const LIMIT_HOURS   = 6;
+    const LAST_JOBS_QTY = 5;
 
-    /**
-     * @var ScheduleCollectionFactory
-     */
     private $scheduleCollectionFactory;
 
-    /**
-     * @var DateTime
-     */
     private $dateTime;
 
-    /**
-     * @var MessageManagerInterface
-     */
     private $messageManager;
 
-    /**
-     * @var CronConfig
-     */
     private $cronConfig;
 
-    /**
-     * @var ScopeConfigInterface
-     */
     private $scopeConfig;
 
-    /**
-     * @var TimezoneInterface
-     */
     private $timezoneConverter;
 
-    /**
-     * @var Schedule
-     */
     private $schedule;
 
-    /**
-     * @var DateTimeFactory
-     */
     private $dateTimeFactory;
+
+    protected $urlBuilder;
 
     public function __construct(
         ScheduleCollectionFactory $scheduleCollectionFactory,
@@ -79,6 +59,7 @@ class CronService implements CronServiceInterface
         ScopeConfigInterface $scopeConfig,
         TimezoneInterface $timezoneConverter,
         Schedule $schedule,
+        UrlInterface $urlBuilder,
         DateTimeFactory $dateTimeFactory
     ) {
         $this->scheduleCollectionFactory = $scheduleCollectionFactory;
@@ -88,6 +69,7 @@ class CronService implements CronServiceInterface
         $this->scopeConfig               = $scopeConfig;
         $this->timezoneConverter         = $timezoneConverter;
         $this->schedule                  = $schedule;
+        $this->urlBuilder                = $urlBuilder;
         $this->dateTimeFactory           = $dateTimeFactory;
     }
 
@@ -111,6 +93,10 @@ class CronService implements CronServiceInterface
         $jobsToCheck = [];
         // checking only jobs with time interval between running < self::LIMIT_HOURS hours
         foreach ($jobCodesToCheck as $code) {
+            if ($this->isLastJobsFailed($code)) {
+                return false;
+            }
+
             $job = $this->getSuccessfulJobsCollection()
                 ->addFieldToFilter('job_code', $code)
                 ->getFirstItem();
@@ -120,11 +106,18 @@ class CronService implements CronServiceInterface
             }
         }
 
+        if (!count($jobsToCheck)) {
+            // in case we checking only one job which not running
+            foreach ($jobCodesToCheck as $jobCode) {
+                if ($this->getUnfinishedJobsByCode($jobCode)->getSize() > 1) {
+                    return false;
+                }
+            }
 
-
-        // cron is working but our jobs wasn't generated yet (fresh installation)
-        if ($this->isAnyCronRunning() && !count($jobsToCheck)) {
-            return true;
+            // cron is working but our jobs wasn't generated yet (fresh installation)
+            if ($this->isAnyCronRunning()) {
+                return true;
+            }
         }
 
         /** @var Schedule $job */
@@ -163,8 +156,7 @@ class CronService implements CronServiceInterface
 
             if (count($notRunningJobs) == count($jobCodes)) {
                 $message .= __(
-                    'Cron for magento is not running.'
-                    . ' To setup a cron job follow the <a target="_blank" href="%1">link</a>',
+                    'Cron for Magento is not running. To setup a cron job, follow the link %1',
                     'http://devdocs.magento.com/guides/v2.0/config-guide/cli/config-cli-subcommands-cron.html'
                 );
             } else {
@@ -176,7 +168,13 @@ class CronService implements CronServiceInterface
                 );
             }
 
-            $this->messageManager->addError($message);
+            $this->messageManager->addComplexErrorMessage(
+                'mstCronMessage',
+                [
+                    'message' => $message,
+                    'url' => $this->urlBuilder->getUrl('mstcore/cron'),
+                ]
+            );
         }
     }
 
@@ -185,6 +183,7 @@ class CronService implements CronServiceInterface
      */
     private function isAnyCronRunning()
     {
+        /** @var \Magento\Cron\Model\Schedule $schedule */
         $schedule = $this->getSuccessfulJobsCollection()->getFirstItem();
 
         return $schedule->getId() ? $this->isScheduleInTimeFrame($schedule) : false;
@@ -197,7 +196,7 @@ class CronService implements CronServiceInterface
      */
     private function isScheduleInTimeFrame(Schedule $schedule)
     {
-        $jobTimestamp = strtotime($schedule->getExecutedAt()); //in store timezone
+        $jobTimestamp = strtotime($schedule->getExecutedAt() ? $schedule->getExecutedAt() : $schedule->getFinishedAt()); //in store timezone
         $timestamp    = strtotime($this->dateTime->gmtDate()); //in store timezone
 
         if (abs($timestamp - $jobTimestamp) > self::LIMIT_HOURS * 60 * 60) {
@@ -222,6 +221,47 @@ class CronService implements CronServiceInterface
     }
 
     /**
+     * @param string $jobCode
+     *
+     * @return \Magento\Cron\Model\ResourceModel\Schedule\Collection
+     */
+    private function getUnfinishedJobsByCode($jobCode)
+    {
+        $collection = $this->scheduleCollectionFactory->create();
+        $collection
+            ->addFieldToFilter('status', ['neq' => 'success'])
+            ->addFieldToFilter('job_code', $jobCode)
+            ->setOrder('scheduled_at', 'desc')
+            ->setPageSize(1);
+
+        return $collection;
+    }
+
+    /**
+     * @param string $jobCode
+     *
+     * @return bool
+     */
+    private function isLastJobsFailed($jobCode)
+    {
+        $collection = $this->scheduleCollectionFactory->create();
+        $collection
+            ->addFieldToFilter('job_code', $jobCode)
+            ->setOrder('executed_at', 'desc')
+            ->setPageSize(self::LAST_JOBS_QTY);
+
+        $failedJobsCount = 0;
+        /** @var \Magento\Cron\Model\Schedule $job */
+        foreach ($collection as $job) {
+            if ($job->getStatus() == 'error') {
+                $failedJobsCount++;
+            }
+        }
+
+        return $failedJobsCount == self::LAST_JOBS_QTY;
+    }
+
+    /**
      * @param string $moduleName
      *
      * @return array
@@ -233,7 +273,6 @@ class CronService implements CronServiceInterface
         $moduleNamespace = str_replace("_", "\\", $moduleName);
 
         foreach ($this->cronConfig->getJobs() as $group) {
-
             $filtered = array_filter(
                 $group,
                 function ($params) use ($moduleNamespace) {
@@ -271,7 +310,7 @@ class CronService implements CronServiceInterface
             $hours = $expressionArray[1];
 
             $configTimeZone = $this->timezoneConverter->getConfigTimezone();
-            $storeDateTime  = $this->dateTimeFactory->create(null, new \DateTimeZone($configTimeZone));
+            $storeDateTime  = $this->dateTimeFactory->create('now', new \DateTimeZone($configTimeZone));
 
             //we check last self::LIMIT_HOURS hours
             for ($limit = 0; $limit <= self::LIMIT_HOURS; $limit++) {
@@ -296,7 +335,7 @@ class CronService implements CronServiceInterface
     {
         foreach ($this->cronConfig->getJobs() as $group) {
             if (array_key_exists($jobCode, $group)) {
-                return isset($group[$jobCode]['schedule'])
+                return array_key_exists('schedule', $group[$jobCode])
                     ? $group[$jobCode]['schedule']
                     : $this->scopeConfig->getValue(
                         $group[$jobCode]['config_path'],

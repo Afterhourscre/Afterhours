@@ -56,6 +56,7 @@
                     <item name="formElement" xsi:type="string">input</item>
                     <item name="validation" xsi:type="array">
                         <item name="required-entry" xsi:type="boolean">true</item>
+                        <item name="validate-no-html-tags" xsi:type="boolean">true</item>
                     </item>
                     <item name="additionalClasses" xsi:type="string">admin__field-note</item>
                     <item name="additionalInfo" xsi:type="string"><![CDATA[
@@ -94,6 +95,9 @@
                     <item name="label" xsi:type="string" translate="true">Sort order</item>
                     <item name="dataType" xsi:type="string">text</item>
                     <item name="formElement" xsi:type="string">input</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-no-html-tags" xsi:type="boolean">true</item>
+                    </item>
                 </item>
             </argument>
         </field>
@@ -132,6 +136,9 @@
                     <item name="dataType" xsi:type="string">text</item>
                     <item name="formElement" xsi:type="string">textarea</item>
                     <item name="additionalClasses" xsi:type="string">mst-seo-content__global-template-syntax</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-no-html-tags" xsi:type="boolean">true</item>
+                    </item>
                 </item>
             </argument>
         </field>
@@ -143,6 +150,9 @@
                     <item name="dataType" xsi:type="string">text</item>
                     <item name="formElement" xsi:type="string">textarea</item>
                     <item name="additionalClasses" xsi:type="string">mst-seo-content__global-template-syntax</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-no-html-tags" xsi:type="boolean">true</item>
+                    </item>
                 </item>
             </argument>
         </field>
@@ -154,6 +164,24 @@
                     <item name="dataType" xsi:type="string">text</item>
                     <item name="formElement" xsi:type="string">textarea</item>
                     <item name="additionalClasses" xsi:type="string">mst-seo-content__global-template-syntax</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-no-html-tags" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+
+        <field name="meta_robots">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Mirasvit\SeoContent\Ui\Rewrite\Source\MetaRobotsSource</item>
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" translate="true" xsi:type="string">Robots Meta Header</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="elementTmpl" xsi:type="string">ui/grid/filters/elements/ui-select</item>
+                    <item name="component" xsi:type="string">Magento_Ui/js/form/element/ui-select</item>
+                    <item name="disableLabel" xsi:type="boolean">true</item>
+                    <item name="multiple" xsi:type="boolean">false</item>
                 </item>
             </argument>
         </field>
@@ -209,6 +237,9 @@
                         <item name="notice" xsi:type="string"><![CDATA[
                             Block template
                         ]]></item>
+                        <item name="validation" xsi:type="array">
+                            <item name="validate-no-html-tags" xsi:type="boolean">true</item>
+                        </item>
                     </item>
                 </argument>
             </field>
@@ -219,8 +250,11 @@
                 <item name="config" xsi:type="array">
                     <item name="label" xsi:type="string" translate="true">SEO description</item>
                     <item name="dataType" xsi:type="string">text</item>
-                    <item name="formElement" xsi:type="string">textarea</item>
-                    <item name="additionalClasses" xsi:type="string">mst-seo-content__global-template-syntax</item>
+                    <item name="formElement" xsi:type="string">wysiwyg</item>
+                    <item name="wysiwyg" xsi:type="boolean">true</item>
+                    <item name="wysiwygConfigData" xsi:type="array">
+                        <item name="is_pagebuilder_enabled" xsi:type="boolean">true</item>
+                    </item>
                     <item name="notice" xsi:type="string"><![CDATA[
                         Will be added in position which you can configure in "SEO description position"
                         and "Template for adding SEO description" field or to "SEO description" widget.
@@ -230,5 +264,5 @@
         </field>
     </fieldset>
 
-    <container class="Mirasvit\SeoContent\Ui\Component\TemplateSyntaxComponent" />
+    <container class="Mirasvit\SeoContent\Ui\Component\TemplateSyntaxComponent"/>
 </form>

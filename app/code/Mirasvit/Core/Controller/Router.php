@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -48,6 +48,13 @@ class Router implements RouterInterface
      */
     protected $response;
 
+    /**
+     * Router constructor.
+     * @param ActionFactory $actionFactory
+     * @param EventManagerInterface $eventManager
+     * @param ResponseInterface $response
+     * @param UrlRewriteHelperInterface $urlRewrite
+     */
     public function __construct(
         ActionFactory $actionFactory,
         EventManagerInterface $eventManager,
@@ -103,8 +110,8 @@ class Router implements RouterInterface
                 ->setAlias(Url::REWRITE_REQUEST_PATH_ALIAS, $identifier);
 
             return $this->actionFactory->create(
-                'Magento\Framework\App\Action\Forward',
-                ['request' => $request]
+                'Magento\Framework\App\Action\Forward'
+//                ['request' => $request]
             );
         }
 

@@ -39,14 +39,19 @@ class ImageBuilder extends \Magento\Catalog\Block\Product\ImageBuilder
         parent::__construct($helperFactory, $imageFactory);
     }
 
-
     /**
      * Create image block
      *
+     * @param \Magento\Catalog\Model\Product|null $product
+     * @param string|null $imageId
+     * @param array|null $attributes
      * @return \Magento\Catalog\Block\Product\Image
      */
-    public function create()
-    {
+    public function create(
+        ?\Magento\Catalog\Model\Product $product = null,
+        ?string $imageId = null,
+        ?array $attributes = null
+    ) {
         $hoverImageIds = [];
 
         /** Check if owlcarousel's hover is enabled */
@@ -64,12 +69,12 @@ class ImageBuilder extends \Magento\Catalog\Block\Product\ImageBuilder
         }
 
         if (empty($hoverImageIds) && !$this->isLazyLoadEnabled() && !$this->lazyLoadingHelper->isEnabled()) {
-            return parent::create();
+            return parent::create($product, $imageId, $attributes);
         }
 
         /** @var \Magento\Catalog\Helper\Image $helper */
         $helper = $this->helperFactory->create()
-            ->init($this->product, $this->imageId);
+            ->init($product, $imageId);
 
         $template = $helper->getFrame()
             ? 'WeltPixel_CategoryPage::product/image.phtml'
@@ -93,10 +98,10 @@ class ImageBuilder extends \Magento\Catalog\Block\Product\ImageBuilder
             ],
         ];
 
-        if (in_array($this->imageId, $hoverImageIds)) {
+        if (in_array($imageId, $hoverImageIds)) {
             /** @var \Magento\Catalog\Helper\Image $helper */
             $hoverHelper = $this->helperFactory->create()
-                ->init($this->product, $this->imageId . '_hover')->resize($helper->getWidth(), $helper->getHeight());
+                ->init($product, $imageId . '_hover')->resize($helper->getWidth(), $helper->getHeight());
 
             $hoverImageUrl = $hoverHelper->getUrl();
             $placeHolderUrl =  $hoverHelper->getDefaultPlaceholderUrl();
@@ -115,7 +120,6 @@ class ImageBuilder extends \Magento\Catalog\Block\Product\ImageBuilder
         if ($this->isOwlCarouselEnabled()) {
             $data['data']['owlcarousel'] = true;
         }
-
 
         return $this->imageFactory->create($data);
     }
@@ -161,4 +165,16 @@ class ImageBuilder extends \Magento\Catalog\Block\Product\ImageBuilder
         return !empty($result) ? implode(' ', $result) : '';
     }
 
+    /**
+     * Retrieve image ratio
+     *
+     * @param \Magento\Catalog\Helper\Image $helper
+     * @return float|null
+     */
+    protected function getRatio($helper)
+    {
+        $width = $helper->getWidth();
+        $height = $helper->getHeight();
+        return $width && $height ? $width / $height : null;
+    }
 }

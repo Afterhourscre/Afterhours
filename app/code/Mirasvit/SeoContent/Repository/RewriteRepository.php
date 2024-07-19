@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -25,12 +25,27 @@ use Mirasvit\SeoContent\Model\ResourceModel\Rewrite\CollectionFactory;
 
 class RewriteRepository implements RewriteRepositoryInterface
 {
+    /**
+     * @var RewriteFactory
+     */
     private $factory;
 
+    /**
+     * @var CollectionFactory
+     */
     private $collectionFactory;
 
+    /**
+     * @var EntityManager
+     */
     private $entityManager;
 
+    /**
+     * RewriteRepository constructor.
+     * @param RewriteFactory $factory
+     * @param CollectionFactory $collectionFactory
+     * @param EntityManager $entityManager
+     */
     public function __construct(
         RewriteFactory $factory,
         CollectionFactory $collectionFactory,
@@ -41,6 +56,9 @@ class RewriteRepository implements RewriteRepositoryInterface
         $this->entityManager = $entityManager;
     }
 
+    /**
+     * @return RewriteInterface[]|\Mirasvit\SeoContent\Model\ResourceModel\Rewrite\Collection
+     */
     public function getCollection()
     {
         return $this->collectionFactory->create();
@@ -54,6 +72,10 @@ class RewriteRepository implements RewriteRepositoryInterface
         return $this->factory->create();
     }
 
+    /**
+     * @param int $id
+     * @return bool|false|RewriteInterface|\Mirasvit\SeoContent\Model\Rewrite|mixed
+     */
     public function get($id)
     {
         $rewrite = $this->create();
@@ -66,11 +88,21 @@ class RewriteRepository implements RewriteRepositoryInterface
         return $rewrite;
     }
 
+    /**
+     * @param RewriteInterface $rewrite
+     * @return RewriteInterface|object
+     * @throws \Exception
+     */
     public function save(RewriteInterface $rewrite)
     {
         return $this->entityManager->save($rewrite);
     }
 
+    /**
+     * @param RewriteInterface $rewrite
+     * @return bool
+     * @throws \Exception
+     */
     public function delete(RewriteInterface $rewrite)
     {
         $this->entityManager->delete($rewrite);

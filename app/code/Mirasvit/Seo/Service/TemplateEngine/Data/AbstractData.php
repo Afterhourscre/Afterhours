@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\TemplateEngine\Data;
 
@@ -21,21 +22,9 @@ use Magento\Framework\DataObject;
 
 abstract class AbstractData extends DataObject
 {
-    /**
-     * @return string
-     */
-    abstract public function getTitle();
+    abstract public function getTitle(): string;
 
-    /**
-     * @return array
-     */
-    abstract public function getVariables();
+    abstract public function getVariables(): array;
 
-    /**
-     * @param string $attribute
-     * @param array  $additionalData
-     *
-     * @return string|false
-     */
-    abstract public function getValue($attribute, $additionalData = []);
+    abstract public function getValue(string $attribute, array $additionalData = []): ?string;
 }

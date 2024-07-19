@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -20,6 +20,7 @@ namespace Mirasvit\SeoContent\Controller\Adminhtml\Template;
 use Mirasvit\Core\Service\CompatibilityService;
 use Mirasvit\SeoContent\Api\Data\TemplateInterface;
 use Mirasvit\SeoContent\Controller\Adminhtml\Template;
+use Mirasvit\Core\Service\SerializeService;
 
 class Save extends Template
 {
@@ -42,30 +43,11 @@ class Save extends Template
 
                 return $resultRedirect->setPath('*/*/');
             }
-            
+
             $data = $this->filter($data, $model);
             $data = $this->contentService->escapeJS($data);
 
-            $model->setRuleType($data[TemplateInterface::RULE_TYPE])
-                ->setName($data[TemplateInterface::NAME])
-                ->setIsActive($data[TemplateInterface::IS_ACTIVE])
-                ->setSortOrder($data[TemplateInterface::SORT_ORDER])
-                ->setTitle($data[TemplateInterface::TITLE])
-                ->setMetaTitle($data[TemplateInterface::META_TITLE])
-                ->setMetaKeywords($data[TemplateInterface::META_KEYWORDS])
-                ->setMetaDescription($data[TemplateInterface::META_DESCRIPTION])
-                ->setDescription($data[TemplateInterface::DESCRIPTION])
-                ->setShortDescription($data[TemplateInterface::SHORT_DESCRIPTION])
-                ->setFullDescription($data[TemplateInterface::FULL_DESCRIPTION])
-                ->setDescriptionPosition($data[TemplateInterface::DESCRIPTION_POSITION])
-                ->setDescriptionTemplate($data[TemplateInterface::DESCRIPTION_TEMPLATE])
-                ->setCategoryDescription($data[TemplateInterface::CATEGORY_DESCRIPTION])
-                ->setCategoryImage($data[TemplateInterface::CATEGORY_IMAGE])
-                ->setStopRuleProcessing($data[TemplateInterface::STOP_RULE_PROCESSING])
-                ->setApplyForChildCategories($data[TemplateInterface::APPLY_FOR_CHILD_CATEGORIES])
-                ->setStoreIds($data[TemplateInterface::STORE_IDS])
-                ->setConditionsSerialized($data[TemplateInterface::CONDITIONS_SERIALIZED])
-                ->setApplyForHomepage($data[TemplateInterface::APPLY_FOR_HOMEPAGE]);
+            $model = $this->fillModelWithData($model, $data);
 
             try {
                 $this->templateRepository->save($model);
@@ -96,7 +78,7 @@ class Save extends Template
      *
      * @return array
      */
-    private function filter(array $data, TemplateInterface $template)
+    protected function filter(array $data, TemplateInterface $template)
     {
         $rule = $template->getRule();
 
@@ -108,11 +90,7 @@ class Save extends Template
             $conditions = $rule->getConditions()->asArray();
         }
 
-        if (CompatibilityService::is21()) {
-            $conditions = $this->serializer->serialize($conditions);
-        } else {
-            $conditions = \Zend_Json::encode($conditions);
-        }
+        $conditions = SerializeService::encode($conditions);
 
         $data[TemplateInterface::CONDITIONS_SERIALIZED] = $conditions;
 
@@ -128,5 +106,32 @@ class Save extends Template
         }
 
         return $data;
+    }
+
+    protected function fillModelWithData(TemplateInterface $model, array $data): TemplateInterface
+    {
+        $model->setRuleType((int)$data[TemplateInterface::RULE_TYPE])
+            ->setName($data[TemplateInterface::NAME])
+            ->setIsActive((bool)$data[TemplateInterface::IS_ACTIVE])
+            ->setSortOrder((int)$data[TemplateInterface::SORT_ORDER])
+            ->setTitle($data[TemplateInterface::TITLE])
+            ->setMetaTitle($data[TemplateInterface::META_TITLE])
+            ->setMetaKeywords($data[TemplateInterface::META_KEYWORDS])
+            ->setMetaDescription($data[TemplateInterface::META_DESCRIPTION])
+            ->setDescription($data[TemplateInterface::DESCRIPTION])
+            ->setShortDescription($data[TemplateInterface::SHORT_DESCRIPTION])
+            ->setFullDescription($data[TemplateInterface::FULL_DESCRIPTION])
+            ->setDescriptionPosition((int)$data[TemplateInterface::DESCRIPTION_POSITION])
+            ->setDescriptionTemplate($data[TemplateInterface::DESCRIPTION_TEMPLATE])
+            ->setCategoryDescription($data[TemplateInterface::CATEGORY_DESCRIPTION])
+            ->setCategoryImage($data[TemplateInterface::CATEGORY_IMAGE])
+            ->setStopRuleProcessing((bool)$data[TemplateInterface::STOP_RULE_PROCESSING])
+            ->setApplyForChildCategories((bool)$data[TemplateInterface::APPLY_FOR_CHILD_CATEGORIES])
+            ->setStoreIds($data[TemplateInterface::STORE_IDS])
+            ->setConditionsSerialized($data[TemplateInterface::CONDITIONS_SERIALIZED])
+            ->setApplyForHomepage((bool)$data[TemplateInterface::APPLY_FOR_HOMEPAGE])
+            ->setApplyForAllBrandsPage((bool)$data[TemplateInterface::APPLY_FOR_ALL_BRANDS_PAGE]);
+
+        return $model;
     }
 }

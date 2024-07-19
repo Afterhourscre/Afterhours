@@ -4,8 +4,8 @@
  * See MS-LICENSE.txt for license details.
  */
 namespace Mageside\MultipleCustomForms\Model\CustomForm\Field\Validator;
-
-class Email extends \Zend_Validate_EmailAddress implements \Magento\Framework\Validator\ValidatorInterface
+use Laminas\Validator\EmailAddress;
+class Email extends EmailAddress implements \Magento\Framework\Validator\ValidatorInterface
 {
     /**
      * EmailAddress constructor.

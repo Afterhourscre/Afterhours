@@ -120,6 +120,10 @@ class DateTime
      */
     private function date($date = null, $locale = null, $useTimezone = false)
     {
+        if ($date === null) {
+            return $this->timezone->date(null, $locale, $useTimezone);
+        }
+
         return $this->timezone->date(strtotime($date), $locale, $useTimezone);
     }
 }

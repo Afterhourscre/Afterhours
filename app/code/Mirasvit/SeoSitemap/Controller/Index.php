@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -32,12 +32,24 @@ abstract class Index extends Action
      * @var \Magento\Framework\Controller\ResultFactory
      */
     protected $resultFactory;
+    /**
+     * @var SeoSitemapUrlService
+     */
+    protected $seoSitemapUrlService;
+    /**
+     * @var \Magento\Framework\App\ResponseInterface
+     */
+    protected $response;
+    /**
+     * @var \Magento\Framework\App\RequestInterface
+     */
+    protected $request;
 
     /**
      * Index constructor.
      *
-     * @param Context                       $context
-     * @param SeoSitemapUrlServiceInterface $seoSitemapUrlService
+     * @param Context $context
+     * @param SeoSitemapUrlService $seoSitemapUrlService
      */
     public function __construct(
         Context $context,

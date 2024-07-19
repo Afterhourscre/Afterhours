@@ -9,135 +9,138 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoContent\Model;
 
 use Magento\Framework\Model\AbstractModel;
+use Mirasvit\Core\Service\SecureOutputService;
 use Mirasvit\SeoContent\Api\Data\ContentInterface;
 
 class Content extends AbstractModel implements ContentInterface
 {
-    public function setTitle($value)
+    public function setTitle(string $value): ContentInterface
     {
-        return $this->setData(self::TITLE, $value);
+        return $this->setData(self::TITLE, SecureOutputService::cleanupOne($value));
     }
 
-    public function getTitle()
+    public function getTitle(): string
     {
-        return $this->getData(self::TITLE);
+        return (string)SecureOutputService::cleanupOne($this->getData(self::TITLE));
     }
 
-    public function setMetaTitle($value)
+    public function setMetaTitle(string $value): ContentInterface
     {
         return $this->setData(self::META_TITLE, $value);
     }
 
-    public function getMetaTitle()
+    public function getMetaTitle(): string
     {
-        return $this->getData(self::META_TITLE);
+        return (string)$this->getData(self::META_TITLE);
     }
 
-    public function setMetaKeywords($value)
+    public function setMetaKeywords(string $value): ContentInterface
     {
         return $this->setData(self::META_KEYWORDS, $value);
     }
 
-    public function getMetaKeywords()
+    public function getMetaKeywords(): string
     {
-        return $this->getData(self::META_KEYWORDS);
+        return (string)$this->getData(self::META_KEYWORDS);
     }
 
-    public function setMetaDescription($value)
+    public function setMetaDescription(string $value): ContentInterface
     {
         return $this->setData(self::META_DESCRIPTION, $value);
     }
 
-    public function getMetaDescription()
+    public function getMetaDescription(): string
     {
-        return $this->getData(self::META_DESCRIPTION);
+        return (string)$this->getData(self::META_DESCRIPTION);
     }
 
-    public function setDescription($value)
+    public function setDescription(string $value): ContentInterface
     {
-        return $this->setData(self::DESCRIPTION, $value);
+        return $this->setData(self::DESCRIPTION, SecureOutputService::cleanupOne($value));
     }
 
-    public function getDescription()
+    public function getDescription(): string
     {
-        return $this->getData(self::DESCRIPTION);
+        return (string)SecureOutputService::cleanupOne($this->getData(self::DESCRIPTION));
     }
 
-    public function setDescriptionPosition($value)
+    public function setDescriptionPosition(int $value): ContentInterface
     {
         return $this->setData(self::DESCRIPTION_POSITION, $value);
     }
 
-    public function getDescriptionPosition()
+    public function getDescriptionPosition(): int
     {
-        return $this->getData(self::DESCRIPTION_POSITION);
+        return (int)$this->getData(self::DESCRIPTION_POSITION);
     }
 
-    public function setDescriptionTemplate($value)
+    public function setDescriptionTemplate(string $value): ContentInterface
     {
         return $this->setData(self::DESCRIPTION_TEMPLATE, $value);
     }
 
-    public function getDescriptionTemplate()
+    public function getDescriptionTemplate(): string
     {
-        return $this->getData(self::DESCRIPTION_TEMPLATE);
+        return (string)$this->getData(self::DESCRIPTION_TEMPLATE);
     }
 
-    public function setShortDescription($value)
+    public function setShortDescription(string $value): ContentInterface
     {
-        return $this->setData(self::SHORT_DESCRIPTION, $value);
+        return $this->setData(self::SHORT_DESCRIPTION, SecureOutputService::cleanupOne($value));
     }
 
-    public function getShortDescription()
+    public function getShortDescription(): string
     {
-        return $this->getData(self::SHORT_DESCRIPTION);
+        return (string)SecureOutputService::cleanupOne($this->getData(self::SHORT_DESCRIPTION));
     }
 
-    public function setFullDescription($value)
+    public function setFullDescription(string $value): ContentInterface
     {
-        return $this->setData(self::FULL_DESCRIPTION, $value);
+        return $this->setData(self::FULL_DESCRIPTION, SecureOutputService::cleanupOne($value));
     }
 
-    public function getFullDescription()
+    public function getFullDescription(): string
     {
-        return $this->getData(self::FULL_DESCRIPTION);
+        return (string)SecureOutputService::cleanupOne($this->getData(self::FULL_DESCRIPTION));
     }
 
-    public function setCategoryDescription($value)
+    public function setCategoryDescription(string $value): ContentInterface
     {
-        return $this->setData(self::CATEGORY_DESCRIPTION, $value);
+        return $this->setData(self::CATEGORY_DESCRIPTION, SecureOutputService::cleanupOne($value));
     }
 
-    public function getCategoryDescription()
+    public function getCategoryDescription(): string
     {
-        return $this->getData(self::CATEGORY_DESCRIPTION);
+        return (string)SecureOutputService::cleanupOne($this->getData(self::CATEGORY_DESCRIPTION));
     }
 
-    public function setCategoryImage($value)
+    public function setCategoryImage(string $value): ContentInterface
     {
         return $this->setData(self::CATEGORY_IMAGE, $value);
     }
 
-    public function getCategoryImage()
+    public function getCategoryImage(): string
     {
-        return $this->getData(self::CATEGORY_IMAGE);
+        return (string)$this->getData(self::CATEGORY_IMAGE);
     }
 
-    public function setData($key, $value = null)
+    public function setMetaRobots(string $value): ContentInterface
     {
-        if ($key == self::DESCRIPTION) {
-//            \Magento\Framework\Debug::backtrace();
-        }
+        return $this->setData(self::META_ROBOTS, $value);
+    }
 
-        return parent::setData($key, $value);
+    public function getMetaRobots(): string
+    {
+        return (string)$this->getData(self::META_ROBOTS);
     }
 }

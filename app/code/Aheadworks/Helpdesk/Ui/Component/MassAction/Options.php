@@ -7,7 +7,7 @@ See LICENSE.txt for license details.
 namespace Aheadworks\Helpdesk\Ui\Component\MassAction;
 
 use Magento\Framework\UrlInterface;
-use Zend\Stdlib\JsonSerializable;
+use Laminas\Stdlib\JsonSerializable;
 use Magento\Framework\Data\OptionSourceInterface;
 
 /**
@@ -86,7 +86,7 @@ class Options implements JsonSerializable
      *
      * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         if ($this->options === null) {
             $this->prepareData();

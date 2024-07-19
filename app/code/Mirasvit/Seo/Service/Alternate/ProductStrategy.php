@@ -9,14 +9,16 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\Alternate;
 
+use Magento\Catalog\Model\Product;
 use Magento\UrlRewrite\Service\V1\Data\UrlRewrite as UrlRewrite;
 use Magento\Catalog\Model\Product\Visibility;
 use Mirasvit\Seo\Api\Service\Alternate\UrlInterface;
@@ -28,38 +30,16 @@ use Magento\Catalog\Api\ProductRepositoryInterface;
 
 class ProductStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyInterface
 {
-    /**
-     * @var \Mirasvit\Seo\Api\Service\Alternate\UrlInterface
-     */
     protected $url;
 
-    /**
-     * @var \Magento\Framework\Registry
-     */
     protected $registry;
 
-    /**
-     * @var \Magento\UrlRewrite\Model\UrlFinderInterface
-     */
     protected $urlFinder;
 
-    /**
-     * @var \Magento\Framework\App\Request\Http
-     */
     protected $request;
 
-    /**
-     * @var \Magento\Catalog\Api\ProductRepositoryInterface
-     */
     protected $productRepository;
 
-    /**
-     * @param \Mirasvit\Seo\Api\Service\Alternate\UrlInterface $url
-     * @param \Magento\Framework\Registry $registry
-     * @param \Magento\UrlRewrite\Model\UrlFinderInterface $urlFinder
-     * @param \Magento\Framework\App\Request\Http $request
-     * @param \Magento\Catalog\Api\ProductRepositoryInterface $productRepository
-     */
     public function __construct(
         UrlInterface $url,
         Registry $registry,
@@ -75,10 +55,7 @@ class ProductStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyInt
         $this->productRepository    = $productRepository;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getStoreUrls()
+    public function getStoreUrls(): array
     {
         $storeUrls = $this->url->getStoresCurrentUrl();
         $storeUrls = $this->getAlternateUrl($storeUrls);
@@ -87,17 +64,18 @@ class ProductStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyInt
     }
 
     /**
-     * {@inheritdoc}
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    public function getAlternateUrl($storeUrls)
+    public function getAlternateUrl(array $storeUrls): array
     {
         $product = $this->registry->registry('current_product');
         $productId = $product->getId();
 
         foreach ($this->url->getStores() as $storeId => $store) {
-            $product = $this->productRepository->getById($product->getId(),false,$storeId);
+            /** @var Product $product */
+            $product = $this->productRepository->getById($product->getId(),false, $storeId);
 
-            if ($product->getData('visibility') == Visibility::VISIBILITY_NOT_VISIBLE) {
+            if ($product->getData('visibility') == Visibility::VISIBILITY_NOT_VISIBLE || !in_array($storeId, $product->getStoreIds())) {
                 unset($storeUrls[$storeId]);
                 continue;
             }
@@ -112,12 +90,16 @@ class ProductStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyInt
 
                 if ($rewriteObject && ($requestPath = $rewriteObject->getRequestPath())) {
                     $storeUrls[$storeId] = $store->getBaseUrl().$requestPath.$this->url->getUrlAddition($store);
+                } elseif (!$rewriteObject) {
+                    $storeUrls[$storeId] = $product->getUrlInStore();
                 }
             }
         }
 
+        if (count($storeUrls) === 1) {
+            $storeUrls = []; // page doesn't have variations
+        }
+
         return $storeUrls;
     }
-
-
 }

@@ -1,18 +1,14 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Plugin\Search\Model;
 
 use Magento\Framework\Serialize\Serializer\Json;
 
-/**
- * Class QueryBackendPlugin
- */
 class QueryBackendPlugin
 {
     /**
@@ -39,9 +35,11 @@ class QueryBackendPlugin
              */
             $resource = $subject->getResource();
             $connection = $resource->getConnection();
-            $select = $connection->select()->from(
-                $resource->getTable('amasty_xsearch_related_term'),
-                ['related_term_id', 'position'])
+            $select = $connection->select()
+                ->from(
+                    $resource->getTable('amasty_xsearch_related_term'),
+                    ['related_term_id', 'position']
+                )
                 ->where('term_id = ?', $subject->getId());
             $relatedTerms = $connection->fetchPairs($select);
         }
@@ -62,7 +60,7 @@ class QueryBackendPlugin
          */
         $resource = $subject->getResource();
         $connection = $resource->getConnection();
-        $whereCondition = $connection->quoteInto( 'term_id = ?', $subject->getId());
+        $whereCondition = $connection->quoteInto('term_id = ?', $subject->getId());
         $connection->delete($resource->getTable('amasty_xsearch_related_term'), $whereCondition);
         $terms = $this->jsonSerializer->unserialize($subject->getRelatedTerms());
         if (is_array($terms) && !empty($terms)) {
@@ -77,7 +75,8 @@ class QueryBackendPlugin
             if ($insertData) {
                 $connection->insertOnDuplicate(
                     $resource->getTable('amasty_xsearch_related_term'),
-                    $insertData, ['position']
+                    $insertData,
+                    ['position']
                 );
             }
         }

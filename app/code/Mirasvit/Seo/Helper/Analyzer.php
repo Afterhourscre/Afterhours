@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -100,7 +100,7 @@ class Analyzer extends AbstractHelper
         $headers = [];
         $pattern = '/<h1(.*?)>(.*?)<\/h1>/ims';
 
-        preg_match_all($pattern, $body, $tags[]);
+        preg_match_all($pattern, $body, $tags);
 
         foreach ($tags as $title) {
             if (isset($title[0][0])) {
@@ -231,9 +231,9 @@ class Analyzer extends AbstractHelper
         preg_match_all('/<img[^>]+>/i', $body, $imagesData);
         if (isset($imagesData[0]) && $imagesData[0]) {
             $img = [];
-
-
             foreach ($imagesData[0] as $imgTag) {
+                /** @var string $imgTag */
+                $img[$imgTag] = [];
                 preg_match_all('/(alt|src)=("[^"]*")/i', $imgTag, $img[$imgTag]);
             }
 

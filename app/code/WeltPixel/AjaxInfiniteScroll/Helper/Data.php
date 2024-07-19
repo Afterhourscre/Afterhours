@@ -443,6 +443,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     private function replaceQuote($str)
     {
+        if($str === null){
+          return null;
+        }
         return str_replace(['\'', '‘', '"'],['&#039;', '&lsquo;', '&#034;'], $str);
     }
 }

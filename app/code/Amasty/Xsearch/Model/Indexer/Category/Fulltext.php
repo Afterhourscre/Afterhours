@@ -1,22 +1,26 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Model\Indexer\Category;
 
+use Amasty\Xsearch\Block\Search\Category;
+use Amasty\Xsearch\Model\Indexer\Category\Fulltext\Action\Full;
 use Amasty\Xsearch\Model\Indexer\Category\Fulltext\Action\FullFactory;
-use \Magento\Framework\Search\Request\Config as SearchRequestConfig;
-use Magento\Store\Model\StoreManagerInterface;
+use Magento\Framework\Search\Request\Config as SearchRequestConfig;
 use Magento\Framework\Search\Request\DimensionFactory;
+use Magento\Store\Model\StoreManagerInterface;
 
 class Fulltext implements \Magento\Framework\Indexer\ActionInterface, \Magento\Framework\Mview\ActionInterface
 {
-    const INDEXER_ID = 'amasty_xsearch_category_fulltext';
+    public const INDEXER_ID = 'amasty_xsearch_category_fulltext';
 
+    /**
+     * @var Full
+     */
     private $fullAction;
 
     /**
@@ -45,20 +49,17 @@ class Fulltext implements \Magento\Framework\Indexer\ActionInterface, \Magento\F
     private $data;
 
     /**
-     * Fulltext constructor.
-     * @param FullFactory $fullActionFactory
-     * @param StoreManagerInterface $storeManager
-     * @param DimensionFactory $dimensionFactory
-     * @param IndexerHandlerFactory $indexerHandlerFactory
-     * @param SearchRequestConfig $searchRequestConfig
-     * @param array $data
+     * @var \Magento\Framework\App\CacheInterface
      */
+    private $cacheManager;
+
     public function __construct(
         FullFactory $fullActionFactory,
         StoreManagerInterface $storeManager,
         DimensionFactory $dimensionFactory,
         IndexerHandlerFactory $indexerHandlerFactory,
         SearchRequestConfig $searchRequestConfig,
+        \Magento\Framework\App\CacheInterface $cacheManager,
         array $data
     ) {
         $this->fullAction = $fullActionFactory->create(['data' => $data]);
@@ -67,6 +68,7 @@ class Fulltext implements \Magento\Framework\Indexer\ActionInterface, \Magento\F
         $this->indexerHandlerFactory = $indexerHandlerFactory;
         $this->searchRequestConfig = $searchRequestConfig;
         $this->data = $data;
+        $this->cacheManager = $cacheManager;
     }
 
     public function executeFull()
@@ -84,7 +86,9 @@ class Fulltext implements \Magento\Framework\Indexer\ActionInterface, \Magento\F
             $saveHandler->saveIndex([$dimension], $this->fullAction->rebuildStoreIndex($storeId));
 
         }
+
         $this->searchRequestConfig->reset();
+        $this->cleanCache();
     }
 
     public function execute($ids)
@@ -96,9 +100,11 @@ class Fulltext implements \Magento\Framework\Indexer\ActionInterface, \Magento\F
 
         foreach ($storeIds as $storeId) {
             $dimension = $this->dimensionFactory->create(['name' => 'scope', 'value' => $storeId]);
-            $saveHandler->deleteIndex([$dimension], new \ArrayObject($ids));
+            $saveHandler->deleteIndex([$dimension], new \ArrayIterator($ids));
             $saveHandler->saveIndex([$dimension], $this->fullAction->rebuildStoreIndex($storeId, $ids));
         }
+
+        $this->cleanCache();
     }
 
     public function executeList(array $ids)
@@ -109,5 +115,10 @@ class Fulltext implements \Magento\Framework\Indexer\ActionInterface, \Magento\F
     public function executeRow($id)
     {
         $this->execute([$id]);
+    }
+
+    private function cleanCache(): void
+    {
+        $this->cacheManager->clean([Category::DEFAULT_CACHE_TAG . '_' . Category::CATEGORY_BLOCK_TYPE]);
     }
 }

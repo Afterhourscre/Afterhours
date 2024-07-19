@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -25,8 +25,18 @@ use Magento\Framework\UrlInterface;
 class ImageService implements ImageServiceInterface
 {
     /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
+    /**
+     * @var ImageBuilder
+     */
+    private $imageBuilder;
+
+    /**
      * ImageService constructor.
      * @param ImageBuilder $imageBuilder
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         ImageBuilder $imageBuilder,
@@ -67,4 +77,3 @@ class ImageService implements ImageServiceInterface
         return rtrim($path, '/') . '/' . ltrim($fileName, '/');
     }
 }
-

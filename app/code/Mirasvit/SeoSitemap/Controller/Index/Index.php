@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -42,7 +42,7 @@ class Index extends \Mirasvit\SeoSitemap\Controller\Index
         $fullActionName = $this->request->getFullActionName();
 
         if (('seositemap_index_index' == $fullActionName)
-            && !preg_match('/' . preg_quote($this->seoSitemapUrlService->getConfigUrSuffix(), '/') .'$/',
+            && !preg_match('/' . preg_quote((string)$this->seoSitemapUrlService->getConfigUrSuffix(), '/') .'$/',
                 $originalPathInfo
             )) {
             $url = $this->seoSitemapUrlService->getBaseUrl();

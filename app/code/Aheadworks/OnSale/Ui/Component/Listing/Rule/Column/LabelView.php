@@ -33,15 +33,25 @@ class LabelView extends LabelColumnView
     /**
      * {@inheritdoc}
      */
-    public function prepareDataSource(array $dataSource)
-    {
-        foreach ($dataSource['data']['items'] as & $item) {
-            $fieldName = $this->getData('name');
+  public function prepareDataSource(array $dataSource)
+{
+    foreach ($dataSource['data']['items'] as &$item) {
+        $fieldName = $this->getData('name');
+
+        $labelId = $item[RuleInterface::LABEL_ID] ?? null;
+        $frontendLabelText = $item[RuleInterface::FRONTEND_LABEL_TEXT][LabelTextInterface::VALUE_LARGE] ?? null;
+
+        if ($labelId !== null && $frontendLabelText !== null) {
             $item[$fieldName] = $this->renderer->render(
-                $item[RuleInterface::LABEL_ID],
-                $item[RuleInterface::FRONTEND_LABEL_TEXT][LabelTextInterface::VALUE_LARGE]
+                $labelId,
+                $frontendLabelText
             );
+        } else {
+            // Handle the case where the necessary data is not available
+            $item[$fieldName] = ''; // Or any default value or handling logic
         }
-        return $dataSource;
     }
+    return $dataSource;
+}
+
 }

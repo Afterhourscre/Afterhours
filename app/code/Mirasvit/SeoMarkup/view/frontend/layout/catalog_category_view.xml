@@ -7,7 +7,7 @@
         </referenceBlock>
 
         <referenceContainer name="content">
-            <block class="Mirasvit\SeoMarkup\Block\Rs\Category" name="mst.seo-markup.rs.category"/>
+            <block class="Mirasvit\SeoMarkup\Block\Rs\Category" name="mst.seo-markup.rs.category" after="-"/>
         </referenceContainer>
     </body>
 </page>

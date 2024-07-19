@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -37,6 +37,12 @@ class AddInTemplate implements TemplateEngineInterface
      */
     private $helpBlockHtml;
 
+    /**
+     * AddInTemplate constructor.
+     * @param TemplateEngineInterface $subject
+     * @param string $template
+     * @param string $helpBlockHtml
+     */
     public function __construct(TemplateEngineInterface $subject, $template, $helpBlockHtml)
     {
         $this->subject = $subject;

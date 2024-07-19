@@ -5,7 +5,7 @@
     $helper = $this->helper('WeltPixel\SearchAutoComplete\Helper\Data');
     $storeId = $helper->getStoreId();
     $sanitize = $helper->isEmptyCollection($itemsCollection);
-    $collectionSize = isset($itemsCollection) ? count($itemsCollection) - 1 : -1;
+    $collectionSize = isset($itemsCollection) ? count($itemsCollection) : 0;
     $helperPrice = $this->helper('Magento\Framework\Pricing\Helper\Data');
     $isEnable = $helper->isEnabled();
     $productDividerClass = $helper->isEnableProductDivider();
@@ -21,6 +21,7 @@
     $dividerColor = $helper->getDividerColor() ;
     $searchVersion = $helper->getSearchVersion();
     $displayResults = $helper->getTemplateResultsContainer();
+    $outputHelper = $this->helper('Magento\Catalog\Helper\Output');
 ?>
 <?php if($isEnable) : ?>
         <?php $i = 1; ?>
@@ -49,7 +50,7 @@
                                         <?php if($isShowPrice) : ?>
                                             <span class="price"><?php echo $_product->getFinalPrice() ?></span>
                                         <?php endif; ?>
-                                        <?php if($isShowDescription) : ?> <?php echo $helper->limitText($_product->getDescription(), $MaxWordsProductDescription)?><?php endif; ?>
+                                        <?php if($isShowDescription) : ?> <?php echo $helper->limitText(strip_tags($outputHelper->productAttribute($_product, $_product->getDescription(), 'description' )), $MaxWordsProductDescription)?><?php endif; ?>
                                     </div>
                                     <div class="clear"></div>
                                 </div>
@@ -59,13 +60,13 @@
                 <?php endforeach; ?>
             </ul>
             <?php if($collectionSize > $maxItemsDisplayed ): ?>
-        
+
                     <div class="more-results">
-                        <a class="advanced_search" onclick="document.getElementById('search_mini_form').submit()" style="color:<?php echo $containerTextColor; ?>"><?php echo __('See all results')?></a>
+                        <a href="#" class="advanced_search" onclick="document.getElementById('search_mini_form').submit()" style="color:<?php echo $containerTextColor; ?>"><?php echo __('See all results')?></a>
                     </div>
-              
+
             <?php endif; ?>
-        <?php elseif($collectionSize != -1): ?>
+        <?php elseif($collectionSize != 0): ?>
             <div class="text-no-result"><?php echo $getTextForNoSearchResult; ?></div>
         <?php endif; ?>
 <?php endif; ?>

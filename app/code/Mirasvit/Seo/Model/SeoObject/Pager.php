@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -19,15 +19,21 @@ namespace Mirasvit\Seo\Model\SeoObject;
 
 class Pager extends \Magento\Framework\DataObject
 {
-    /**
-     *
-     */
-    public function _construct()
-    {
-        parent::_construct();
-        $page = (int) $this->request->getParam('p');
-        if ($page > 1) {
-            $this->setPage(__('Page %1', $page));
-        }
-    }
+//    /**
+//     * @var mixed
+//     */
+//    private $request;
+
+//    /**
+//     *
+//     */
+//    public function _construct()
+//    {
+//        parent::_construct(); //@fixme method does not exists
+//        //@fixme $request is not defined
+//        $page = (int) $this->request->getParam('p');
+//        if ($page > 1) {
+//            $this->setPage(__('Page %1', $page));
+//        }
+//    }
 }

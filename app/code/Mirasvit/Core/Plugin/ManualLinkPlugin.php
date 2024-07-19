@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -46,6 +46,13 @@ class ManualLinkPlugin
      */
     private $layout;
 
+    /**
+     * ManualLinkPlugin constructor.
+     * @param ManualServiceInterface $manualService
+     * @param AddInTemplateFactory $addInTemplate
+     * @param LayoutInterface $layout
+     * @param TemplateEnginePhp $templateEnginePhp
+     */
     public function __construct(
         ManualServiceInterface $manualService,
         AddInTemplateFactory $addInTemplate,
@@ -88,7 +95,7 @@ class ManualLinkPlugin
             ->setPosition($position);
 
         //we can't render block here using standard way
-        $html = $this->templateEnginePhp->render($manualBlock, $manualBlock->getTemplateFile());
+        $html = $this->templateEnginePhp->render($manualBlock, $manualBlock->getTemplateFile(), []);
 
         if ($html) {
             return $this->addInTemplate->create([

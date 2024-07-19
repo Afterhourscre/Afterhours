@@ -9,25 +9,34 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
 
 namespace Mirasvit\SeoContent\Ui\Template\Source;
 
+use Magento\Framework\Module\Manager;
 use Magento\Framework\Option\ArrayInterface;
 use Mirasvit\SeoContent\Api\Data\TemplateInterface;
 
 class RuleTypeSource implements ArrayInterface
 {
+    private $moduleManager;
+
+    public function __construct(
+        Manager $moduleManager
+    ) {
+        $this->moduleManager = $moduleManager;
+    }
+
     /**
      * {@inheritdoc}
      */
     public function toOptionArray()
     {
-        return [
+        $optionArray = [
             [
                 'label' => __('Categories'),
                 'value' => TemplateInterface::RULE_TYPE_CATEGORY,
@@ -45,5 +54,21 @@ class RuleTypeSource implements ArrayInterface
                 'value' => TemplateInterface::RULE_TYPE_PAGE,
             ],
         ];
+
+        if ($this->moduleManager->isEnabled('Mirasvit_BlogMx')) {
+            $optionArray[] = [
+                'label' => __('Blog'),
+                'value' => TemplateInterface::RULE_TYPE_BLOG,
+            ];
+        }
+
+        if ($this->moduleManager->isEnabled('Mirasvit_Brand')) {
+            $optionArray[] = [
+                'label' => __('Brand'),
+                'value' => TemplateInterface::RULE_TYPE_BRAND,
+            ];
+        }
+
+        return $optionArray;
     }
 }

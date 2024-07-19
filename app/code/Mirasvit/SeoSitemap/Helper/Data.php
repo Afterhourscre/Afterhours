@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -35,17 +35,25 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $context;
 
     /**
-     * @param \Mirasvit\SeoSitemap\Model\Config     $config
+     * @var \Mirasvit\SeoSitemap\Model\Config\LinkSitemapConfig
+     */
+    protected $linkSitemapConfig;
+    /**
+     * @param \Mirasvit\SeoSitemap\Model\Config $config
+     * @param \Mirasvit\SeoSitemap\Service\SeoSitemapUrlService $seoSitemapUrlService
      * @param \Magento\Framework\App\Helper\Context $context
      */
     public function __construct(
         \Mirasvit\SeoSitemap\Model\Config $config,
         \Mirasvit\SeoSitemap\Service\SeoSitemapUrlService $seoSitemapUrlService,
+        \Mirasvit\SeoSitemap\Model\Config\LinkSitemapConfig $linkSitemapConfig,
         \Magento\Framework\App\Helper\Context $context
     ) {
         $this->config               = $config;
         $this->seoSitemapUrlService = $seoSitemapUrlService;
         $this->context              = $context;
+        $this->linkSitemapConfig    = $linkSitemapConfig;
+
         parent::__construct($context);
     }
 
@@ -87,6 +95,17 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * @param string $url
+     *
+     * @return bool
+     */
+    public function checkIsUrlExcluded($url)
+    {
+        $excludedLinks = $this->linkSitemapConfig->getExcludeLinks();
+        return $this->checkArrayPattern($url, $excludedLinks);
+    }
+
+    /**
      * @param string $urlWithHost
      *
      * @return mixed|string
@@ -97,6 +116,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $url   = $parts['path'];
         $url   = str_replace('index.php/', '', $url);
         $url   = str_replace('index.php', '', $url);
+
+        if (strpos($url, '/') !== 0) {
+            $url = '/' . $url; //need this so exclude patterns will work the same way for Frontend and XML sitemaps
+        }
+
         if (isset($parts['query'])) {
             $url .= '?' . $parts['query'];
         }

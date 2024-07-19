@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -23,11 +23,18 @@ class HeadingsCriteria extends AbstractCriteria
 {
     const LABEL = 'Headings';
 
+    /**
+     * @param string $content
+     * @return \Magento\Framework\DataObject
+     */
     public function handle($content)
     {
-        $pattern = '/<(h[1-6]).*?>(.*?)<\/h[1-6]>/ims';
-
         $tags = [];
+
+        $pattern = '/<(h[1-6]).*?>(.*?)<\/h[1-6]>/ims';
+        $content = str_replace('&lt;', '<', $content);
+        $content = str_replace('&gt;', '>', $content);
+
         preg_match_all($pattern, $content, $tags);
 
         $headers = [
@@ -73,6 +80,10 @@ class HeadingsCriteria extends AbstractCriteria
         }
     }
 
+    /**
+     * @param array $headers
+     * @return string
+     */
     private function getNote(array $headers)
     {
         $count = [];

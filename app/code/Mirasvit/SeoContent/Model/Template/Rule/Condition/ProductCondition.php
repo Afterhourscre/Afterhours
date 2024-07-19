@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -22,80 +22,49 @@ use Magento\Rule\Model\Condition\AbstractCondition;
 
 class ProductCondition extends AbstractCondition
 {
-    /**
-     * @var \Magento\CatalogInventory\Model\Stock\ItemFactory
-     */
     protected $stockItemFactory;
 
-    /**
-     * @var \Magento\CatalogRule\Model\ResourceModel\RuleFactory
-     */
     protected $ruleFactory;
 
-    /**
-     * @var \Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\CollectionFactory
-     */
     protected $entityAttributeSetCollectionFactory;
 
-    /**
-     * @var \Magento\Catalog\Model\ResourceModel\ProductFactory
-     */
     protected $productFactory;
 
-    /**
-     * @var \Magento\Catalog\Model\ ResourceModel\Product\Type\ConfigurableFactory
-     */
     protected $productTypeConfigurableFactory;
 
-    /**
-     * @var \Magento\Eav\Model\Config
-     */
     protected $config;
 
-    /**
-     * @var \Magento\Framework\UrlInterface
-     */
     protected $urlManager;
 
-    /**
-     * @var \Magento\Backend\Model\Url
-     */
     protected $backendUrlManager;
 
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
     protected $storeManager;
 
-    /**
-     * @var \Magento\Framework\Locale\FormatInterface
-     */
     protected $localeFormat;
 
-    /**
-     * @var \Magento\Framework\View\Asset\Repository
-     */
     protected $assetRepo;
 
-    /**
-     * @var \Magento\Customer\Model\Session
-     */
     protected $customerSession;
 
-    /**
-     * @var \Magento\Framework\Model\Context
-     */
     protected $context;
 
-    /**
-     * @var \Magento\Framework\Registry
-     */
     protected $registry;
 
-    /**
-     * @var \Magento\Catalog\Model\Category
-     */
     protected $category;
+
+    /**
+     * @var array
+     */
+    protected $entityAttributeValues = [];
+
+    /**
+     * @var string
+     */
+    protected $isUsedForRuleProperty = 'is_used_for_promo_rules';
+
+    private $stockState;
+
+    private $localeDate;
 
     public function __construct(
         \Magento\CatalogInventory\Model\Stock\ItemFactory $stockItemFactory,
@@ -136,17 +105,7 @@ class ProductCondition extends AbstractCondition
     }
 
     /**
-     * @var null|string|int
-     */
-    protected $entityAttributeValues = null;
-
-    /**
-     * @var string
-     */
-    protected $isUsedForRuleProperty = 'is_used_for_promo_rules';
-
-    /**
-     * @return false|\Magento\Eav\Model\Entity\Attribute\AbstractAttribute|\Magento\Framework\DataObject
+     * @return false|\Magento\Catalog\Model\ResourceModel\Eav\Attribute
      */
     public function getAttributeObject()
     {
@@ -177,82 +136,13 @@ class ProductCondition extends AbstractCondition
                 || !$attribute->getDataUsingMethod($this->isUsedForRuleProperty)) {
                 continue;
             }
-            $attributes[$attribute->getAttributeCode()] = $attribute->getFrontendLabel();
+            $attributes[$attribute->getAttributeCode()] = $attribute->getFrontendLabel() . ' (' . $attribute->getAttributeCode() . ')';
         }
 
         $attributes = $this->addSpecialAttributes($attributes);
 
         asort($attributes);
         $this->setAttributeOption($attributes);
-
-        return $this;
-    }
-
-    /**
-     * @param array $attributes
-     *
-     * @return array
-     */
-    private function addSpecialAttributes(array $attributes)
-    {
-        $attributes['attribute_set_id'] = (string)__('Attribute Set');
-        $attributes['category_ids']     = (string)__('Category');
-
-        return $attributes;
-    }
-
-    /**
-     * @return $this
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     */
-    protected function _prepareValueOptions()
-    {
-        // Check that both keys exist. Maybe somehow only one was set not in this routine, but externally.
-        $selectReady = $this->getData('value_select_options');
-        $hashedReady = $this->getData('value_option');
-        if ($selectReady && $hashedReady) {
-            return $this;
-        }
-
-        // Get array of select options. It will be used as source for hashed options
-        $selectOptions = null;
-        if ($this->getAttribute() === 'attribute_set_id') {
-            $entityTypeId  = $this->config
-                ->getEntityType('catalog_product')->getId();
-            $selectOptions = $this->entityAttributeSetCollectionFactory->create()
-                ->setEntityTypeFilter($entityTypeId)
-                ->load()
-                ->toOptionArray();
-        } elseif (is_object($this->getAttributeObject())) {
-            $attributeObject = $this->getAttributeObject();
-            if ($attributeObject->usesSource()) {
-                if ($attributeObject->getFrontendInput() == 'multiselect') {
-                    $addEmptyOption = false;
-                } else {
-                    $addEmptyOption = true;
-                }
-                $selectOptions = $attributeObject->getSource()->getAllOptions($addEmptyOption);
-            }
-        }
-
-        // Set new values only if we really got them
-        if ($selectOptions !== null) {
-            // Overwrite only not already existing values
-            if (!$selectReady) {
-                $this->setData('value_select_options', $selectOptions);
-            }
-            if (!$hashedReady) {
-                $hashedOptions = [];
-                foreach ($selectOptions as $o) {
-                    if (is_array($o['value'])) {
-                        continue; // We cannot use array as index
-                    }
-                    $hashedOptions[$o['value']] = $o['label'];
-                }
-                $this->setData('value_option', $hashedOptions);
-            }
-        }
 
         return $this;
     }
@@ -309,7 +199,7 @@ class ProductCondition extends AbstractCondition
 
     /**
      * Retrieve attribute element.
-     * @return Varien_Form_Element_Abstract
+     * @return AbstractCondition
      */
     public function getAttributeElement()
     {
@@ -320,7 +210,7 @@ class ProductCondition extends AbstractCondition
     }
 
     /**
-     * @param string $productCollection
+     * @param mixed $productCollection
      *
      * @return $this
      */
@@ -424,24 +314,6 @@ class ProductCondition extends AbstractCondition
         return $url !== false ? $this->backendUrlManager->getUrl($url) : '';
     }
 
-    //breaks "is one of" rule
-    /**
-     * Commented due to issue with "is one of" rule
-     * Retrieve parsed value
-     * @return array|string|int|float
-     */
-    // public function getValueParsed()
-    // {
-    //     if (!$this->hasValueParsed()) {
-    //         $value = $this->getData('value');
-
-    //         $this->setValueParsed($value);
-    //     }
-
-    //     return $this->getData('value_parsed');
-    // }
-
-
     /**
      * Retrieve Explicit Apply.
      * @return bool
@@ -494,6 +366,23 @@ class ProductCondition extends AbstractCondition
         return parent::loadArray($arr);
     }
 
+    //breaks "is one of" rule
+    /**
+     * Commented due to issue with "is one of" rule
+     * Retrieve parsed value
+     * @return array|string|int|float
+     */
+    // public function getValueParsed()
+    // {
+    //     if (!$this->hasValueParsed()) {
+    //         $value = $this->getData('value');
+
+    //         $this->setValueParsed($value);
+    //     }
+
+    //     return $this->getData('value_parsed');
+    // }
+
     /**
      * Validate product attrbute value for condition.
      *
@@ -503,7 +392,7 @@ class ProductCondition extends AbstractCondition
      */
     public function validate(\Magento\Framework\Model\AbstractModel $object)
     {
-        if (!($object instanceof \Magento\Catalog\Model\Product)) {
+        if (!($object instanceof \Magento\Catalog\Model\Product) && !($object instanceof \Magento\Catalog\Model\Category)) {
             return true;
         }
 
@@ -511,6 +400,7 @@ class ProductCondition extends AbstractCondition
 
         switch ($attrCode) {
             case 'category_ids':
+                /** @var \Magento\Catalog\Model\Category $object */
                 return $this->validateCategory($object);
 
             case 'attribute_set_id':
@@ -519,15 +409,73 @@ class ProductCondition extends AbstractCondition
                 return $this->validateAttribute($attrId);
 
             case 'qty':
+                /** @var \Magento\Catalog\Model\Product $object */
                 return $this->validateQty($object);
 
             default:
+                /** @var mixed $object */
                 return $this->validateValue($object, $attrCode);
         }
     }
 
     /**
-     * @param string $object
+     * @return $this
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     */
+    protected function _prepareValueOptions()
+    {
+        // Check that both keys exist. Maybe somehow only one was set not in this routine, but externally.
+        $selectReady = $this->getData('value_select_options');
+        $hashedReady = $this->getData('value_option');
+        if ($selectReady && $hashedReady) {
+            return $this;
+        }
+
+        // Get array of select options. It will be used as source for hashed options
+        $selectOptions = null;
+        if ($this->getAttribute() === 'attribute_set_id') {
+            $entityTypeId  = $this->config
+                ->getEntityType('catalog_product')->getId();
+            $selectOptions = $this->entityAttributeSetCollectionFactory->create()
+                ->setEntityTypeFilter($entityTypeId)
+                ->load()
+                ->toOptionArray();
+        } elseif (is_object($this->getAttributeObject())) {
+            $attributeObject = $this->getAttributeObject();
+            if ($attributeObject->usesSource()) {
+                if ($attributeObject->getFrontendInput() == 'multiselect') {
+                    $addEmptyOption = false;
+                } else {
+                    $addEmptyOption = true;
+                }
+                $selectOptions = $attributeObject->getSource()->getAllOptions($addEmptyOption);
+            }
+        }
+
+        // Set new values only if we really got them
+        if ($selectOptions !== null) {
+            // Overwrite only not already existing values
+            if (!$selectReady) {
+                $this->setData('value_select_options', $selectOptions);
+            }
+            if (!$hashedReady) {
+                $hashedOptions = [];
+                foreach ($selectOptions as $o) {
+                    if (is_array($o['value'])) {
+                        continue; // We cannot use array as index
+                    }
+                    $hashedOptions[$o['value']] = $o['label'];
+                }
+                $this->setData('value_option', $hashedOptions);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param \Magento\Catalog\Model\Category $object
      *
      * @return bool
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
@@ -544,13 +492,13 @@ class ProductCondition extends AbstractCondition
 
         $op = $this->getOperatorForValidate();
         if ((($op == '==') || ($op == '!=')) && is_array($categoryIds)) {
-            $value           = $this->getValueParsed();
-            $value           = preg_split('#\s*[,;]\s*#', $value, null, PREG_SPLIT_NO_EMPTY);
+            $value = $this->getValueParsed();
+            $value = preg_split('#\s*[,;]\s*#', $value, 0, PREG_SPLIT_NO_EMPTY);
 
             if ($this->registry->registry('apply_for_child_categories')) {
                 foreach ($value as $categoryId) {
                     $category = $this->category->load($categoryId);
-                    $value = array_merge($value, preg_split('#\s*[,;]\s*#', $category->getAllChildren(), null, PREG_SPLIT_NO_EMPTY));
+                    $value    = array_merge($value, preg_split('#\s*[,;]\s*#', $category->getAllChildren(), 0, PREG_SPLIT_NO_EMPTY));
                 }
             }
 
@@ -605,8 +553,8 @@ class ProductCondition extends AbstractCondition
     }
 
     /**
-     * @param string $object
-     * @param string $attrCode
+     * @param \Magento\Framework\Model\AbstractModel $object
+     * @param string                                 $attrCode
      *
      * @return bool
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
@@ -616,6 +564,7 @@ class ProductCondition extends AbstractCondition
     {
         if (!isset($this->entityAttributeValues[$object->getId()])) {
             $attr = $object->getResource()->getAttribute($attrCode);
+
             if ($attr && $attr->getBackendType() == 'datetime' && !is_int($this->getValue())) {
                 $this->setValue(strtotime($this->getValue()));
 
@@ -629,6 +578,17 @@ class ProductCondition extends AbstractCondition
                 $value = strlen($value) ? explode(',', $value) : [];
 
                 return $this->validateAttribute($value);
+            }
+
+            // we are here when categories validated by product attributes (layered navigation)
+
+            $objectValue = $object->getData($attrCode) ? explode(',', $object->getData($attrCode)) : [];
+
+            // compatibility with navigation multiselect
+            if (count($objectValue) > 1 && !is_array($this->getValueParsed())) {
+                $result = in_array($this->getValueParsed(), $objectValue);
+
+                return strpos($this->getOperator(), '!') === false ? $result : !$result;
             }
 
             return parent::validate($object);
@@ -663,7 +623,7 @@ class ProductCondition extends AbstractCondition
     }
 
     /**
-     * @param string $object
+     * @param \Magento\Catalog\Model\Product $object
      *
      * @return bool
      */
@@ -691,5 +651,18 @@ class ProductCondition extends AbstractCondition
         $qty = $this->stockState->getStockQty($object->getId());
 
         return $this->validateAttribute($qty);
+    }
+
+    /**
+     * @param array $attributes
+     *
+     * @return array
+     */
+    private function addSpecialAttributes(array $attributes)
+    {
+        $attributes['attribute_set_id'] = (string)__('Attribute Set');
+        $attributes['category_ids']     = (string)__('Category');
+
+        return $attributes;
     }
 }

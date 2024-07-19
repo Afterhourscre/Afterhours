@@ -9,15 +9,16 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoMarkup\Block\Og;
 
-use Magento\Framework\View\Element\Template;
+use Magento\Framework\View\Element\Template\Context;
 use Magento\Theme\Block\Html\Header\Logo;
 use Mirasvit\Seo\Api\Service\StateServiceInterface;
 use Mirasvit\SeoMarkup\Model\Config\CategoryConfig;
@@ -31,10 +32,10 @@ class Category extends AbstractBlock
     private $logo;
 
     public function __construct(
-        CategoryConfig $categoryConfig,
+        CategoryConfig        $categoryConfig,
         StateServiceInterface $stateService,
-        Logo $logo,
-        Template\Context $context
+        Logo                  $logo,
+        Context               $context
     ) {
         $this->categoryConfig = $categoryConfig;
         $this->stateService   = $stateService;
@@ -43,30 +44,41 @@ class Category extends AbstractBlock
         parent::__construct($context);
     }
 
-    protected function getMeta()
+    protected function getMeta(): ?array
     {
-        if (!$this->categoryConfig->isOgEnabled()) {
-            return false;
+        $store = $this->_storeManager->getStore();
+
+        if (!$this->categoryConfig->isOgEnabled((int)$store->getId())) {
+            return null;
         }
 
         $category = $this->stateService->getCategory();
 
         if (!$category) {
-            return false;
+            return null;
         }
 
-        /** @var \Magento\Store\Model\Store $store */
-        $store = $this->_storeManager->getStore();
+        $imageUrl  = $this->logo->getLogoSrc();
+        $catImgUrl = $category->getImageUrl();
 
-        $meta = [
+        if ($catImgUrl) {
+            if (class_exists('\Magento\Catalog\Model\Category\Image')) {
+                $categoryImage = \Magento\Framework\App\ObjectManager::getInstance()
+                    ->get('\Magento\Catalog\Model\Category\Image');
+
+                $imageUrl = $categoryImage->getUrl($category, 'image');
+            } else {
+                $imageUrl = $catImgUrl;
+            }
+        }
+
+        return [
             'og:type'        => 'product.group',
-            'og:url'         => $this->_urlBuilder->escape($this->_urlBuilder->getCurrentUrl()),
+            'og:url'         => $this->_urlBuilder->escape($category->getUrl()),
             'og:title'       => $this->pageConfig->getTitle()->get(),
             'og:description' => $this->pageConfig->getDescription(),
-            'og:image'       => $category->getImageUrl() ? $category->getImageUrl() : $this->logo->getLogoSrc(),
+            'og:image'       => $imageUrl,
             'og:site_name'   => $store->getFrontendName(),
         ];
-
-        return $meta;
     }
 }

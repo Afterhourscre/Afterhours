@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 declare(strict_types=1);
 
@@ -20,7 +19,7 @@ class Preview
      *
      * @return bool
      */
-    public function aroundIsPreviewMode(StagePreview $subject, \Closure $proceed)
+    public function aroundIsPreviewMode($subject, \Closure $proceed)
     {
         try {
             return $proceed();

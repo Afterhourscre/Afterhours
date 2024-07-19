@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -25,6 +25,18 @@ use Magento\Framework\App\Filesystem\DirectoryList;
 class Download extends \Mirasvit\SeoAutolink\Controller\Adminhtml\Import
 {
     const SAMPLE_FILES_MODULE = 'Mirasvit_SeoAutolink';
+    /**
+     * @var \Magento\Framework\Controller\Result\RawFactory
+     */
+    private $resultRawFactory;
+    /**
+     * @var \Magento\Framework\App\Response\Http\FileFactory
+     */
+    private $fileFactory;
+    /**
+     * @var ComponentRegistrar
+     */
+    private $componentRegistrar;
 
     /**
      * @param \Magento\Framework\App\Response\Http\FileFactory $fileFactory
@@ -62,11 +74,11 @@ class Download extends \Mirasvit\SeoAutolink\Controller\Adminhtml\Import
     {
         $fileName = $this->getRequest()->getParam('file') . '.csv';
         $moduleDir = $this->componentRegistrar->getPath(ComponentRegistrar::MODULE, self::SAMPLE_FILES_MODULE);
-        $fileAbsolutePath = realpath($moduleDir . '/../../pub/media/seo/') . '/' . $fileName;
+        $fileAbsolutePath = realpath($moduleDir . '/media/') . '/' . $fileName;
 
         if (!file_exists($fileAbsolutePath)) {
-            /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
             $this->messageManager->addErrorMessage(__('There is no sample file for this entity.'));
+            /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
             $resultRedirect = $this->resultRedirectFactory->create();
             $resultRedirect->setPath('*/*/index');
             return $resultRedirect;

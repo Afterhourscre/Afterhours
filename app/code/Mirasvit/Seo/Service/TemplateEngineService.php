@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service;
 
@@ -30,12 +31,20 @@ class TemplateEngineService implements TemplateEngineServiceInterface
         $this->templateProcessor = $templateProcessor;
     }
 
-    public function render($template, array $vars = [])
+    /**
+     * @param string $template
+     * @param array $vars
+     * @return string
+     */
+    public function render(string $template = null, array $vars = []): string
     {
-        return $this->templateProcessor->process($template, $vars);
+        return $this->templateProcessor->process((string)$template, $vars);
     }
 
-    public function getData()
+    /**
+     * @return TemplateEngine\Data\AbstractData[]
+     */
+    public function getData(): array
     {
         return $this->templateProcessor->getData();
     }

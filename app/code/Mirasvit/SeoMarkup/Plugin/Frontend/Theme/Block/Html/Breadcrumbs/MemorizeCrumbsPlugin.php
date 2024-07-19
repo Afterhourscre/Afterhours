@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -23,10 +23,21 @@ use Mirasvit\SeoMarkup\Model\Config\BreadcrumbListConfig;
 
 class MemorizeCrumbsPlugin
 {
+    /**
+     * @var UrlInterface
+     */
     private $urlBuilder;
 
+    /**
+     * @var Registry
+     */
     private $registry;
 
+    /**
+     * MemorizeCrumbsPlugin constructor.
+     * @param UrlInterface $urlBuilder
+     * @param Registry $registry
+     */
     public function __construct(
         UrlInterface $urlBuilder,
         Registry $registry
@@ -36,6 +47,11 @@ class MemorizeCrumbsPlugin
     }
 
 
+    /**
+     * @param mixed $subject
+     * @param mixed $result
+     * @return mixed
+     */
     public function afterToHtml($subject, $result)
     {
         $crumbs = $this->parseHtml($result);

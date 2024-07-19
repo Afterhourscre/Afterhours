@@ -9,36 +9,52 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoMarkup\Block\Rs\Product;
 
+use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Pricing\Price\FinalPrice;
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\View\LayoutInterface;
 use Magento\Payment\Model\Config as PaymentConfig;
 use Magento\Shipping\Model\Config as ShippingConfig;
+use Magento\Store\Api\Data\StoreInterface;
+use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\Store;
+use Magento\Tax\Model\Config;
 use Mirasvit\Seo\Api\Service\TemplateEngineServiceInterface;
+use Mirasvit\SeoMarkup\Api\Data\ExtenderInterface;
 use Mirasvit\SeoMarkup\Model\Config\ProductConfig;
-use Magento\Framework\Locale\FormatInterface;
+use Mirasvit\SeoMarkup\Model\Config as MirasvitConfig;
+use Mirasvit\SeoMarkup\Repository\ExtenderRepository;
+use Mirasvit\SeoMarkup\Service\SnippetService;
 
+/**
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ */
 class OfferData
 {
+    const PRODUCT_PRICES_INCLUDING_TAX = 2;
+
     /**
-     * @var \Magento\Catalog\Model\Product
+     * @var ProductInterface
      */
     private $product;
 
-    private $formatInterface;
     /**
-     * @var \Magento\Store\Model\Store
+     * @var ?StoreInterface
      */
     private $store;
 
-    protected $storeInterface;
+    /**
+     * @var ?int
+     */
+    private $storeId;
 
     private $productConfig;
 
@@ -50,103 +66,89 @@ class OfferData
 
     private $shippingConfig;
 
+    private $extenderRepository;
+
+    private $snippetService;
+
     public function __construct(
-        ProductConfig $productConfig,
+        ProductConfig                  $productConfig,
         TemplateEngineServiceInterface $templateEngineService,
-        PaymentConfig $paymentConfig,
-        ScopeConfigInterface $scopeConfig,
-        ShippingConfig $shippingConfig,
-        LayoutInterface $layout,
-        FormatInterface $formatInterface
+        PaymentConfig                  $paymentConfig,
+        ScopeConfigInterface           $scopeConfig,
+        ShippingConfig                 $shippingConfig,
+        ExtenderRepository             $extenderRepository,
+        SnippetService                 $snippetService
     ) {
         $this->productConfig         = $productConfig;
         $this->templateEngineService = $templateEngineService;
         $this->paymentConfig         = $paymentConfig;
         $this->scopeConfig           = $scopeConfig;
         $this->shippingConfig        = $shippingConfig;
-        $this->layout                = $layout;
-        $this->formatInterface       = $formatInterface;
+        $this->extenderRepository    = $extenderRepository;
+        $this->snippetService        = $snippetService;
     }
 
-    /**
-     * @param object $product
-     * @param object $store
-     *
-     * @return array|false
-     */
-    public function getData($product, $store)
+    public function getData(ProductInterface $product, StoreInterface $store, bool $dry = false): array
     {
-        $this->product = $product->load($product->getId());
+        $this->product = $dry ? $product : $product->load($product->getId());
         $this->store   = $store;
 
-        $currencyCode  = $this->store->getCurrentCurrencyCode();
-        $specialToDate = $this->templateEngineService->render('[product_special_to_date]', ['product' => $product]);
-        $finalPrice    = strip_tags(html_entity_decode($this->getPrice($this->product)));
-        preg_match_all('/[0-9\.\,]+/', $finalPrice, $matches);
+        $currencyCode = $this->store->getCurrentCurrencyCode();
+        $finalPrice   = $this->getFinalPrice();
 
-        if(!isset($matches[0][0])) {
-            return;
-        }
-       
-        $finalPrice = $matches[0][0];
-        $finalPrice = $this->formatInterface->getNumber($finalPrice); 
         $values = [
             '@type'                   => 'Offer',
             'url'                     => $this->product->getVisibility() != 1 ? $this->product->getProductUrl() : false,
             'price'                   => number_format($finalPrice, 2, '.', ''),
             'priceCurrency'           => $currencyCode,
-            'priceValidUntil'         => empty($specialToDate) ? '2030-01-01' : $specialToDate,
+            'priceValidUntil'         => $this->getPriceValidUntil(),
             'availability'            => $this->getOfferAvailability(),
             'itemCondition'           => $this->getOfferItemCondition(),
             'acceptedPaymentMethod'   => $this->getOfferAcceptedPaymentMethods(),
             'availableDeliveryMethod' => $this->getOfferAvailableDeliveryMethods(),
+            'sku'                     => $this->product->getSku(),
+            'gtin'                    => $this->getGtin(),
         ];
 
-        $data = [];
-
-        foreach ($values as $key => $value) {
-            if ($value) {
-                $data[$key] = $value;
-            }
+        $extenders = $this->extenderRepository
+            ->getListForProduct($product, ExtenderInterface::OFFER_TYPE, $this->getStoreId());
+        foreach ($extenders as $extender) {
+            $values = $this->snippetService
+                ->extendRichSnippet($values, $extender->getSnippetArray(), $extender->isOverrideEnabled());
         }
 
-        return $data;
+        return array_filter($values);
     }
 
-    public function getPrice($product)
+    public function isIncludingTax(): bool
     {
-        $priceRender = $this->layout->getBlock('product.price.render.default');
-        if (!$priceRender) {
-            $priceRender = $this->layout->createBlock(
-                \Magento\Framework\Pricing\Render::class,
-                'product.price.render.default',
-                ['data' => ['price_render_handle' => 'catalog_product_prices']]
-            );
-        }
-
-        $price = '';
-        if ($priceRender) {
-            $price = $priceRender->render(
-                \Magento\Catalog\Pricing\Price\FinalPrice::PRICE_CODE,
-                $product,
-                [
-                    'display_minimal_price'  => true,
-                    'use_link_for_as_low_as' => true,
-                    'zone'                   => \Magento\Framework\Pricing\Render::ZONE_ITEM_LIST,
-                ]
-            );
-        }
-
-        return $price;
+        return in_array(
+            $this->scopeConfig->getValue(
+                'tax/display/type',
+                ScopeInterface::SCOPE_STORES,
+                $this->store
+            ),
+            [Config::DISPLAY_TYPE_INCLUDING_TAX, Config::DISPLAY_TYPE_BOTH]
+        );
     }
 
-    /**
-     * @return string|false
-     */
-    private function getOfferAvailability()
+    protected function getOfferAvailableDeliveryMethods(): ?array
     {
-        if (!$this->productConfig->isAvailabilityEnabled()) {
-            return false;
+        if (!$this->productConfig->isAvailableDeliveryMethodEnabled($this->getStoreId())) {
+            return null;
+        }
+
+        if ($activeDeliveryMethods = $this->getActiveDeliveryMethods()) {
+            return $activeDeliveryMethods;
+        }
+
+        return null;
+    }
+
+    private function getOfferAvailability(): ?string
+    {
+        if (!$this->productConfig->isAvailabilityEnabled($this->getStoreId())) {
+            return null;
         }
 
         $productAvailability = method_exists($this->product, 'isAvailable')
@@ -154,71 +156,63 @@ class OfferData
             : $this->product->isInStock();
 
         if ($productAvailability) {
-            return "http://schema.org/InStock";
+            return MirasvitConfig::HTTP_SCHEMA_ORG . '/InStock';
         } else {
-            return "http://schema.org/OutOfStock";
+            return MirasvitConfig::HTTP_SCHEMA_ORG . '/OutOfStock';
         }
     }
 
-    /**
-     * @return string|false
-     */
-    private function getOfferItemCondition()
+    private function getOfferItemCondition(): ?string
     {
-        $conditionType = $this->productConfig->getItemConditionType();
+        $storeId       = $this->getStoreId();
+        $conditionType = $this->productConfig->getItemConditionType($storeId);
 
         if (!$conditionType) {
-            return false;
+            return null;
         }
 
         if ($conditionType == ProductConfig::ITEM_CONDITION_NEW_ALL) {
-            return "http://schema.org/NewCondition";
+            return MirasvitConfig::HTTP_SCHEMA_ORG . '/NewCondition';
         } elseif ($conditionType == ProductConfig::ITEM_CONDITION_MANUAL) {
-            $attribute      = $this->productConfig->getItemConditionAttribute();
+            $attribute      = $this->productConfig->getItemConditionAttribute($storeId);
             $conditionValue = $this->templateEngineService->render("[product_$attribute]");
 
             if (!$conditionValue) {
-                return false;
+                return null;
             }
 
             switch ($conditionValue) {
-                case $this->productConfig->getItemConditionAttributeValueNew():
-                    return "http://schema.org/NewCondition";
+                case $this->productConfig->getItemConditionAttributeValueNew($storeId):
+                    return MirasvitConfig::HTTP_SCHEMA_ORG . '/NewCondition';
 
-                case $this->productConfig->getItemConditionAttributeValueUsed():
-                    return "http://schema.org/UsedCondition";
+                case $this->productConfig->getItemConditionAttributeValueUsed($storeId):
+                    return MirasvitConfig::HTTP_SCHEMA_ORG . '/UsedCondition';
 
-                case $this->productConfig->getItemConditionAttributeValueRefurbished():
-                    return "http://schema.org/RefurbishedCondition";
+                case $this->productConfig->getItemConditionAttributeValueRefurbished($storeId):
+                    return MirasvitConfig::HTTP_SCHEMA_ORG . '/RefurbishedCondition';
 
-                case $this->productConfig->getItemConditionAttributeValueDamaged():
-                    return "http://schema.org/DamagedCondition";
+                case $this->productConfig->getItemConditionAttributeValueDamaged($storeId):
+                    return MirasvitConfig::HTTP_SCHEMA_ORG . '/DamagedCondition';
             }
         }
 
-        return false;
+        return null;
     }
 
-    /**
-     * @return array|false
-     */
-    private function getOfferAcceptedPaymentMethods()
+    private function getOfferAcceptedPaymentMethods(): ?array
     {
-        if (!$this->productConfig->isAcceptedPaymentMethodEnabled()) {
-            return false;
+        if (!$this->productConfig->isAcceptedPaymentMethodEnabled($this->getStoreId())) {
+            return null;
         }
 
         if ($activePaymentMethods = $this->getActivePaymentMethods()) {
             return $activePaymentMethods;
         }
 
-        return false;
+        return null;
     }
 
-    /**
-     * @return array
-     */
-    private function getActivePaymentMethods()
+    private function getActivePaymentMethods(): array
     {
         $payments = $this->paymentConfig->getActiveMethods();
         $methods  = [];
@@ -245,10 +239,7 @@ class OfferData
         return array_unique($methods);
     }
 
-    /**
-     * @return array|bool
-     */
-    private function getActivePaymentCCTypes()
+    private function getActivePaymentCCTypes(): ?array
     {
         $methods    = [];
         $allMethods = [
@@ -277,29 +268,10 @@ class OfferData
             return $methods;
         }
 
-        return false;
+        return null;
     }
 
-    /**
-     * @return array|false
-     */
-    protected function getOfferAvailableDeliveryMethods()
-    {
-        if (!$this->productConfig->isAvailableDeliveryMethodEnabled()) {
-            return false;
-        }
-
-        if ($activeDeliveryMethods = $this->getActiveDeliveryMethods()) {
-            return $activeDeliveryMethods;
-        }
-
-        return false;
-    }
-
-    /**
-     * @return array
-     */
-    private function getActiveDeliveryMethods()
+    private function getActiveDeliveryMethods(): array
     {
         $methods = [];
 
@@ -322,5 +294,54 @@ class OfferData
         }
 
         return array_unique($methods);
+    }
+
+    private function getGtin(): string
+    {
+        return $this->productConfig->getGtin8Attribute($this->getStoreId())
+            ? (string)$this->product->getData($this->productConfig->getGtin8Attribute($this->getStoreId()))
+            : '';
+    }
+
+    private function getPriceValidUntil(): string
+    {
+        $specialToDate = $this->templateEngineService->render(
+            '[product_special_to_date]',
+            ['product' => $this->product]
+        );
+
+        if (strtotime($specialToDate) > time()) {
+            return date("Y-m-d ", strtotime($specialToDate));
+        } else {
+            return '2030-01-01';
+        }
+    }
+
+    private function getFinalPrice(): float
+    {
+        $priceAmount = $this->product->getPriceInfo()
+            ->getPrice(FinalPrice::PRICE_CODE)
+            ->getAmount();
+
+        if ($this->isIncludingTax()) {
+            $finalPrice = $priceAmount->getValue();
+        } else {
+            $finalPrice = $priceAmount->getBaseAmount();
+        }
+
+        return $finalPrice;
+    }
+
+    private function getStoreId(): int
+    {
+        if (!isset($this->store)) {
+            return Store::DEFAULT_STORE_ID;
+        }
+
+        if (!isset($this->storeId)) {
+            $this->storeId = (int)$this->store->getStoreId();
+        }
+
+        return $this->storeId;
     }
 }

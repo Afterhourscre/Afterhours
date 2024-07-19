@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoContent\Service\Content\Modifier;
 
@@ -40,7 +41,7 @@ class MaxLengthModifier implements ModifierInterface
         $this->storeManager = $storeManager;
     }
 
-    public function modify(ContentInterface $content)
+    public function modify(ContentInterface $content, ?string $forceApplyTo = null): ContentInterface
     {
         $store = $this->storeManager->getStore();
 
@@ -52,7 +53,7 @@ class MaxLengthModifier implements ModifierInterface
             $content->setMetaDescription($this->truncate($content->getMetaDescription(), $length));
         }
 
-        if ($this->stateService->isProductPage()) {
+        if ($this->stateService->isProductPage() || $forceApplyTo == 'product') {
             if ($length = $this->config->getProductNameLength($store)) {
                 $content->setTitle($this->truncate($content->getTitle(), $length));
             }
@@ -65,12 +66,7 @@ class MaxLengthModifier implements ModifierInterface
         return $content;
     }
 
-    /**
-     * @param string $string
-     * @param int    $limit
-     * @return string
-     */
-    private function truncate($string, $limit)
+    private function truncate(string $string, int $limit): string
     {
         return mb_substr($string, 0, $limit);
     }

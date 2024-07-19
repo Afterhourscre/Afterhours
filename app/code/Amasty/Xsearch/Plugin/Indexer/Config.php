@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Plugin\Indexer;
 
@@ -12,7 +11,7 @@ use Magento\CatalogSearch\Model\Indexer\Fulltext;
 
 class Config
 {
-    const AMASTY_XSEARCH_CATEGORY_FULLTEXT = "amasty_xsearch_category_fulltext";
+    public const AMASTY_XSEARCH_CATEGORY_FULLTEXT = "amasty_xsearch_category_fulltext";
 
     /**
      * @param \Magento\Indexer\Model\Config $subject

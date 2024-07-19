@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -52,6 +52,15 @@ class Redirect extends \Magento\Framework\App\Helper\AbstractHelper
     protected $seoData;
 
 
+    /**
+     * Redirect constructor.
+     * @param Config $config
+     * @param \Magento\Framework\UrlInterface $urlManager
+     * @param \Magento\Framework\App\Response\RedirectInterface $redirect
+     * @param \Magento\Framework\App\ActionFlag $actionFlag
+     * @param Data $seoData
+     * @param \Magento\Customer\Model\Session $customerSession
+     */
     public function __construct(
         \Mirasvit\Seo\Model\Config $config,
         \Magento\Framework\UrlInterface $urlManager,
@@ -92,7 +101,7 @@ class Redirect extends \Magento\Framework\App\Helper\AbstractHelper
         $extension = substr(strrchr($url, '.'), 1);
 
         if (substr($url, -1) != '/' && $this->config->getTrailingSlash() == Config::TRAILING_SLASH) {
-            if (!in_array($extension, ['html', 'htm', 'php', 'xml', 'rss'])) {
+            if (!in_array($extension, ['html', 'htm', 'php', 'xml', 'rss', 'txt'])) {
                 $url .= '/';
                 //currently not needed for cli as we do not alter URLs that contain '?'
                 if (php_sapi_name() != "cli" && $_SERVER['QUERY_STRING']) {

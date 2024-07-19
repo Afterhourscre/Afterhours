@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -45,6 +45,13 @@ class ManualService implements ManualServiceInterface
      */
     private $moduleList;
 
+    /**
+     * ManualService constructor.
+     * @param RequestInterface $request
+     * @param ModuleDirReader $moduleDirReader
+     * @param XmlParser $parser
+     * @param ModuleListInterface $moduleList
+     */
     public function __construct(
         RequestInterface $request,
         ModuleDirReader $moduleDirReader,
@@ -134,7 +141,7 @@ class ManualService implements ManualServiceInterface
     private function getManualData()
     {
         $xml = [];
-        $module = $this->request->getControllerModule();
+        $module = (string)$this->request->getControllerModule();
 
         if (strpos($module, 'Mirasvit_') !== false) {
             $xml = $this->loadXML($module);

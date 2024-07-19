@@ -9,35 +9,40 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
+
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\Alternate;
 
 use Magento\Framework\App\RequestInterface;
 
-class MageplazaBlogStrategy
+class MageplazaBlogStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyInterface
 {
     private $manager;
+
     private $url;
+
     protected $request;
+    /**
+     * @var mixed
+     */
+    private $helperBlog;
 
     public function __construct(
         \Magento\Framework\Module\Manager $manager,
         \Mirasvit\Seo\Api\Service\Alternate\UrlInterface $url,
         RequestInterface $request
     ) {
-        $this->manager      = $manager;
-        $this->url          = $url;
-        $this->request      = $request;
+        $this->manager = $manager;
+        $this->url     = $url;
+        $this->request = $request;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getStoreUrls()
+    public function getStoreUrls(): array
     {
         if ($this->manager->isEnabled('Mageplaza_Blog') && class_exists('\Mageplaza\Blog\Helper\Data')) {
             $this->helperBlog = \Magento\Framework\App\ObjectManager::getInstance()->get(
@@ -46,12 +51,12 @@ class MageplazaBlogStrategy
             $id = $this->getRequest()->getParam('id');
             $post = $this->helperBlog->getFactoryByType(\Mageplaza\Blog\Helper\Data::TYPE_POST)->create()->load($id);
             $storeUrls = $this->url->getStoresCurrentUrl();
-            $allowedStores = explode(',', $post->getStoreIds());
-            
+            $allowedStores = explode(',', (string)$post->getStoreIds());
+
             if (!$storeUrls) {
-                return false;
+                return [];
             }
-            
+
             foreach ($storeUrls as $key => $value) {
                 if (!in_array($key, $allowedStores)) {
                     unset($storeUrls[$key]);
@@ -64,8 +69,13 @@ class MageplazaBlogStrategy
         }
     }
 
-    public function getRequest()
+    public function getRequest(): RequestInterface
     {
         return $this->request;
+    }
+
+    public function getAlternateUrl(array $storeUrls): array
+    {
+        return [];
     }
 }

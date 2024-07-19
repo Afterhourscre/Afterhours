@@ -10,7 +10,7 @@
  */
 ?>
 <script>
-    window.enableChatUsersConfig = <?php /* @escapeNotVerified */ echo \Zend_Json::encode($block->getEnableUsersConfig()); ?>;
+    window.enableChatUsersConfig = <?php /* @escapeNotVerified */ echo json_encode($block->getEnableUsersConfig()); ?>;
 </script>
 <div id="chatbox-active-users" class="chat-active-model" data-bind="scope:'active-users'" data-role="chat-active-model">
     <!-- ko template: getTemplate() --><!-- /ko -->

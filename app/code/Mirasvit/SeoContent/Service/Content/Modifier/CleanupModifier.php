@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoContent\Service\Content\Modifier;
 
@@ -24,7 +25,7 @@ use Mirasvit\SeoContent\Api\Data\ContentInterface;
  */
 class CleanupModifier implements ModifierInterface
 {
-    public function modify(ContentInterface $content)
+    public function modify(ContentInterface $content, ?string $forceApplyTo = null): ContentInterface
     {
         $metaProperties = [
             ContentInterface::META_TITLE,
@@ -41,12 +42,12 @@ class CleanupModifier implements ModifierInterface
         return $content;
     }
 
-    /**
-     * @param string $meta
-     * @return string
-     */
-    private function cleanupMeta($meta)
+    private function cleanupMeta(?string $meta): ?string
     {
+        if (!$meta) {
+            return $meta;
+        }
+        
         $meta = strip_tags($meta);
         $meta = preg_replace('/\s{2,}/', ' ', $meta); //remove unnecessary spaces
         $meta = preg_replace('/\"/', ' ', $meta); //remove " because it destroys html

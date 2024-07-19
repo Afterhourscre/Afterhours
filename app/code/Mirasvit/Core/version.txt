@@ -1,1 +1,1 @@
-mirasvit-module-core-1.2.106-5df057-41656-NDE2NTY=
+mirasvit-module-core-1.4.37-130606-41656-NDE2NTY=

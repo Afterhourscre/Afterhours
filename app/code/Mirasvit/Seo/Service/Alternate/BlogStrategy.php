@@ -9,18 +9,23 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\Alternate;
 
-class BlogStrategy
+use Magento\Framework\App\ObjectManager;
+
+class BlogStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyInterface
 {
     private $manager;
+
     private $registry;
+
     private $url;
 
     public function __construct(
@@ -28,30 +33,64 @@ class BlogStrategy
         \Magento\Framework\Registry $registry,
         \Mirasvit\Seo\Api\Service\Alternate\UrlInterface $url
     ) {
-        $this->manager      = $manager;
-        $this->registry     = $registry;
-        $this->url          = $url;
+        $this->manager  = $manager;
+        $this->registry = $registry;
+        $this->url      = $url;
     }
 
     /**
-     * {@inheritdoc}
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
-    public function getStoreUrls()
+    public function getStoreUrls(): array
     {
-        if (!$this->manager->isEnabled('Mirasvit_Blog')) {
+        if (!$this->manager->isEnabled('Mirasvit_BlogMx')) {
             return [];
         }
 
         $storeUrls = $this->url->getStoresCurrentUrl();
-        $post = $this->registry->registry('current_blog_post');
-        $allowedStores = $post->getStoreIds();
+
+        if (!$storeUrls) {
+            return [];
+        }
+
+        $blogRegistry = null;
+
+        if (class_exists('\Mirasvit\BlogMx\Registry')) {
+            $blogRegistry = ObjectManager::getInstance()->get('\Mirasvit\BlogMx\Registry');
+        }
+
+        if (!$blogRegistry) {
+            return [];
+        }
+
+        $entity = null;
+
+        if ($post = $blogRegistry->getPost()) {
+            $entity = $post;
+        } elseif ($category = $blogRegistry->getCategory()) {
+            $entity = $category;
+        } else {
+            return [];
+        }
+
+        $allowedStores = $entity->getStoreIds();
+
+        if (empty($allowedStores)) {
+            return $storeUrls;
+        }
 
         foreach ($storeUrls as $key => $value) {
-            if (!in_array($key, $allowedStores)){
+            if (!in_array($key, $allowedStores)) {
                 unset($storeUrls[$key]);
             }
         }
 
         return $storeUrls;
+    }
+
+    public function getAlternateUrl(array $storeUrls): array
+    {
+        return [];
     }
 }

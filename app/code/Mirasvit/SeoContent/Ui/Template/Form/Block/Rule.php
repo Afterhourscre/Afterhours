@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -62,6 +62,14 @@ class Rule extends Form implements TabInterface
      */
     protected $_nameInLayout = 'conditions_serialized';
 
+    /**
+     * Rule constructor.
+     * @param \Magento\Rule\Block\Conditions $conditions
+     * @param FieldsetRenderer $fieldsetRenderer
+     * @param FormFactory $formFactory
+     * @param Registry $registry
+     * @param Context $context
+     */
     public function __construct(
         \Magento\Rule\Block\Conditions $conditions,
         FieldsetRenderer $fieldsetRenderer,
@@ -129,6 +137,7 @@ class Rule extends Form implements TabInterface
 
         $renderer = $this->fieldsetRenderer
             ->setTemplate('Magento_CatalogRule::promo/fieldset.phtml')
+            ->setNameInLayout('mst_seo_template_catalogrule')
             ->setData('new_child_url', $this->getUrl('*/template/newConditionHtml', [
                 'form'                       => 'rule_' . $fieldsetName,
                 'form_name'                  => $formName,

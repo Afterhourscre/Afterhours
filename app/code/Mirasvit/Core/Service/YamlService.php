@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -55,13 +55,37 @@ class YamlService
      * @var mixed
      */
     private $_dumpIndent;
+    /**
+     * @var int
+     */
     private $_dumpWordWrap;
+    /**
+     * @var bool
+     */
     private $_containsGroupAnchor = false;
+    /**
+     * @var bool
+     */
     private $_containsGroupAlias = false;
+    /**
+     * @var string
+     */
     private $path;
+    /**
+     * @var string
+     */
     private $result;
+    /**
+     * @var string
+     */
     private $LiteralPlaceHolder = '___YAML_Literal_Block___';
+    /**
+     * @var array
+     */
     private $SavedGroups = [];
+    /**
+     * @var int
+     */
     private $indent;
     /**
      * Path modifier that should be applied after adding current element.
@@ -156,11 +180,11 @@ class YamlService
      * you can turn off wordwrap by passing in 0.
      *
      * @access public
-     * @return string
      * @param array|\stdClass $array PHP array
-     * @param int $indent Pass in false to use the default, which is 2
-     * @param int $wordwrap Pass in 0 for no wordwrap, false for default (40)
+     * @param bool|int $indent Pass in false to use the default, which is 2
+     * @param bool $wordwrap Pass in 0 for no wordwrap, false for default (40)
      * @param bool $no_opening_dashes Do not start YAML file with "---\n"
+     * @return string
      */
     public static function dump($array, $indent = false, $wordwrap = false, $no_opening_dashes = false)
     {
@@ -183,10 +207,11 @@ class YamlService
      * you can turn off wordwrap by passing in 0.
      *
      * @access public
-     * @return string
      * @param array $array PHP array
-     * @param int $indent Pass in false to use the default, which is 2
-     * @param int $wordwrap Pass in 0 for no wordwrap, false for default (40)
+     * @param bool $indent Pass in false to use the default, which is 2
+     * @param bool $wordwrap Pass in 0 for no wordwrap, false for default (40)
+     * @param bool $no_opening_dashes
+     * @return string
      */
     public function _dump($array, $indent = false, $wordwrap = false, $no_opening_dashes = false)
     {
@@ -230,10 +255,13 @@ class YamlService
     /**
      * Attempts to convert a key / value array item to YAML
      * @access private
+     * @param string $key The name of the key
+     * @param mixed $value The value of the item
+     * @param int $indent The indent of the current node
+     * @param int $previous_key
+     * @param int $first_key
+     * @param null $source_array
      * @return string
-     * @param $key The name of the key
-     * @param $value The value of the item
-     * @param $indent The indent of the current node
      */
     private function _yamlize($key, $value, $indent, $previous_key = -1, $first_key = 0, $source_array = null)
     {
@@ -262,8 +290,8 @@ class YamlService
      * Attempts to convert an array to YAML
      * @access private
      * @return string
-     * @param $array The array you want to convert
-     * @param $indent The indent of the current level
+     * @param array $array The array you want to convert
+     * @param int $indent The indent of the current level
      */
     private function _yamlizeArray($array, $indent)
     {
@@ -286,10 +314,13 @@ class YamlService
     /**
      * Returns YAML from a key and a value
      * @access private
+     * @param string $key The name of the key
+     * @param string $value The value of the item
+     * @param int $indent The indent of the current node
+     * @param int $previous_key
+     * @param int $first_key
+     * @param null $source_array
      * @return string
-     * @param $key The name of the key
-     * @param $value The value of the item
-     * @param $indent The indent of the current node
      */
     private function _dumpNode($key, $value, $indent, $previous_key = -1, $first_key = 0, $source_array = null)
     {
@@ -325,7 +356,7 @@ class YamlService
         if (self::isTranslationWord($value)) {
             $value = $this->_doLiteralBlock($value, $indent);
         }
-        if (trim($value) != $value) {
+        if ($value && trim($value) != $value) {
             $value = $this->_doLiteralBlock($value, $indent);
         }
 
@@ -362,8 +393,8 @@ class YamlService
      * Creates a literal block for dumping
      * @access private
      * @return string
-     * @param $value
-     * @param $indent int The value of the indent
+     * @param string $value
+     * @param int $indent int The value of the indent
      */
     private function _doLiteralBlock($value, $indent)
     {
@@ -400,8 +431,9 @@ class YamlService
     /**
      * Folds a string of text, if necessary
      * @access private
+     * @param string $value The string you wish to fold
+     * @param int $indent
      * @return string
-     * @param $value The string you wish to fold
      */
     private function _doFolding($value, $indent)
     {
@@ -424,24 +456,40 @@ class YamlService
         return $value;
     }
 
+    /**
+     * @param string $value
+     * @return bool
+     */
     private function isTrueWord($value)
     {
         $words = self::getTranslations(['true', 'on', 'yes', 'y']);
         return in_array($value, $words, true);
     }
 
+    /**
+     * @param string $value
+     * @return bool
+     */
     private function isFalseWord($value)
     {
         $words = self::getTranslations(['false', 'off', 'no', 'n']);
         return in_array($value, $words, true);
     }
 
+    /**
+     * @param string $value
+     * @return bool
+     */
     private function isNullWord($value)
     {
         $words = self::getTranslations(['null', '~']);
         return in_array($value, $words, true);
     }
 
+    /**
+     * @param string $value
+     * @return bool
+     */
     private function isTranslationWord($value)
     {
         return (
@@ -456,7 +504,7 @@ class YamlService
      * Reference: http://yaml.org/type/bool.html
      * TODO: Use only words from the YAML spec.
      * @access private
-     * @param $value The value to coerce
+     * @param string $value The value to coerce
      */
     private function coerceValue(&$value)
     {
@@ -472,7 +520,9 @@ class YamlService
     /**
      * Given a set of words, perform the appropriate translations on them to
      * match the YAML 1.1 specification for type coercing.
-     * @param $words The words to translate
+     * @param array $words The words to translate
+     * @return array
+     * @return array
      * @access private
      */
     private static function getTranslations(array $words)
@@ -486,18 +536,33 @@ class YamlService
 
     // LOADING FUNCTIONS
 
+    /**
+     * @param string $input
+     * @return array|string
+     * @throws \Exception
+     */
     private function _load($input)
     {
         $Source = $this->loadFromSource($input);
         return $this->loadWithSource($Source);
     }
 
+    /**
+     * @param string $input
+     * @return array|string
+     * @throws \Exception
+     */
     private function _loadString($input)
     {
         $Source = $this->loadFromString($input);
         return $this->loadWithSource($Source);
     }
 
+    /**
+     * @param string $Source
+     * @return array|string
+     * @throws \Exception
+     */
     private function loadWithSource($Source)
     {
         if (empty($Source)) {
@@ -570,6 +635,10 @@ class YamlService
         return $this->result;
     }
 
+    /**
+     * @param string $input
+     * @return array
+     */
     private function loadFromSource($input)
     {
         if (!empty($input) && strpos($input, "\n") === false && file_exists($input)) {
@@ -579,6 +648,10 @@ class YamlService
         return $this->loadFromString($input);
     }
 
+    /**
+     * @param string $input
+     * @return array
+     */
     private function loadFromString($input)
     {
         $lines = explode("\n", $input);
@@ -754,6 +827,7 @@ class YamlService
     /**
      * Used in inlines to check for more inlines or quoted strings
      * @access private
+     * @param mixed $inline
      * @return array
      */
     private function _inlineEscape($inline)
@@ -889,6 +963,11 @@ class YamlService
         return $explode;
     }
 
+    /**
+     * @param string $line
+     * @param string $lineIndent
+     * @return bool
+     */
     private function literalBlockContinues($line, $lineIndent)
     {
         if (!trim($line)) {
@@ -900,6 +979,11 @@ class YamlService
         return false;
     }
 
+    /**
+     * @param array $alias
+     * @return mixed|string
+     * @throws \Exception
+     */
     private function referenceContentsByAlias($alias)
     {
         do {
@@ -917,6 +1001,12 @@ class YamlService
         return $value;
     }
 
+    /**
+     * @param array $array
+     * @param int $indent
+     * @return bool
+     * @throws \Exception
+     */
     private function addArrayInline($array, $indent)
     {
         $CommonGroupPath = $this->path;
@@ -931,6 +1021,12 @@ class YamlService
         return true;
     }
 
+    /**
+     * @param mixed $incoming_data
+     * @param mixed $incoming_indent
+     * @return bool|void
+     * @throws \Exception
+     */
     private function addArray($incoming_data, $incoming_indent)
     {
         if (count($incoming_data) > 1) {
@@ -1015,6 +1111,10 @@ class YamlService
         }
     }
 
+    /**
+     * @param string $line
+     * @return bool|false|string
+     */
     private static function startsLiteralBlock($line)
     {
         $lastChar = substr(trim($line), -1);
@@ -1031,6 +1131,10 @@ class YamlService
         return $lastChar;
     }
 
+    /**
+     * @param string $line
+     * @return bool
+     */
     private static function greedilyNeedNextLine($line)
     {
         $line = trim($line);
@@ -1049,6 +1153,13 @@ class YamlService
         return false;
     }
 
+    /**
+     * @param mixed $literalBlock
+     * @param string $line
+     * @param mixed $literalBlockStyle
+     * @param int $indent
+     * @return string
+     */
     private function addLiteralLine($literalBlock, $line, $literalBlockStyle, $indent = -1)
     {
         $line = self::stripIndent($line, $indent);
@@ -1072,6 +1183,11 @@ class YamlService
         return $literalBlock . $line;
     }
 
+    /**
+     * @param string $lineArray
+     * @param mixed $literalBlock
+     * @return mixed
+     */
     public function revertLiteralPlaceHolder($lineArray, $literalBlock)
     {
         foreach ($lineArray as $k => $_) {
@@ -1085,6 +1201,11 @@ class YamlService
         return $lineArray;
     }
 
+    /**
+     * @param string $line
+     * @param int $indent
+     * @return false|string
+     */
     private static function stripIndent($line, $indent = -1)
     {
         if ($indent == -1) {
@@ -1094,6 +1215,10 @@ class YamlService
         return substr($line, $indent);
     }
 
+    /**
+     * @param int $indent
+     * @return array|string
+     */
     private function getParentPathByIndent($indent)
     {
         if ($indent == 0) {
@@ -1111,6 +1236,10 @@ class YamlService
         return $linePath;
     }
 
+    /**
+     * @param int $indent
+     * @return bool
+     */
     private function clearBiggerPathValues($indent)
     {
         if ($indent == 0) {
@@ -1129,6 +1258,10 @@ class YamlService
         return true;
     }
 
+    /**
+     * @param string $line
+     * @return bool
+     */
     private static function isComment($line)
     {
         if (!$line) {
@@ -1144,11 +1277,19 @@ class YamlService
         return false;
     }
 
+    /**
+     * @param string $line
+     * @return bool
+     */
     private static function isEmpty($line)
     {
         return (trim($line) === '');
     }
 
+    /**
+     * @param string $line
+     * @return bool
+     */
     private function isArrayElement($line)
     {
         if (!$line || !is_scalar($line)) {
@@ -1166,11 +1307,19 @@ class YamlService
         return true;
     }
 
+    /**
+     * @param string $line
+     * @return false|int
+     */
     private function isHashElement($line)
     {
         return strpos($line, ':');
     }
 
+    /**
+     * @param string $line
+     * @return bool
+     */
     private function isLiteral($line)
     {
         if ($this->isArrayElement($line)) {
@@ -1183,6 +1332,10 @@ class YamlService
         return true;
     }
 
+    /**
+     * @param string $value
+     * @return string
+     */
     private static function unquote($value)
     {
         if (!$value) {
@@ -1201,11 +1354,19 @@ class YamlService
         return $value;
     }
 
+    /**
+     * @param string $line
+     * @return bool
+     */
     private function startsMappedSequence($line)
     {
         return (substr($line, 0, 2) == '- ' && substr($line, -1, 1) == ':');
     }
 
+    /**
+     * @param string $line
+     * @return array
+     */
     private function returnMappedSequence($line)
     {
         $array = [];
@@ -1216,6 +1377,10 @@ class YamlService
         return [$array];
     }
 
+    /**
+     * @param string $value
+     * @throws \Exception
+     */
     private function checkKeysInValue($value)
     {
         if (strchr('[{"\'', $value[0]) === false) {
@@ -1225,6 +1390,11 @@ class YamlService
         }
     }
 
+    /**
+     * @param string $line
+     * @return array
+     * @throws \Exception
+     */
     private function returnMappedValue($line)
     {
         $this->checkKeysInValue($line);
@@ -1235,21 +1405,38 @@ class YamlService
         return $array;
     }
 
+    /**
+     * @param string $line
+     * @return bool
+     */
     private function startsMappedValue($line)
     {
         return (substr($line, -1, 1) == ':');
     }
 
+    /**
+     * @param string $line
+     * @return bool
+     */
     private function isPlainArray($line)
     {
         return ($line[0] == '[' && substr($line, -1, 1) == ']');
     }
 
+    /**
+     * @param string $line
+     * @return mixed
+     */
     private function returnPlainArray($line)
     {
         return $this->_toType($line);
     }
 
+    /**
+     * @param string $line
+     * @return array
+     * @throws \Exception
+     */
     private function returnKeyValuePair($line)
     {
         $array = [];
@@ -1280,6 +1467,10 @@ class YamlService
         return $array;
     }
 
+    /**
+     * @param string $line
+     * @return array
+     */
     private function returnArrayElement($line)
     {
         if (strlen($line) <= 1) {
@@ -1297,6 +1488,10 @@ class YamlService
         return $array;
     }
 
+    /**
+     * @param string $line
+     * @return bool|mixed
+     */
     private function nodeContainsGroup($line)
     {
         $symbolsForReference = 'A-z0-9_\-';
@@ -1322,6 +1517,10 @@ class YamlService
         return false;
     }
 
+    /**
+     * @param string $line
+     * @param mixed $group
+     */
     private function addGroup($line, $group)
     {
         if ($group[0] == '&') {
@@ -1332,6 +1531,11 @@ class YamlService
         }
     }
 
+    /**
+     * @param string $line
+     * @param mixed $group
+     * @return string
+     */
     private function stripGroup($line, $group)
     {
         $line = trim(str_replace($group, '', $line));

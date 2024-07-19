@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -20,7 +20,6 @@ namespace Mirasvit\SeoSitemap\Preference\ResourceModel;
 use Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator;
 use Magento\Framework\App\ObjectManager;
 use Magento\Store\Model\Store;
-
 use Magento\Sitemap\Model\Source\Product\Image\IncludeImage;
 
 class Product extends \Magento\Sitemap\Model\ResourceModel\Catalog\Product
@@ -46,17 +45,17 @@ class Product extends \Magento\Sitemap\Model\ResourceModel\Catalog\Product
     private $productRepository;
 
     /**
-     * @var FriendlyImageUrlServiceInterface
+     * @var \Mirasvit\Seo\Api\Service\FriendlyImageUrlServiceInterface\Proxy
      */
     private $friendlyImageUrlService;
 
     /**
-     * @var Config
+     * @var \Mirasvit\Seo\Model\Config
      */
     private $config;
 
     /**
-     * @var SitemapConfig
+     * @var \Mirasvit\SeoSitemap\Model\Config
      */
     private $sitemapConfig;
 
@@ -86,7 +85,11 @@ class Product extends \Magento\Sitemap\Model\ResourceModel\Catalog\Product
     }
 
     /**
+     * @param int $storeId
      * @return array|bool
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws \Zend_Db_Statement_Exception
      */
     public function getCollection($storeId)
     {
@@ -118,8 +121,6 @@ class Product extends \Magento\Sitemap\Model\ResourceModel\Catalog\Product
             ->where('w.website_id = ?', $store->getWebsiteId());
 
         $this->_addFilter($store->getId(), 'visibility', $this->_productVisibility->getVisibleInSiteIds(), 'in');
-
-            
 
         if (is_object($this->sitemapConfig)) {
             if (!$this->sitemapConfig->getIsShowNonSalableProducts($storeId)) {
@@ -198,7 +199,7 @@ class Product extends \Magento\Sitemap\Model\ResourceModel\Catalog\Product
     /**
      * Load product images
      *
-     * @param \Magento\Framework\DataObject $product
+     * @param \Magento\Catalog\Model\Product $product
      * @param int                           $storeId
      *
      * @return void
@@ -217,7 +218,7 @@ class Product extends \Magento\Sitemap\Model\ResourceModel\Catalog\Product
         ) {
             $imagesCollection = [
                 new \Magento\Framework\DataObject(
-                    ['url' => $this->getCurrentProductImageUrl($product, $product->getImage())]
+                    ['url' => $this->getCurrentProductImageUrl($product, $product->getImage(), $storeId)]
                 ),
             ];
         }
@@ -225,7 +226,7 @@ class Product extends \Magento\Sitemap\Model\ResourceModel\Catalog\Product
         if ($imagesCollection) {
             $thumbnail = $product->getThumbnail();
             if ($thumbnail && $product->getThumbnail() != self::NOT_SELECTED_IMAGE) {
-                $thumbnail = $this->getCurrentProductImageUrl($product, $thumbnail);
+                $thumbnail = $this->getCurrentProductImageUrl($product, $thumbnail, $storeId);
             } else {
                 $thumbnail = $this->friendlyImageUrlService->getFriendlyImageName($product, $imagesCollection[0]->getUrl());
             }
@@ -236,7 +237,7 @@ class Product extends \Magento\Sitemap\Model\ResourceModel\Catalog\Product
                         'collection'    => $imagesCollection,
                         'title'         => $product->getName(),
                         'thumbnail'     => $thumbnail,
-                        'alt'           => $this->friendlyImageUrlService->getFriendlyImageAlt($product),
+                        'alt'           => $this->getCurrentProductImageAlt($product, $storeId),
                     ]
                 )
             );
@@ -244,6 +245,8 @@ class Product extends \Magento\Sitemap\Model\ResourceModel\Catalog\Product
     }
 
     /**
+     * @param \Magento\Catalog\Model\Product $product
+     * @param int $storeId
      * @return array
      */
     protected function _getAllProductImages($product, $storeId)
@@ -259,7 +262,7 @@ class Product extends \Magento\Sitemap\Model\ResourceModel\Catalog\Product
             foreach ($gallery as $image) {
                 $imagesCollection[] = new \Magento\Framework\DataObject(
                     [
-                        'url'       => $this->getCurrentProductImageUrl($product, $image['file']),
+                        'url'       => $this->getCurrentProductImageUrl($product, $image['file'], $storeId),
                         'caption'   => $image['label'] ? $image['label'] : $image['label_default'],
                     ]
                 );
@@ -270,24 +273,49 @@ class Product extends \Magento\Sitemap\Model\ResourceModel\Catalog\Product
     }
 
     /**
+     * @param \Magento\Catalog\Model\Product $product
+     * @param mixed $image
+     * @param int $storeId
      * @return string
      */
-    protected function getCurrentProductImageUrl($product, $image)
+    protected function getCurrentProductImageUrl($product, $image, $storeId)
     {
-        if ($this->isImageFriendlyUrlEnabled && $this->imageUrlTemplate && $this->isEnoughData($this->imageUrlTemplate)) {
-            $product = $this->productRepository->getById($product->getId());
+        if ($this->isImageFriendlyUrlEnabled && $this->imageUrlTemplate /*&& $this->isEnoughData($this->imageUrlTemplate)*/) {
+            $product = $this->productRepository->getById($product->getId(), $editMode = false, $storeId);
             $image = $this->friendlyImageUrlService->getFriendlyImageName($product, $image);
         }
 
-        $imgUrl = $this->catalogImageHelper->init($product, 'product_page_image_small')
-            ->resize(800, 600)
-            ->setImageFile($image)
-            ->getUrl();
+        if (strpos($image, '.gif') === false) {
+            $imageHelper = $this->catalogImageHelper->init($product, 'product_page_image_small')
+                ->setImageFile($image)
+                ->resize(800, 600);
 
-        return $imgUrl;
+            return $imageHelper->getUrl();
+        }
+
+        // when sitemap generates from the admin panel initiating small image triggers resize
+        // which can cause errors for GIF images
+        $imageHelper = $this->catalogImageHelper->init($product, 'product_page_image_large')
+                ->setImageFile($image);
+
+        return $imageHelper->getUrl();
     }
 
     /**
+     * @param \Magento\Catalog\Model\Product $product
+     * @param int $storeId
+     *
+     * @return string
+     */
+    protected function getCurrentProductImageAlt($product, $storeId)
+    {
+        $product = $this->productRepository->getById($product->getId(), $editMode = false, $storeId);
+
+        return $this->friendlyImageUrlService->getFriendlyImageAlt($product, $storeId);
+    }
+
+    /**
+     * @param mixed $imageUrlTemplate
      * @return bool
      */
     protected function isEnoughData($imageUrlTemplate)

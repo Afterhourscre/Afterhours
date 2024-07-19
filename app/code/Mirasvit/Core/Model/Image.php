@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -119,7 +119,7 @@ class Image
     protected $isBaseFilePlaceholder;
 
     /**
-     * @var string
+     * @var bool|string
      */
     protected $newFile;
 
@@ -553,7 +553,7 @@ class Image
             }
         }
 
-        $this->getImageProcessor()->resize($this->width, $this->height);
+        $this->getImageProcessor()->resize(intval($this->width), intval($this->height));
 
         return $this;
     }
@@ -594,7 +594,7 @@ class Image
         $left = $right = intval($left);
         $top  = $bottom = intval($top);
 
-        $this->getImageProcessor()->resize($nw, $nh);
+        $this->getImageProcessor()->resize(intval($nw), intval($nh));
         $this->getImageProcessor()->crop($top, $left, $right, $bottom);
 
         return $this;

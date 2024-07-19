@@ -9,22 +9,27 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoMarkup\Service;
 
 class SnippetService
 {
-    /**
-     * @param string $value
-     * @return string
-     */
-    public function escapeValue($value)
+    public function extendRichSnippet(array $data, array $update, bool $isOverrideEnabled): array
     {
-        return str_replace('"', '\"', $value);
+        foreach ($update as $key => $value) {
+            if (is_array($value)) {
+                $data[$key] = $this->extendRichSnippet($data[$key] ?? [], $value, $isOverrideEnabled);
+            } elseif ($isOverrideEnabled || !isset($data[$key])) {
+                $data[$key] = $value;
+            }
+        }
+
+        return $data;
     }
 }

@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Model\Search\Category;
 
@@ -18,7 +17,7 @@ use Magento\Store\Model\StoreManagerInterface as StoreManager;
 
 class UrlDataProvider
 {
-    const SEARCH_POPUP_CATEGORY_DATA = 'amasty_search_popup_category_data_for_store_';
+    public const SEARCH_POPUP_CATEGORY_DATA = 'amasty_search_popup_category_data_for_store_';
 
     /**
      * @var BlockCache
@@ -81,7 +80,13 @@ class UrlDataProvider
         foreach ($categoryCollection as $category) {
             $categoryData[$category->getId()] = [
                 'name' => $category->getName(),
-                'full_link' => $this->prepareCategoryLink($category)
+                'full_link' => $this->urlBuilder->getUrl(
+                    '',
+                    [
+                        '_direct' => $category->getRequestPath(),
+                        '_category' => $category
+                    ]
+                )
             ];
         }
 
@@ -99,25 +104,6 @@ class UrlDataProvider
     private function saveToCache(array &$categoryData)
     {
         $this->cache->save($this->serializer->serialize($categoryData), $this->getCacheTag());
-    }
-
-    /**
-     * @param Category $category
-     * @return string
-     */
-    private function prepareCategoryLink(Category $category)
-    {
-        if ($category->getRequestPath()) {
-            $categoryLink = $category->getUrlInstance()->getDirectUrl($category->getRequestPath());
-        } else {
-            $urlKey = $category->getUrlKey() ? $category->getUrlKey() : $category->formatUrlKey($category->getName());
-            $categoryLink = $this->urlBuilder->getUrl(
-                'catalog/category/view',
-                ['s' => $urlKey, 'id' => $category->getId()]
-            );
-        }
-
-        return $categoryLink;
     }
 
     /**

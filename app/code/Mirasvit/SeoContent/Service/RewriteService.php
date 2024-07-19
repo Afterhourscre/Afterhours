@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoContent\Service;
 
@@ -43,15 +44,13 @@ class RewriteService
         $this->request           = $request;
     }
 
-    /**
-     * @param string $url
-     * @return bool|RewriteInterface
-     */
-    public function getRewrite($url)
+    public function getRewrite(?string $url): ?RewriteInterface
     {
         if ($url == null) {
             $url = $this->request->getRequestUri();
         }
+
+        $fullActionName = $this->request->getFullActionName();
 
         $collection = $this->rewriteRepository->getCollection();
         $collection->addFieldToFilter(RewriteInterface::IS_ACTIVE, true)
@@ -59,20 +58,16 @@ class RewriteService
             ->setOrder(RewriteInterface::SORT_ORDER, 'desc');
 
         foreach ($collection as $rewrite) {
-            if ($this->isFollowPattern($url, $rewrite->getUrl())) {
+            if ($this->isFollowPattern($url, $rewrite->getUrl()) ||
+                $this->isFollowPattern($fullActionName, $rewrite->getUrl())) {
                 return $rewrite;
             }
         }
 
-        return false;
+        return null;
     }
 
-    /**
-     * @param string $url
-     * @param string $pattern
-     * @return bool
-     */
-    private function isFollowPattern($url, $pattern)
+    private function isFollowPattern(string $url, string $pattern): bool
     {
         $url     = strtolower($url);
         $pattern = strtolower($pattern);

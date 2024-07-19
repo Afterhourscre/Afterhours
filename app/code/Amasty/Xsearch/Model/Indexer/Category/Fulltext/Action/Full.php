@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Model\Indexer\Category\Fulltext\Action;
 
@@ -22,7 +21,7 @@ class Full
     /**
      * Scope identifier
      */
-    const SCOPE_FIELD_NAME = 'scope';
+    public const SCOPE_FIELD_NAME = 'scope';
 
     /**
      * Searchable attributes cache
@@ -51,8 +50,6 @@ class Full
     private $categoryAttributeCollectionFactory;
 
     /**
-     * Eav config
-     *
      * @var \Magento\Eav\Model\Config
      */
     private $eavConfig;
@@ -65,8 +62,6 @@ class Full
     private $eventManager;
 
     /**
-     * Store manager
-     *
      * @var \Magento\Store\Model\StoreManagerInterface
      */
     private $storeManager;
@@ -274,6 +269,7 @@ class Full
 
             foreach ($attributes as $attribute) {
                 $attribute->setEntity($entity);
+                $attribute->setIsSearchable(true);
             }
 
             $this->searchableAttributes = $attributes;

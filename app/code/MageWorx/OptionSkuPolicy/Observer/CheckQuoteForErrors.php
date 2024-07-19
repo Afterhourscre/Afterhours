@@ -11,7 +11,6 @@ use Magento\Framework\Event\ObserverInterface;
 use MageWorx\OptionSkuPolicy\Helper\Data as Helper;
 use Magento\Framework\App\ResponseFactory;
 use Magento\Framework\UrlInterface;
-use Zend\Console\Response;
 use Magento\Framework\Message\ManagerInterface;
 
 class CheckQuoteForErrors implements ObserverInterface
@@ -34,7 +33,6 @@ class CheckQuoteForErrors implements ObserverInterface
     /**
      * @var Response
      */
-    protected $response;
 
     /**
      * @var ManagerInterface
@@ -52,13 +50,11 @@ class CheckQuoteForErrors implements ObserverInterface
         Helper $helper,
         ResponseFactory $responseFactory,
         UrlInterface $url,
-        Response $response,
         ManagerInterface $messageManager
     ) {
         $this->helper          = $helper;
         $this->responseFactory = $responseFactory;
         $this->url             = $url;
-        $this->response        = $response;
         $this->messageManager  = $messageManager;
     }
 
@@ -82,7 +78,7 @@ class CheckQuoteForErrors implements ObserverInterface
             }
             $this->responseFactory->create()->setRedirect($redirectUrl)->sendResponse();
             //We need to avoid using “exit” in own code for corresponding Marketplace requirements
-            $this->response->send();
+           // $this->response->send();
         }
         return $this;
     }

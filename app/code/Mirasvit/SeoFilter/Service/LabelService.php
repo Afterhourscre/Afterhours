@@ -9,115 +9,158 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo-filter
- * @version   1.0.16
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   1.3.22
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoFilter\Service;
 
+use Magento\Catalog\Model\CategoryRepository;
 use Magento\Framework\Filter\FilterManager;
 use Magento\UrlRewrite\Model\ResourceModel\UrlRewriteCollectionFactory;
 use Mirasvit\SeoFilter\Api\Data\RewriteInterface;
-use Mirasvit\SeoFilter\Api\Repository\RewriteRepositoryInterface;
-use Mirasvit\SeoFilter\Model\Config;
+use Mirasvit\SeoFilter\Model\ConfigProvider;
 use Mirasvit\SeoFilter\Model\Context;
+use Mirasvit\SeoFilter\Repository\RewriteRepository;
+use Magento\Eav\Model\Entity\Attribute\Option;
 
 class LabelService
 {
-    /**
-     * @var FilterManager
-     */
     private $filterManager;
 
-    /**
-     * @var RewriteRepositoryInterface
-     */
     private $rewriteRepository;
 
-    /**
-     * @var Config
-     */
-    private $config;
+    private $configProvider;
 
-    /**
-     * @var Context
-     */
     private $context;
 
-    /**
-     * @var UrlRewriteCollectionFactory
-     */
     private $urlRewriteCollectionFactory;
 
-    /**
-     * @var UrlService
-     */
     private $urlService;
 
-    /**
-     * LabelService constructor.
-     * @param FilterManager $filter
-     * @param RewriteRepositoryInterface $rewriteRepository
-     * @param UrlRewriteCollectionFactory $urlRewriteCollectionFactory
-     * @param UrlService $urlService
-     * @param Config $config
-     * @param Context $context
-     */
+    private $categoryRepository;
+
     public function __construct(
         FilterManager $filter,
-        RewriteRepositoryInterface $rewriteRepository,
+        RewriteRepository $rewriteRepository,
         UrlRewriteCollectionFactory $urlRewriteCollectionFactory,
         UrlService $urlService,
-        Config $config,
+        ConfigProvider $configProvider,
+        CategoryRepository $categoryRepository,
         Context $context
     ) {
         $this->filterManager               = $filter;
         $this->rewriteRepository           = $rewriteRepository;
         $this->urlRewriteCollectionFactory = $urlRewriteCollectionFactory;
         $this->urlService                  = $urlService;
-        $this->config                      = $config;
+        $this->configProvider              = $configProvider;
         $this->context                     = $context;
+        $this->categoryRepository          = $categoryRepository;
     }
 
-    /**
-     * @param string $attributeCode
-     * @param string  $itemValue
-     * @return string|string[]
-     */
-    public function createLabel($attributeCode, $itemValue)
+    public function createLabel(string $attributeCode, string $itemValue, ?Option $attributeOption): string
     {
         if ($this->context->isDecimalAttribute($attributeCode)) {
-            $label = str_replace('-', Config::SEPARATOR_DECIMAL, $itemValue);
-            $label = $attributeCode . Config::SEPARATOR_DECIMAL . $label;
+            if ($this->configProvider->getUrlFormat() == ConfigProvider::URL_FORMAT_ATTR_OPTIONS) {
+                $label = $itemValue;
+            } else {
+                $label = str_replace('-', ConfigProvider::SEPARATOR_DECIMAL, $itemValue);
+                $label = $attributeCode . ConfigProvider::SEPARATOR_DECIMAL . $label;
+            }
         } else {
+            if ($attributeCode == 'category_ids') {
+                try {
+                    $category = $this->categoryRepository->get($itemValue, $this->context->getStoreId());
+
+                    $itemValue = $this->configProvider->getUrlFormat() == ConfigProvider::URL_FORMAT_ATTR_OPTIONS
+                        ? $category->getUrlKey()
+                        : 'category ' . $category->getUrlKey();
+                } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+                    $itemValue = $attributeCode . ' ' . $itemValue;
+                }
+            }
+
+            $excludedSymbols = ['™', '℠', '®', '©'];
+            $itemValue = str_replace($excludedSymbols, '', $itemValue);
+            
             $label = strtolower($this->filterManager->translitUrl($itemValue));
+
+            if (strlen($itemValue) > 0 && strlen($label) == 0 && $attributeOption) {
+                $label = $attributeOption->getOptionId();
+            }
+
             $label = $this->getLabelWithSeparator($label);
         }
 
         return $label;
     }
 
-    /**
-     * @param string $label
-     * @return string
-     */
-    private function getLabelWithSeparator($label)
+    public function uniqueLabel(string $label, ?int $storeId = null, int $suffix = 0, ?string $attributeCode = null): string
+    {
+        if ($storeId === null) {
+            $storeId = $this->context->getStoreId();
+        }
+
+        $newLabel = $suffix ? $label . '_' . $suffix : $label;
+
+        $path = $this->urlService->trimCategorySuffix($this->context->getRequest()->getOriginalPathInfo());
+
+//        $possiblePath = $path . '/' . $newLabel;
+
+        if ($attributeCode === 'price') {
+            return $newLabel;
+        }
+
+        $isExists = $this->urlRewriteCollectionFactory->create()
+            ->addFieldToFilter('entity_type', 'category')
+            ->addFieldToFilter('redirect_type', 0)
+            ->addFieldToFilter('store_id', $storeId)
+            ->addFieldToFilter('request_path', ['regexp' => '(^|/)' . $newLabel . '(/|%)'])
+            ->getSize();
+
+        if ($isExists) {
+            return $this->uniqueLabel($label, $storeId, $suffix + 1);
+        }
+
+        $isExists = $this->rewriteRepository->getCollection()
+            ->addFieldToFilter(RewriteInterface::REWRITE, $newLabel)
+            ->addFieldToFilter(RewriteInterface::STORE_ID, $storeId);
+
+        if ($attributeCode) {
+            $isExists->addFieldToFilter(RewriteInterface::ATTRIBUTE_CODE, ['neq' => $attributeCode]);
+        }
+
+        $isExists = $isExists->getSize();
+
+        if ($isExists) {
+            return $this->uniqueLabel($label, $storeId, $suffix + 1, $attributeCode);
+        }
+
+        return $newLabel;
+    }
+
+    private function getLabelWithSeparator(string $label): string
     {
         $label = str_replace('__', '_', $label);
 
-        switch ($this->config->getComplexFilterNamesSeparator()) {
-            case Config::FILTER_NAME_WITHOUT_SEPARATOR:
-                $label = str_replace(Config::SEPARATOR_FILTERS, '', $label);
+        switch ($this->configProvider->getNameSeparator()) {
+            case ConfigProvider::NAME_SEPARATOR_NONE:
+                $label = str_replace(ConfigProvider::SEPARATOR_FILTERS, '', $label);
                 break;
 
-            case Config::FILTER_NAME_BOTTOM_DASH_SEPARATOR:
-                $label = str_replace(Config::SEPARATOR_FILTERS, '_', $label);
+            case ConfigProvider::NAME_SEPARATOR_DASH:
+                $label = str_replace(ConfigProvider::SEPARATOR_FILTERS, '_', $label);
                 break;
 
-            case Config::FILTER_NAME_CAPITAL_LETTER_SEPARATOR:
-                $labelExploded = explode(Config::SEPARATOR_FILTERS, $label);
+            case ConfigProvider::NAME_SEPARATOR_HYPHEN:
+                $label = str_replace(ConfigProvider::SEPARATOR_FILTERS, '-', $label);
+                break;
+
+            case ConfigProvider::NAME_SEPARATOR_CAPITAL:
+                $labelExploded = explode(ConfigProvider::SEPARATOR_FILTERS, $label);
                 $labelExploded = array_map('ucfirst', $labelExploded);
 
                 $label = implode('', $labelExploded);
@@ -126,45 +169,5 @@ class LabelService
         }
 
         return $label;
-    }
-
-
-    /**
-     * Check if "rewrite + store_id" combination already exists in mst_seo_filter_rewrite table
-     *
-     * @param string $label
-     * @param int    $suffix
-     *
-     * @return string
-     */
-    public function uniqueLabel($label, $suffix = 0)
-    {
-        $newLabel = $suffix ? $label . '_' . $suffix : $label;
-
-        $path = $this->urlService->trimCategorySuffix($this->context->getRequest()->getOriginalPathInfo());
-
-        $possiblePath = $path . '/' . $newLabel;
-
-        $isExists = $this->urlRewriteCollectionFactory->create()
-            ->addFieldToFilter('entity_type', 'category')
-            ->addFieldToFilter('redirect_type', 0)
-            ->addFieldToFilter('store_id', $this->context->getStoreId())
-            ->addFieldToFilter('request_path', $possiblePath)
-            ->getSize();
-
-        if ($isExists) {
-            return $this->uniqueLabel($label, $suffix + 1);
-        }
-
-        $isExists = $this->rewriteRepository->getCollection()
-            ->addFieldToFilter(RewriteInterface::REWRITE, $newLabel)
-            ->addFieldToFilter(RewriteInterface::STORE_ID, $this->context->getStoreId())
-            ->getSize();
-
-        if ($isExists) {
-            return $this->uniqueLabel($label, $suffix + 1);
-        }
-
-        return $newLabel;
     }
 }

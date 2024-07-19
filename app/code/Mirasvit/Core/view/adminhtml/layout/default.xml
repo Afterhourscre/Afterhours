@@ -8,5 +8,9 @@
         <referenceBlock name="page.title">
             <block class="Mirasvit\Core\Block\Adminhtml\Menu" name="mirasvit.menu" template="menu.phtml" />
         </referenceBlock>
+
+        <referenceContainer name="page.main.container">
+            <block class="Mirasvit\Core\Block\Adminhtml\FeatureRequest" name="mst.feature-request" template="Mirasvit_Core::feature_request.phtml" after="-"/>
+        </referenceContainer>
     </body>
 </page>

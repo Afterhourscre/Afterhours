@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.2.106
- * @copyright Copyright (C) 2019 Mirasvit (https://mirasvit.com/)
+ * @version   1.4.37
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -21,6 +21,14 @@ use Magento\Backend\Model\Menu;
 
 class UpdateMarkupPlugin
 {
+    /**
+     * @param mixed $subject
+     * @param Menu $menu
+     * @param int $level
+     * @param int $limit
+     * @param array $colBrakes
+     * @return array
+     */
     public function beforeRenderNavigation($subject, Menu $menu, $level = 0, $limit = 0, $colBrakes = [])
     {
         if ($menu->get('Mirasvit_Core::marketplace') && $level != 0) {

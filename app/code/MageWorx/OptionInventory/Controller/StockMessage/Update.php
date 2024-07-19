@@ -43,6 +43,6 @@ class Update extends Action
 
         $options = $this->stockProvider->updateOptionsStockMessage($options);
 
-        return $this->getResponse()->setBody(\Zend_Json::encode(['result' => $options]));
+        return $this->getResponse()->setBody(json_encode(['result' => $options]));
     }
 }

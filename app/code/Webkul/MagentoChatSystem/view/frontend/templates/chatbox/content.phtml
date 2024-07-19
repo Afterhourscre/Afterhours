@@ -10,7 +10,7 @@
  */
 ?>
 <script>
-    window.chatboxConfig = <?php /* @escapeNotVerified */ echo \Zend_Json::encode($block->getChatBoxConfig()); ?>;
+    window.chatboxConfig = <?php /* @escapeNotVerified */ echo json_encode($block->getChatBoxConfig()); ?>;
 </script>
 <?php echo $block->getChildHtml('style_template'); ?>
 <div id="chatbox-component" data-bind="scope:'chatbox-content'" class="field">

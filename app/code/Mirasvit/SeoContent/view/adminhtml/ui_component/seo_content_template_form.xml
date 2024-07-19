@@ -15,6 +15,7 @@
         <item name="buttons" xsi:type="array">
             <item name="back" xsi:type="string">Mirasvit\SeoContent\Ui\Template\Form\Control\BackButton</item>
             <item name="delete" xsi:type="string">Mirasvit\SeoContent\Ui\Template\Form\Control\DeleteButton</item>
+            <item name="duplicate" xsi:type="string">Mirasvit\SeoContent\Ui\Template\Form\Control\DuplicateButton</item>
             <item name="save" xsi:type="string">Mirasvit\SeoContent\Ui\Template\Form\Control\SaveButton</item>
             <item name="save_and_continue" xsi:type="string">Mirasvit\SeoContent\Ui\Template\Form\Control\SaveAndContinueButton</item>
         </item>
@@ -56,6 +57,7 @@
                     <item name="formElement" xsi:type="string">input</item>
                     <item name="validation" xsi:type="array">
                         <item name="required-entry" xsi:type="boolean">true</item>
+                        <item name="validate-no-html-tags" xsi:type="boolean">true</item>
                     </item>
                 </item>
             </argument>
@@ -118,6 +120,9 @@
                     <item name="label" xsi:type="string" translate="true">Sort Order</item>
                     <item name="dataType" xsi:type="string">text</item>
                     <item name="formElement" xsi:type="string">input</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-no-html-tags" xsi:type="boolean">true</item>
+                    </item>
                 </item>
             </argument>
         </field>
@@ -129,6 +134,9 @@
                     <item name="dataType" xsi:type="string">text</item>
                     <item name="formElement" xsi:type="string">input</item>
                     <item name="additionalClasses" xsi:type="string">mst-seo-content__global-template-syntax</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-no-html-tags" xsi:type="boolean">true</item>
+                    </item>
                 </item>
             </argument>
         </field>
@@ -140,6 +148,9 @@
                     <item name="dataType" xsi:type="string">text</item>
                     <item name="formElement" xsi:type="string">textarea</item>
                     <item name="additionalClasses" xsi:type="string">mst-seo-content__global-template-syntax</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-no-html-tags" xsi:type="boolean">true</item>
+                    </item>
                 </item>
             </argument>
         </field>
@@ -151,6 +162,9 @@
                     <item name="dataType" xsi:type="string">text</item>
                     <item name="formElement" xsi:type="string">textarea</item>
                     <item name="additionalClasses" xsi:type="string">mst-seo-content__global-template-syntax</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-no-html-tags" xsi:type="boolean">true</item>
+                    </item>
                 </item>
             </argument>
         </field>
@@ -167,182 +181,255 @@
         </field>
     </fieldset>
 
-    <fieldset name="category">
+    <fieldset name="settings">
         <argument name="data" xsi:type="array">
             <item name="config" xsi:type="array">
-                <item name="label" xsi:type="string">Category Description</item>
+                <item name="label" xsi:type="string">Description Settings</item>
                 <item name="collapsible" xsi:type="boolean">true</item>
                 <item name="opened" xsi:type="boolean">true</item>
                 <item name="component" xsi:type="string">Mirasvit_SeoContent/js/template/form/fieldset</item>
                 <item name="toggle" xsi:type="array">
                     <item name="selector" xsi:type="string">${ $.provider }:data.rule_type</item>
-                    <item name="value" xsi:type="string">2,3</item>
+                    <item name="value" xsi:type="string">1,2,3</item>
                 </item>
             </item>
         </argument>
 
-        <field name="description_position">
-            <argument name="data" xsi:type="array">
-                <item name="options" xsi:type="object">Mirasvit\SeoContent\Ui\Template\Source\CategoryDescriptionPositionSource</item>
-                <item name="config" xsi:type="array">
-                    <item name="dataType" xsi:type="string">text</item>
-                    <item name="label" translate="true" xsi:type="string">SEO Description Position</item>
-                    <item name="formElement" xsi:type="string">select</item>
-                    <item name="elementTmpl" xsi:type="string">ui/grid/filters/elements/ui-select</item>
-                    <item name="component" xsi:type="string">Magento_Ui/js/form/element/ui-select</item>
-                    <item name="disableLabel" xsi:type="boolean">true</item>
-                    <item name="multiple" xsi:type="boolean">false</item>
-                </item>
-            </argument>
-        </field>
-
-        <container>
+        <fieldset name="category">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
-                    <item name="component" xsi:type="string">Mirasvit_SeoContent/js/template/form/group</item>
+                    <item name="label" xsi:type="string"/>
+                    <item name="collapsible" xsi:type="boolean">false</item>
+                    <item name="component" xsi:type="string">Mirasvit_SeoContent/js/template/form/fieldset</item>
                     <item name="toggle" xsi:type="array">
-                        <item name="selector" xsi:type="string">${ $.provider }:data.description_position</item>
-                        <item name="value" xsi:type="string">5</item>
+                        <item name="selector" xsi:type="string">${ $.provider }:data.rule_type</item>
+                        <item name="value" xsi:type="string">2,3</item>
                     </item>
                 </item>
             </argument>
 
-            <field name="description_template">
+            <field name="description_position">
                 <argument name="data" xsi:type="array">
+                    <item name="options" xsi:type="object">Mirasvit\SeoContent\Ui\Template\Source\CategoryDescriptionPositionSource</item>
                     <item name="config" xsi:type="array">
-                        <item name="label" xsi:type="string" translate="true">Template for adding SEO description</item>
                         <item name="dataType" xsi:type="string">text</item>
-                        <item name="formElement" xsi:type="string">input</item>
-                        <item name="additionalClasses" xsi:type="string">admin__field-note</item>
-                        <item name="notice" xsi:type="string"><![CDATA[
-                            Block template
-                        ]]></item>
+                        <item name="label" translate="true" xsi:type="string">SEO Description Position</item>
+                        <item name="formElement" xsi:type="string">select</item>
+                        <item name="elementTmpl" xsi:type="string">ui/grid/filters/elements/ui-select</item>
+                        <item name="component" xsi:type="string">Magento_Ui/js/form/element/ui-select</item>
+                        <item name="disableLabel" xsi:type="boolean">true</item>
+                        <item name="multiple" xsi:type="boolean">false</item>
                     </item>
                 </argument>
             </field>
-        </container>
 
-        <field name="description">
+            <container>
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="component" xsi:type="string">Mirasvit_SeoContent/js/template/form/group</item>
+                        <item name="toggle" xsi:type="array">
+                            <item name="selector" xsi:type="string">${ $.provider }:data.description_position</item>
+                            <item name="value" xsi:type="string">5</item>
+                        </item>
+                    </item>
+                </argument>
+
+                <field name="description_template">
+                    <argument name="data" xsi:type="array">
+                        <item name="config" xsi:type="array">
+                            <item name="label" xsi:type="string" translate="true">Template for adding SEO description</item>
+                            <item name="dataType" xsi:type="string">text</item>
+                            <item name="formElement" xsi:type="string">input</item>
+                            <item name="additionalClasses" xsi:type="string">admin__field-note</item>
+                            <item name="notice" xsi:type="string"><![CDATA[
+                            Block template
+                        ]]></item>
+                            <item name="validation" xsi:type="array">
+                                <item name="validate-no-html-tags" xsi:type="boolean">true</item>
+                            </item>
+                        </item>
+                    </argument>
+                </field>
+            </container>
+        </fieldset>
+
+
+        <fieldset name="product">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
-                    <item name="label" xsi:type="string" translate="true">SEO description</item>
-                    <item name="dataType" xsi:type="string">text</item>
-                    <item name="formElement" xsi:type="string">textarea</item>
-                    <item name="additionalClasses" xsi:type="string">mst-seo-content__global-template-syntax</item>
-                    <item name="notice" xsi:type="string"><![CDATA[
+                    <item name="label" xsi:type="string"/>
+                    <item name="collapsible" xsi:type="boolean">false</item>
+                    <item name="component" xsi:type="string">Mirasvit_SeoContent/js/template/form/fieldset</item>
+                    <item name="toggle" xsi:type="array">
+                        <item name="selector" xsi:type="string">${ $.provider }:data.rule_type</item>
+                        <item name="value" xsi:type="string">1</item>
+                    </item>
+                </item>
+            </argument>
+
+            <field name="description_position">
+                <argument name="data" xsi:type="array">
+                    <item name="options" xsi:type="object">Mirasvit\SeoContent\Ui\Template\Source\ProductDescriptionPositionSource</item>
+                    <item name="config" xsi:type="array">
+                        <item name="dataType" xsi:type="string">text</item>
+                        <item name="label" translate="true" xsi:type="string">SEO Description Position</item>
+                        <item name="formElement" xsi:type="string">select</item>
+                        <item name="elementTmpl" xsi:type="string">ui/grid/filters/elements/ui-select</item>
+                        <item name="component" xsi:type="string">Magento_Ui/js/form/element/ui-select</item>
+                        <item name="disableLabel" xsi:type="boolean">true</item>
+                        <item name="multiple" xsi:type="boolean">false</item>
+                    </item>
+                </argument>
+            </field>
+
+            <container>
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="component" xsi:type="string">Mirasvit_SeoContent/js/template/form/group</item>
+                        <item name="toggle" xsi:type="array">
+                            <item name="selector" xsi:type="string">${ $.provider }:data.description_position</item>
+                            <item name="value" xsi:type="string">5</item>
+                        </item>
+                    </item>
+                </argument>
+
+                <field name="description_template">
+                    <argument name="data" xsi:type="array">
+                        <item name="config" xsi:type="array">
+                            <item name="label" xsi:type="string" translate="true">Template for adding SEO description</item>
+                            <item name="dataType" xsi:type="string">text</item>
+                            <item name="formElement" xsi:type="string">input</item>
+                            <item name="additionalClasses" xsi:type="string">admin__field-note</item>
+                            <item name="notice" xsi:type="string"><![CDATA[
+                            Block template
+                        ]]></item>
+                            <item name="validation" xsi:type="array">
+                                <item name="validate-no-html-tags" xsi:type="boolean">true</item>
+                            </item>
+                        </item>
+                    </argument>
+                </field>
+            </container>
+        </fieldset>
+
+        <fieldset name="seo_description">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string">SEO Description</item>
+                    <item name="collapsible" xsi:type="boolean">false</item>
+                    <item name="component" xsi:type="string">Mirasvit_SeoContent/js/template/form/fieldset</item>
+                    <item name="toggle" xsi:type="array">
+                        <item name="selector" xsi:type="string">${ $.provider }:data.rule_type</item>
+                        <item name="value" xsi:type="string">1,2,3</item>
+                    </item>
+                </item>
+            </argument>
+            <field name="description">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="disableLabel" xsi:type="boolean">true</item>
+                        <item name="dataType" xsi:type="string">text</item>
+                        <item name="formElement" xsi:type="string">wysiwyg</item>
+                        <item name="wysiwyg" xsi:type="boolean">true</item>
+                        <item name="wysiwygConfigData" xsi:type="array">
+                            <item name="is_pagebuilder_enabled" xsi:type="boolean">true</item>
+                            <item name="height" xsi:type="number">200</item>
+                        </item>
+                        <item name="notice" xsi:type="string"><![CDATA[
                         Will be added in position which you can configure in "SEO description position"
                         and "Template for adding SEO description" field or to "SEO description" widget.
                     ]]></item>
-                </item>
-            </argument>
-        </field>
-
-        <field name="category_description">
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="label" xsi:type="string" translate="true">Category description</item>
-                    <item name="dataType" xsi:type="string">text</item>
-                    <item name="formElement" xsi:type="string">textarea</item>
-                    <item name="additionalClasses" xsi:type="string">mst-seo-content__global-template-syntax</item>
-                    <item name="notice" xsi:type="string"><![CDATA[
-                       Will only be applied if native Magento category description block is displayed on the frontend.
-                    ]]></item>
-                </item>
-            </argument>
-        </field>
-    </fieldset>
-
-    <fieldset name="product">
-        <argument name="data" xsi:type="array">
-            <item name="config" xsi:type="array">
-                <item name="label" xsi:type="string">Product Description</item>
-                <item name="collapsible" xsi:type="boolean">true</item>
-                <item name="opened" xsi:type="boolean">true</item>
-                <item name="component" xsi:type="string">Mirasvit_SeoContent/js/template/form/fieldset</item>
-                <item name="toggle" xsi:type="array">
-                    <item name="selector" xsi:type="string">${ $.provider }:data.rule_type</item>
-                    <item name="value" xsi:type="string">1</item>
-                </item>
-            </item>
-        </argument>
-
-        <field name="description_position">
-            <argument name="data" xsi:type="array">
-                <item name="options" xsi:type="object">Mirasvit\SeoContent\Ui\Template\Source\ProductDescriptionPositionSource</item>
-                <item name="config" xsi:type="array">
-                    <item name="dataType" xsi:type="string">text</item>
-                    <item name="label" translate="true" xsi:type="string">SEO Description Position</item>
-                    <item name="formElement" xsi:type="string">select</item>
-                    <item name="elementTmpl" xsi:type="string">ui/grid/filters/elements/ui-select</item>
-                    <item name="component" xsi:type="string">Magento_Ui/js/form/element/ui-select</item>
-                    <item name="disableLabel" xsi:type="boolean">true</item>
-                    <item name="multiple" xsi:type="boolean">false</item>
-                </item>
-            </argument>
-        </field>
-
-        <container>
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="component" xsi:type="string">Mirasvit_SeoContent/js/template/form/group</item>
-                    <item name="toggle" xsi:type="array">
-                        <item name="selector" xsi:type="string">${ $.provider }:data.description_position</item>
-                        <item name="value" xsi:type="string">5</item>
-                    </item>
-                </item>
-            </argument>
-
-            <field name="description_template">
-                <argument name="data" xsi:type="array">
-                    <item name="config" xsi:type="array">
-                        <item name="label" xsi:type="string" translate="true">Template for adding SEO description</item>
-                        <item name="dataType" xsi:type="string">text</item>
-                        <item name="formElement" xsi:type="string">input</item>
-                        <item name="additionalClasses" xsi:type="string">admin__field-note</item>
-                        <item name="notice" xsi:type="string"><![CDATA[
-                            Block template
-                        ]]></item>
                     </item>
                 </argument>
             </field>
-        </container>
+        </fieldset>
 
-        <field name="description">
+        <fieldset name="category_full_description">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
-                    <item name="label" xsi:type="string" translate="true">SEO description</item>
-                    <item name="dataType" xsi:type="string">text</item>
-                    <item name="formElement" xsi:type="string">textarea</item>
-                    <item name="additionalClasses" xsi:type="string">mst-seo-content__global-template-syntax</item>
-                    <item name="notice" xsi:type="string"><![CDATA[
-                        Will be added in position which you can configure in "SEO description position"
-                        and "Template for adding SEO description" field.
+                    <item name="label" xsi:type="string">Category Description</item>
+                    <item name="collapsible" xsi:type="boolean">false</item>
+                    <item name="component" xsi:type="string">Mirasvit_SeoContent/js/template/form/fieldset</item>
+                    <item name="toggle" xsi:type="array">
+                        <item name="selector" xsi:type="string">${ $.provider }:data.rule_type</item>
+                        <item name="value" xsi:type="string">2,3</item>
+                    </item>
+                </item>
+            </argument>
+            <field name="category_description">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="disableLabel" xsi:type="boolean">true</item>
+                        <item name="dataType" xsi:type="string">text</item>
+                        <item name="formElement" xsi:type="string">wysiwyg</item>
+                        <item name="wysiwyg" xsi:type="boolean">true</item>
+                        <item name="wysiwygConfigData" xsi:type="array">
+                            <item name="is_pagebuilder_enabled" xsi:type="boolean">true</item>
+                            <item name="height" xsi:type="number">200</item>
+                        </item>
+                        <item name="notice" xsi:type="string"><![CDATA[
+                       Will only be applied if native Magento category description block is displayed on the frontend.
                     ]]></item>
-                </item>
-            </argument>
-        </field>
+                    </item>
+                </argument>
+            </field>
+        </fieldset>
 
-        <field name="short_description">
+        <fieldset name="product_short_description">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
-                    <item name="label" xsi:type="string" translate="true">Product short description</item>
-                    <item name="dataType" xsi:type="string">text</item>
-                    <item name="formElement" xsi:type="string">textarea</item>
-                    <item name="additionalClasses" xsi:type="string">mst-seo-content__global-template-syntax</item>
+                    <item name="label" xsi:type="string">Short Description</item>
+                    <item name="collapsible" xsi:type="boolean">false</item>
+                    <item name="component" xsi:type="string">Mirasvit_SeoContent/js/template/form/fieldset</item>
+                    <item name="toggle" xsi:type="array">
+                        <item name="selector" xsi:type="string">${ $.provider }:data.rule_type</item>
+                        <item name="value" xsi:type="string">1</item>
+                    </item>
                 </item>
             </argument>
-        </field>
+            <field name="short_description">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="disableLabel" xsi:type="boolean">true</item>
+                        <item name="dataType" xsi:type="string">text</item>
+                        <item name="formElement" xsi:type="string">wysiwyg</item>
+                        <item name="wysiwyg" xsi:type="boolean">true</item>
+                        <item name="wysiwygConfigData" xsi:type="array">
+                            <item name="is_pagebuilder_enabled" xsi:type="boolean">true</item>
+                            <item name="height" xsi:type="number">200</item>
+                        </item>
+                    </item>
+                </argument>
+            </field>
+        </fieldset>
 
-        <field name="full_description">
+        <fieldset name="product_full_description">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
-                    <item name="label" xsi:type="string" translate="true">Product description</item>
-                    <item name="dataType" xsi:type="string">text</item>
-                    <item name="formElement" xsi:type="string">textarea</item>
-                    <item name="additionalClasses" xsi:type="string">mst-seo-content__global-template-syntax</item>
+                    <item name="label" xsi:type="string">Full Description</item>
+                    <item name="collapsible" xsi:type="boolean">false</item>
+                    <item name="component" xsi:type="string">Mirasvit_SeoContent/js/template/form/fieldset</item>
+                    <item name="toggle" xsi:type="array">
+                        <item name="selector" xsi:type="string">${ $.provider }:data.rule_type</item>
+                        <item name="value" xsi:type="string">1</item>
+                    </item>
                 </item>
             </argument>
-        </field>
+            <field name="full_description">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="disableLabel" xsi:type="boolean">true</item>
+                        <item name="dataType" xsi:type="string">text</item>
+                        <item name="formElement" xsi:type="string">wysiwyg</item>
+                        <item name="wysiwyg" xsi:type="boolean">true</item>
+                        <item name="wysiwygConfigData" xsi:type="array">
+                            <item name="is_pagebuilder_enabled" xsi:type="boolean">true</item>
+                            <item name="height" xsi:type="number">200</item>
+                        </item>
+                    </item>
+                </argument>
+            </field>
+        </fieldset>
     </fieldset>
 
     <fieldset name="conditions">
@@ -352,10 +439,6 @@
                 <item name="collapsible" xsi:type="boolean">true</item>
                 <item name="opened" xsi:type="boolean">false</item>
                 <item name="component" xsi:type="string">Mirasvit_SeoContent/js/template/form/fieldset</item>
-                <item name="toggle" xsi:type="array">
-                    <item name="selector" xsi:type="string">${ $.provider }:data.rule_type</item>
-                    <item name="value" xsi:type="string">1,2,3</item>
-                </item>
             </item>
         </argument>
 
@@ -462,5 +545,37 @@
         </field>
     </fieldset>
 
-    <container class="Mirasvit\SeoContent\Ui\Component\TemplateSyntaxComponent" />
+    <fieldset name="brand">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="label" xsi:type="string">Brands additional settings</item>
+                <item name="collapsible" xsi:type="boolean">true</item>
+                <item name="opened" xsi:type="boolean">false</item>
+                <item name="component" xsi:type="string">Mirasvit_SeoContent/js/template/form/fieldset</item>
+                <item name="toggle" xsi:type="array">
+                    <item name="selector" xsi:type="string">${ $.provider }:data.rule_type</item>
+                    <item name="value" xsi:type="string">6</item>
+                </item>
+            </item>
+        </argument>
+
+        <field name="apply_for_all_brands_page">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string" translate="true">Apply for the "All Brands" page</item>
+                    <item name="dataType" xsi:type="string">boolean</item>
+                    <item name="formElement" xsi:type="string">checkbox</item>
+                    <item name="prefer" xsi:type="string">toggle</item>
+                    <item name="valueMap" xsi:type="array">
+                        <item name="true" xsi:type="number">1</item>
+                        <item name="false" xsi:type="number">0</item>
+                    </item>
+                    <item name="default" xsi:type="number">0</item>
+                    <item name="additionalClasses" xsi:type="string">admin__field-note</item>
+                </item>
+            </argument>
+        </field>
+    </fieldset>
+
+    <container class="Mirasvit\SeoContent\Ui\Component\TemplateSyntaxComponent"/>
 </form>

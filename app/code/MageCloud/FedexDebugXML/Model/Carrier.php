@@ -27,6 +27,11 @@ use Magento\Shipping\Model\Rate\Result;
 class Carrier extends AbstractCarrierOnline implements \Magento\Shipping\Model\Carrier\CarrierInterface
 {
     /**
+     * @var \Magento\Fedex\Model\Carrier
+     */
+    protected $_shippingFedex;
+
+    /**
      * Code of the carrier
      *
      * @var string
@@ -176,6 +181,7 @@ class Carrier extends AbstractCarrierOnline implements \Magento\Shipping\Model\C
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
+        \Magento\Fedex\Model\Carrier $shippingFedex,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory $rateErrorFactory,
         \Psr\Log\LoggerInterface $logger,
@@ -198,6 +204,7 @@ class Carrier extends AbstractCarrierOnline implements \Magento\Shipping\Model\C
         Json $serializer = null,
         ClientFactory $soapClientFactory = null
     ) {
+        $this->_shippingFedex = $shippingFedex;
         $this->_storeManager = $storeManager;
         $this->_productCollectionFactory = $productCollectionFactory;
         parent::__construct(

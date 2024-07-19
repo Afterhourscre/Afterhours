@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -23,9 +23,10 @@ class SitemapHomePagePlugin
      * Add home page in xml sitemap (from Magento 2.2.4)
      *
      * @param \Magento\Cms\Model\GetUtilityPageIdentifiers $subject
+     * @param array $ignoredPages
      * @return array
      */
-    public function afterExecute($subject , $ignoredPages)
+    public function afterExecute($subject, $ignoredPages)
     {
         foreach ($ignoredPages as $key => $page) {
             if ($page == 'home') {

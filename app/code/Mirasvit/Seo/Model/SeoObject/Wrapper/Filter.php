@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -19,6 +19,11 @@ namespace Mirasvit\Seo\Model\SeoObject\Wrapper;
 
 class Filter extends \Magento\Framework\DataObject
 {
+    /**
+     * @var \Magento\Catalog\Model\Layer\Resolver
+     */
+    private $layerResolver;
+
     /**
      * @param \Magento\Catalog\Model\Layer\Resolver $layerResolver
      */

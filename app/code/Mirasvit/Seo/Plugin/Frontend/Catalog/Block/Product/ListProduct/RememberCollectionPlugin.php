@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -22,14 +22,26 @@ use Mirasvit\Seo\Api\Config\CurrentPageProductsInterface;
 
 class RememberCollectionPlugin
 {
+    /**
+     * @var Registry
+     */
     private $registry;
 
+    /**
+     * RememberCollectionPlugin constructor.
+     * @param Registry $registry
+     */
     public function __construct(
         Registry $registry
     ) {
         $this->registry = $registry;
     }
 
+    /**
+     * @param mixed $subject
+     * @param mixed $collection
+     * @return mixed
+     */
     public function afterGetLoadedProductCollection($subject, $collection)
     {
         $this->registry->register(CurrentPageProductsInterface::PRODUCT_COLLECTION, $collection, true);

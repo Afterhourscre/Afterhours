@@ -9,14 +9,18 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoContent\Plugin\Frontend\Framework\View\TemplateEngine;
 
+use Magento\Cms\Model\Template\FilterProvider;
+use Magento\Framework\View\Element\BlockInterface;
+use Magento\Framework\View\TemplateEngineInterface as Subject;
 use Mirasvit\SeoContent\Api\Data\ContentInterface;
 use Mirasvit\SeoContent\Service\ContentService;
 
@@ -27,23 +31,30 @@ class AddSeoDescriptionPlugin
 {
     private $contentService;
 
-    private $level     = 0;
+    private $filterProvider;
 
+    /**
+     * @var int
+     */
+    private $level = 0;
+
+    /**
+     * @var array
+     */
     private $templates = [];
 
     public function __construct(
-        ContentService $contentService
+        ContentService $contentService,
+        FilterProvider $filterProvider
     ) {
         $this->contentService = $contentService;
+        $this->filterProvider = $filterProvider;
     }
 
     /**
-     * @param \Magento\Framework\View\TemplateEngine\Php $subject
-     * @param object                                     $block
-     * @param string                                     $template
-     * @return  \Magento\Framework\View\TemplateEngine\Php
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function beforeRender($subject, $block = null, $template = null)
+    public function beforeRender(Subject $subject, ?BlockInterface $block = null, ?string $template = null)
     {
         $this->templates[$this->level] = $template;
         $this->level++;
@@ -52,11 +63,9 @@ class AddSeoDescriptionPlugin
     }
 
     /**
-     * @param \Magento\Framework\View\TemplateEngine\Php $subject
-     * @param string                                     $result
-     * @return string
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function afterRender($subject, $result)
+    public function afterRender(Subject $subject, string $result): string
     {
         $this->level--;
         $template = $this->templates[$this->level];
@@ -64,9 +73,9 @@ class AddSeoDescriptionPlugin
         $content = $this->contentService->getCurrentContent();
 
         if ($content->getDescriptionPosition() == ContentInterface::DESCRIPTION_POSITION_CUSTOM_TEMPLATE
+            && !empty($content->getDescriptionTemplate())
             && strpos($template, $content->getDescriptionTemplate()) !== false) {
-
-            $result .= $content->getDescription();
+            $result .= $this->filterProvider->getPageFilter()->filter($content->getDescription());
         }
 
         return $result;

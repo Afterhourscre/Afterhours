@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoAutolink\Block\Adminhtml;
 
@@ -21,28 +22,22 @@ use Magento\Backend\Block\Widget\Grid\Container as GridContainer;
 
 class Link extends GridContainer
 {
-    /**
-     * @return void
-     */
     protected function _construct()
     {
-        $this->_controller = 'adminhtml_link';
-        $this->_blockGroup = 'Mirasvit_SeoAutolink';
+        $this->_controller     = 'adminhtml_link';
+        $this->_blockGroup     = 'Mirasvit_SeoAutolink';
         $this->_addButtonLabel = __('Add New Link');
 
 
         $this->buttonList->add('import', [
-            'label'   => __('Import Links'),
+            'label'   => __('Import/Export Links'),
             'onclick' => "setLocation('" . $this->getUrl('seoautolink/import/index') . "')",
         ]);
 
         parent::_construct();
     }
 
-    /**
-     * @return string
-     */
-    public function getCreateUrl()
+    public function getCreateUrl(): string
     {
         return $this->getUrl('*/*/add');
     }

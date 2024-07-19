@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -25,7 +25,13 @@ use Magento\Framework\Module\Manager ;
 class Menu extends AbstractMenu
 {
     /**
+     * @var Manager
+     */
+    private $moduleManager;
+
+    /**
      * @param Context $context
+     * @param Manager $moduleManager
      */
     public function __construct(
         Context $context,
@@ -55,15 +61,15 @@ class Menu extends AbstractMenu
 
         if ($this->moduleManager->isEnabled('Mirasvit_SeoAutolink')) {
             $this->addItem([
-                'resource' => 'Mirasvit_Seo::seoautolink_link',
-                'title' => __('Autolinks'),
+                'resource' => 'Mirasvit_SeoAutolink::seoautolink_link',
+                'title' => __('Cross Links'),
                 'url' => $this->urlBuilder->getUrl('seoautolink/link'),
             ]);
         }
 
         if ($this->moduleManager->isEnabled('Mirasvit_SeoSitemap')) {
             $this->addItem([
-                'resource' => 'Mirasvit_Seo::catalog_sitemap',
+                'resource' => 'Magento_Sitemap::sitemap',
                 'title' => __('Site Map'),
                 'url' => $this->urlBuilder->getUrl('adminhtml/sitemap/'),
             ]);
@@ -75,12 +81,18 @@ class Menu extends AbstractMenu
             'url'      => $this->urlBuilder->getUrl('adminhtml/system_config/edit/section/seo'),
         ]);
 
+//        $this->addItem([
+//            'resource' => 'Mirasvit_Seo::seo_checklist',
+//            'title'    => __('SEO Checklist'),
+//            'url'      => $this->urlBuilder->getUrl('seo/checklist'),
+//        ]);
+
         $this->addSeparator();
 
         $this->addItem([
             'resource' => 'Mirasvit_Seo::seo_manual',
             'title'    => __('User Manual'),
-            'url'      => 'http://docs.mirasvit.com/module-seo/current',
+            'url'      => 'https://mirasvit.com/docs/module-seo/current/',
         ])->addItem([
             'resource' => 'Mirasvit_Seo::seo_get_support',
             'title'    => __('Get Support'),

@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Block\Search;
 
@@ -39,30 +38,27 @@ class Tab extends \Magento\Framework\View\Element\Template
     }
 
     /**
-     * @param $tabName
-     * @param $blockName
-     * @param $blockClass
-     * @param $template
-     * @return bool
+     * @param string $tabName
+     * @param string $blockName
+     * @param string $blockClass
+     * @param string $template
+     * @param string $tabType
+     * @return void
      */
-    public function addTab($tabName, $blockName, $blockClass, $template)
+    public function addTab($tabName, $blockName, $blockClass, $template, $tabType): void
     {
-        if (!class_exists($blockClass)) {
-            return false;
-        }
-
-        if (strpos($blockClass, 'Landing') !== false
-            && !$this->moduleManager->isEnabled('Amasty_Xlanding')
+        if (class_exists($blockClass)
+            && !(strpos($blockClass, 'Landing') !== false
+                && !$this->moduleManager->isEnabled('Amasty_Xlanding'))
         ) {
-            return false;
+            $tabName = $this->helper->getTabTitle($tabType) ?: $tabName;
+            $this->tabs[] = [
+                'name' => $tabName,
+                'block_name' => $blockName,
+                'block_class' => $blockClass,
+                'template' => $template
+            ];
         }
-
-        $this->tabs[] = [
-            'name' => $tabName,
-            'block_name' => $blockName,
-            'block_class' => $blockClass,
-            'template' => $template
-        ];
     }
 
     /**

@@ -9,31 +9,25 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Api\Service\Alternate;
+
+use Magento\Store\Api\Data\StoreInterface;
 
 interface UrlInterface
 {
     /**
      * Get stores urls.
-     *
-     * @return array
      */
-    public function getStoresCurrentUrl();
+    public function getStoresCurrentUrl(): array;
 
-    /**
-     * @return array
-     */
-    public function getStores();
+    public function getStores(): array;
 
-    /**
-     * @param string $store
-     * @return string
-     */
-    public function getUrlAddition($store);
+    public function getUrlAddition(StoreInterface $store): string;
 }

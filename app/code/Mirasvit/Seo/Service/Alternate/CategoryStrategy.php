@@ -9,61 +9,52 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\Alternate;
 
+use Magento\Catalog\Api\Data\CategoryInterface;
+use Magento\Framework\ObjectManagerInterface;
+use Magento\Framework\View\Element\Template\Context;
+use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory;
+use Magento\Catalog\Model\CategoryFactory;
+use Magento\Framework\Registry;
+use Magento\UrlRewrite\Model\ResourceModel\UrlRewriteCollectionFactory;
+use Mirasvit\Seo\Api\Service\Alternate\UrlInterface;
+use Mirasvit\Seo\Api\Config\AlternateConfigInterface;
+
 class CategoryStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyInterface
 {
-    /**
-     * @var \Mirasvit\Seo\Api\Service\Alternate\UrlInterface
-     */
     protected $url;
 
-    /**
-     * @var \Mirasvit\Seo\Api\Config\AlternateConfigInterface
-     */
     protected $alternateConfig;
 
-    /**
-     * @var \Magento\Framework\View\Element\Template\Context
-     */
     protected $context;
 
-    /**
-     * @var \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory
-     */
     protected $categoryCollectionFactory;
 
-    /**
-     * @var \Magento\Catalog\Model\CategoryFactory
-     */
     protected $categoryFactory;
 
-    /**
-     * @var \Magento\Framework\Registry
-     */
     protected $registry;
 
-    /**
-     * @param \Mirasvit\Seo\Api\Service\Alternate\UrlInterface                $url
-     * @param \Mirasvit\Seo\Api\Config\AlternateConfigInterface               $alternateConfig
-     * @param \Magento\Framework\View\Element\Template\Context                $context
-     * @param \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $categoryCollectionFactory
-     * @param \Magento\Catalog\Model\CategoryFactory                          $categoryFactory
-     * @param \Magento\Framework\Registry                                     $registry
-     */
+    protected $urlRewriteFactory;
+
+    protected $objectManager;
+
     public function __construct(
-        \Mirasvit\Seo\Api\Service\Alternate\UrlInterface $url,
-        \Mirasvit\Seo\Api\Config\AlternateConfigInterface $alternateConfig,
-        \Magento\Framework\View\Element\Template\Context $context,
-        \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $categoryCollectionFactory,
-        \Magento\Catalog\Model\CategoryFactory $categoryFactory,
-        \Magento\Framework\Registry $registry
+        UrlInterface $url,
+        AlternateConfigInterface $alternateConfig,
+        Context $context,
+        CollectionFactory $categoryCollectionFactory,
+        CategoryFactory $categoryFactory,
+        Registry $registry,
+        UrlRewriteCollectionFactory $urlRewriteFactory,
+        ObjectManagerInterface $objectManager
     ) {
         $this->url                       = $url;
         $this->alternateConfig           = $alternateConfig;
@@ -71,12 +62,11 @@ class CategoryStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyIn
         $this->categoryCollectionFactory = $categoryCollectionFactory;
         $this->categoryFactory           = $categoryFactory;
         $this->registry                  = $registry;
+        $this->urlRewriteFactory         = $urlRewriteFactory;
+        $this->objectManager             = $objectManager;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getStoreUrls()
+    public function getStoreUrls(): array
     {
         $storeUrls = $this->url->getStoresCurrentUrl();
         $storeUrls = $this->getAlternateUrl($storeUrls);
@@ -85,9 +75,10 @@ class CategoryStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyIn
     }
 
     /**
-     * {@inheritdoc}
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
-    public function getAlternateUrl($storeUrls)
+    public function getAlternateUrl(array $storeUrls): array
     {
         $currentBaseUrl = $this->context->getUrlBuilder()->getBaseUrl();
         foreach ($this->url->getStores() as $storeId => $store) {
@@ -98,8 +89,9 @@ class CategoryStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyIn
                 ->addFieldToFilter('entity_id', ['eq' => $this->registry->registry('current_category')->getId()])
                 ->getFirstItem();
 
-            if (!$category->getIsActive()) {
+            if (!$category->getIsActive() || !in_array($storeId, $category->getStoreIds())) {
                 unset($storeUrls[$storeId]);
+                continue;
             }
 
             if ($category->hasData() && ($currentCategory = $this->categoryFactory
@@ -107,6 +99,10 @@ class CategoryStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyIn
                     ->setStoreId($store->getId())
                     ->load($category->getEntityId()))
             ) {
+                if ($requestPath = $this->getCategoryRewrite($currentCategory, (int)$storeId)) {
+                    $currentCategory->setRequestPath($requestPath);
+                }
+
                 $storeBaseUrl       = $store->getBaseUrl();
                 $currentCategoryUrl = $currentCategory->getUrl();
                 //ned for situation like https://example.com/eu/ and https://example.com/
@@ -118,19 +114,30 @@ class CategoryStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyIn
                     $slashStoreBaseUrlCount     = substr_count($storeBaseUrl, '/');
                     $currentCategoryUrlExploded = explode('/', $currentCategoryUrl);
                     $currentCategoryUrl         = $storeBaseUrl . implode(
-                            '/',
-                            array_slice($currentCategoryUrlExploded, $slashStoreBaseUrlCount)
-                        );
+                        '/',
+                        array_slice($currentCategoryUrlExploded, $slashStoreBaseUrlCount)
+                    );
                 }
 
                 $urlAddition = $this->url->getUrlAddition($store);
 
-                $preparedUrlAdditionCurrent = $this->getUrlAdditionalParsed(strstr($currentUrl, '?'));
+                $preparedUrlAdditionCurrent = $this->getUrlAdditionalParsed(strstr($currentUrl, '?') ?: null);
                 $preparedUrlAdditionStore   = $this->getUrlAdditionalParsed($urlAddition);
                 $urlAdditionCategory        = $this->getPreparedUrlAdditional(
                     $preparedUrlAdditionCurrent,
                     $preparedUrlAdditionStore
                 );
+
+                if (
+                    class_exists('\Mirasvit\SeoFilter\Model\ConfigProvider')
+                    && $this->objectManager->get('\Mirasvit\SeoFilter\Model\ConfigProvider')->isEnabled()
+                    && class_exists('\Mirasvit\SeoFilter\Service\FriendlyUrlService')
+                ) {
+                    $friendlyUrlService = $this->objectManager->get('\Mirasvit\SeoFilter\Service\FriendlyUrlService');
+                    // active filters are retrieved inside function
+                    $currentCategoryUrl = $friendlyUrlService->getUrl('', '', false, $currentCategoryUrl);
+                }
+
                 // if store use different attributes name will be added after use seo filter (if need)
                 if ($this->alternateConfig->isHreflangCutCategoryAdditionalData()) {
                     $storeUrls[$storeId] = $currentCategoryUrl;
@@ -139,6 +146,11 @@ class CategoryStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyIn
                 }
             }
         }
+
+        if (count($storeUrls) === 1) {
+            $storeUrls = []; // page doesn't have variations
+        }
+
         //restore original store ID
         $this->categoryFactory->create()
             ->setStoreId($this->context->getStoreManager()->getStore()->getId());
@@ -146,14 +158,22 @@ class CategoryStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyIn
         return $storeUrls;
     }
 
+    protected function getCategoryRewrite(CategoryInterface $category, int $storeId): ?string
+    {
+        $urlRewrite = $this->urlRewriteFactory->create();
+        $categoryRewrite = $urlRewrite->addFieldToFilter('entity_type', 'category')
+            ->addFieldToFilter('redirect_type', 0)
+            ->addFieldToFilter('store_id', $storeId)
+            ->addFieldToFilter('entity_id', $category->getId())
+            ->getFirstItem();
+
+        return $categoryRewrite && $categoryRewrite->getId() ? $categoryRewrite->getRequestPath() : null;
+    }
+
     /**
-     * Parse additional  url.
-     *
-     * @param string $urlAddition
-     *
-     * @return array
+     * Parse additional url.
      */
-    protected function getUrlAdditionalParsed($urlAddition)
+    protected function getUrlAdditionalParsed(string $urlAddition = null): array
     {
         if (!$urlAddition) {
             return [];
@@ -174,14 +194,9 @@ class CategoryStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyIn
     }
 
     /**
-     * Prepare additional  url.
-     *
-     * @param array $preparedUrlAdditionCurrent
-     * @param array $preparedUrlAdditionStore
-     *
-     * @return string
+     * Prepare additional url.
      */
-    protected function getPreparedUrlAdditional($preparedUrlAdditionCurrent, $preparedUrlAdditionStore)
+    protected function getPreparedUrlAdditional(array $preparedUrlAdditionCurrent, array $preparedUrlAdditionStore): string
     {
         $correctUrlAddition = [];
         $mergedUrlAddition  = array_merge_recursive($preparedUrlAdditionCurrent, $preparedUrlAdditionStore);
@@ -201,21 +216,16 @@ class CategoryStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyIn
 
     /**
      * Convert additional url array to string.
-     *
-     * @param array $correctUrlAddition
-     *
-     * @return string
      */
-    protected function getUrlAdditionalString($correctUrlAddition)
+    protected function getUrlAdditionalString(array $correctUrlAddition): string
     {
         $urlAddition      = '?';
         $urlAdditionArray = [];
         foreach ($correctUrlAddition as $keyUrlAddition => $valueUrlAddition) {
-            $urlAdditionArray[] .= $keyUrlAddition . '=' . $valueUrlAddition;
+            $urlAdditionArray[] = $keyUrlAddition.'='.$valueUrlAddition;
         }
         $urlAddition .= implode('&', $urlAdditionArray);
 
         return $urlAddition;
     }
-
 }

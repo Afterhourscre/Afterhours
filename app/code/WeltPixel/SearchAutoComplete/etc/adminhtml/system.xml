@@ -5,6 +5,15 @@
 			<label>Ajax Search Autocomplete</label>
 			<tab>weltpixel</tab>
 			<resource>WeltPixel_SearchAutoComplete::SearchAutoComplete</resource>
+            <group id="general_module_information" translate="label" type="text" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Ajax Search Autocomplete</label>
+                <attribute type="expanded">1</attribute>
+                <fieldset_css>weltpixel-module-information-header active</fieldset_css>
+                <field id="separator_product_dimensions" translate="button_label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <frontend_model>WeltPixel\Backend\Block\Adminhtml\System\Config\ModuleInformation</frontend_model>
+                    <button_label>WeltPixel_SearchAutoComplete</button_label>
+                </field>
+            </group>
 			<group id="general" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label">
 				<label>General Settings for Ajax Search Autocomplete</label>
 				<field id="enable" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label" type="select">
@@ -33,8 +42,8 @@
 				</field>
 				<field id="maxItems" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
 					<label>Maximum number of items displayed</label>
-					<comment>
-                        <![CDATA[
+                    <comment>
+                    <![CDATA[
                         Set the maximum number of items displayed in the dropdown list. Example: 3<br/>
                         <b>Note:</b> For Display Results are set Horizontally the maximum number of items can be up to 8.
                         ]]>
@@ -121,6 +130,17 @@
 						<field id="enable">1</field>
 					</depends>
 				</field>
+                <field id="maxItems" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Maximum number of popular suggestions displayed</label>
+                    <validate>validate-number validate-greater-than-zero</validate>
+                    <comment> <![CDATA[Set the maximum number of popular suggestions displayed. Example: 10; <br/>
+                        If not set, all the results will be displayed.]]>
+                    </comment>
+                    <depends>
+                        <field id="enable">1</field>
+                        <field id="enablePopularSuggestions">1</field>
+                    </depends>
+                </field>
 			</group>
 			<group id="categorySearch" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="40" translate="label">
 				<label>Category Search Settings</label>
@@ -159,9 +179,9 @@
 					</depends>
 				</field>
 				<field id="templateResultsContainer" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="label" type="select">
-					<label>Display Results</label>
+					<label>Display Results (Desktop-only)</label>
 					<source_model>WeltPixel\SearchAutoComplete\Model\Config\Source\TemplateResults</source_model>
-					<comment>Select how the results are displayed. See tooltip for more details. </comment>
+					<comment>Select how the results are displayed. See tooltip for more details. (This setting applies to the desktop view only.) </comment>
 					<tooltip>Horizontal option only available with Search V2 from Pearl Theme. Check your search version in WeltPixel -> Custom Header -> Search Options -> Search Version </tooltip>
 				</field>
 				<field id="enableProductDivider" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="label" type="select">

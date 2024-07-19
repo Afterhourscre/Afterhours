@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -26,6 +26,25 @@ use Mirasvit\SeoSitemap\Service\SeoSitemapUrlService;
 class Router implements RouterInterface
 {
 
+    /**
+     * @var ActionFactory
+     */
+    private $actionFactory;
+    /**
+     * @var SeoSitemapUrlService
+     */
+    private $url;
+    /**
+     * @var EventManagerInterface
+     */
+    private $eventManager;
+
+    /**
+     * Router constructor.
+     * @param SeoSitemapUrlService $url
+     * @param ActionFactory $actionFactory
+     * @param EventManagerInterface $eventManager
+     */
     public function __construct(
         SeoSitemapUrlService $url,
         ActionFactory $actionFactory,
@@ -58,8 +77,7 @@ class Router implements RouterInterface
                 ->setParams($params);
 
             return $this->actionFactory->create(
-                'Magento\Framework\App\Action\Forward',
-                ['request' => $request]
+                'Magento\Framework\App\Action\Forward'
             );
         }
 

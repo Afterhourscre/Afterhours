@@ -13,8 +13,9 @@ $abstractProductBlock = $block->getLayout()->createBlock('\Magento\Catalog\Block
 <?php $buttonTitle = __('Add to Cart'); ?>
 <?php $addToCartClass = !$block->shouldRenderQuantity() ? 'full-width-btn' : ''; ?>
 <?php
-$qtyIncrement = (int)$_product->getExtensionAttributes()->getStockItem()->getQtyIncrements();
-if (!$qtyIncrement) {
+$qtyIncrement = 1;
+$stockItem = $_product->getExtensionAttributes()->getStockItem();
+if ($stockItem && !$stockItem->getQtyIncrements() ) {
     $qtyIncrement = 1;
 }
 ?>

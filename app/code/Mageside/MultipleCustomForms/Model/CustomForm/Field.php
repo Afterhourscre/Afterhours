@@ -7,6 +7,7 @@ namespace Mageside\MultipleCustomForms\Model\CustomForm;
 
 use Mageside\MultipleCustomForms\Model\CustomForm\Field\Settings;
 use Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\DateType;
+use Magento\Framework\Validation\Validator\IsNotEmpty;
 
 class Field extends \Magento\Framework\Model\AbstractModel
 {
@@ -399,8 +400,9 @@ class Field extends \Magento\Framework\Model\AbstractModel
             $valid = true;
 
             $value = $this->getSubmittedValue($data);
-            $value = is_string($value) ? trim($value) : $value;
-            if (!\Zend_Validate::is($value, 'NotEmpty')) {
+	    $value = is_string($value) ? trim($value) : $value;
+
+            if (empty($value)) {
                 if ($this->getRequired()) {
                     $this->_messageManager->addErrorMessage(__('%1 is required.', $this->getTitle()));
                     return false;

@@ -2,14 +2,14 @@
 
 // @codingStandardsIgnoreFile
 
-$uniqueid = 'instagram-widget-'.uniqid();
+$uniqueid = 'instagram-widget-' . uniqid();
 $imagesPerRow = $this->getData('images_per_row');
-$openImagesInNewTab = ($this->getData('images_in_new_tab'))  ? 'target="_blank"' : '';
-$imagesHavePadding = ($this->getData('images_have_padding'))  ? 'use-padding' : '';
-$useImageShuffle = ($this->getData('optimize_image_layout'))  ? true : false;
-$description = trim($this->getData('description'));
-$backgroundColor = trim($this->getData('background_color'));
-$title = trim($this->getData('title'));
+$openImagesInNewTab = ($this->getData('images_in_new_tab')) ? 'target="_blank"' : '';
+$imagesHavePadding = ($this->getData('images_have_padding')) ? 'use-padding' : '';
+$useImageShuffle = ($this->getData('optimize_image_layout')) ? true : false;
+$description = trim($this->getData('description') ?? '');
+$backgroundColor = trim($this->getData('background_color') ?? '');
+$title = trim($this->getData('title') ?? '');
 $limit = intval($this->getData('limit'));
 $resolution = $this->getData('resolution_jsparser');
 $feedType = $this->getData('feed_type_jsparser');
@@ -17,9 +17,10 @@ $userName = $this->getData('user_name');
 $tagName = $this->getData('tag_name');
 $imagesAltTag = $this->getData('images_alt_text');
 $imagesAltLabel = '';
+
 switch ($imagesAltTag) {
     case '2':
-        $imagesAltLabel = $block->escapeHtml(trim($this->getData('custom_alt_text')));
+        $imagesAltLabel = $block->escapeHtml(trim($this->getData('custom_alt_text') ?? ''));
         break;
     case '0':
     default:
@@ -36,41 +37,39 @@ switch ($imagesAltTag) {
             <span class="center"><?php /* @escapeNotVerified */ echo $description ?></span>
         <?php endif; ?>
     </div>
-    <div id="<?php echo $uniqueid; ?>" class="instagram-photos <?php /* @escapeNotVerified */ echo $imagesPerRow ?>" ></div>
+    <div id="<?php echo $uniqueid; ?>" class="instagram-photos <?php /* @escapeNotVerified */ echo $imagesPerRow ?>"></div>
 </div>
-<div class="clear" >&nbsp;</div>
+<div class="clear">&nbsp;</div>
 <script>
     require(['jquery', 'instagramFeed', 'shufflejs'],
         function ($, instagramFeed, Shuffle) {
             var $instagramPhotosEl = $('#<?php echo $uniqueid; ?>');
-            if( $instagramPhotosEl.length > 0 ){
+            if ($instagramPhotosEl.length > 0) {
 
                 $instagramPhotosEl.each(function() {
-                    var instaGramTarget ='#<?php echo $uniqueid; ?>',
+                    var instaGramTarget = '#<?php echo $uniqueid; ?>',
                         instaGramUserId = '<?php echo $userName ?>',
                         instaGramTag = '<?php echo $tagName ?>',
                         instaGramCount = <?php echo $limit ?>,
                         instaGramType = '<?php echo $feedType ?>',
                         instaGramRes = '<?php echo $resolution ?>',
-                        instaImageNewTab = '<?php  echo $openImagesInNewTab ?>',
-                        instaImagePadding = '<?php  echo $imagesHavePadding ?>',
+                        instaImageNewTab = '<?php echo $openImagesInNewTab ?>',
+                        instaImagePadding = '<?php echo $imagesHavePadding ?>',
                         useImageShuffle = '<?php echo $useImageShuffle ?>',
                         instaImageAltTag = <?php echo $imagesAltTag ?>,
                         instaImageAltLabel = '<?php echo $imagesAltLabel ?>';
 
+                    if (!instaGramCount) { instaGramCount = 6; }
+                    if (!instaGramRes) { instaGramRes = '640'; }
 
-                    if( !instaGramCount ) { instaGramCount = 6; }
-                    if( !instaGramRes ) { instaGramRes = '640'; }
-
-                    if( instaGramType == 'user' ) {
-
+                    if (instaGramType == 'user') {
                         $.instagramFeed({
                             'username': instaGramUserId,
                             'container': instaGramTarget,
                             'image_size': instaGramRes,
                             'items': instaGramCount,
-                            'image_new_tab' : instaImageNewTab,
-                            'image_padding' : instaImagePadding,
+                            'image_new_tab': instaImageNewTab,
+                            'image_padding': instaImagePadding,
                             'image_alt_tag': instaImageAltTag,
                             'image_alt_label': instaImageAltLabel,
                             'after': function() {
@@ -79,15 +78,14 @@ switch ($imagesAltTag) {
                                 }
                             }
                         });
-
-                    } else if( instaGramType == 'tagged' ) {
+                    } else if (instaGramType == 'tagged') {
                         $.instagramFeed({
                             'tag': instaGramTag,
                             'container': instaGramTarget,
                             'image_size': instaGramRes,
                             'items': instaGramCount,
-                            'image_new_tab' : instaImageNewTab,
-                            'image_padding' : instaImagePadding,
+                            'image_new_tab': instaImageNewTab,
+                            'image_padding': instaImagePadding,
                             'image_alt_tag': instaImageAltTag,
                             'image_alt_label': instaImageAltLabel,
                             'after': function() {

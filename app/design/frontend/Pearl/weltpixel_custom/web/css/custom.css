@@ -1,0 +1,20 @@
+ul.weltpixel_multistore {
+    width: 50px;
+}
+.multistore-switcher .dropdown-options img {
+    width: 40px;
+    height: 20px;
+}
+.multistore-switcher.active ul {
+    margin-top: 6px;
+}
+.multistore-switcher button.action {
+   padding: 0;
+    background: unset !important;
+    border: unset !important;
+}
+.multistore-switcher button img {
+        width: 50px;
+    height: 25px;
+    border: 1px solid #b1afaf;
+}

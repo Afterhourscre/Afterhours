@@ -8,7 +8,7 @@
 /**
  * Posts autload
  */
- define([
+define([
     'domReady!',
     'jquery'
 ], function (domReady, $) {
@@ -39,17 +39,16 @@
         /**
          * Load new content
          */
-        function startLoading()
-        {
+        function startLoading() {
             if (that.opt.current_page < that.opt.last_page && !that.loading) {
                 that.loading = true;
                 $('.mfblog-show-onload').show();
                 $('.mfblog-hide-onload').hide();
 
                 $.ajax({
-                    "url":that.opt.page_url[that.opt.current_page+1],
-                    "cache":true
-                }).success(function (data) {
+                    url: that.opt.page_url[that.opt.current_page + 1],
+                    cache: true
+                }).done(function (data) {
                     var $html = $(data);
                     var ws = that.opt.list_wrapper;
                     var $nw = $html.find(ws);
@@ -59,7 +58,7 @@
                     }
 
                     if ($html.find('[data-original]').length) {
-                        require(['jquery', 'Magefan_Blog/js/lib/mfblogunveil', 'domReady!'], function($){
+                        require(['jquery', 'Magefan_Blog/js/lib/mfblogunveil', 'domReady!'], function ($) {
                             $('.mfblogunveil').mfblogunveil();
                         });
                     }
@@ -76,8 +75,7 @@
         /**
          * On loading end
          */
-        function endLoading()
-        {
+        function endLoading() {
             that.loading = false;
             $('.mfblog-show-onload').hide();
             if (that.opt.current_page < that.opt.last_page) {
@@ -107,7 +105,7 @@
     };
 
     return function (options) {
-        new Lazyload(options)
+        new Lazyload(options);
     };
 
 });

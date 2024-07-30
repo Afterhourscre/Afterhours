@@ -1,3 +1,5 @@
+/* multistore switcher */
+
 ul.weltpixel_multistore {
     width: 50px;
 }
@@ -14,7 +16,20 @@ ul.weltpixel_multistore {
     border: unset !important;
 }
 .multistore-switcher button img {
-        width: 50px;
-    height: 25px;
-    border: 1px solid #b1afaf;
+     height: 25px;
+    width: 96px;
 }
+.page-header .page-header .multistore-switcher {
+    top: 8px !important;
+}
+
+/* minicart changes */
+.header .quickcart-wrapper .block-quickcart .block-content-quickcart .quickcart-top button.close:before {
+    content: '\e616';
+    position: relative;
+    top: 15px;
+}
+.header .quickcart-wrapper .block-quickcart .block-content-quickcart .quickcart-top button.close span {
+    display: none;
+}
+

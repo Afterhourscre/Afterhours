@@ -11,6 +11,9 @@ $fbAppId = $block->getAppId(); // Assuming getAppId() returns a string or null
 if ($fbAppId !== null) {
     $fbAppId = trim($fbAppId);
 }
+// Ensure the image is retrieved correctly
+$productImage = $block->getImage($_product, 'product_base_image');
+$imageUrl = $productImage ? $productImage->getImageUrl() : '';
 ?>
 <!--  facebook open graph -->
 <?php if ($fbAppId) : ?>
@@ -19,7 +22,7 @@ if ($fbAppId !== null) {
 <meta property="og:site_name" content="<?php /* @escapeNotVerified */ echo $block->getSiteName(); ?>" />
 <meta property="og:type" content="og:product" />
 <meta property="og:title" content="<?php /* @escapeNotVerified */ echo $block->stripTags($_product->getName()); ?>" />
-<meta property="og:image" content="<?php /* @escapeNotVerified */ echo $block->stripTags($block->getImage($_product, 'product_base_image')->getImageUrl()); ?>" />
+<meta name="twitter:image" content="<?php /* @escapeNotVerified */ echo $block->stripTags($imageUrl); ?>" />
 <meta property="og:description" content="<?php /* @escapeNotVerified */ echo $block->escapeQuote($block->stripTags($block->getDescription($_product))); ?>" />
 <meta property="og:url" content="<?php /* @escapeNotVerified */ echo $block->stripTags($block->getCurrentUrl($_product)); ?>" />
 <meta property="product:price:amount" content="<?php echo $this->getPrice(); ?>" />

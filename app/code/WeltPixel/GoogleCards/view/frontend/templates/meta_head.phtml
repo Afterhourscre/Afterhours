@@ -10,6 +10,8 @@ if (!$reviewCount) {
     $reviewCount = 0;
 }
 $ratingSummary = ($summaryModel->getRatingSummary()) ? $summaryModel->getRatingSummary() : 20;
+
+$productImage = $block->getImage($_product, 'product_base_image');
 ?>
 
 <script type="application/ld+json">
@@ -17,7 +19,7 @@ $ratingSummary = ($summaryModel->getRatingSummary()) ? $summaryModel->getRatingS
         "@context": "https://schema.org/",
         "@type": "Product",
         "name": "<?php /* @escapeNotVerified */ echo $block->escapeQuote($block->stripTags($_product->getName())); ?>",
-        "image": "<?php /* @escapeNotVerified */ echo $block->stripTags($block->getImage($_product, 'product_base_image')->getImageUrl()); ?>",
+        "image": "<?php /* @escapeNotVerified */ echo $block->stripTags($productImage ? $productImage->getImageUrl() : ''); ?>",
         "description": "<?php /* @escapeNotVerified */ echo $block->escapeQuote($block->stripTags($block->getDescription($_product))); ?>",
 <?php if (strlen(trim($_brand))): ?>
         "brand": {

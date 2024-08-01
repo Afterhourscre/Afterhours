@@ -12,7 +12,7 @@ namespace WeltPixel\EnhancedEmail\Block\Items;
  * Class AbstractItems
  * @package WeltPixel\EnhancedEmail\Block\Order\Email
  */
-class AbstractItems extends \Magento\Sales\Block\Order\Email\Invoice\Items
+class ShipmentItems extends \Magento\Sales\Block\Order\Email\Shipment\Items
 {
     /**
      * @var \WeltPixel\EnhancedEmail\Helper\Data

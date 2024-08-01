@@ -8,6 +8,8 @@ namespace Mageside\MultipleCustomForms\Model\CustomForm;
 use Mageside\MultipleCustomForms\Model\CustomForm\Field\Settings;
 use Mageside\MultipleCustomForms\Block\Widget\CustomForm\Fields\Type\DateType;
 use Magento\Framework\Validation\Validator\IsNotEmpty;
+use Laminas\Validator\ValidatorChain;
+use Laminas\Validator\EmailAddress;
 
 class Field extends \Magento\Framework\Model\AbstractModel
 {
@@ -394,64 +396,69 @@ class Field extends \Magento\Framework\Model\AbstractModel
      * @param $data
      * @return bool
      */
-    public function validateData($data)
-    {
-        try {
-            $valid = true;
+  public function validateData($data)
+{
+    try {
+        $valid = true;
 
-            $value = $this->getSubmittedValue($data);
-	    $value = is_string($value) ? trim($value) : $value;
+        $value = $this->getSubmittedValue($data);
+        $value = is_string($value) ? trim($value) : $value;
 
-            if (empty($value)) {
-                if ($this->getRequired()) {
-                    $this->_messageManager->addErrorMessage(__('%1 is required.', $this->getTitle()));
-                    return false;
-                } else {
-                    return true;
-                }
+        if (empty($value)) {
+            if ($this->getRequired()) {
+                $this->_messageManager->addErrorMessage(__('%1 is required.', $this->getTitle()));
+                return false;
+            } else {
+                return true;
             }
-            if ($validators = $this->getValidation()) {
-                if (!is_array($validators)) {
-                    $validators = [$validators];
+        }
+
+        if ($validators = $this->getValidation()) {
+            if (!is_array($validators)) {
+                $validators = [$validators];
+            }
+
+            foreach ($validators as $type) {
+                if (!$validator = $this->_fieldSettings->getValidator($type)) {
+                    if (isset($validator['validator'])) {
+                        $valid = false;
+                        continue;
+                    }
                 }
-                foreach ($validators as $type) {
-                    if (!$validator = $this->_fieldSettings->getValidator($type)) {
-                        if (isset($validator['validator'])) {
-                            $valid = false;
-                            continue;
-                        }
-                    }
-                    $validator = $validator['validator'];
 
-                    $arguments = !empty($validator['arguments']) ? $validator['arguments'] : [];
-                    foreach ($arguments as $key => $argument) {
-                        if ($key === 'locale') {
-                            $arguments[$key] = $this->_localeResolver->getLocale();
-                        }
-                    }
+                $validator = $validator['validator'];
+                $validatorChain = new ValidatorChain();
 
-                    if ($type == 'emails') {
-                        $emails = explode(',', $value);
-                        foreach ($emails as $email) {
-                            if (!\Zend_Validate::is(trim($email), $validator['class'], $arguments)) {
-                                $valid = false;
-                                $this->_messageManager->addErrorMessage(__($validator['errorMessage'], $this->getTitle()));
-                            }
-                        }
-                    } else {
-                        if (!\Zend_Validate::is($value, $validator['class'], $arguments)) {
+                $arguments = !empty($validator['arguments']) ? $validator['arguments'] : [];
+                foreach ($arguments as $key => $argument) {
+                    if ($key === 'locale') {
+                        $arguments[$key] = $this->_localeResolver->getLocale();
+                    }
+                }
+
+                if ($type == 'emails') {
+                    $emails = explode(',', $value);
+                    foreach ($emails as $email) {
+                        $emailValidator = new EmailAddress();
+                        if (!$emailValidator->isValid(trim($email))) {
                             $valid = false;
                             $this->_messageManager->addErrorMessage(__($validator['errorMessage'], $this->getTitle()));
                         }
                     }
+                } else {
+                    $validatorChain->attachByName($validator['class'], $arguments);
+                    if (!$validatorChain->isValid($value)) {
+                        $valid = false;
+                        $this->_messageManager->addErrorMessage(__($validator['errorMessage'], $this->getTitle()));
+                    }
                 }
             }
-
-            return $valid;
-        } catch (\Exception $e) {
-            $this->_messageManager->addErrorMessage(__('Unable to validate field %1.', $this->getTitle()));
-
-            return false;
         }
+
+        return $valid;
+    } catch (\Exception $e) {
+        $this->_messageManager->addErrorMessage(__('Unable to validate field %1.', $this->getTitle()));
+        return false;
     }
+}
 }

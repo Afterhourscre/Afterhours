@@ -2,9 +2,15 @@
 namespace WeltPixel\CategoryPage\Block\Product;
 
 use Magento\Catalog\Helper\ImageFactory as HelperFactory;
+use Psr\Log\LoggerInterface;
 
 class ImageBuilder extends \Magento\Catalog\Block\Product\ImageBuilder
 {
+
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
 
     /** @var  \WeltPixel\CategoryPage\Helper\Data */
     protected $categoryPageHelper;
@@ -27,12 +33,14 @@ class ImageBuilder extends \Magento\Catalog\Block\Product\ImageBuilder
      * @param \WeltPixel\LazyLoading\Helper\Data $lazyLoadingHelper
      */
     public function __construct(
+         LoggerInterface $logger,
         HelperFactory $helperFactory,
         \Magento\Catalog\Block\Product\ImageFactory $imageFactory,
         \WeltPixel\CategoryPage\Helper\Data $categoryPageHelper,
         \WeltPixel\OwlCarouselSlider\Helper\Custom $owlHelperCustom,
         \WeltPixel\LazyLoading\Helper\Data $lazyLoadingHelper
     ) {
+         $this->logger = $logger;
         $this->categoryPageHelper = $categoryPageHelper;
         $this->owlHelperCustom = $owlHelperCustom;
         $this->lazyLoadingHelper = $lazyLoadingHelper;
@@ -48,10 +56,11 @@ class ImageBuilder extends \Magento\Catalog\Block\Product\ImageBuilder
      * @return \Magento\Catalog\Block\Product\Image
      */
     public function create(
-        ?\Magento\Catalog\Model\Product $product = null,
-        ?string $imageId = null,
-        ?array $attributes = null
-    ) {
+    ?\Magento\Catalog\Model\Product $product = null,
+    ?string $imageId = null,
+    ?array $attributes = null
+) {
+    try {
         $hoverImageIds = [];
 
         /** Check if owlcarousel's hover is enabled */
@@ -73,8 +82,7 @@ class ImageBuilder extends \Magento\Catalog\Block\Product\ImageBuilder
         }
 
         /** @var \Magento\Catalog\Helper\Image $helper */
-        $helper = $this->helperFactory->create()
-            ->init($product, $imageId);
+        $helper = $this->helperFactory->create()->init($product, $imageId);
 
         $template = $helper->getFrame()
             ? 'WeltPixel_CategoryPage::product/image.phtml'
@@ -91,7 +99,7 @@ class ImageBuilder extends \Magento\Catalog\Block\Product\ImageBuilder
                 'width' => $helper->getWidth(),
                 'height' => $helper->getHeight(),
                 'label' => $helper->getLabel(),
-                'ratio' =>  $this->getRatio($helper),
+                'ratio' => $this->getRatio($helper),
                 'custom_attributes' => $this->getCustomAttributes(),
                 'resized_image_width' => !empty($imagesize[0]) ? $imagesize[0] : $helper->getWidth(),
                 'resized_image_height' => !empty($imagesize[1]) ? $imagesize[1] : $helper->getHeight(),
@@ -104,11 +112,11 @@ class ImageBuilder extends \Magento\Catalog\Block\Product\ImageBuilder
                 ->init($product, $imageId . '_hover')->resize($helper->getWidth(), $helper->getHeight());
 
             $hoverImageUrl = $hoverHelper->getUrl();
-            $placeHolderUrl =  $hoverHelper->getDefaultPlaceholderUrl();
+            $placeHolderUrl = $hoverHelper->getDefaultPlaceholderUrl();
 
             /** Do not display hover placeholder */
             if ($placeHolderUrl == $hoverImageUrl) {
-                $data['data']['hover_image_url'] = NULL;
+                $data['data']['hover_image_url'] = null;
             } else {
                 $data['data']['hover_image_url'] = $hoverImageUrl;
             }
@@ -121,8 +129,15 @@ class ImageBuilder extends \Magento\Catalog\Block\Product\ImageBuilder
             $data['data']['owlcarousel'] = true;
         }
 
-        return $this->imageFactory->create($data);
+        return $this->imageFactory->create($product, $data['data']['image_url'], $data['data']);
+
+    } catch (\Exception $e) {
+        // Log the exception message
+        $this->logger->critical($e->getMessage());
+        return null;
     }
+}
+
 
     /**
      * @return bool

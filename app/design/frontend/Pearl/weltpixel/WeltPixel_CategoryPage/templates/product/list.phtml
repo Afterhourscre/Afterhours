@@ -110,9 +110,9 @@ $gtmHelper = $this->helper('WeltPixel\GoogleTagManager\Helper\Data');
                         <div class="product-item-inner <?php echo /* @escapeNotVerified */ $hoverShow; ?>">
                             <div class="product-item-inner-hide"></div>
                             <div
-                                class="product actions product-item-actions <?php echo isset($alignAddToCart) == 'center' ? ' ' . $alignAddToCart : ''; ?>"<?php echo strpos($pos, $viewMode . '-actions') ? $position : ''; ?>>
+                                class="product actions product-item-actions <?php echo isset($alignAddToCart) == 'center' ? ' ' . $alignAddToCart : ''; ?>"<?php echo (is_string($pos) && strpos($pos, $viewMode . '-actions')) ? $position : ''; ?>>
                                 <div class="actions-primary"<?php /* @escapeNotVerified */
-                                echo strpos($pos, $viewMode . '-primary') ? $position : ''; ?>>
+                                echo (is_string($pos) && strpos($pos, $viewMode . '-primary')) ? $position : ''; ?>>
                                     <?php if ($displayAddToCart != 0 && $_product->isSaleable()): ?>
                                         <div class="addtocart_position_<?php /* @escapeNotVerified */
                                         echo $displayAddToCart;
@@ -151,7 +151,7 @@ $gtmHelper = $this->helper('WeltPixel\GoogleTagManager\Helper\Data');
                                     <?php endif; ?>
                                 </div>
                                 <div data-role="add-to-links"
-                                     class="actions-secondary"<?php echo strpos($pos, $viewMode . '-secondary') ? $position : ''; ?>>
+                                     class="actions-secondary"<?php echo (is_string($pos) && strpos($pos, $viewMode . '-secondary')) ? $position : ''; ?>>
                                     <?php if ($displayWishlist != 0 && $this->helper('Magento\Wishlist\Helper\Data')->isAllow()): ?>
                                         <a href="#"
                                            class="action towishlist whishlist_position_<?php /* @escapeNotVerified */

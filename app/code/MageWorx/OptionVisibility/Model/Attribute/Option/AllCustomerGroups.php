@@ -131,28 +131,34 @@ class AllCustomerGroups extends AbstractAttribute
      * @param \Magento\Catalog\Model\Product\Option|\Magento\Catalog\Model\Product\Option\Value|array $data
      * @return string
      */
-    public function prepareDataBeforeSave($data)
-    {
-        if (is_object($data)) {
-            $jsonCustomerGroup = $data->getData('customer_group');
-        } elseif (is_array($data) && isset($data[$this->getName()])) {
-            $jsonCustomerGroup = $data[$this->getName()];
-        } else {
-            return '';
-        }
+   public function prepareDataBeforeSave($data)
+{
+    if (is_object($data)) {
+        $jsonCustomerGroup = $data->getData('customer_group');
+    } elseif (is_array($data) && isset($data[$this->getName()])) {
+        $jsonCustomerGroup = $data[$this->getName()];
+    } else {
+        return '';
+    }
 
-        $decodedJsonData = json_decode($jsonCustomerGroup, true);
+    // Ensure $jsonCustomerGroup is a string before passing it to json_decode
+    if ($jsonCustomerGroup === null) {
+        return '1';
+    }
 
-        if (empty($decodedJsonData) || !is_array($decodedJsonData)) {
+    $decodedJsonData = json_decode($jsonCustomerGroup, true);
+
+    if (empty($decodedJsonData) || !is_array($decodedJsonData)) {
+        return '1';
+    }
+
+    foreach ($decodedJsonData as $key => $value) {
+        if (isset($value['customer_group_id']) && $value['customer_group_id'] == 32000) {
             return '1';
         }
-
-        foreach ($decodedJsonData as $key => $value) {
-            if ($value['customer_group_id'] == 32000) {
-                return '1';
-            }
-        }
-
-        return '0';
     }
+
+    return '0';
+}
+
 }

@@ -15,7 +15,7 @@ class Email extends EmailAddress implements \Magento\Framework\Validator\Validat
     {
         parent::__construct($options);
 
-        $this->getHostnameValidator()->setValidateTld(false);
+        $this->getHostnameValidator()->useTldCheck(false);
     }
 
     /**
@@ -23,6 +23,6 @@ class Email extends EmailAddress implements \Magento\Framework\Validator\Validat
      */
     public function setValidateTld($shouldValidate)
     {
-        $this->getHostnameValidator()->setValidateTld($shouldValidate);
+        $this->getHostnameValidator()->useTldCheck($shouldValidate);
     }
 }

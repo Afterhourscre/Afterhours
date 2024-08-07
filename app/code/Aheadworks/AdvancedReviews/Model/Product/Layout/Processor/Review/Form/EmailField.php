@@ -45,7 +45,7 @@ class EmailField implements LayoutProcessorInterface
      */
     public function process($jsLayout, $productId = null, $storeId = null)
     {
-        if ($this->isNeedToAddEmailField($storeId)) {
+        if ($this->isNeedToAddEmailField($storeId) && false) {
             $reviewFormChildrenPath = 'components/awArReviewContainer/children/awArReviewForm/children';
             $jsLayout = $this->arrayManager->merge(
                 $reviewFormChildrenPath,
@@ -56,17 +56,14 @@ class EmailField implements LayoutProcessorInterface
                         'dataScope' => 'email',
                         'provider' => 'awArReviewFormProvider',
                         'configProvider' => 'awArReviewConfigProvider',
-                        'template' => 'Aheadworks_AdvancedReviews/ui/form/custom-notice-field',
+                        'template' => 'ui/form/element/email',
                         'elementTmpl' => 'ui/form/element/email',
                         'label' => __('Email'),
                         'notice' => __('(will not be published)'),
                         'sortOrder' => 25,
-                        'imports' => [
-                            'visible' => '!${ $.configProvider }:data.is_customer_logged_in'
-                        ],
                         'validation' => [
                             'validate-email' => true,
-                            'required-entry' => $this->isEmailFieldRequired($storeId),
+                            'required-entry' => true,
                         ],
                     ]
                 ]

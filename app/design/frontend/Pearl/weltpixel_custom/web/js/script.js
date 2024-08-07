@@ -5,6 +5,15 @@ define([
         "use strict";
 
         $(document).ready(function($){
+            
+            $('.product-info-main .product-options-wrapper .fieldset .field').each(function() {
+                var $selectElement = $(this).find('select');
+                if ($selectElement.length && $selectElement.find('option').length > 1) {
+                    $selectElement.prop('selectedIndex', 1);
+                    $selectElement.trigger('change');
+                }
+            });
+
             $('.product-add-form .field label.label').on('click', function () {
                 $(this).toggleClass('active');
                 $(this).siblings().slideToggle();

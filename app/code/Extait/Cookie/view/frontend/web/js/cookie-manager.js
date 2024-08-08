@@ -18,7 +18,7 @@ define([
     return Component.extend({
         isAllow: function (name) {
             if (window.extaitCookie && window.extaitCookie.isModuleEnable) {
-                var allowedCookies = JSON.parse($.cookie('extait_allowed_cookies')),
+                var allowedCookies = JSON.parse($.cookie('extait_allowed_cookies') || '{}'),
                     allCookies = window.extaitCookie.allCookiesNames;
                 
                 if ($.inArray(name, allCookies) === -1) {

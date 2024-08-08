@@ -1,17 +1,5 @@
-cd /var/www/html/store1.fur4.com
-composer update --with-all-dependencies
-#rm -rf vendor
-#rm composer.lock
-#composer install
-cp pub/.htaccess.cors pub/.htaccess
-php bin/magento module:disable Graycore_Cors PayPal_Braintree PayPal_BraintreeGraphQl PayPal_BraintreeGiftWrapping PayPal_BraintreeGiftCardAccount PayPal_BraintreeCustomerBalance
-php bin/magento module:enable Magento_ApplicationPerformanceMonitor Magento_ApplicationPerformanceMonitorNewRelic Magento_AsyncConfig Magento_ContactGraphQl Magento_DataExporter Magento_GraphQlNewRelic Magento_AdminGraphQlServer Magento_IntegrationGraphQl Magento_InventorySalesAsyncOrder Magento_OrderCancellation Magento_OrderCancellationGraphQl Magento_OrderCancellationUi Magento_ServiceProxy Magento_ServicesConnector Magento_PaymentServicesPaypalGraphQl Magento_QueryXml Magento_ServicesId Magento_PaymentServicesBase Magento_SaaSCommon Magento_SalesRuleGraphQl Magento_PaymentServicesDashboard Magento_PaymentServicesPaypal Magento_StoreDataExporter Magento_ServicesIdGraphQlServer Magento_ServicesIdLayout Magento_SalesDataExporter  Magento_PaymentServicesSaaSExport BronzeByte_Dealer BronzeByte_Review Magento_GraphQlResolverCache Magento_GraphQlServer Platformz_Refactory BronzeByte_Catalog BronzeByte_ContactUsGraphql BronzeByte_Recaptcha BronzeByte_CouponGraphql
-php bin/magento setup:upgrade
+rm -rf var/view_processesd/*
+rm -rf pub/static/frontend/Pearl/weltpixel/*
+rm -rf pub/static/frontend/Pearl/weltpixel_custom/*
 php bin/magento s:d:c
-php bin/magento setup:static-content:deploy -f
-php bin/magento indexer:reindex
-php bin/magento c:f
-cp pub/.htaccess.cors pub/.htaccess
-php bin/magento deploy:mode:set production
-php bin/magento cache:enable
-chmod -R 0777 var pub generated
+php bin/magento setup:static-content:deploy -f -t Pearl/weltpixel_custom

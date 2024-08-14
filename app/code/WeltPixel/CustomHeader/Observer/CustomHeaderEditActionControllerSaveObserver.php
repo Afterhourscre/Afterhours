@@ -274,106 +274,104 @@ class CustomHeaderEditActionControllerSaveObserver implements ObserverInterface
         $headerIconHoverColor = $this->_helper->getHeaderIconHoverColor($storeId);
         // ---
 
-        $globalPromoTextColor = strlen(trim($globalPromoTextColor)) ? 'color: ' . $globalPromoTextColor . ';' : '';
-        $globalPromoBackgroundColor = strlen(trim($globalPromoBackgroundColor)) ? 'background-color: ' . $globalPromoBackgroundColor . ';' : '';
+     $globalPromoTextColor = strlen(trim($globalPromoTextColor ?? '')) ? 'color: ' . $globalPromoTextColor . ';' : '';
+$globalPromoBackgroundColor = strlen(trim($globalPromoBackgroundColor ?? '')) ? 'background-color: ' . $globalPromoBackgroundColor . ';' : '';
 
-        $topHeaderWidth = strlen(trim($topHeaderWidth)) ? 'max-width:' . $topHeaderWidth . ' !important;' : '';
+$topHeaderWidth = strlen(trim($topHeaderWidth ?? '')) ? 'max-width:' . $topHeaderWidth . ' !important;' : '';
 
-        $topHeaderLinkColorImportant = strlen(trim($topHeaderLinkColor)) ? 'color:' . $topHeaderLinkColor . '!important;' : '';
+$topHeaderLinkColorImportant = strlen(trim($topHeaderLinkColorImportant ?? '')) ? 'color:' . $topHeaderLinkColorImportant . '!important;' : '';
 
-        $topHeaderLinkColor = strlen(trim($topHeaderLinkColor)) ? 'color:' . $topHeaderLinkColor . ';' : '';
+$topHeaderLinkColor = strlen(trim($topHeaderLinkColor ?? '')) ? 'color:' . $topHeaderLinkColor . ';' : '';
 
-        $topHeaderActiveLinkColor = strlen(trim($topHeaderActiveLinkColor)) ? '&:active { color: ' . $topHeaderActiveLinkColor . '; }' : '';
-        $topHeaderHoverLinkColor = strlen(trim($topHeaderHoverLinkColor)) ? '&:hover { color: ' . $topHeaderHoverLinkColor . ' !important; }' : '';
+$topHeaderActiveLinkColor = strlen(trim($topHeaderActiveLinkColor ?? '')) ? '&:active { color: ' . $topHeaderActiveLinkColor . '; }' : '';
+$topHeaderHoverLinkColor = strlen(trim($topHeaderHoverLinkColor ?? '')) ? '&:hover { color: ' . $topHeaderHoverLinkColor . ' !important; }' : '';
 
-        $topHeaderSubmenuLinkColor = strlen(trim($topHeaderSubmenuLinkColor)) ? 'color:' . $topHeaderSubmenuLinkColor . ' !important;' : '';
-        $topHeaderSubmenuHoverLinkColor = strlen(trim($topHeaderSubmenuHoverLinkColor)) ? '&:hover { color: ' . $topHeaderSubmenuHoverLinkColor . ' !important; }' : '';
+$topHeaderSubmenuLinkColor = strlen(trim($topHeaderSubmenuLinkColor ?? '')) ? 'color:' . $topHeaderSubmenuLinkColor . ' !important;' : '';
+$topHeaderSubmenuHoverLinkColor = strlen(trim($topHeaderSubmenuHoverLinkColor ?? '')) ? '&:hover { color: ' . $topHeaderSubmenuHoverLinkColor . ' !important; }' : '';
 
-        $topHeaderBackgroundColor = strlen(trim($topHeaderBackgroundColor)) ? 'background-color:' . $topHeaderBackgroundColor . ' !important;' : '';
-        $topHeaderBorderBottomColor = strlen(trim($topHeaderBorderBottomColor)) ? 'border-bottom: 1px solid ' . $topHeaderBorderBottomColor . ';' : '';
-        $middleHeaderWidth = strlen(trim($middleHeaderWidth)) ? 'max-width:' . $middleHeaderWidth . ';' : '';
-        $middleHeaderBackgroundColor = strlen(trim($middleHeaderBackgroundColor)) ? 'background-color:' . $middleHeaderBackgroundColor . ' !important;' : '';
-        $bottomHeaderWidth = strlen(trim($bottomHeaderWidth)) ? 'max-width:' . $bottomHeaderWidth . ';' : '';
-        $bottomHeaderPadding = strlen(trim($bottomHeaderPadding)) ? '@media (max-width: ' . $bottomHeaderPadding . '){ padding-right: 15px !important; padding-left: 15px !important; }' : '';
-        $bottomHeaderBackgroundColor = strlen(trim($bottomHeaderBackgroundColor)) ? 'background-color:' . $bottomHeaderBackgroundColor . ' !important;' : 'background-color: transparent !important;';
-        $bottomHeaderBorderHoverColor = strlen(trim($bottomHeaderHoverLinkColor)) ? 'border-color:' . $bottomHeaderHoverLinkColor . '40 !important;' : '';
-        $bottomHeaderLinkColor = strlen(trim($bottomHeaderLinkColor)) ? 'color:' . $bottomHeaderLinkColor . ' !important;' : '';
-        $bottomHeaderLinkColorShadow = strlen(trim($bottomHeaderHoverLinkColor)) ? 'text-shadow: 0 0 0 ' . $bottomHeaderHoverLinkColor . ' !important;' : '';
-        $bottomHeaderLinkColorHover = strlen(trim($bottomHeaderHoverLinkColor)) ? 'color: ' . $bottomHeaderHoverLinkColor . ' !important;' : '';
-        $bottomHeaderHoverLinkColor = strlen(trim($bottomHeaderHoverLinkColor)) ? '&:hover { color: ' . $bottomHeaderHoverLinkColor . ' !important; }' : '';
-        $bottomNavigationShadow = strlen(trim($bottomNavigationShadow)) ? '-webkit-box-shadow: ' . $bottomNavigationShadow . '; -moz-box-shadow: ' . $bottomNavigationShadow . '; -o-box-shadow: ' . $bottomNavigationShadow . '; box-shadow: ' . $bottomNavigationShadow . ';' : '';
+$topHeaderBackgroundColor = strlen(trim($topHeaderBackgroundColor ?? '')) ? 'background-color:' . $topHeaderBackgroundColor . ' !important;' : '';
+$topHeaderBorderBottomColor = strlen(trim($topHeaderBorderBottomColor ?? '')) ? 'border-bottom: 1px solid ' . $topHeaderBorderBottomColor . ';' : '';
+$middleHeaderWidth = strlen(trim($middleHeaderWidth ?? '')) ? 'max-width:' . $middleHeaderWidth . ';' : '';
+$middleHeaderBackgroundColor = strlen(trim($middleHeaderBackgroundColor ?? '')) ? 'background-color:' . $middleHeaderBackgroundColor . ' !important;' : '';
+$bottomHeaderWidth = strlen(trim($bottomHeaderWidth ?? '')) ? 'max-width:' . $bottomHeaderWidth . ';' : '';
+$bottomHeaderPadding = strlen(trim($bottomHeaderPadding ?? '')) ? '@media (max-width: ' . $bottomHeaderPadding . '){ padding-right: 15px !important; padding-left: 15px !important; }' : '';
+$bottomHeaderBackgroundColor = strlen(trim($bottomHeaderBackgroundColor ?? '')) ? 'background-color:' . $bottomHeaderBackgroundColor . ' !important;' : 'background-color: transparent !important;';
+$bottomHeaderBorderHoverColor = strlen(trim($bottomHeaderHoverLinkColor ?? '')) ? 'border-color:' . $bottomHeaderHoverLinkColor . '40 !important;' : '';
+$bottomHeaderLinkColor = strlen(trim($bottomHeaderLinkColor ?? '')) ? 'color:' . $bottomHeaderLinkColor . ' !important;' : '';
+$bottomHeaderLinkColorShadow = strlen(trim($bottomHeaderHoverLinkColor ?? '')) ? 'text-shadow: 0 0 0 ' . $bottomHeaderHoverLinkColor . ' !important;' : '';
+$bottomHeaderLinkColorHover = strlen(trim($bottomHeaderHoverLinkColor ?? '')) ? 'color: ' . $bottomHeaderHoverLinkColor . ' !important;' : '';
+$bottomHeaderHoverLinkColor = strlen(trim($bottomHeaderHoverLinkColor ?? '')) ? '&:hover { color: ' . $bottomHeaderHoverLinkColor . ' !important; }' : '';
+$bottomNavigationShadow = strlen(trim($bottomNavigationShadow ?? '')) ? '-webkit-box-shadow: ' . $bottomNavigationShadow . '; -moz-box-shadow: ' . $bottomNavigationShadow . '; -o-box-shadow: ' . $bottomNavigationShadow . '; box-shadow: ' . $bottomNavigationShadow . ';' : '';
 
-        $serachOptionsWidth = strlen(trim($serachOptionsWidth)) ? 'width: ' . $serachOptionsWidth . ';' : '';
-        $serachOptionsHeight = strlen(trim($serachOptionsHeight)) ? 'height: ' . $serachOptionsHeight . ';' : '';
+$serachOptionsWidth = strlen(trim($serachOptionsWidth ?? '')) ? 'width: ' . $serachOptionsWidth . ';' : '';
+$serachOptionsHeight = strlen(trim($serachOptionsHeight ?? '')) ? 'height: ' . $serachOptionsHeight . ';' : '';
 
-        if($inputBorders == 0){
-            $inputBorders = strlen(trim($inputBorders)) ? 'border:' . $borderWidth . 'px solid ' . $mainSearchElementsColor . '!important;'  : '';
+if ($inputBorders == 0) {
+    $inputBorders = strlen(trim($inputBorders ?? '')) ? 'border:' . $borderWidth . 'px solid ' . $mainSearchElementsColor . '!important;'  : '';
+} else {
+    $inputBorders = strlen(trim($inputBorders ?? '')) ? 'border:none !important; border-bottom:' . $borderWidth . 'px solid ' . $mainSearchElementsColor . '!important; '  : '';
+}
 
-        }else{
-            $inputBorders = strlen(trim($inputBorders)) ? 'border:none !important; border-bottom:' . $borderWidth . 'px solid ' . $mainSearchElementsColor . '!important; '  : '';
-        }
+$rgba = 'background-color: rgba(' . implode(",", array_values($this->hex2rgb($backgroundColorSearchv2))) . ',' . $backgroundOpacitySearchv2 . ' ) !important;';
+$backgroundColorSearchv2 = strlen(trim($backgroundColorSearchv2 ?? '')) ? $rgba : '';
 
-        $rgba = 'background-color: rgba(' . implode(",", array_values($this->hex2rgb($backgroundColorSearchv2))) . ',' . $backgroundOpacitySearchv2 .' ) !important;';
-        $backgroundColorSearchv2 = strlen(trim($backgroundColorSearchv2)) ? $rgba : '';
+$inputBackgroundColor = strlen(trim($inputBackgroundColor ?? '')) ? 'background-color:' . $inputBackgroundColor . '!important;'  : '';
+$mainSearchElementsColor = strlen(trim($mainSearchElementsColor ?? '')) ? 'color:' . $mainSearchElementsColor . '!important;'   : '';
+$magnifierBackgroundColor = strlen(trim($magnifierBackgroundColor ?? '')) ? 'background-color:' . $magnifierBackgroundColor . ';'  : '';
+$searchInputFontSize = strlen(trim($searchInputFontSize ?? '')) ? 'font-size:' . $searchInputFontSize . 'px !important;'  : '';
 
-        $inputBackgroundColor = strlen(trim($inputBackgroundColor)) ? 'background-color:' . $inputBackgroundColor . '!important;'  : '';
-        $mainSearchElementsColor = strlen(trim($mainSearchElementsColor)) ? 'color:' . $mainSearchElementsColor . '!important;'   : '';
-        $magnifierBackgroundColor = strlen(trim($magnifierBackgroundColor)) ? 'background-color:' . $magnifierBackgroundColor . ';'  : '';
-        $searchInputFontSize = strlen(trim($searchInputFontSize)) ? 'font-size:' . $searchInputFontSize . 'px !important;'  : '';
+$defaultFontSettings = $this->_frontendHelper->getDefaultFontSettings($storeId);
+$navFontSize = strlen(trim($defaultFontSettings['font____size__base'] ?? '')) ? 'font-size: ' . (int) $defaultFontSettings['font____size__base'] . 'px !important;' : '';
 
-        $defaultFontSettings = $this->_frontendHelper->getDefaultFontSettings($storeId);
-        $navFontSize = strlen(trim($defaultFontSettings['font____size__base'])) ? 'font-size: ' . (int) $defaultFontSettings['font____size__base'] . 'px !important;' : '';
-
-        if (!$serachOptionsBorderWidth) {
-            $serachOptionsBorderWidth = [];
+if (!$serachOptionsBorderWidth) {
+    $serachOptionsBorderWidth = [];
+} else {
+    try {
+        $serachOptionsBorderWidthJson = json_decode($serachOptionsBorderWidth);
+        /** magento 2.2 removed serialization  */
+        if ($serachOptionsBorderWidthJson && ($serachOptionsBorderWidth != $serachOptionsBorderWidthJson)) {
+            $serachOptionsBorderWidth = json_decode($serachOptionsBorderWidth, true);
+            $serachOptionsBorderWidth = $serachOptionsBorderWidth['<%- _id %>'];
         } else {
-            try {
-                $serachOptionsBorderWidthJson = json_decode($serachOptionsBorderWidth);
-                /** magento 2.2 removed serialization  */
-                if ($serachOptionsBorderWidthJson && ($serachOptionsBorderWidth != $serachOptionsBorderWidthJson)) {
-                    $serachOptionsBorderWidth = json_decode($serachOptionsBorderWidth, true);
-                    $serachOptionsBorderWidth = $serachOptionsBorderWidth['<%- _id %>'];
-                } else {
-                    $serachOptionsBorderWidth = unserialize($serachOptionsBorderWidth)['<%- _id %>'];
-                }
-            } catch (\Exception $ex) {
-                $serachOptionsBorderWidth = [];
-            }
+            $serachOptionsBorderWidth = unserialize($serachOptionsBorderWidth)['<%- _id %>'];
         }
+    } catch (\Exception $ex) {
+        $serachOptionsBorderWidth = [];
+    }
+}
 
-
-        $searchOBW = [];
-        $true = false;
-        foreach ($serachOptionsBorderWidth as $serachOptionsBorderWidth) {
-            if ($serachOptionsBorderWidth) {
-                $true = true;
-            }
-            $searchOBW[] .= $serachOptionsBorderWidth;
-        }
+$searchOBW = [];
+$true = false;
+foreach ($serachOptionsBorderWidth as $serachOptionsBorderWidth) {
+    if ($serachOptionsBorderWidth) {
+        $true = true;
+    }
+    $searchOBW[] .= $serachOptionsBorderWidth;
+}
         $searchOBW = implode(' ', $searchOBW);
-        $serachOptionsBorderWidth = strlen(trim($true)) ? 'border-width: ' . $searchOBW . ';' : 'border-width: 0px 0px 1px 0px;';
-        $serachOptionsBorderStyle = strlen(trim($serachOptionsBorderStyle)) ? 'border-style: ' . $serachOptionsBorderStyle . ';' : 'border-style: solid;';
-        $serachOptionsBorderColor = strlen(trim($serachOptionsBorderColor)) ? 'border-color: ' . $serachOptionsBorderColor . ';' : 'border-color: #000000;';
-        $serachOptionsBackground = strlen(trim($serachOptionsBackground)) ? 'background-color: ' . $serachOptionsBackground . ';' : 'background-color: transparent;';
-        $serachOptionsColor = strlen(trim($serachOptionsColor)) ? 'color: ' . $serachOptionsColor . ';' : 'color: initial;';
-        $serachOptionsPlaceHolderColor = strlen(trim($serachOptionsPlaceHolderColor)) ? 'color: ' . $serachOptionsPlaceHolderColor . '!important;' : 'color: #000000;';
-        $serachOptionsFontSize = strlen(trim($serachOptionsFontSize)) ? 'font-size: ' . $serachOptionsFontSize . ';' : 'font-size: 15px;';
+        $serachOptionsBorderWidth = strlen(trim((string)$true)) ? 'border-width: ' . $searchOBW . ';' : 'border-width: 0px 0px 1px 0px;';
+        $serachOptionsBorderStyle = strlen(trim((string)$serachOptionsBorderStyle)) ? 'border-style: ' . $serachOptionsBorderStyle . ';' : 'border-style: solid;';
+        $serachOptionsBorderColor = strlen(trim((string)$serachOptionsBorderColor)) ? 'border-color: ' . $serachOptionsBorderColor . ';' : 'border-color: #000000;';
+        $serachOptionsBackground = strlen(trim((string)$serachOptionsBackground)) ? 'background-color: ' . $serachOptionsBackground . ';' : 'background-color: transparent;';
+        $serachOptionsColor = strlen(trim((string)$serachOptionsColor)) ? 'color: ' . $serachOptionsColor . ';' : 'color: initial;';
+        $serachOptionsPlaceHolderColor = strlen(trim((string)$serachOptionsPlaceHolderColor)) ? 'color: ' . $serachOptionsPlaceHolderColor . '!important;' : 'color: #000000;';
+        $serachOptionsFontSize = strlen(trim((string)$serachOptionsFontSize)) ? 'font-size: ' . $serachOptionsFontSize . ';' : 'font-size: 15px;';
 
-        $headerIconSize = strlen(trim($headerIconSize)) ? 'font-size: ' . $headerIconSize . ' !important;' : 'font-size: 16px !important;';
-        $headerIconColor = strlen(trim($headerIconColor)) ? 'color: ' . $headerIconColor . ' !important' : 'color: inherit';
-        $headerIconHoverColor = strlen(trim($headerIconHoverColor)) ? 'color: ' . $headerIconHoverColor . ' !important' : 'color: inherit';
+        $headerIconSize = strlen(trim((string)$headerIconSize)) ? 'font-size: ' . $headerIconSize . ' !important;' : 'font-size: 16px !important;';
+        $headerIconColor = strlen(trim((string)$headerIconColor)) ? 'color: ' . $headerIconColor . ' !important' : 'color: inherit';
+        $headerIconHoverColor = strlen(trim((string)$headerIconHoverColor)) ? 'color: ' . $headerIconHoverColor . ' !important' : 'color: inherit';
 
-        $bkColorMobile = (int)$this->_mobileBreakPoint - 1 . 'px';
+       $bkColorMobile = (int)$this->_mobileBreakPoint - 1 . 'px';
         $maxBkColorMobile = (int)$this->_mobileBreakPoint . 'px';
 
-        // sticky header
-        $stickyHeaderBackgroundColor = $stickyHeaderBackgroundColor && strlen(trim($stickyHeaderBackgroundColor)) ? 'background-color:' . $stickyHeaderBackgroundColor . ' !important;' : 'background-color: #ffffff !important;';
-        $stickyHeaderElementsColor = $stickyHeaderElementsColor && strlen(trim($stickyHeaderElementsColor)) ? 'color:' . $stickyHeaderElementsColor . ' !important;' : '';
-        $stickyHeaderElementsHoverColor = $stickyHeaderElementsHoverColor && strlen(trim($stickyHeaderElementsHoverColor)) ? 'color:' . $stickyHeaderElementsHoverColor . ' !important;' : '';
-        $stickyNavigationBorderColor = $stickyNavigationBorderColor && strlen(trim($stickyNavigationBorderColor)) ? 'border-color:' . $stickyNavigationBorderColor . ' !important;' : '';
-        $stickyNavigationBorderHoverColor = $stickyNavigationBorderHoverColor && strlen(trim($stickyNavigationBorderHoverColor)) ? 'border-color:' . $stickyNavigationBorderHoverColor . ' !important;' : '';
-        $stickySearchBorderColor = $stickySearchBorderColor && strlen(trim($stickySearchBorderColor)) ? 'border-color:' . $stickySearchBorderColor . ' !important;' : '';
-        $stickySearchBackgroundColor = $stickySearchBackgroundColor && strlen(trim($stickySearchBackgroundColor)) ? 'background-color:' . $stickySearchBackgroundColor . ' !important;' : 'background-color: transparent !important;';
+        $stickyHeaderBackgroundColor = $stickyHeaderBackgroundColor && strlen(trim((string)$stickyHeaderBackgroundColor)) ? 'background-color:' . $stickyHeaderBackgroundColor . ' !important;' : 'background-color: #ffffff !important;';
+        $stickyHeaderElementsColor = $stickyHeaderElementsColor && strlen(trim((string)$stickyHeaderElementsColor)) ? 'color:' . $stickyHeaderElementsColor . ' !important;' : '';
+        $stickyHeaderElementsHoverColor = $stickyHeaderElementsHoverColor && strlen(trim((string)$stickyHeaderElementsHoverColor)) ? 'color:' . $stickyHeaderElementsHoverColor . ' !important;' : '';
+        $stickyNavigationBorderColor = $stickyNavigationBorderColor && strlen(trim((string)$stickyNavigationBorderColor)) ? 'border-color:' . $stickyNavigationBorderColor . ' !important;' : '';
+        $stickyNavigationBorderHoverColor = $stickyNavigationBorderHoverColor && strlen(trim((string)$stickyNavigationBorderHoverColor)) ? 'border-color:' . $stickyNavigationBorderHoverColor . ' !important;' : '';
+        $stickySearchBorderColor = $stickySearchBorderColor && strlen(trim((string)$stickySearchBorderColor)) ? 'border-color:' . $stickySearchBorderColor . ' !important;' : '';
+        $stickySearchBackgroundColor = $stickySearchBackgroundColor && strlen(trim((string)$stickySearchBackgroundColor)) ? 'background-color:' . $stickySearchBackgroundColor . ' !important;' : 'background-color: transparent !important;';
+
 
         //        Generate Less
         $content .= "

@@ -8,6 +8,7 @@ namespace MageWorx\OptionTemplates\Controller\Adminhtml\Group;
 
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Serialize\Serializer\Json as Serializer;
 use Magento\Ui\Component\MassAction\Filter;
 use Magento\Framework\App\Response\Http\FileFactory;
 use Magento\Framework\App\Filesystem\DirectoryList;
@@ -35,6 +36,11 @@ class Export extends MassAction
     protected $groupBaseEntity;
 
     /**
+     * @var Serializer
+     */
+    protected $serializer;
+
+    /**
      * @param Filter $filter
      * @param CollectionFactory $collectionFactory
      * @param Copier $groupCopier
@@ -43,6 +49,7 @@ class Export extends MassAction
      * @param FileFactory $fileFactory
      * @param DirectoryList $directoryList
      * @param GroupBaseEntity $groupBaseEntity
+     * @param Serializer $serializer
      */
     public function __construct(
         Filter $filter,
@@ -52,11 +59,13 @@ class Export extends MassAction
         Context $context,
         FileFactory $fileFactory,
         GroupBaseEntity $groupBaseEntity,
-        DirectoryList $directoryList
+        DirectoryList $directoryList,
+        Serializer $serializer
     ) {
         $this->fileFactory     = $fileFactory;
         $this->directoryList   = $directoryList;
         $this->groupBaseEntity = $groupBaseEntity;
+        $this->serializer      = $serializer;
         parent::__construct($filter, $collectionFactory, $groupBuilder, $context);
     }
 
@@ -80,7 +89,7 @@ class Export extends MassAction
 
             return $this->fileFactory->create(
                 $fileName,
-                json_encode($groupsData, true),
+                $this->serializer->serialize($groupsData),
                 DirectoryList::VAR_DIR,
                 'application/json'
             );

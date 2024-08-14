@@ -17,29 +17,22 @@ use \Magento\Framework\Registry;
  */
 class BeforeSaveValues
 {
-    /**
-     * @var \MageWorx\OptionLink\Helper\Attribute
-     */
-    protected $helperAttribute;
-
-    /**
-     * @var \MageWorx\OptionLink\Model\OptionValue
-     */
-    protected $modelOptionValue;
+    protected HelperAttribute $helperAttribute;
+    protected ModelOptionValue $modelOptionValue;
 
     /**
      * Store manager
      *
      * @var \Magento\Store\Model\StoreManagerInterface
      */
-    protected $storeManager;
+    protected StoreManagerInterface $storeManager;
 
     /**
      * Magento register
      *
      * @var \Magento\Framework\Registry
      */
-    protected $registry;
+    protected Registry $registry;
 
     /**
      * BeforeSaveValues constructor.

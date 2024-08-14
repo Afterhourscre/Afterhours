@@ -7,7 +7,7 @@ namespace MageWorx\OptionFeatures\Model\CollectionUpdater\Product;
 
 use MageWorx\OptionBase\Model\Product\AbstractProductUpdater;
 use MageWorx\OptionFeatures\Helper\Data as Helper;
-use MageWorx\OptionFeatures\Model\ProductAttributes;
+use MageWorx\OptionBase\Model\ProductAttributes;
 
 class Absolutes extends AbstractProductUpdater
 {

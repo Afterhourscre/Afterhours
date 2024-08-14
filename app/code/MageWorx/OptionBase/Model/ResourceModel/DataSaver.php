@@ -8,31 +8,17 @@ namespace MageWorx\OptionBase\Model\ResourceModel;
 
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface as Connection;
+use MageWorx\OptionBase\Helper\Data;
 
 class DataSaver
 {
-    /**
-     * @var ResourceConnection
-     */
-    protected $resource;
+    protected ResourceConnection $resource;
+    protected Connection $connection;
+    protected Data $baseHelper;
 
-    /**
-     * @var Connection
-     */
-    protected $connection;
-
-    /**
-     * @var \MageWorx\OptionBase\Helper\Data
-     */
-    protected $baseHelper;
-
-    /**
-     * @param ResourceConnection $resource
-     * @param \MageWorx\OptionBase\Helper\Data $helperData
-     */
     public function __construct(
         ResourceConnection $resource,
-        \MageWorx\OptionBase\Helper\Data $helperData
+        Data $helperData
     ) {
         $this->resource = $resource;
         $this->connection = $resource->getConnection();

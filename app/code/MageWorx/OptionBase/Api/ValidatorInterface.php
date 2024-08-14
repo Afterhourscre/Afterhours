@@ -5,7 +5,7 @@
  */
 namespace MageWorx\OptionBase\Api;
 
-use Magento\Catalog\Api\Data\CustomOptionInterface;
+use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Model\Product\Option\Type\DefaultType;
 
@@ -18,14 +18,14 @@ interface ValidatorInterface
      * @param array $values
      * @return bool
      */
-    public function canValidateAddToCart($subject, $values);
+    public function canValidateAddToCart(DefaultType $subject, array $values): bool;
 
     /**
      * Validation for option on cart and checkout
      *
      * @param ProductInterface $product
-     * @param CustomOptionInterface $option
+     * @param ProductCustomOptionInterface $option
      * @return bool
      */
-    public function canValidateCartCheckout($product, $option);
+    public function canValidateCartCheckout(ProductInterface $product, ProductCustomOptionInterface $option): bool;
 }

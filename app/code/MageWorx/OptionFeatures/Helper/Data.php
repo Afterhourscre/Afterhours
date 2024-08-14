@@ -3,6 +3,7 @@
  * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+declare(strict_types=1);
 
 namespace MageWorx\OptionFeatures\Helper;
 
@@ -10,6 +11,7 @@ use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Filesystem;
+use Magento\Framework\Filesystem\Driver\File as FileDriver;
 use Magento\Framework\Image\Factory as ImageFactory;
 use MageWorx\OptionFeatures\Model\Image as ImageModel;
 use MageWorx\OptionFeatures\Model\Product\Option\Value\Media\Config;
@@ -19,12 +21,17 @@ use Magento\Framework\App\State;
 class Data extends AbstractHelper
 {
     // Option value attributes
-    const KEY_IS_DEFAULT  = 'is_default';
-    const KEY_COST        = 'cost';
-    const KEY_WEIGHT      = 'weight';
-    const KEY_WEIGHT_TYPE = 'weight_type';
-    const KEY_DESCRIPTION = 'description';
-    const KEY_IMAGE       = 'images_data';
+    const KEY_IS_DEFAULT                    = 'is_default';
+    const KEY_COST                          = 'cost';
+    const KEY_WEIGHT                        = 'weight';
+    const KEY_WEIGHT_TYPE                   = 'weight_type';
+    const KEY_DESCRIPTION                   = 'description';
+    const KEY_IMAGE                         = 'images_data';
+    const KEY_QTY_MULTIPLIER                = 'qty_multiplier';
+    const KEY_IS_HIDDEN                     = 'is_hidden';
+    const KEY_LOAD_LINKED_PRODUCT           = 'load_linked_product';
+    const KEY_HIDE_VALUE_PRICE              = 'hide_value_price';
+    const KEY_HIDE_PRODUCT_PAGE_VALUE_PRICE = 'hide_product_page_value_price';
 
     // Option attributes
     const KEY_DIV_CLASS            = 'div_class';
@@ -35,33 +42,46 @@ class Data extends AbstractHelper
     const KEY_SELECTION_LIMIT_TO   = 'selection_limit_to';
 
     // Product attributes
-    const KEY_ABSOLUTE_COST   = 'absolute_cost';
-    const KEY_ABSOLUTE_WEIGHT = 'absolute_weight';
-    const KEY_ABSOLUTE_PRICE  = 'absolute_price';
+    const KEY_ABSOLUTE_COST                 = 'absolute_cost';
+    const KEY_ABSOLUTE_WEIGHT               = 'absolute_weight';
+    const KEY_ABSOLUTE_PRICE                = 'absolute_price';
+    const KEY_HIDE_ADDITIONAL_PRODUCT_PRICE = 'hide_additional_product_price';
+    const KEY_SHAREABLE_LINK                = 'shareable_link';
 
     const KEY_OPTION_GALLERY_DISPLAY_MODE = 'mageworx_option_gallery';
     const KEY_OPTION_IMAGE_MODE           = 'mageworx_option_image_mode';
 
     const OPTION_IMAGE_MODE_DISABLED = 0;
     const OPTION_IMAGE_MODE_REPLACE  = 1;
+    const OPTION_IMAGE_MODE_APPEND   = 2;
+    const OPTION_IMAGE_MODE_OVERLAY  = 3;
 
     const OPTION_GALLERY_TYPE_DISABLED      = 0;
     const OPTION_GALLERY_TYPE_BESIDE_OPTION = 1;
     const OPTION_GALLERY_TYPE_ONCE_SELECTED = 2;
 
     // Value map
-    const IS_DEFAULT_TRUE       = '1';
-    const IS_DEFAULT_FALSE      = '0';
-    const QTY_INPUT_TRUE        = '1';
-    const QTY_INPUT_FALSE       = '0';
-    const ONE_TIME_TRUE         = '1';
-    const ONE_TIME_FALSE        = '0';
-    const ABSOLUTE_COST_TRUE    = '1';
-    const ABSOLUTE_COST_FALSE   = '0';
-    const ABSOLUTE_WEIGHT_TRUE  = '1';
-    const ABSOLUTE_WEIGHT_FALSE = '0';
-    const ABSOLUTE_PRICE_TRUE   = '1';
-    const ABSOLUTE_PRICE_FALSE  = '0';
+    const IS_DEFAULT_TRUE                           = '1';
+    const IS_DEFAULT_FALSE                          = '0';
+    const QTY_INPUT_TRUE                            = '1';
+    const QTY_INPUT_FALSE                           = '0';
+    const ONE_TIME_TRUE                             = '1';
+    const ONE_TIME_FALSE                            = '0';
+    const ABSOLUTE_COST_TRUE                        = '1';
+    const ABSOLUTE_COST_FALSE                       = '0';
+    const ABSOLUTE_WEIGHT_TRUE                      = '1';
+    const ABSOLUTE_WEIGHT_FALSE                     = '0';
+    const ABSOLUTE_PRICE_TRUE                       = '1';
+    const ABSOLUTE_PRICE_FALSE                      = '0';
+    const IS_LOAD_LINKED_PRODUCT_TRUE               = '1';
+    const IS_LOAD_LINKED_PRODUCT_FALSE              = '0';
+    const IS_HIDE_VALUE_PRICE_ON_PRODUCT_PAGE_TRUE  = '1';
+    const IS_HIDE_VALUE_PRICE_ON_PRODUCT_PAGE_FALSE = '0';
+
+
+    const SHAREABLE_LINK_USE_CONFIG = 'use_config';
+    const SHAREABLE_LINK_ENABLED    = 'enabled';
+    const SHAREABLE_LINK_DISABLED   = 'disabled';
 
     // Config
     const XML_PATH_USE_WEIGHT                    = 'mageworx_apo/optionfeatures/use_weight';
@@ -74,10 +94,21 @@ class Data extends AbstractHelper
     const XML_PATH_DEFAULT_QTY_LABEL             = 'mageworx_apo/optionfeatures/default_qty_label';
     const XML_PATH_USE_DESCRIPTION               = 'mageworx_apo/optionfeatures/use_description';
     const XML_PATH_USE_OPTION_DESCRIPTION        = 'mageworx_apo/optionfeatures/use_option_description';
-    const XML_PATH_USE_IS_DEFAULT                = 'mageworx_apo/optionfeatures/use_is_default';
     const XML_PATH_TOOLTIP_IMAGE                 = 'mageworx_apo/optionfeatures/tooltip_image';
     const XML_PATH_USE_WYSIWYG_FOR_DESCRIPTION   = 'mageworx_apo/optionfeatures/use_wysiwyg_for_description';
     const XML_PATH_USE_ABSOLUTE_PRICE_BY_DEFAULT = 'mageworx_apo/optionfeatures/use_absolute_price_by_default';
+    const XML_PATH_USE_LOAD_LINKED_PRODUCT       = 'mageworx_apo/optionfeatures/use_load_linked_product';
+
+    const XML_PATH_PRODUCT_PRICE_DISPLAY_MODE           = 'mageworx_apo/optionfeatures/product_price_display_mode';
+    const XML_PATH_USE_ADDITIONAL_PRODUCT_PRICE_FIELD   = 'mageworx_apo/optionfeatures/use_additional_product_price_field';
+    const XML_PATH_ADDITIONAL_PRODUCT_PRICE_FIELD_LABEL = 'mageworx_apo/optionfeatures/additional_product_price_field_label';
+    const XML_PATH_ADDITIONAL_PRODUCT_PRICE_FIELD_MODE  = 'mageworx_apo/optionfeatures/additional_product_price_field_mode';
+
+    //shareable link
+    const XML_PATH_ENABLE_SHAREABLE_LINK       = 'mageworx_apo/optionfeatures/enable_shareable_link';
+    const XML_PATH_SHAREABLE_LINK_TEXT         = 'mageworx_apo/optionfeatures/shareable_link_text';
+    const XML_PATH_SHAREABLE_LINK_SUCCESS_TEXT = 'mageworx_apo/optionfeatures/shareable_link_success_text';
+    const XML_PATH_SHAREABLE_LINK_HINT_TEXT    = 'mageworx_apo/optionfeatures/shareable_link_hint_text';
 
     //selection limit
     const XML_PATH_SELECTION_LIMIT_MESSAGE_FROM_TO = 'mageworx_apo/optionfeatures/selection_limit_message_from_to';
@@ -91,86 +122,86 @@ class Data extends AbstractHelper
     const IMAGE_MEDIA_ATTRIBUTE_BASE_IMAGE    = 'base_image';
     const IMAGE_MEDIA_ATTRIBUTE_TOOLTIP_IMAGE = 'tooltip_image';
     const IMAGE_MEDIA_ATTRIBUTE_SWATCH_IMAGE  = 'swatch_image';
+    const IMAGE_MEDIA_ATTRIBUTE_OVERLAY_IMAGE = 'overlay_image';
 
-    const XML_BASE_IMAGE_THUMBNAIL_SIZE    = 'mageworx_apo/optionfeatures/base_image_thumbnail_size';
-    const XML_TOOLTIP_IMAGE_THUMBNAIL_SIZE = 'mageworx_apo/optionfeatures/tooltip_image_thumbnail_size';
+    const XML_BASE_IMAGE_THUMBNAIL_HEIGHT_SIZE = 'mageworx_apo/optionfeatures/base_image_thumbnail_height_size';
+    const XML_BASE_IMAGE_THUMBNAIL_WIDTH_SIZE  = 'mageworx_apo/optionfeatures/base_image_thumbnail_width_size';
+    const XML_TOOLTIP_IMAGE_THUMBNAIL_SIZE     = 'mageworx_apo/optionfeatures/tooltip_image_thumbnail_size';
+
+    const XML_PATH_ENABLE_HIDE_VALUE_PRICE           = 'mageworx_apo/optionfeatures/enable_hide_value_price';
+    const XML_PATH_USE_HIDE_PRODUCT_PAGE_VALUE_PRICE = 'mageworx_apo/optionfeatures/hide_product_page_value_price';
+
+    const XML_PATH_ENABLE_CUST_AND_ADD_TO_CART_BUTTON = 'mageworx_apo/optionfeatures/enable_customize_and_add_to_cart_button';
 
     // Option value image attributes
-    protected $imageAttributes = [
+    protected array $imageAttributes = [
         self::IMAGE_MEDIA_ATTRIBUTE_BASE_IMAGE        => 'Base',
         self::IMAGE_MEDIA_ATTRIBUTE_TOOLTIP_IMAGE     => 'Tooltip',
-        ImageModel::COLUMN_REPLACE_MAIN_GALLERY_IMAGE => 'Replace Main Gallery Image'
+        ImageModel::COLUMN_REPLACE_MAIN_GALLERY_IMAGE => 'Replace Main Gallery Image',
+        ImageModel::COLUMN_OVERLAY_IMAGE              => 'Overlay'
     ];
 
-    /**
-     * @var Config
-     */
-    protected $mediaConfig;
-
-    /**
-     * @var ImageFactory
-     */
-    protected $imageFactory;
+    protected Config $mediaConfig;
+    protected ImageFactory $imageFactory;
 
     /**
      * Filesystem instance
      *
      * @var Filesystem
      */
-    protected $filesystem;
+    protected Filesystem $filesystem;
+    protected FileDriver $fileDriver;
 
     /**
      * Option swatch's height config path
      *
      * @var string
      */
-    protected $configPathSwatchHeight;
+    protected string $configPathSwatchHeight;
 
     /**
      * Option swatch's width config path
      *
      * @var string
      */
-    protected $configPathSwatchWidth;
+    protected string $configPathSwatchWidth;
 
     /**
      * Text swatch's max width config path
      *
      * @var string
      */
-    protected $configPathTextSwatchMaxWidth;
+    protected string $configPathTextSwatchMaxWidth;
 
     /**
      * Show swatch title config path
      *
      * @var string
      */
-    protected $configPathShowSwatchTitle;
+    protected string $configPathShowSwatchTitle;
 
     /**
      * Show swatch price config path
      *
      * @var string
      */
-    protected $configPathShowSwatchPrice;
+    protected string $configPathShowSwatchPrice;
 
-    /**
-     * @var State
-     */
-    protected $state;
+    protected State $state;
 
     /**
      * Additional product attributes for product_attributes table
      *
      * @var array
      */
-    protected $additionalProductAttributes;
+    protected array $additionalProductAttributes;
 
     /**
      * @param Context $context
      * @param Config $mediaConfig
      * @param ImageFactory $imageFactory
      * @param Filesystem $filesystem
+     * @param FileDriver $fileDriver
      * @param State $state
      * @param array $additionalProductAttributes
      * @param string $configPathSwatchHeight
@@ -184,6 +215,7 @@ class Data extends AbstractHelper
         Config $mediaConfig,
         ImageFactory $imageFactory,
         Filesystem $filesystem,
+        FileDriver $fileDriver,
         State $state,
         $additionalProductAttributes = [],
         $configPathSwatchHeight = '',
@@ -196,6 +228,7 @@ class Data extends AbstractHelper
         $this->mediaConfig                  = $mediaConfig;
         $this->imageFactory                 = $imageFactory;
         $this->filesystem                   = $filesystem;
+        $this->fileDriver                   = $fileDriver;
         $this->configPathSwatchHeight       = $configPathSwatchHeight;
         $this->configPathSwatchWidth        = $configPathSwatchWidth;
         $this->configPathTextSwatchMaxWidth = $configPathTextSwatchMaxWidth;
@@ -226,9 +259,9 @@ class Data extends AbstractHelper
      * @param null $storeId
      * @return string
      */
-    public function getTooltipImage($storeId = null)
+    public function getTooltipImage($storeId = null): string
     {
-        return $this->scopeConfig->getValue(
+        return (string)$this->scopeConfig->getValue(
             self::XML_PATH_TOOLTIP_IMAGE,
             ScopeInterface::SCOPE_STORE,
             $storeId
@@ -241,7 +274,7 @@ class Data extends AbstractHelper
      * @param int|null $storeId
      * @return bool
      */
-    public function isOptionDescriptionEnabled($storeId = null)
+    public function isOptionDescriptionEnabled($storeId = null): bool
     {
         return (bool)$this->scopeConfig->getValue(
             self::XML_PATH_USE_OPTION_DESCRIPTION,
@@ -276,7 +309,7 @@ class Data extends AbstractHelper
      * @param int|null $storeId
      * @return bool
      */
-    public function isOptionValueDescriptionEnabled($storeId = null)
+    public function isOptionValueDescriptionEnabled($storeId = null): bool
     {
         return (bool)$this->scopeConfig->getValue(
             self::XML_PATH_USE_DESCRIPTION,
@@ -293,16 +326,35 @@ class Data extends AbstractHelper
      *
      * @return string
      */
-    public function getThumbImageUrl($path, $type)
+    public function getThumbImageUrl($path, $type): string
     {
         if (!$path) {
+            return '';
+        }
+
+        // Checking image availability
+        $filePath      = $this->mediaConfig->getMediaPath($path);
+        $mediaDirectory    = $this->filesystem->getDirectoryRead(DirectoryList::MEDIA);
+        $fileAbsolutePath  = $mediaDirectory->getAbsolutePath($filePath);
+
+        try {
+            if (!$this->fileDriver->isExists($fileAbsolutePath)) {
+                return '';
+            }
+        } catch (\Exception $e) {
+            // Skip logging error if file not exists
             return '';
         }
 
         $keepFrame = false;
         switch ($type) {
             case self::IMAGE_MEDIA_ATTRIBUTE_BASE_IMAGE:
-                $thumbHeight = $thumbWidth = $this->getBaseImageThumbnailSize();
+                $thumbHeight = $this->getBaseImageThumbnailHeight();
+                if ($this->getBaseImageThumbnailWidth() != 0) {
+                    $thumbWidth = $this->getBaseImageThumbnailWidth();
+                } else {
+                    $thumbWidth = $thumbHeight;
+                }
                 break;
             case self::IMAGE_MEDIA_ATTRIBUTE_TOOLTIP_IMAGE:
                 $thumbHeight = $thumbWidth = $this->getTooltipImageThumbnailSize();
@@ -321,39 +373,51 @@ class Data extends AbstractHelper
             return $this->mediaConfig->getMediaUrl($path);
         }
 
-        $filePath      = $this->mediaConfig->getMediaPath($path);
         $pathArray     = explode('/', $filePath);
         $fileName      = array_pop($pathArray);
         $directoryPath = implode('/', $pathArray);
         $thumbPath     = $directoryPath . '/' . $thumbHeight . 'x' . $thumbWidth . '/';
 
-        $mediaDirectory    = $this->filesystem->getDirectoryRead(DirectoryList::MEDIA);
         $thumbAbsolutePath = $mediaDirectory->getAbsolutePath($thumbPath);
-        $fileAbsolutePath  = $mediaDirectory->getAbsolutePath($filePath);
 
         $thumbFilePath = $thumbAbsolutePath . $fileName;
-        if (!file_exists($thumbFilePath)) {
-            $this->createThumbFile(
-                $fileAbsolutePath,
-                $thumbAbsolutePath,
-                $fileName,
-                $thumbHeight,
-                $thumbWidth,
-                $keepFrame
-            );
+        try {
+            if (!$this->fileDriver->isExists($thumbFilePath)) {
+                $this->createThumbFile(
+                    $fileAbsolutePath,
+                    $thumbAbsolutePath,
+                    $fileName,
+                    $thumbHeight,
+                    $thumbWidth,
+                    $keepFrame,
+                    $type
+                );
+            }
+        } catch (\Exception $e) {
+            $this->_logger->error($e);
         }
 
-        return $this->mediaConfig->getUrl($thumbPath . $fileName);
+        return (string)$this->mediaConfig->getUrl($thumbPath . $fileName);
     }
 
     /**
-     * Get swatch base image thumbnail size
+     * Get swatch base image thumbnail height size
      *
      * @return int
      */
-    public function getBaseImageThumbnailSize()
+    public function getBaseImageThumbnailHeight()
     {
-        return intval($this->scopeConfig->getValue(self::XML_BASE_IMAGE_THUMBNAIL_SIZE));
+        return intval($this->scopeConfig->getValue(self::XML_BASE_IMAGE_THUMBNAIL_HEIGHT_SIZE));
+    }
+
+    /**
+     * Get swatch base image thumbnail weight size
+     *
+     * @return int
+     */
+    public function getBaseImageThumbnailWidth()
+    {
+        return intval($this->scopeConfig->getValue(self::XML_BASE_IMAGE_THUMBNAIL_WIDTH_SIZE));
     }
 
     /**
@@ -401,7 +465,7 @@ class Data extends AbstractHelper
      *
      * @return bool
      */
-    public function isShowSwatchTitle()
+    public function isShowSwatchTitle(): bool
     {
         return boolval($this->scopeConfig->getValue($this->configPathShowSwatchTitle));
     }
@@ -411,7 +475,7 @@ class Data extends AbstractHelper
      *
      * @return bool
      */
-    public function isShowSwatchPrice()
+    public function isShowSwatchPrice(): bool
     {
         return boolval($this->scopeConfig->getValue($this->configPathShowSwatchPrice));
     }
@@ -425,11 +489,19 @@ class Data extends AbstractHelper
      * @param int $thumbHeight
      * @param int $thumbWidth
      * @param bool $keepFrame
+     * @param string $type
      *
      * @return void
      */
-    public function createThumbFile($origFilePath, $thumbPath, $newFileName, $thumbHeight, $thumbWidth, $keepFrame)
-    {
+    public function createThumbFile(
+        $origFilePath,
+        $thumbPath,
+        $newFileName,
+        $thumbHeight,
+        $thumbWidth,
+        $keepFrame,
+        $type
+    ) {
         try {
             $image      = $this->imageFactory->create($origFilePath);
             $origHeight = $image->getOriginalHeight();
@@ -448,20 +520,25 @@ class Data extends AbstractHelper
 
             $width  = null;
             $height = null;
-
-            if ($origHeight > $origWidth) {
+            if ($type == self::IMAGE_MEDIA_ATTRIBUTE_BASE_IMAGE) {
+                $width  = $thumbWidth;
                 $height = $thumbHeight;
-                if (!$keepFrame) {
-                    $width = $ratio * $height;
-                }
+                $image->keepAspectRatio(false);
             } else {
-                $width = $thumbWidth;
-                if (!$keepFrame) {
-                    $height = $ratio * $width;
+                if ($origHeight > $origWidth) {
+                    $height = $thumbHeight;
+                    if (!$keepFrame) {
+                        $width = $ratio * $height;
+                    }
+                } else {
+                    $width = $thumbWidth;
+                    if (!$keepFrame) {
+                        $height = $ratio * $width;
+                    }
                 }
             }
 
-            $image->resize($width, $height);
+            $image->resize((int)$width, (int)$height);
 
             $image->constrainOnly(true);
             $image->keepAspectRatio(true);
@@ -482,7 +559,7 @@ class Data extends AbstractHelper
      * @param int $width
      * @return string
      */
-    public function getImageUrl($path, $height = 300, $width = 300)
+    public function getImageUrl($path, $height = 300, $width = 300): string
     {
         if (!$path) {
             return '';
@@ -499,11 +576,143 @@ class Data extends AbstractHelper
         $fileAbsolutePath = $mediaDirectory->getAbsolutePath($filePath);
 
         $imgFilePath = $imgAbsolutePath . $fileName;
-        if (!file_exists($imgFilePath)) {
-            $this->createImageFile($fileAbsolutePath, $imgAbsolutePath, $fileName, $width, $height);
+        try {
+            if (!$this->fileDriver->isExists($imgFilePath)) {
+                $this->createImageFile($fileAbsolutePath, $imgAbsolutePath, $fileName, $width, $height);
+            }
+        } catch (\Exception $e) {
+            $this->_logger->error($e);
         }
 
-        return $this->mediaConfig->getUrl($imagePath . $fileName);
+        return (string)$this->mediaConfig->getUrl($imagePath . $fileName);
+    }
+
+    /**
+     * Get image url for specified type, width or height
+     *
+     * @param string $path
+     * @param int $height
+     * @param int $width
+     * @return string
+     */
+    public function getImageAbsolutePath($path, $height = 700, $width = 700): string
+    {
+        if (!$path) {
+            return '';
+        }
+
+        $parts = explode('media/catalog', $path);
+        if (count($parts) === 2) {
+            $path             = '/catalog' . $parts[1];
+            $mediaDirectory   = $this->filesystem->getDirectoryRead(DirectoryList::MEDIA);
+            $fileAbsolutePath = $mediaDirectory->getAbsolutePath($path);
+
+            return (string)$fileAbsolutePath;
+        }
+
+        $parts = explode($this->mediaConfig->getBaseMediaPath(), $path);
+        if (count($parts) === 2) {
+            $path = $parts[1];
+        }
+
+        $filePath      = $this->mediaConfig->getMediaPath($path);
+        $pathArray     = explode('/', $filePath);
+        $fileName      = array_pop($pathArray);
+        $directoryPath = implode('/', $pathArray);
+        $imagePath     = $directoryPath . '/' . $width . 'x' . $height . '/';
+
+        $mediaDirectory   = $this->filesystem->getDirectoryRead(DirectoryList::MEDIA);
+        $imgAbsolutePath  = $mediaDirectory->getAbsolutePath($imagePath);
+        $fileAbsolutePath = $mediaDirectory->getAbsolutePath($filePath);
+
+        $imgFilePath = $imgAbsolutePath . $fileName;
+        try {
+            if (!$this->fileDriver->isExists($imgFilePath)) {
+                $this->createImageFile($fileAbsolutePath, $imgAbsolutePath, $fileName, $width, $height);
+            }
+        } catch (\Exception $e) {
+            $this->_logger->error($e);
+        }
+
+        return (string)$imgFilePath;
+    }
+
+    /**
+     * Get overlay directory path
+     *
+     * @return string
+     */
+    public function getOverlayDirectoryPath()
+    {
+        return 'mageworx/optionfeatures/product/overlay';
+    }
+
+    /**
+     * Overlay images on base image
+     *
+     * @param string $baseImageUrl
+     * @param array $overlayImages
+     * @param int $imageWidth
+     * @param int $imageHeight
+     * @return string
+     */
+    public function getOverlayImageUrl($baseImageUrl, $overlayImages, $imageWidth, $imageHeight): string
+    {
+        if (!$overlayImages) {
+            return (string)$baseImageUrl ?? '';
+        }
+
+        $optionTypeImageIds    = [];
+        $baseImageAbsolutePath = $this->getImageAbsolutePath($baseImageUrl);
+
+        $hash               = '';
+        $hashDimensionsPart = ',' . $imageWidth . 'x' . $imageHeight;
+
+        foreach ($overlayImages as $overlayImage) {
+            $optionTypeImageIds[] = $overlayImage->getData('option_type_image_id');
+
+            $hash            = hash('sha256', implode(',', $optionTypeImageIds) . $hashDimensionsPart);
+            $mediaDirectory  = $this->filesystem->getDirectoryRead(DirectoryList::MEDIA);
+            $imgAbsolutePath = $mediaDirectory->getAbsolutePath(
+                $this->getOverlayDirectoryPath() . '/' . $hash . '.png'
+            );
+
+            try {
+                if (!$this->fileDriver->isExists($imgAbsolutePath)) {
+                    $overlayImageAbsolutePath = $this->getImageAbsolutePath(
+                        $overlayImage->getValue(),
+                        $imageWidth,
+                        $imageHeight
+                    );
+
+
+                    $image = $this->imageFactory->create($baseImageAbsolutePath);
+
+                    $image->setWatermarkHeight($imageHeight);
+                    $image->setWatermarkWidth($imageWidth);
+                    $image->setWatermarkPosition('stretch');
+                    $image->setWatermarkImageOpacity(100);
+                    $image->watermark($overlayImageAbsolutePath, 0, 0, 100);
+
+                    $image->keepAspectRatio(true);
+                    $image->keepFrame(true);
+                    $image->keepTransparency(true);
+                    $image->constrainOnly(false);
+                    $image->quality(100);
+                    $image->resize($imageWidth, $imageHeight);
+                    $image->constrainOnly(true);
+                    $image->keepAspectRatio(true);
+                    $image->keepFrame(false);
+
+                    $image->save($imgAbsolutePath);
+                }
+            } catch (\Exception $e) {
+                $this->_logger->error($e);
+            }
+            $baseImageAbsolutePath = $imgAbsolutePath;
+        }
+
+        return (string)$this->mediaConfig->getUrl($this->getOverlayDirectoryPath() . '/' . $hash . '.png');
     }
 
     /**
@@ -559,12 +768,72 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Check if 'use weight' are enable
+     * Check if 'Customize and Add to cart' is enabled
      *
      * @param int|null $storeId
      * @return bool
      */
-    public function isWeightEnabled($storeId = null)
+    public function isEnabledCustAndAddToCartButton(?int $storeId = null): bool
+    {
+        return $this->scopeConfig->isSetFlag(
+            self::XML_PATH_ENABLE_CUST_AND_ADD_TO_CART_BUTTON,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Check if 'Hide Value Price' is enabled
+     *
+     * @param int|null $storeId
+     * @return bool
+     */
+    public function isEnabledHideValuePrice(?int $storeId = null): bool
+    {
+        return $this->scopeConfig->isSetFlag(
+            self::XML_PATH_ENABLE_HIDE_VALUE_PRICE,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Check if 'Hide Value Price On Product Page' is enabled
+     *
+     * @param int|null $storeId
+     * @return bool
+     */
+    public function isEnabledHideProductPageValuePrice($storeId = null): bool
+    {
+        return $this->scopeConfig->isSetFlag(
+            self::XML_PATH_USE_HIDE_PRODUCT_PAGE_VALUE_PRICE,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Check if 'use Load Linked Product' is enabled
+     *
+     * @param int|null $storeId
+     * @return bool
+     */
+    public function isLoadLinkedProductEnabled($storeId = null): bool
+    {
+        return $this->scopeConfig->isSetFlag(
+            self::XML_PATH_USE_LOAD_LINKED_PRODUCT,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Check if 'use weight' are enabled
+     *
+     * @param int|null $storeId
+     * @return bool
+     */
+    public function isWeightEnabled($storeId = null): bool
     {
         return $this->scopeConfig->isSetFlag(
             self::XML_PATH_USE_WEIGHT,
@@ -574,13 +843,13 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Check if 'use absolute weight' are enable
+     * Check if 'use absolute weight' are enabled
      * Depends on the 'use weight' flag
      *
      * @param int|null $storeId
      * @return bool
      */
-    public function isAbsoluteWeightEnabled($storeId = null)
+    public function isAbsoluteWeightEnabled($storeId = null): bool
     {
         return $this->scopeConfig->isSetFlag(
                 self::XML_PATH_USE_ABSOLUTE_WEIGHT,
@@ -590,12 +859,12 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Check if 'use cost' are enable
+     * Check if 'use cost' are enabled
      *
      * @param int|null $storeId
      * @return bool
      */
-    public function isCostEnabled($storeId = null)
+    public function isCostEnabled($storeId = null): bool
     {
         return $this->scopeConfig->isSetFlag(
             self::XML_PATH_USE_COST,
@@ -605,13 +874,13 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Check if 'use absolute cost' are enable
+     * Check if 'use absolute cost' are enabled
      * Depends on the 'use cost' flag
      *
      * @param int|null $storeId
      * @return bool
      */
-    public function isAbsoluteCostEnabled($storeId = null)
+    public function isAbsoluteCostEnabled($storeId = null): bool
     {
         return $this->scopeConfig->isSetFlag(
                 self::XML_PATH_USE_ABSOLUTE_COST,
@@ -621,12 +890,12 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Check if 'use absolute price' are enable
+     * Check if 'use absolute price' are enabled
      *
      * @param int|null $storeId
      * @return bool
      */
-    public function isAbsolutePriceEnabled($storeId = null)
+    public function isAbsolutePriceEnabled($storeId = null): bool
     {
         return $this->scopeConfig->isSetFlag(
             self::XML_PATH_USE_ABSOLUTE_PRICE,
@@ -636,12 +905,12 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Check if 'one time' are enable
+     * Check if 'one time' are enabled
      *
      * @param int|null $storeId
      * @return bool
      */
-    public function isOneTimeEnabled($storeId = null)
+    public function isOneTimeEnabled($storeId = null): bool
     {
         return $this->scopeConfig->isSetFlag(
             self::XML_PATH_USE_ONE_TIME,
@@ -656,7 +925,7 @@ class Data extends AbstractHelper
      * @param int|null $storeId
      * @return bool
      */
-    public function isQtyInputEnabled($storeId = null)
+    public function isQtyInputEnabled($storeId = null): bool
     {
         return $this->scopeConfig->isSetFlag(
             self::XML_PATH_USE_QTY_INPUT,
@@ -671,9 +940,9 @@ class Data extends AbstractHelper
      * @param int|null $storeId
      * @return string
      */
-    public function getDefaultQtyLabel($storeId = null)
+    public function getDefaultQtyLabel($storeId = null): string
     {
-        return $this->scopeConfig->getValue(
+        return (string)$this->scopeConfig->getValue(
             self::XML_PATH_DEFAULT_QTY_LABEL,
             ScopeInterface::SCOPE_STORE,
             $storeId
@@ -686,25 +955,10 @@ class Data extends AbstractHelper
      * @param int|null $storeId
      * @return bool
      */
-    public function isValueDescriptionEnabled($storeId = null)
+    public function isValueDescriptionEnabled($storeId = null): bool
     {
         return $this->scopeConfig->isSetFlag(
             self::XML_PATH_USE_DESCRIPTION,
-            ScopeInterface::SCOPE_STORE,
-            $storeId
-        );
-    }
-
-    /**
-     * Check if 'use is default' is enabled
-     *
-     * @param int|null $storeId
-     * @return bool
-     */
-    public function isDefaultEnabled($storeId = null)
-    {
-        return $this->scopeConfig->isSetFlag(
-            self::XML_PATH_USE_IS_DEFAULT,
             ScopeInterface::SCOPE_STORE,
             $storeId
         );
@@ -715,7 +969,7 @@ class Data extends AbstractHelper
      *
      * @return bool
      */
-    public function isEnabledWysiwygForDescription()
+    public function isEnabledWysiwygForDescription(): bool
     {
         return $this->scopeConfig->isSetFlag(
             self::XML_PATH_USE_WYSIWYG_FOR_DESCRIPTION
@@ -728,7 +982,7 @@ class Data extends AbstractHelper
      * @param int|null $storeId
      * @return bool
      */
-    public function isAbsolutePriceEnabledByDefault($storeId = null)
+    public function isAbsolutePriceEnabledByDefault($storeId = null): bool
     {
         return $this->scopeConfig->isSetFlag(
             self::XML_PATH_USE_ABSOLUTE_PRICE_BY_DEFAULT,
@@ -743,9 +997,9 @@ class Data extends AbstractHelper
      * @param int|null $storeId
      * @return string
      */
-    protected function getSelectionLimitFromToMessage($storeId = null)
+    protected function getSelectionLimitFromToMessage($storeId = null): string
     {
-        return $this->scopeConfig->getValue(
+        return (string)$this->scopeConfig->getValue(
             self::XML_PATH_SELECTION_LIMIT_MESSAGE_FROM_TO,
             ScopeInterface::SCOPE_STORE,
             $storeId
@@ -758,9 +1012,9 @@ class Data extends AbstractHelper
      * @param int|null $storeId
      * @return string
      */
-    protected function getSelectionLimitFromMessage($storeId = null)
+    protected function getSelectionLimitFromMessage($storeId = null): string
     {
-        return $this->scopeConfig->getValue(
+        return (string)$this->scopeConfig->getValue(
             self::XML_PATH_SELECTION_LIMIT_MESSAGE_FROM,
             ScopeInterface::SCOPE_STORE,
             $storeId
@@ -773,9 +1027,9 @@ class Data extends AbstractHelper
      * @param int|null $storeId
      * @return string
      */
-    protected function getSelectionLimitToMessage($storeId = null)
+    protected function getSelectionLimitToMessage($storeId = null): string
     {
-        return $this->scopeConfig->getValue(
+        return (string)$this->scopeConfig->getValue(
             self::XML_PATH_SELECTION_LIMIT_MESSAGE_TO,
             ScopeInterface::SCOPE_STORE,
             $storeId
@@ -794,7 +1048,8 @@ class Data extends AbstractHelper
         if ($selectionLimitFrom > 0 && $selectionLimitTo > 0) {
             $template = str_ireplace('{selection_limit_from}', '%1', $this->getSelectionLimitFromToMessage());
             $template = str_ireplace('{selection_limit_to}', '%2', $template);
-            return __(
+
+            return (string)__(
                 $template,
                 $selectionLimitFrom,
                 $selectionLimitTo
@@ -803,7 +1058,8 @@ class Data extends AbstractHelper
 
         if ($selectionLimitFrom > 0 && !$selectionLimitTo) {
             $template = str_ireplace('{selection_limit_from}', '%1', $this->getSelectionLimitFromMessage());
-            return __(
+
+            return (string)__(
                 $template,
                 $selectionLimitFrom
             );
@@ -811,12 +1067,201 @@ class Data extends AbstractHelper
 
         if ($selectionLimitTo > 0 && !$selectionLimitFrom) {
             $template = str_ireplace('{selection_limit_to}', '%1', $this->getSelectionLimitToMessage());
-            return __(
+
+            return (string)__(
                 $template,
                 $selectionLimitTo
             );
         }
 
         return '';
+    }
+
+    /**
+     * Get selection limit tamplate data
+     *
+     * @return array
+     */
+    public function getSelectionLimitTemplateData(): array
+    {
+        return  [
+            'selection_limit_from_message' => $this->getSelectionLimitFromMessage(),
+            'selection_limit_to_message' => $this->getSelectionLimitToMessage(),
+            'selection_limit_from_to_message' => $this->getSelectionLimitFromToMessage()
+        ];
+    }
+
+    /**
+     * Get product price display mode
+     *
+     * @param null|int $storeId
+     * @return string
+     * @see \MageWorx\OptionFeatures\Model\Config\Source\ProductPriceDisplayMode for possible values
+     *
+     */
+    public function getProductPriceDisplayMode($storeId = null): string
+    {
+        return (string)$this->scopeConfig->getValue(
+            self::XML_PATH_PRODUCT_PRICE_DISPLAY_MODE,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Is enabled additional product price field
+     *
+     * @param null|int $storeId
+     * @return bool
+     */
+    public function isEnabledAdditionalProductPriceField($storeId = null): bool
+    {
+        return $this->scopeConfig->isSetFlag(
+            self::XML_PATH_USE_ADDITIONAL_PRODUCT_PRICE_FIELD,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Get additional product price display field label
+     *
+     * @param null|int $storeId
+     * @return string
+     */
+    public function getAdditionalProductPriceFieldLabel($storeId = null): string
+    {
+        return (string)$this->scopeConfig->getValue(
+            self::XML_PATH_ADDITIONAL_PRODUCT_PRICE_FIELD_LABEL,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Get additional product price display field mode
+     *
+     * @param null|int $storeId
+     * @return string
+     * @see \MageWorx\OptionFeatures\Model\Config\Source\AdditionalProductPriceDisplayMode for possible values
+     *
+     */
+    public function getAdditionalProductPriceFieldMode($storeId = null): string
+    {
+        return (string)$this->scopeConfig->getValue(
+            self::XML_PATH_ADDITIONAL_PRODUCT_PRICE_FIELD_MODE,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Is enabled shareable link
+     *
+     * @param null|int $storeId
+     * @return bool
+     */
+    public function isEnabledShareableLink($storeId = null): bool
+    {
+        return $this->scopeConfig->isSetFlag(
+            self::XML_PATH_ENABLE_SHAREABLE_LINK,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Get shareable link text
+     *
+     * @param null|int $storeId
+     * @return string
+     */
+    public function getShareableLinkText($storeId = null): string
+    {
+        return (string)$this->scopeConfig->getValue(
+            self::XML_PATH_SHAREABLE_LINK_TEXT,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Get shareable link success text
+     *
+     * @param null|int $storeId
+     * @return string
+     */
+    public function getShareableLinkSuccessText($storeId = null): string
+    {
+        return (string)$this->scopeConfig->getValue(
+            self::XML_PATH_SHAREABLE_LINK_SUCCESS_TEXT,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Get shareable link hint text
+     *
+     * @param null|int $storeId
+     * @return string
+     */
+    public function getShareableLinkHintText($storeId = null): string
+    {
+        return (string)$this->scopeConfig->getValue(
+            self::XML_PATH_SHAREABLE_LINK_HINT_TEXT,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Get option's qty from data
+     *
+     * @param array $data
+     * @param int $optionId
+     * @param int $optionTypeId
+     * @return int
+     */
+    public function getOptionQty($data, $optionId, $optionTypeId)
+    {
+        if (isset($data['options_qty'][$optionId][$optionTypeId])) {
+            $optionQty = intval($data['options_qty'][$optionId][$optionTypeId]);
+        } elseif (isset($data['options_qty'][$optionId])) {
+            $optionQty = intval($data['options_qty'][$optionId]);
+        } else {
+            $optionQty = 1;
+        }
+
+        return $optionQty;
+    }
+
+    /**
+     * Get selected values of specific options from Quote Item
+     *
+     * @param \Magento\Catalog\Model\Product\Option[] $optionsToBeProcessed
+     * @param \Magento\Quote\Model\Quote\Item $quoteItem
+     * @return array
+     */
+    public function getSelectedValuesFromQuoteItem($optionsToBeProcessed, $quoteItem)
+    {
+        $selectedValues = [];
+        $sortedOptions  = $this->sortOptions($optionsToBeProcessed);
+        foreach ($sortedOptions as $sortedOption) {
+            /** @var \Magento\Quote\Model\Quote\Item\Option $quoteItemOption */
+            $quoteItemOption = $quoteItem->getOptionByCode('option_' . $sortedOption->getId());
+            if (!$quoteItemOption) {
+                continue;
+            }
+            $quoteOptionValue = $quoteItemOption->getValue();
+            if (!$quoteOptionValue) {
+                continue;
+            }
+
+            $values         = explode(',', $quoteOptionValue);
+            $selectedValues = array_merge($selectedValues, $values);
+        }
+
+        return $selectedValues;
     }
 }

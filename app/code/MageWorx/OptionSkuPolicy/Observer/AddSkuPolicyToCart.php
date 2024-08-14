@@ -13,20 +13,9 @@ use MageWorx\OptionSkuPolicy\Model\SkuPolicy;
 
 class AddSkuPolicyToCart implements ObserverInterface
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
+    protected Helper $helper;
+    protected SkuPolicy $skuPolicyApplier;
 
-    /**
-     * @var SkuPolicy
-     */
-    protected $skuPolicyApplier;
-
-    /**
-     * @param Helper $helper
-     * @param SkuPolicy $skuPolicyApplier
-     */
     public function __construct(
         Helper $helper,
         SkuPolicy $skuPolicyApplier

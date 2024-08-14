@@ -16,11 +16,8 @@ class Config implements ConfigInterface
      *
      * @var StoreManagerInterface
      */
-    protected $storeManager;
+    protected StoreManagerInterface $storeManager;
 
-    /**
-     * @param StoreManagerInterface $storeManager
-     */
     public function __construct(StoreManagerInterface $storeManager)
     {
         $this->storeManager = $storeManager;
@@ -30,7 +27,7 @@ class Config implements ConfigInterface
      * @param string $file
      * @return string
      */
-    public function getMediaPath($file)
+    public function getMediaPath($file): string
     {
         return $this->getBaseMediaPath() . '/' . $this->prepareFile($file);
     }
@@ -50,16 +47,16 @@ class Config implements ConfigInterface
      * @param string $file
      * @return string
      */
-    protected function prepareFile($file)
+    protected function prepareFile($file): string
     {
-        return ltrim(str_replace('\\', '/', $file), '/');
+        return ltrim(str_replace('\\', '/', (string)$file), '/');
     }
 
     /**
      * @param string $file
      * @return string
      */
-    public function getMediaUrl($file)
+    public function getMediaUrl($file): string
     {
         return $this->getBaseMediaUrl() . '/' . $this->prepareFile($file);
     }
@@ -69,7 +66,7 @@ class Config implements ConfigInterface
      */
     public function getBaseMediaUrl()
     {
-        return $this->storeManager->getStore()->getBaseUrl(
+        return (string)$this->storeManager->getStore()->getBaseUrl(
             UrlInterface::URL_TYPE_MEDIA
         ) . $this->getBaseMediaPath();
     }
@@ -78,7 +75,7 @@ class Config implements ConfigInterface
      * @param string $file
      * @return string
      */
-    public function getUrl($file)
+    public function getUrl($file): string
     {
         return rtrim($this->getBaseUrl(), '/') . '/' . ltrim($this->prepareFile($file), '/');
     }
@@ -88,7 +85,7 @@ class Config implements ConfigInterface
      */
     public function getBaseUrl()
     {
-        return $this->storeManager->getStore()->getBaseUrl(
+        return (string)$this->storeManager->getStore()->getBaseUrl(
             UrlInterface::URL_TYPE_MEDIA
         );
     }

@@ -14,10 +14,7 @@ use MageWorx\OptionBase\Helper\Data as OptionBaseHelper;
  */
 class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection
 {
-    /**
-     * @var OptionBaseHelper
-     */
-    protected $helper;
+    protected OptionBaseHelper $helper;
 
     /**
      * Map field to alias

@@ -71,7 +71,8 @@ class OptionValueFactoryResolver
         array $data = array()
     ) {
         if ($this->request->getParam('mageworx_optiontemplates_group')
-            || $this->request->getActionName() === 'importTemplateMageOne'
+            || $this->request->getActionName() === 'importMageOne'
+            || $this->request->getActionName() === 'importTemplateMageTwo'
         ) {
             return $this->objectManager->create($this->groupInstanceName, $data);
         }

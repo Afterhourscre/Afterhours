@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--
 /**
- * Copyright © 2016 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
 -->
@@ -56,16 +56,6 @@
             </argument>
         </arguments>
     </type>
-
-    <type name="MageWorx\OptionBase\Helper\Data">
-        <arguments>
-            <argument name="linkedAttributes" xsi:type="array">
-                <item name="qty" xsi:type="string">qty</item>
-            </argument>
-        </arguments>
-    </type>
-
-    <!-- Plugins -->
     <type name="MageWorx\OptionBase\Model\Product\Option\Value\AdditionalHtmlData">
         <arguments>
             <argument name="data" xsi:type="array">
@@ -73,13 +63,47 @@
             </argument>
         </arguments>
     </type>
-
-    <!-- Installation -->
-    <type name="MageWorx\OptionBase\Model\Installer">
+    <type name="MageWorx\OptionBase\Model\Product\Option\AdditionalHtmlData">
         <arguments>
-            <argument name="installSchema" xsi:type="array">
-                <item name="optioninventory_install_schema_data" xsi:type="object">MageWorx\OptionInventory\Model\InstallSchema</item>
+            <argument name="data" xsi:type="array">
+                <item name="manage_stock" xsi:type="object">MageWorx\OptionInventory\Model\Product\Option\AdditionalHtml</item>
             </argument>
         </arguments>
+    </type>
+    <type name="MageWorx\OptionGraphQl\Model\Resolver\AdvancedProductOptionsSettings">
+        <arguments>
+            <argument name="data" xsi:type="array">
+                <item name="inventory_helper" xsi:type="object">MageWorx\OptionInventory\Helper\Data</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- validation -->
+    <type name="MageWorx\OptionBase\Model\ValidationResolver">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="option_inventory" xsi:type="object">MageWorx\OptionInventory\Model\Validator</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!--Plugins-->
+    <type name="MageWorx\OptionBase\Helper\Data">
+        <plugin name="mageworx_optioninventory_transfer_setting"
+                type="MageWorx\OptionInventory\Plugin\TransferSetting"
+                sortOrder="10"
+        />
+        <arguments>
+            <argument name="linkedAttributes" xsi:type="array">
+                <item name="qty" xsi:type="string">qty</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Quote\Model\QuoteManagement">
+        <plugin name="mageworx-optionInventory-update-value-qty"
+                type="MageWorx\OptionInventory\Plugin\UpdateLinkedValueQtyAfterPlaceOrder"
+                sortOrder="11"
+                disabled="false"
+        />
     </type>
 </config>

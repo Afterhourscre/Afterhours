@@ -1,50 +1,57 @@
 <?php
 /**
- * Copyright © 2017 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
 namespace MageWorx\OptionBase\Model\Entity;
 
-use \Magento\Framework\Model\AbstractModel;
-use \Magento\Framework\App\Config\ScopeConfigInterface;
-use \MageWorx\OptionBase\Model\Product\Option\Attributes as OptionAttributes;
-use \MageWorx\OptionBase\Model\Product\Option\Value\Attributes as OptionValueAttributes;
-use \Magento\Catalog\Model\Product\Option;
-use \Magento\Catalog\Model\Product\Option\Value;
-use \MageWorx\OptionBase\Helper\Data as OptionBaseHelper;
+use Magento\Framework\Model\AbstractModel;
+use Magento\Framework\Model\Context;
+use Magento\Framework\Registry;
+use Magento\Framework\Model\ResourceModel\AbstractResource;
+use Magento\Framework\Data\Collection\AbstractDb;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use MageWorx\OptionBase\Model\Product\Option\Attributes as OptionAttributes;
+use MageWorx\OptionBase\Model\Product\Option\Value\Attributes as OptionValueAttributes;
+use Magento\Catalog\Model\Product\Option;
+use Magento\Catalog\Model\Product\Option\Value;
+use MageWorx\OptionBase\Helper\Data as OptionBaseHelper;
 
 class Base extends AbstractModel
 {
-    /**
-     * @var OptionBaseHelper
-     */
-    protected $helper;
+    protected OptionBaseHelper $helper;
+    protected ScopeConfigInterface $scopeConfig;
+    protected OptionAttributes $optionAttributes;
+    protected OptionValueAttributes $optionValueAttributes;
 
     /**
-     * @var ScopeConfigInterface
+     * @param ScopeConfigInterface $scopeConfig
+     * @param OptionAttributes $optionAttributes
+     * @param OptionValueAttributes $optionValueAttributes
+     * @param OptionBaseHelper $helper
+     * @param Context $context
+     * @param Registry $registry
+     * @param AbstractResource|null $resource
+     * @param AbstractDb|null $resourceCollection
+     * @param array $data
      */
-    protected $scopeConfig;
-
-    /**
-     * @var OptionAttributes
-     */
-    protected $optionAttributes;
-
-    /**
-     * @var OptionValueAttributes
-     */
-    protected $optionValueAttributes;
-
     public function __construct(
         ScopeConfigInterface $scopeConfig,
         OptionAttributes $optionAttributes,
         OptionValueAttributes $optionValueAttributes,
-        OptionBaseHelper $helper
+        OptionBaseHelper $helper,
+        Context $context,
+        Registry $registry,
+        AbstractResource $resource = null,
+        AbstractDb $resourceCollection = null,
+        array $data = []
     ) {
-        $this->scopeConfig = $scopeConfig;
-        $this->optionAttributes = $optionAttributes;
+        $this->scopeConfig           = $scopeConfig;
+        $this->optionAttributes      = $optionAttributes;
         $this->optionValueAttributes = $optionValueAttributes;
-        $this->helper = $helper;
+        $this->helper                = $helper;
+        parent::__construct($context, $registry, $resource, $resourceCollection, $data);
     }
 
     public function getBaseHelper()
@@ -67,19 +74,19 @@ class Base extends AbstractModel
         }
 
         $showPrice = true;
-        $results = [];
+        $results   = [];
 
         foreach ($options as $option) {
             /* @var $option Option */
-            $result = [];
-            $result['id'] = $option->getOptionId();
-            $result['item_count'] = $object->getItemCount();
-            $result['option_id'] = $option->getOptionId();
-            $result['title'] = $option->getTitle();
-            $result['type'] = $option->getType();
-            $result['is_require'] = $option->getIsRequire();
-            $result['sort_order'] = $option->getSortOrder();
-            $result['can_edit_price'] = $object->getCanEditPrice();
+            $result                    = [];
+            $result['id']              = $option->getOptionId();
+            $result['item_count']      = $object->getItemCount();
+            $result['option_id']       = $option->getOptionId();
+            $result['title']           = $option->getTitle();
+            $result['type']            = $option->getType();
+            $result['is_require']      = $option->getIsRequire();
+            $result['sort_order']      = $option->getSortOrder();
+            $result['can_edit_price']  = $object->getCanEditPrice();
             $result['group_option_id'] = $option->getGroupOptionId();
             if (!empty($object->getGroupId())) {
                 $result['group_id'] = $object->getGroupId();
@@ -93,18 +100,18 @@ class Base extends AbstractModel
                     $i = $value->getOptionTypeId();
                     /* @var $value Value */
                     $result['values'][$i] = [
-                        'item_count' => max($itemCount, $value->getOptionTypeId()),
-                        'option_id' => $value->getOptionId(),
-                        'option_type_id' => $value->getOptionTypeId(),
-                        'title' => $value->getTitle(),
-                        'price' => $showPrice ?
+                        'item_count'            => max($itemCount, $value->getOptionTypeId()),
+                        'option_id'             => $value->getOptionId(),
+                        'option_type_id'        => $value->getOptionTypeId(),
+                        'title'                 => $value->getTitle(),
+                        'price'                 => $showPrice ?
                             $this->getPriceValue((float)$value->getPrice(), $value->getPriceType()) :
                             0,
-                        'price_type' => $showPrice && $value->getPriceType() ?
+                        'price_type'            => $showPrice && $value->getPriceType() ?
                             $value->getPriceType() :
                             'fixed',
-                        'sku' => $value->getSku(),
-                        'sort_order' => $value->getSortOrder(),
+                        'sku'                   => $value->getSku(),
+                        'sort_order'            => $value->getSortOrder(),
                         'group_option_value_id' => $value->getGroupOptionValueId(),
                     ];
                     if (!empty($object->getGroupId())) {
@@ -114,21 +121,21 @@ class Base extends AbstractModel
                     $result['values'][$i] = $this->addSpecificOptionValueAttributes($result['values'][$i], $value);
                 }
             } else {
-                $result['price'] = $showPrice ? $this->getPriceValue(
+                $result['price']          = $showPrice ? $this->getPriceValue(
                     (float)$option->getPrice(),
                     $option->getPriceType()
                 ) : 0;
-                $result['price_type'] = $option->getPriceType() ? $option->getPriceType() : 'fixed';
-                $result['sku'] = $option->getSku();
+                $result['price_type']     = $option->getPriceType() ? $option->getPriceType() : 'fixed';
+                $result['sku']            = $option->getSku();
                 $result['max_characters'] = $option->getMaxCharacters();
                 $result['file_extension'] = $option->getFileExtension();
-                $result['image_size_x'] = $option->getImageSizeX();
-                $result['image_size_y'] = $option->getImageSizeY();
-                $result['values'] = null;
+                $result['image_size_x']   = $option->getImageSizeX();
+                $result['image_size_y']   = $option->getImageSizeY();
+                $result['values']         = null;
             }
 
             // Add option attributes specified in the third-party modules to the option
-            $result = $this->addSpecificOptionAttributes($result, $option);
+            $result                          = $this->addSpecificOptionAttributes($result, $option);
             $results[$option->getOptionId()] = $result;
         }
 
@@ -146,6 +153,8 @@ class Base extends AbstractModel
             $result = number_format($value, 2, null, '');
         } elseif ($type == 'fixed') {
             $result = number_format($value, 2, null, '');
+        } elseif ($type == 'char') {
+            $result = number_format($value, 2, null, '');
         } else {
             $result = 0;
         }
@@ -154,7 +163,7 @@ class Base extends AbstractModel
     }
 
     /**
-     * Get mageworx_option_id from option
+     * Get option_id from option
      *
      * @param $option
      * @return string
@@ -165,7 +174,7 @@ class Base extends AbstractModel
     }
 
     /**
-     * Get mageworx_option_type_id from option value
+     * Get option_type_id from option value
      *
      * @param $option
      * @return string
@@ -176,7 +185,7 @@ class Base extends AbstractModel
     }
 
     /**
-     * Get mageworx_option_id from option
+     * Get option_id from option
      *
      * @param $option
      * @return string
@@ -187,7 +196,7 @@ class Base extends AbstractModel
     }
 
     /**
-     * Get mageworx_option_type_id from option value
+     * Get option_type_id from option value
      *
      * @param $value
      * @return string
@@ -235,9 +244,11 @@ class Base extends AbstractModel
     {
         foreach ($attributes as $attribute) {
             $attributeName = $attribute->getName();
-            $data = $object->getData();
+            $data          = $object->getData();
             if (isset($data[$attributeName])) {
                 $result[$attributeName] = $data[$attributeName];
+            } else {
+                $result[$attributeName] = '';
             }
         }
         return $result;

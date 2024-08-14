@@ -18,24 +18,10 @@ use Magento\Ui\Component\Form\Field;
  */
 class Swatches extends AbstractModifier implements ModifierInterface
 {
-    /**
-     * @var array
-     */
-    protected $meta = [];
+    protected array $meta = [];
+    protected string $form = 'product_form';
+    protected Helper $helper;
 
-    /**
-     * @var string
-     */
-    protected $form = 'product_form';
-
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @param Helper $helper
-     */
     public function __construct(
         Helper $helper
     ) {

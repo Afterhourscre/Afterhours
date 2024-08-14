@@ -15,7 +15,7 @@ define(
         // @mwImageReplacer used for replace main image in the product gallery
         'mwImageReplacer',
         'jquery/validate',
-        'jquery/ui',
+        'jquery-ui-modules/widget',
         'jquery/jquery.parsequery'
     ],
     function ($, _, $t, dropDownTmpl, radioTmpl, checkboxTmpl, emptyTmpl, replacer) {
@@ -28,6 +28,8 @@ define(
          */
         $.widget('mageworx.optionAdditionalImages', {
             options: {
+                productImageClassSelectorActive: '.fotorama__active',
+                productImageClassSelector: '.fotorama__img',
                 customOptionClassSelector: '.product-custom-option',
                 imagesContainerClass: 'option_images_gallery',
                 currentOptionId: null,
@@ -63,7 +65,7 @@ define(
                     var imagesContainer = '<div class="' + params.imagesContainerClass + '"/>';
                     $element.parent().append(imagesContainer);
 
-                    if (self.getOGType() == self.getOGTypeBesideOption()) {
+                    if (self.getOGType() == self.getOGTypeBesideOption() || self.getOGType() == self.getOGTypeOnceSelected()) {
                         self.elementChange();
                     }
 
@@ -71,6 +73,36 @@ define(
                         self._observeStyleOptions();
                     }
                 });
+
+                if (this.isEnabledAnyOptionOverlayMode()) {
+                    var target = $('.gallery-placeholder')[0];
+
+                    var observer = new MutationObserver(function( mutations ) {
+                        mutations.forEach(function( mutation ) {
+                            var newNodes = mutation.addedNodes;
+                            if( newNodes !== null ) {
+                                var $nodes = $( newNodes );
+                                $nodes.each(function() {
+                                    var $node = $( this );
+                                    if( $node.hasClass('fotorama-item') ) {
+                                        setTimeout(function () {
+                                            self.processOverlayImages();
+                                            observer.disconnect();
+                                        }, 500)
+                                    }
+                                });
+                            }
+                        });
+                    });
+
+                    var config = {
+                        attributes: true,
+                        childList: true,
+                        characterData: true
+                    };
+
+                    observer.observe(target, config);
+                }
             },
 
             /**
@@ -114,6 +146,10 @@ define(
              */
             resolveOptionId: function () {
                 var id = this.options.$element.attr('id');
+                if (!id) {
+                    return null;
+                }
+
                 id = id.replace('select_', '')
                     .replace('options_', '');
                 if (id.match(/_/)) {
@@ -150,6 +186,7 @@ define(
              */
             elementChange: function () {
                 this.clearImagesContainer();
+                var self = this;
 
                 var valueIds = this.options.$element.val();
                 if (this.getOGType() != this.getOGTypeDisabled()) {
@@ -168,6 +205,46 @@ define(
                 if (this.isEnabledOptionReplaceMode()) {
                     replacer.replace();
                 }
+
+                if (this.isEnabledOptionOverlayMode()) {
+                    self.processOverlayImages();
+                }
+            },
+
+            /**
+             * Check selected values and show/hide their overlay images
+             */
+            processOverlayImages: function () {
+                var self = this;
+                $('.mageworx-overlay-images-' + this.getOptionId()).remove();
+
+                if (!_.isUndefined(window.apoData[this.getOptionId()])) {
+                    $.each(window.apoData[this.getOptionId()], function (i, valueId) {
+                        self.addOverlayImage(valueId);
+                    });
+                }
+            },
+
+            /**
+             * Add overlay image for selected value
+             * 
+             * 'z-index' forming consists of from option and value ids, 
+             * it’s required because 'z-index' value must always be greater than the current one in the next option. 
+             * Exapmle when only valueId is not enought: optId:1 (valIds: 1, 2, 3), optId:2 (valIds: 4, 5, 6). 
+             * Adding new valueId to opt1 -> optId:1 (valIds: 1, 2, 3, 7).  
+             * It requires to add 'z-index' forming from option and value sort orders in the future.
+             *
+             * @param valueId
+             */
+            addOverlayImage: function (valueId) {
+                var optionId = this.getOptionId();
+                $(this.options.productImageClassSelectorActive)
+                    .find(this.options.productImageClassSelector)
+                    .parent()
+                    .append('<img ' +
+                        'class="fotorama__img mageworx-overlay-images-' + this.getOptionId() + '" ' +
+                        'src="' + this.options.options[optionId]['values'][valueId]['overlay_image_url'] + '" ' +
+                        'style="position: absolute; z-index: ' + optionId + valueId + ';">');
             },
 
             /**
@@ -478,6 +555,30 @@ define(
              */
             isEnabledOptionReplaceMode: function () {
                 return this.options.options[this.getOptionId()]['mageworx_option_image_mode'] === '1';
+            },
+
+            /**
+             * Check if current option's image mode is overlay
+             *
+             * @returns boolean
+             */
+            isEnabledOptionOverlayMode: function () {
+                return this.options.options[this.getOptionId()]['mageworx_option_image_mode'] === '3';
+            },
+
+            /**
+             * Check if any option's image mode is overlay
+             *
+             * @returns boolean
+             */
+            isEnabledAnyOptionOverlayMode: function () {
+                var result = false;
+                $.each(this.options.options, function(index, option) {
+                    if (option['mageworx_option_image_mode'] === '3') {
+                        result = true;
+                    }
+                })
+                return result;
             },
 
             /**

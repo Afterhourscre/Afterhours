@@ -16,25 +16,10 @@ use \Magento\Framework\ObjectManagerInterface as ObjectManager;
  */
 class OptionValue
 {
-    /**
-     * @var \MageWorx\OptionTemplates\Model\ResourceModel\Group\Option\Value\CollectionFactory
-     */
-    protected $mageworxValueFactory;
-
-    /**
-     * @var \Magento\Catalog\Model\ResourceModel\Product\Option\Value\CollectionFactory
-     */
-    protected $magentoValueFactory;
-
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
-    protected $storeManager;
-
-    /**
-     * @var \Magento\Framework\ObjectManagerInterface
-     */
-    protected $objectManager = null;
+    protected MageWorxValueFactory $mageworxValueFactory;
+    protected MagentoValueFactory $magentoValueFactory;
+    protected StoreManager $storeManager;
+    protected ?ObjectManager $objectManager = null;
 
     /**
      * OptionValue constructor.

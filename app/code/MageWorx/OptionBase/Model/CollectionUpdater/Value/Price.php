@@ -70,8 +70,6 @@ class Price extends AbstractUpdater
         $entityType = $conditions['entity_type'];
         $tableName  = $this->getTableName($entityType);
 
-        $this->resource->getConnection()->query('SET SESSION group_concat_max_len = 100000;');
-
         $selectExpr = "SELECT " . OptionTypePrice::FIELD_OPTION_TYPE_ID . " as "
             . OptionTypePrice::FIELD_OPTION_TYPE_ID_ALIAS . ","
             . " CONCAT('[',"

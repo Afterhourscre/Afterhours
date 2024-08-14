@@ -1,7 +1,6 @@
 define([
     'jquery',
     'underscore',
-    'jquery/ui',
     'jquery/validate',
     'mage/translate'
 ], function($, _){
@@ -36,7 +35,7 @@ define([
                     selectionCounter = value.length;
                 }
 
-                return selectionLimitFrom <= selectionCounter && selectionLimitTo >= selectionCounter;
+                return selectionLimitFrom <= selectionCounter && (!selectionLimitTo || selectionLimitTo >= selectionCounter);
             },
             $.mage.__("Please, choose required number of values.")
         );

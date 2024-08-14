@@ -12,26 +12,10 @@ use MageWorx\OptionBase\Helper\System as SystemHelper;
 
 abstract class AbstractProductUpdater implements ProductCollectionUpdaterInterface
 {
-    /**
-     * @var SystemHelper
-     */
-    protected $systemHelper;
+    protected SystemHelper $systemHelper;
+    protected Helper $helper;
+    protected ResourceConnection $resource;
 
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var ResourceConnection
-     */
-    protected $resource;
-
-    /**
-     * @param ResourceConnection $resource
-     * @param Helper $helper
-     * @param SystemHelper $systemHelper
-     */
     public function __construct(
         ResourceConnection $resource,
         Helper $helper,

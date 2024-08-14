@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2017 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
 
@@ -25,25 +25,10 @@ use MageWorx\OptionFeatures\Model\ResourceModel\Image\CollectionFactory as Image
  */
 class Renderer
 {
-    /**
-     * @var LayoutInterface
-     */
-    protected $layout;
-
-    /**
-     * @var ImagesCollectionFactory
-     */
-    protected $imagesCollectionFactory;
-
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var \MageWorx\OptionBase\Helper\Data
-     */
-    protected $baseHelper;
+    protected LayoutInterface $layout;
+    protected ImagesCollectionFactory $imagesCollectionFactory;
+    protected Helper $helper;
+    protected BaseHelper $baseHelper;
 
     /**
      * Renderer constructor.
@@ -99,33 +84,49 @@ class Renderer
             return $result;
         }
 
-        $processImageModes = [
-            Helper::OPTION_IMAGE_MODE_REPLACE,
-        ];
-        $optionsShouldBeProcessed = [];
+        $optionsToBeProcessed = [];
         foreach ($optionValues['options'] as $optionId => $value) {
             /** @var \Magento\Catalog\Model\Product\Option $option */
             $option = $product->getOptionById($optionId);
-            /** @var array $processImageModes */
-            if (!empty($option[Helper::KEY_OPTION_IMAGE_MODE]) &&
-                in_array($option[Helper::KEY_OPTION_IMAGE_MODE], $processImageModes)
-            ) {
-                $optionsShouldBeProcessed[] = $option;
+            if (empty($option[Helper::KEY_OPTION_IMAGE_MODE])) {
+                continue;
+            }
+            if ($option[Helper::KEY_OPTION_IMAGE_MODE] == Helper::OPTION_IMAGE_MODE_REPLACE) {
+                $optionsToBeProcessed['replace'][] = $option;
+            } elseif ($option[Helper::KEY_OPTION_IMAGE_MODE] == Helper::OPTION_IMAGE_MODE_OVERLAY) {
+                $optionsToBeProcessed['overlay'][] = $option;
             }
         }
 
-        // Do nothing with product without replace mode
-        if (empty($optionsShouldBeProcessed)) {
+        if (empty($optionsToBeProcessed)) {
             $result = $proceed($product, $imageId, $attributes);
             return $result;
         }
 
         /** @var \Magento\Catalog\Block\Product\Image $imageBlock */
         $imageBlock = $this->layout->createBlock('\Magento\Catalog\Block\Product\Image')
-            ->setTemplate('Magento_Catalog::product/image_with_borders.phtml');
-        /** @var array $imageData */
-        $imageData = $this->getSelectedOptionsImageData($optionsShouldBeProcessed, $quoteItem, $attributes);
-        if (!$imageData || empty($imageData)) {
+                                   ->setTemplate('Magento_Catalog::product/image_with_borders.phtml');
+
+        $imageData = null;
+        if (!empty($optionsToBeProcessed['replace'])) {
+            $selectedValues = $this->helper->getSelectedValuesFromQuoteItem($optionsToBeProcessed['replace'], $quoteItem);
+            if (!empty($selectedValues)) {
+                $imageData = $this->getReplaceImageData($optionsToBeProcessed['replace'], $quoteItem, $attributes);
+            }
+        }
+        if (!empty($optionsToBeProcessed['overlay'])) {
+            if (!$imageData) {
+                $result = $proceed($product, $imageId, $attributes);
+                $imageData = $result->getData();
+            }
+
+            $selectedValues = $this->helper->getSelectedValuesFromQuoteItem($optionsToBeProcessed['overlay'], $quoteItem);
+            if (!empty($selectedValues)) {
+                $imageData = $this->getOverlayImageData($optionsToBeProcessed['overlay'], $imageData, $quoteItem);
+            }
+        }
+
+        if (empty($imageData)) {
             $result = $proceed($product, $imageId, $attributes);
             return $result;
         }
@@ -142,42 +143,110 @@ class Renderer
      * 'label' => string,
      * 'resized_image_width' => int,
      * 'resized_image_height' => int,
+     * 'custom_attributes' => string
+     *
+     * @param \Magento\Catalog\Model\Product\Option[] $optionsToBeProcessed
+     * @param array $imageData
+     * @param QuoteItem $quoteItem
+     * @param array $customAttributes array of html custom attributes for the <img>
+     * @return array
+     */
+    protected function getOverlayImageData(
+        array $optionsToBeProcessed,
+        array $imageData,
+        QuoteItem $quoteItem,
+        $customAttributes = []
+    ) {
+        if (empty($optionsToBeProcessed)) {
+            return null;
+        }
+
+        $imageHeight = 165;
+        $imageWidth  = 165;
+
+        $customAttributesFormatted = $this->getCustomAttributes($customAttributes);
+
+        $selectedValues = $this->helper->getSelectedValuesFromQuoteItem($optionsToBeProcessed, $quoteItem);
+
+        /** @var ImagesCollection $imageCollection */
+        $imageCollection = $this->imagesCollectionFactory
+            ->create()
+            ->addFieldToFilter(
+                'option_type_id',
+                $selectedValues
+            )->addFieldToFilter(
+                'overlay_image',
+                1
+            );
+
+        $overlayImages = [];
+        foreach ($imageCollection->getItems() as $overlayImage) {
+            if (!$overlayImage || !$overlayImage->getValue()) {
+                continue;
+            }
+
+            $overlayImages[] = $overlayImage;
+        }
+
+        $imageUrl = $this->helper->getOverlayImageUrl($imageData['image_url'], $overlayImages, $imageWidth, $imageHeight);
+
+        $data = [
+            'image_url' => $imageUrl,
+            'width' => $imageWidth,
+            'height' => $imageHeight,
+            'label' => $imageData['label'] ?? '',
+            'resized_image_width' => $imageWidth,
+            'resized_image_height' => $imageHeight,
+            'custom_attributes' => $customAttributesFormatted,
+        ];
+
+        return $data;
+    }
+
+    /**
+     * Search most suitable image using sort order and returns its data in array:
+     * 'image_url' => string,
+     * 'width' => int,
+     * 'height' => int,
+     * 'label' => string,
+     * 'resized_image_width' => int,
+     * 'resized_image_height' => int,
      * 'custom_attributes' => string (!)
      *
      * @important Method uses recursion and can call itself if suitable image is not found
      * in the current option or value
      *
-     * @param \Magento\Catalog\Model\Product\Option[] $optionsShouldBeProcessed
+     * @param \Magento\Catalog\Model\Product\Option[] $optionsToBeProcessed
      * @param QuoteItem $quoteItem
      * @param array $customAttributes array of html custom attributes for the <img>
      * @return array
      */
-    protected function getSelectedOptionsImageData(
-        array $optionsShouldBeProcessed,
+    protected function getReplaceImageData(
+        array $optionsToBeProcessed,
         QuoteItem $quoteItem,
         $customAttributes = []
     ) {
-        if (empty($optionsShouldBeProcessed)) {
+        if (empty($optionsToBeProcessed)) {
             return null;
         }
 
         $imageHeight = 165;
         $imageWidth = 165;
-        $customAttributesAsString = $this->getCustomAttributes($customAttributes);
+        $customAttributesFormatted = $this->getCustomAttributes($customAttributes);
 
-        $sortedOptions = $this->helper->sortOptions($optionsShouldBeProcessed);
+        $sortedOptions = $this->helper->sortOptions($optionsToBeProcessed);
         /** @var \Magento\Catalog\Model\Product\Option $lastOption */
         $lastOption = end($sortedOptions);
         $lastOptionId = $lastOption->getId();
         /** @var \Magento\Quote\Model\Quote\Item\Option $quoteItemOption */
         $quoteItemOption = $quoteItem->getOptionByCode('option_' . $lastOptionId);
-        if (!$quoteItemOption && !empty($optionsShouldBeProcessed)) {
-            return $this->renew($optionsShouldBeProcessed, $quoteItem, $customAttributes);
+        if (!$quoteItemOption && !empty($optionsToBeProcessed)) {
+            return $this->renew($optionsToBeProcessed, $quoteItem, $customAttributes);
         }
 
         $optionValue = $quoteItemOption->getValue();
         if (!$optionValue) {
-            return $this->renew($optionsShouldBeProcessed, $quoteItem, $customAttributes);
+            return $this->renew($optionsToBeProcessed, $quoteItem, $customAttributes);
         }
         $optionValuesReversed = array_reverse(explode(',', $optionValue));
         foreach ($optionValuesReversed as $value) {
@@ -209,23 +278,27 @@ class Renderer
                 'label' => $imageModel->getAlt(),
                 'resized_image_width' => $imageWidth,
                 'resized_image_height' => $imageHeight,
-                'custom_attributes' => $customAttributesAsString,
+                'custom_attributes' => $customAttributesFormatted,
             ];
 
             return $data;
         }
 
-        return $this->renew($optionsShouldBeProcessed, $quoteItem, $customAttributes);
+        return $this->renew($optionsToBeProcessed, $quoteItem, $customAttributes);
     }
 
     /**
      * Retrieve image custom attributes for HTML element
      *
      * @param array $attributes
-     * @return string
+     * @return string|array
      */
     private function getCustomAttributes($attributes = [])
     {
+        if ($this->baseHelper->checkModuleVersion('104.0.0')) {
+            return $attributes;
+        }
+
         $result = [];
         foreach ($attributes as $name => $value) {
             $result[] = $name . '="' . $value . '"';
@@ -235,25 +308,25 @@ class Renderer
     }
 
     /**
-     * Used for recursion call of the getSelectedOptionsImageData method
+     * Used for recursion call of the getReplaceImageData method
      * validate input data and breaks recursion if an input array (options) is empty
      *
-     * @param array $optionsShouldBeProcessed
+     * @param array $optionsToBeProcessed
      * @param QuoteItem $quoteItem
      * @param array $customAttributes
      * @return array|null
      */
     private function renew(
-        array $optionsShouldBeProcessed,
+        array $optionsToBeProcessed,
         QuoteItem $quoteItem,
         array $customAttributes
     ) {
-        if (empty($optionsShouldBeProcessed)) {
+        if (empty($optionsToBeProcessed)) {
             return null;
         }
 
-        array_pop($optionsShouldBeProcessed);
+        array_pop($optionsToBeProcessed);
 
-        return $this->getSelectedOptionsImageData($optionsShouldBeProcessed, $quoteItem, $customAttributes);
+        return $this->getReplaceImageData($optionsToBeProcessed, $quoteItem, $customAttributes);
     }
 }

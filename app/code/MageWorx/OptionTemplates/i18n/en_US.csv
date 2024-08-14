@@ -59,3 +59,5 @@ selected,selected
 Products,Products
 "A total of %1 record(s) have been duplicated","A total of %1 record(s) have been duplicated"
 "An error occurred while duplicating record(s).","An error occurred while duplicating record(s)."
+"An error occurred while exporting template(s).","An error occurred while exporting template(s)."
+Export,Export

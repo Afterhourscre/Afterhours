@@ -6,6 +6,7 @@
 
 namespace MageWorx\OptionInventory\Observer;
 
+use MageWorx\OptionInventory\Helper\Data as HelperData;
 use \MageWorx\OptionInventory\Model\Validator;
 use \MageWorx\OptionInventory\Model\StockProvider;
 use \Magento\Framework\Event\ObserverInterface;
@@ -21,25 +22,11 @@ use \MageWorx\OptionInventory\Model\ResourceModel\StockManagement;
  */
 class SubtractQuoteOptionValueInventoryObserver implements ObserverInterface
 {
-    /**
-     * @var Validator
-     */
-    protected $validator;
-
-    /**
-     * @var StockProvider
-     */
-    protected $stockProvider;
-
-    /**
-     * @var StockManagement
-     */
-    protected $stockManagement;
-
-    /**
-     * @var OptionValuesQty
-     */
-    protected $optionValuesQty;
+    protected Validator $validator;
+    protected StockProvider $stockProvider;
+    protected StockManagement $stockManagement;
+    protected OptionValuesQty $optionValuesQty;
+    protected HelperData $helperData;
 
     /**
      * SubtractQuoteOptionValueInventoryObserver constructor.
@@ -51,12 +38,14 @@ class SubtractQuoteOptionValueInventoryObserver implements ObserverInterface
         Validator $validator,
         StockProvider $stockProvider,
         StockManagement $stockManagement,
-        OptionValuesQty $optionValuesQty
+        OptionValuesQty $optionValuesQty,
+        HelperData $helperData
     ) {
-        $this->validator = $validator;
-        $this->stockProvider = $stockProvider;
+        $this->validator       = $validator;
+        $this->stockProvider   = $stockProvider;
         $this->stockManagement = $stockManagement;
         $this->optionValuesQty = $optionValuesQty;
+        $this->helperData      = $helperData;
     }
 
     /**
@@ -65,18 +54,20 @@ class SubtractQuoteOptionValueInventoryObserver implements ObserverInterface
      */
     public function execute(EventObserver $observer)
     {
-        /** @var \Magento\Quote\Model\Quote $quote */
-        $quote = $observer->getEvent()->getQuote();
-        $quoteItems = $quote->getAllItems();
+        if ($this->helperData->isEnabledOptionInventory()) {
+            /** @var \Magento\Quote\Model\Quote $quote */
+            $quote      = $observer->getEvent()->getQuote();
+            $quoteItems = $quote->getAllItems();
 
-        $requestedValues = $this->stockProvider->getRequestedData($quoteItems, []);
-        $originQuoteValues = $this->stockProvider->getOriginData($requestedValues);
+            $requestedValues   = $this->stockProvider->getRequestedData($quoteItems, []);
+            $originQuoteValues = $this->stockProvider->getOriginData($requestedValues);
 
-        $this->validator->validate($requestedValues, $originQuoteValues);
+            $this->validator->validate($requestedValues, $originQuoteValues);
 
-        $items = $this->optionValuesQty->getItemsToCorrect($requestedValues, $originQuoteValues);
+            $items = $this->optionValuesQty->getItemsToCorrect($requestedValues, $originQuoteValues);
 
-        $this->stockManagement->correctItemsQty($items, '-');
+            $this->stockManagement->correctItemsQty($items, '-');
+        }
 
         return $this;
     }

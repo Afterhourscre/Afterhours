@@ -1,11 +1,11 @@
 /**
- * Copyright © 2018 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
 define([
     'jquery',
     'underscore',
-    'jquery/ui'
+    'jquery-ui-modules/widget'
 ], function ($, _) {
     'use strict';
 
@@ -28,33 +28,64 @@ define([
          * @param base
          * @param self
          */
-        firstRun: function firstRun(optionConfig, productConfig, base, self)
-        {
+        firstRun: function firstRun(optionConfig, productConfig, base, self) {
+            this.options.options = [];
             this.initOptions();
             this.baseObject = base;
 
-            if (_.isUndefined(window.apoData)) {
-                window.apoData = {};
-                $.each(this.options.options, function (index, option) {
-                    window.apoData[option.id] = [];
-                });
+            var $this = this;
+            $.each(self.options, function (index, element) {
+                $this.options[index] = element;
+            });
+
+            if (!self.options.isAdmin) {
+                $('.mageworx-need-wrap').wrap('<span>');
             }
 
-            this.toggleOptions();
+            var $needDisableDateValidationFields = $('.mageworx-disable-date-validation');
+            if ($needDisableDateValidationFields.length > 0) {
+                $needDisableDateValidationFields.find('select').attr('data-validate', '{"datetime-validation": false}');
+                this.disableDatetimeValidation($needDisableDateValidationFields);
+            }
 
-            return this;
-        },
+            if (!_.isUndefined(self.options.dependencyRulesJson) && self.options.dependencyRulesJson.length !== 0) {
+                this.options.dependencyRules = JSON.parse(self.options.dependencyRulesJson);
+            }
 
-        /**
-         * Triggers one time after init price (from base.js)
-         * @param optionConfig
-         * @param productConfig
-         * @param base
-         * @param self
-         */
-        afterInitPrice: function afterFirstRun(optionConfig, productConfig, base, self)
-        {
-            this.options.firstRunProcessed = [];
+            window.apoData = {};
+
+            $.each(this.options.options, function (index, option) {
+                window.apoData[option.id] = [];
+            });
+
+            if (!_.isUndefined(self.options.selectedValues)) {
+                $.each(self.options.selectedValues, function (index, values) {
+                    window.apoData[index] = values;
+                });
+            }
+            this.baseObject.addOptionChangeListeners();
+
+            if (self.options.isAdmin) {
+                if (window.apoAdminIsAfterFirstRun) {
+                    $this.options.hiddenOptions = window.optionsToHide;
+                    $this.options.hiddenValues = window.valuesToHide;
+                }
+                // Bind option change event listener
+                this.baseObject.addOptionChangeListeners();
+                $('#product-options-wrapper').show();
+
+                $.each(optionConfig, function (item, i) {
+                    var field = $('[data-option_id="' + item + '"]') ? $('[data-option_id="' + item + '"]') : $('[data-option_type_id="' + item + '"]');
+                    if (field.css('display') == 'none') {
+                        field.removeClass('required');
+                        if (field.find('input[type="file"]').length < 1 || self.options.isAdmin) {
+                            field.find('input, select, textarea, .field').removeClass('required');
+                            field.find('input, select, textarea, .field').removeClass('required-entry');
+                        }
+                    }
+                });
+                window.apoAdminIsAfterFirstRun = true;
+            }
         },
 
         /**
@@ -64,9 +95,9 @@ define([
          * @param productConfig
          * @param base
          */
-        update: function update(option, optionConfig, productConfig, base)
-        {
+        update: function update(option, optionConfig, productConfig, base) {
             var self = this;
+
             var optionField = $(option).closest('[data-option_id]');
             var optionId = optionField.attr('data-option_id');
             var optionObject = self.getOptionObject(optionId, 'option');
@@ -76,15 +107,14 @@ define([
                 optionTypeField = $(option).closest('[data-option_type_id]');
             }
 
+            var object = optionObject;
             if (optionTypeField) {
-                var valueId = optionTypeField.attr('data-option_type_id'),
-                    object = self.getOptionObject(valueId, 'value');
-            } else {
-                var object = optionObject;
+                var valueId = parseInt(optionTypeField.attr('data-option_type_id'));
+                object = self.getOptionObject(valueId, 'value');
             }
 
             if ($.inArray(optionObject.type, ['drop_down', 'multiple']) !== -1) {
-                if (optionObject.type == 'drop_down') {
+                if (optionObject.type === 'drop_down') {
                     // For dropdown - for selected select options only
                     $('#' + option.attr('id') + ' option:selected').each(function () {
                         self.toggleDropdown(optionObject, self.getOptionObject($(this).attr('data-option_type_id'), 'value'));
@@ -99,7 +129,7 @@ define([
                     }
                 }
             } else if ($.inArray(optionObject.type, ['checkbox', 'radio']) !== -1) {
-                if (optionObject.type == 'radio') {
+                if (optionObject.type === 'radio') {
                     if ($(option).is(':checked')) {
                         self.toggleRadio(optionObject, object);
                     }
@@ -112,9 +142,21 @@ define([
                 }
             }
 
-            $.each(this.options.options, function (index, option) {
-                option.toggle();
-            });
+            self.options.needDependencyRulesProcessing = true;
+            while (self.options.needDependencyRulesProcessing) {
+                self.options.needDependencyRulesProcessing = false;
+                self.processDependencyRules();
+            }
+
+            if (self.options.isAdmin) {
+                window.valuesToHide = self.options.valuesToHide;
+                window.optionsToHide = self.options.optionsToHide;
+            }
+
+            self.options.hiddenValues = self.options.valuesToHide;
+            self.options.valuesToHide = [];
+            self.options.hiddenOptions = self.options.optionsToHide;
+            self.options.optionsToHide = [];
         },
 
         /**
@@ -128,40 +170,30 @@ define([
 
             // For --Please Select-- - unselect all selected values
             if (typeof changedValue.id === "undefined" && _.isArray(window.apoData[option.id])) {
-                $.each(window.apoData[option.id], function (index, value) {
-
-                    var index = window.apoData[option.id].indexOf(value);
+                $.each(window.apoData[option.id], function (i, value) {
+                    var index = window.apoData[option.id].indexOf(parseInt(value));
                     if (index !== -1) {
-                        window.apoData[option.id].splice(index, 1);
-                        self.toggleOption(self.getOptionObject(value, 'value'));
+                        self.apoDataToSplice(option.id, index);
                     }
                 });
             }
-
             // For select "normal" value
             if (typeof changedValue.id !== "undefined") {
                 // Toggle unselected values
                 if (_.isArray(window.apoData[option.id])) {
-                    $.each(window.apoData[option.id], function (index, value) {
-
-                        var index = window.apoData[option.id].indexOf(value);
-                        if (value.id !== changedValue.id && index !== -1) {
-                            window.apoData[option.id].splice(index, 1);
-                            self.toggleOption(self.getOptionObject(value, 'value'));
+                    $.each(window.apoData[option.id], function (i, value) {
+                        var index = window.apoData[option.id].indexOf(parseInt(value));
+                        if (value !== changedValue.id && index !== -1) {
+                            self.apoDataToSplice(option.id, index);
                         }
                     });
                 }
 
-                // Toggle selected value
-                if (_.isUndefined(window.apoData[option.id])) {
-                    window.apoData[option.id] = [];
-                }
-                window.apoData[option.id].push(changedValue.id);
-                self.toggleOption(changedValue);
+                self.apoDataToPush(option.id, changedValue.id);
             }
         },
 
-        /**ы
+        /**
          * Toggle multiselect
          *
          * @param option
@@ -172,31 +204,23 @@ define([
 
             var changedValueObjects = [];
             $.each(changedValues, function (index, changedValue) {
-                changedValueObjects.push($(changedValue).attr('data-option_type_id'));
+                changedValueObjects.push(parseInt($(changedValue).attr('data-option_type_id')));
             });
 
             // For select "normal" value
             // Toggle unselected values
-            $.each(window.apoData[option.id], function (index, value) {
-                var currentIndex = changedValueObjects.indexOf(value);
+            $.each(window.apoData[option.id], function (i, value) {
+                var currentIndex = changedValueObjects.indexOf(parseInt(value));
                 if (currentIndex === -1) {
-                    index = window.apoData[option.id].indexOf(value);
-                    window.apoData[option.id].splice(index, 1);
-                    self.toggleOption(self.getOptionObject(value, 'value'));
+                    var index = window.apoData[option.id].indexOf(parseInt(value));
+                    self.apoDataToSplice(option.id, index);
                 }
             });
 
             $.each(changedValues, function (index, changedValue) {
                 // Toggle selected value
                 var changedValueObject = self.getOptionObject($(changedValue).attr('data-option_type_id'), 'value');
-                var currentIndex = window.apoData[option.id].indexOf(changedValueObject.id);
-                if (currentIndex === -1) {
-                    if (_.isUndefined(window.apoData[option.id])) {
-                        window.apoData[option.id] = [];
-                    }
-                    window.apoData[option.id].push(changedValueObject.id);
-                    self.toggleOption(changedValueObject);
-                }
+                self.apoDataToPush(option.id, changedValueObject.id);
             });
         },
 
@@ -210,11 +234,9 @@ define([
 
             // unselect all values, which already in apoData)
             $.each(window.apoData[option.id], function (index, value) {
-
-                var currentIndex = window.apoData[option.id].indexOf(value);
+                var currentIndex = window.apoData[option.id].indexOf(parseInt(value));
                 if (currentIndex !== -1) {
-                    window.apoData[option.id].splice(currentIndex, 1);
-                    self.toggleOption(self.getOptionObject(value, 'value'));
+                    self.apoDataToSplice(option.id, currentIndex);
                 }
             });
             window.apoData[option.id] = [];
@@ -232,23 +254,19 @@ define([
             // For select "normal" value
             if (typeof changedValue.id !== "undefined") {
                 // Toggle unselected values
+                if (_.isUndefined(window.apoData)) {
+                    window.apoData = {};
+                }
                 if (_.isArray(window.apoData[option.id])) {
-                    $.each(window.apoData[option.id], function (index, value) {
-
-                        var index = window.apoData[option.id].indexOf(value);
+                    $.each(window.apoData[option.id], function (i, value) {
+                        var index = window.apoData[option.id].indexOf(parseInt(value));
                         if (value.id !== changedValue.id && index !== -1) {
-                            window.apoData[option.id].splice(index, 1);
-                            self.toggleOption(self.getOptionObject(value, 'value'));
+                            self.apoDataToSplice(option.id, index);
                         }
                     });
                 }
 
-                // Toggle selected value
-                if (_.isUndefined(window.apoData[option.id])) {
-                    window.apoData[option.id] = [];
-                }
-                window.apoData[option.id].push(changedValue.id);
-                self.toggleOption(changedValue);
+                self.apoDataToPush(option.id, changedValue.id);
             }
         },
 
@@ -264,11 +282,7 @@ define([
             // For select "normal" value
             if (typeof changedValue.id !== "undefined") {
                 // Toggle selected value
-                if (_.isUndefined(window.apoData[option.id])) {
-                    window.apoData[option.id] = [];
-                }
-                window.apoData[option.id].push(changedValue.id);
-                self.toggleOption(changedValue);
+                self.apoDataToPush(option.id, changedValue.id);
             }
         },
 
@@ -282,86 +296,373 @@ define([
             var self = this;
 
             // Toggle unselected value
-            var currentIndex = window.apoData[option.id].indexOf(changedValue.id);
+            var currentIndex = window.apoData[option.id].indexOf(parseInt(changedValue.id));
             if (currentIndex !== -1) {
-                window.apoData[option.id].splice(currentIndex, 1);
-                self.toggleOption(self.getOptionObject(changedValue.id, 'value'));
+                self.apoDataToSplice(option.id, currentIndex);
             }
         },
 
         /**
-         * Toggle options
+         * Process dependency rules
          */
-        toggleOptions: function () {
+        processDependencyRules: function () {
             var self = this;
-            // toggle options: show or hide dependencies, deselect if hide
-            $.each(this.options.options, function (index, option) {
+            self.options.optionsToHide = [];
+            self.options.valuesToHide = [];
 
-                $.each(option.values, function (index, value) {
-                    value.toggle();
-                    self.options.firstRunProcessed.push(value.id);
+            if (typeof self.options !== 'undefined' && !!self.options.dependencyRules && self.options.dependencyRules.length !== 0) {
+                $.each(self.options.dependencyRules, function (index, rule) {
+                    if (rule.condition_type === 'and') {
+                        self.processDependencyAndRules(rule);
+                    } else {
+                        self.processDependencyOrRules(rule);
+                    }
                 });
 
-                option.toggle();
-                self.options.firstRunProcessed.push(option.id);
+                self.hideOptionIfAllValuesHidden();
+                self.runShowProcessor();
+            }
+        },
+
+        /**
+         * Push selected value to window apo data
+         *
+         * @param optionId
+         * @param valueId
+         */
+        apoDataToPush: function (optionId, valueId) {
+            // Toggle selected value
+            var currentIndex = window.apoData[optionId].indexOf(parseInt(valueId));
+            if (currentIndex === -1) {
+                if (_.isUndefined(window.apoData[optionId])) {
+                    window.apoData[optionId] = [];
+                }
+                window.apoData[optionId].push(parseInt(valueId));
+            }
+        },
+
+        /**
+         * Splice unselected values from window apo data
+         *
+         * @param optionId
+         * @param currentIndex
+         */
+        apoDataToSplice: function (optionId, currentIndex) {
+            window.apoData[optionId].splice(currentIndex, 1);
+        },
+
+        /**
+         * Process dependency OR-type rules
+         *
+         * @param dependencyRule
+         */
+        processDependencyOrRules: function (dependencyRule) {
+            var self = this;
+
+            var conditionsMet = typeof dependencyRule.conditions !== 'undefined' && dependencyRule.conditions.length > 0,
+                breakLoop = false;
+
+            $.each(dependencyRule.conditions, function (index, condition) {
+                if (breakLoop) {
+                    return false;
+                }
+                var conditionOptionValues = condition.values;
+                if (conditionOptionValues.length < 1 && condition.id && self.options.optionToValueMap[condition.id]
+                ) {
+                    conditionOptionValues = self.options.optionToValueMap[condition.id];
+                }
+
+                if (condition.type === '!eq') {
+                    /**
+                     * value in selected != hidden
+                     */
+                    $.each(conditionOptionValues, function (i, conditionOptionValueId) {
+                        var optionId = self.options.valueToOptionMap[conditionOptionValueId],
+                            index = -1;
+                        if (!_.isUndefined(optionId)) {
+                            index = window.apoData[optionId].indexOf(parseInt(conditionOptionValueId));
+                        }
+                        if (index !== -1) {
+                            conditionsMet = false;
+                            breakLoop = true;
+                            return false;
+                        }
+                    });
+                } else if (condition.type === 'eq') {
+                    /**
+                     * value in selected = hidden
+                     *
+                     * We don't have equality conditions in use at the moment, for this reason I have removed it
+                     *
+                     */
+                }
             });
 
-            return this;
-        },
-
-        /**
-         * Toggle option
-         *
-         * @param object
-         */
-        toggleOption: function (object) {
-            if (this.options.firstRunProcessed.indexOf(object.id) !== -1) {
-                return;
+            if (conditionsMet) {
+                self.processHiddenValuesByRule(dependencyRule);
             }
-
-            this.processChildDependencies(object, this.options.valueChildren, 'value');
-            this.processChildDependencies(object, this.options.optionChildren, 'option');
-
-            return this;
         },
 
         /**
-         * Process child dependencies
+         * Process dependency AND-type rules
          *
-         * @param object
-         * @param childDependencies
-         * @param childType
+         * @param dependencyRule
          */
-        processChildDependencies: function (object, childDependencies, childType)
-        {
+        processDependencyAndRules: function (dependencyRule) {
             var self = this;
-            var isOption = _.isUndefined(object.type) ? false : true;
 
-            if ($.inArray(object.id, _.keys(childDependencies)) === -1) {
-                return this;
-            }
+            var conditionsMet = false,
+                breakLoop = false;
 
-            var children = childDependencies[object.id];
+            $.each(dependencyRule.conditions, function (index, condition) {
+                if (breakLoop) {
+                    return false;
+                }
+                var conditionOptionValues = condition.values;
+                if (conditionOptionValues.length < 1 && condition.id && self.options.optionToValueMap[condition.id]
+                ) {
+                    conditionOptionValues = self.options.optionToValueMap[condition.id];
+                }
 
-            $.each(children, function (index, childId) {
-                var valueObj = self.getOptionObject(childId, childType);
-                if (valueObj) {
-                    var isShown = valueObj.toggle();
-                    if (self.isNeedToSkipToggleOptionProcess(valueObj)) {
-                        return;
-                    }
-                    var isChildSelected = window.apoData[valueObj.getOption().id].indexOf(valueObj.id);
-                    if (isChildSelected !== -1) {
-                        self.toggleOption(valueObj);
-                    }
-                    if (!isOption && !isShown) {
-                        var index = window.apoData[valueObj.getOption().id].indexOf(valueObj.id);
-                        if (index !== -1) {
-                            window.apoData[valueObj.getOption().id].splice(index, 1);
+                if (condition.type === '!eq') {
+                    /**
+                     * value !in selected = hidden
+                     */
+                    $.each(conditionOptionValues, function (i, conditionOptionValueId) {
+                        var optionId = self.options.valueToOptionMap[conditionOptionValueId],
+                            index = -1;
+                        if (!_.isUndefined(optionId)) {
+                            index = window.apoData[optionId].indexOf(parseInt(conditionOptionValueId));
                         }
+                        if (index === -1) {
+                            breakLoop = conditionsMet = true;
+                            return false;
+                        }
+                    });
+                } else if (condition.type === 'eq') {
+                    /**
+                     * value !in selected != hidden
+                     *
+                     * We don't have equality conditions in use at the moment, for this reason I have removed it
+                     *
+                     */
+                }
+            });
+
+            if (conditionsMet) {
+                self.processHiddenValuesByRule(dependencyRule);
+            }
+        },
+
+        /**
+         * Process hidden values by rule
+         *
+         * @param dependencyRule
+         */
+        processHiddenValuesByRule: function (dependencyRule) {
+            var self = this;
+
+            $.each(dependencyRule.actions.hide, function (i, hideItem) {
+                var option = self.getOptionObject(hideItem.id, 'option');
+                if ($.inArray(option.type, ['drop_down', 'multiple', 'checkbox', 'radio']) === -1) {
+                    if ($.inArray(parseInt(hideItem.id), self.options.optionsToHide) === -1) {
+                        self.options.optionsToHide.push(parseInt(hideItem.id));
+                    }
+                } else {
+                    $.each(hideItem.values, function (iv, value) {
+                        var index = window.apoData[hideItem.id].indexOf(parseInt(value));
+                        if (index !== -1) {
+                            self.options.needDependencyRulesProcessing = true;
+                            self.apoDataToSplice(hideItem.id, index);
+                            var object = self.getOptionObject(value, 'value');
+                        }
+                        if ($.inArray(parseInt(value), self.options.valuesToHide) === -1) {
+                            self.options.valuesToHide.push(parseInt(value));
+                        }
+                    });
+                }
+                self.runHideProcessor(hideItem);
+            });
+        },
+
+        /**
+         * Show option or value
+         */
+        runShowProcessor: function () {
+            var self = this;
+
+            $.each(self.options.hiddenOptions, function (i, option) {
+                var index = self.options.optionsToHide.indexOf(parseInt(option));
+                if (index === -1) {
+                    var object = self.getOptionObject(option, 'option');
+                    if (object !== '') {
+                        self.show(object, true);
                     }
                 }
             });
+
+            $.each(self.options.hiddenValues, function (i, value) {
+                var index = self.options.valuesToHide.indexOf(parseInt(value));
+                if (index === -1) {
+                    var object = self.getOptionObject(value, 'value');
+                    if (object !== '') {
+                        self.show(object.getOption(), true);
+                        self.show(object, false);
+                    }
+                }
+            });
+        },
+
+        /**
+         * Hide option if all values are hidden
+         */
+        hideOptionIfAllValuesHidden: function () {
+            var self = this;
+
+            $.each(self.options.optionToValueMap, function (option, values) {
+                var areAllValuesHidden = true;
+                if (values.length < 1) {
+                    return;
+                }
+                $.each(values, function (i, value) {
+                    if ($.inArray(parseInt(value), self.options.valuesToHide) === -1) {
+                        areAllValuesHidden = false;
+                        return false;
+                    }
+                });
+                if (areAllValuesHidden) {
+                    if ($.inArray(parseInt(option), self.options.optionsToHide) !== -1) {
+                        return;
+                    }
+                    self.options.optionsToHide.push(parseInt(option));
+                    var isOption = true;
+                    var index = self.options.hiddenOptions.indexOf(parseInt(option));
+                    if (index !== -1) {
+                        return;
+                    }
+                    var object = self.getOptionObject(option, 'option');
+                    if (object !== '') {
+                        self.hide(object, isOption);
+                    }
+                }
+            });
+        },
+
+        /**
+         * Show option or value
+         *
+         * @param object
+         * @param isOption
+         */
+        show: function (object, isOption) {
+            var self = this;
+
+            var isRequired = false;
+            var field = isOption ? $('[data-option_id="' + object.id + '"]') : $('[data-option_type_id="' + object.id + '"]');
+
+            if (isOption && typeof self.options.optionRequiredConfig != 'undefined') {
+                isRequired = typeof self.options.optionRequiredConfig[object.id] != 'undefined' ?
+                    self.options.optionRequiredConfig[object.id] :
+                    false;
+            }
+
+            if (!isOption && field.css('display') === 'none') {
+                self.baseObject.addNewlyShowedOptionValue(object.id);
+            }
+            if (!isOption) {
+                var type = object.getOption().type;
+                if ($.inArray(type, ['drop_down', 'multiple']) !== -1) {
+                    if (field.parent().prop("tagName").toLowerCase() === 'span') {
+                        field.unwrap('span');
+                    }
+                }
+            }
+            field.show();
+            if (isOption && isRequired) {
+                if (field.hasClass('date') || field.find('.datetime-picker').length > 0) {
+                    self.enableDatetimeValidation(field);
+                } else {
+                    field.addClass('required');
+                    if (field.find('input[type="file"]').length < 1 || self.options.isAdmin) {
+                        field.find('input, select, textarea, .field').addClass('required');
+                        field.find('input, select, textarea, .field').addClass('required-entry');
+                    }
+                }
+            }
+        },
+
+        /**
+         * Hide option or value
+         *
+         * @param hideItem
+         */
+        runHideProcessor: function (hideItem) {
+            var self = this;
+
+            var isOption = false;
+
+            if (!_.isEmpty(hideItem.values)) {
+                $.each(hideItem.values, function (i, value) {
+                    var index = self.options.hiddenValues.indexOf(parseInt(value));
+                    if (index === -1) {
+                        var object = self.getOptionObject(value, 'value');
+                        if (object !== '') {
+                            self.hide(object, isOption);
+                        }
+                    }
+                });
+            } else {
+                isOption = true;
+                var index = self.options.hiddenOptions.indexOf(parseInt(hideItem.id));
+                if (index === -1) {
+                    var object = self.getOptionObject(hideItem.id, 'option');
+                    if (object !== '') {
+                        self.hide(object, isOption);
+                    }
+                }
+            }
+        },
+
+        /**
+         * Hide option or value
+         *
+         * @param object
+         * @param isOption
+         */
+        hide: function (object, isOption) {
+            var self = this;
+
+            var isRequired = false;
+            var field = isOption ? $('[data-option_id="' + object.id + '"]') : $('[data-option_type_id="' + object.id + '"]');
+
+            if (isOption && typeof self.options.optionRequiredConfig != 'undefined') {
+                isRequired = typeof self.options.optionRequiredConfig[object.id] != 'undefined' ?
+                    self.options.optionRequiredConfig[object.id] :
+                    false;
+            }
+
+            if (!isOption) {
+                var type = object.getOption().type;
+                if ($.inArray(type, ['drop_down', 'multiple']) !== -1) {
+                    if (field.parent().prop("tagName").toLowerCase() !== 'span') {
+                        field.wrap('<span>');
+                    }
+                }
+            }
+            field.hide();
+            if (isOption && isRequired) {
+                if (field.hasClass('date') || field.find('.datetime-picker').length > 0) {
+                    self.disableDatetimeValidation(field);
+                } else {
+                    field.removeClass('required');
+                    if (field.find('input[type="file"]').length < 1 || self.options.isAdmin) {
+                        field.find('input, select, textarea, .field').removeClass('required');
+                        field.find('input, select, textarea, .field').removeClass('required-entry');
+                    }
+                }
+            }
+
+            object.reset();
         },
 
         /**
@@ -370,16 +671,15 @@ define([
          * @param id
          * @param type
          */
-        getOptionObject: function (id, type)
-        {
+        getOptionObject: function (id, type) {
             var object = '';
             $.each(this.options.options, function (index, option) {
-                if (type == 'option' && option.id == id) {
+                if (type === 'option' && parseInt(option.id) === parseInt(id)) {
                     object = option;
                     return false;
                 }
                 $.each(option.values, function (index, value) {
-                    if (type == 'value' && value.id == id) {
+                    if (type === 'value' && parseInt(value.id) === parseInt(id)) {
                         object = value;
                         return false;
                     }
@@ -394,72 +694,8 @@ define([
          */
         initOptions: function () {
             var self = this,
-                isValid,
                 getType,
-                toggle,
                 reset;
-
-            /**
-             * check if option or value is valid:
-             * if true - show,
-             * false - hide.
-             *
-             * @param object
-             * @returns {boolean}
-             */
-            isValid = function (object) {
-                // init parent dependencies:
-                // if object is option - use optionParents,
-                // else - valueParents.
-                var parentDependencies = _.isUndefined(object.type) ? self.options.valueParents : self.options.optionParents;
-
-                // 1. If object not exist in parentDependencies then it is not dependent
-                // and return true.
-                if ($.inArray(object.id, _.keys(parentDependencies)) === -1) {
-                    return true;
-                }
-
-                // 2. If any of parents are selected - return true
-                var parentSelected = false;
-                var parents = parentDependencies[object.id]; // parent values ids
-
-                $.each(parents, function (index, parentId) {
-                    var field = $('[data-option_type_id="'+parentId+'"]');
-                    var type = object._getType(parentId);
-
-                    if (object.isAndDependencyType) {
-                        parentSelected = false;
-                    }
-
-                    // checkbox and radio
-                    if ($.inArray(type, ['checkbox', 'radio']) !== -1) {
-                        var element = field.children('input');
-
-                        if (element.is(':checked')) {
-                            parentSelected = true;
-                        }
-                    }
-
-                    // drop-down and multiselect
-                    if ($.inArray(type, ['drop_down', 'multiple']) !== -1) {
-                        var elements = field.parent('select').find(':selected');
-
-                        $.each(elements, function (index, element) {
-                            if ($(element).attr('data-option_type_id') == parentId) {
-                                parentSelected = true;
-                            }
-                        });
-                    }
-
-                    if (parentSelected && !object.isAndDependencyType) {
-                        return true;
-                    } else if (!parentSelected && object.isAndDependencyType) {
-                        return false;
-                    }
-                });
-
-                return parentSelected;
-            };
 
             /**
              * Retrieve option type, by value id.
@@ -468,12 +704,12 @@ define([
              * @param valueId
              * @returns {string}
              */
-            getType = function (valueId) { // return option type by value
+            getType = function (valueId) {
                 var type = '';
 
                 $.each(self.options.options, function (index, option) {
                     $.each(option.values, function (index, value) {
-                        if (valueId == value.id) {
+                        if (valueId === value.id) {
                             type = value.getOption().type;
                             return;
                         }
@@ -486,120 +722,46 @@ define([
                 return type;
             };
 
+
             /**
-             * Toggle field visibility based on dependency
+             * Reset value
              *
-             * @param object
+             * @param value
              */
-            toggle = function (object) {
-                var isOption = _.isUndefined(object.type) ? false : true,
-                    field = isOption ? $('[data-option_id="'+object.id+'"]') : $('[data-option_type_id="'+object.id+'"]'),
-                    isRequired = false,
-                    isShown = false;
-
-                if (isOption && typeof self.options.optionRequiredConfig != 'undefined') {
-                    isRequired = typeof self.options.optionRequiredConfig[object.id] != 'undefined' ?
-                        self.options.optionRequiredConfig[object.id] :
-                        false;
-                }
-                // toggle visibility
-                if (object.isValid()) {
-                    if (!isOption && field.css('display') == 'none') {
-                        self.baseObject.addNewlyShowedOptionValue(object.id);
-                    }
-                    if (!isOption) {
-                        var type = object.getOption().type;
-                        if ($.inArray(type, ['drop_down', 'multiple']) !== -1) {
-                            if (field.parent().prop("tagName").toLowerCase() == 'span') {
-                                field.unwrap('<span>');
-                            }
-                        }
-                    }
-                    field.show();
-                    isShown = true;
-                    if (isOption && isRequired) {
-                        if (field.hasClass('date')) {
-                            self.enableDatetimeValidation(field);
-                        } else {
-                            field.addClass('required');
-                            if (field.find('input[type="file"]').length < 1) {
-                                field.find('input, select, textarea, .field').addClass('required');
-                                field.find('input, select, textarea, .field').addClass('required-entry');
-                            }
-                        }
-                    }
-                } else {
-                    if (!isOption) {
-                        var type = object.getOption().type;
-                        if ($.inArray(type, ['drop_down', 'multiple']) !== -1) {
-                            if (field.parent().prop("tagName").toLowerCase() != 'span') {
-                                field.wrap('<span>');
-                            }
-                        }
-                    }
-                    field.hide();
-                    if (isOption && isRequired) {
-                        if (field.hasClass('date')) {
-                            self.disableDatetimeValidation(field);
-                        } else {
-                            field.removeClass('required');
-                            if (field.find('input[type="file"]').length < 1) {
-                                field.find('input, select, textarea, .field').removeClass('required');
-                                field.find('input, select, textarea, .field').removeClass('required-entry');
-                            }
-                        }
-                    }
-                }
-
-                // reset element
-                object.reset();
-
-                return isShown;
-            },
-
-                /**
-                 * Reset value
-                 *
-                 * @param value
-                 */
-                reset = function (value) {
-                    var isOption = _.isUndefined(value.type) ? false : true;
-                    if (isOption) {
-                        return this;
-                    }
-
-                    var field = $('[data-option_type_id="'+value.id+'"]');
-                    if (field.css('display') != 'none') {
-                        return this;
-                    }
-
-                    var type = value.getOption().type;
-                    var element = null;
-
-                    // checkbox and radio
-                    if ($.inArray(type, ['checkbox', 'radio']) !== -1) {
-                        element = field.children('input');
-
-                        element.removeAttr('checked');
-                        element.trigger('change');
-                    }
-
-                    // drop-down and multiselect
-                    if ($.inArray(type, ['drop_down', 'multiple']) !== -1) {
-                        element = field.closest('select');
-
-                        field.removeAttr('selected');
-                        element.trigger('change');
-                    }
-
-                    // update product price
-                    var priceOptions = $(self.options.addToCartSelector).data('magePriceOptions');
-                    if (!_.isUndefined(priceOptions) && !_.isNull(element)) {
-                        priceOptions._onOptionChanged({target: element});
-                    }
-
+            reset = function (value) {
+                var isOption = !_.isUndefined(value.type);
+                if (isOption) {
                     return this;
-                },
+                }
+
+                var field = $('[data-option_type_id="' + value.id + '"]');
+                if (field.css('display') !== 'none') {
+                    return this;
+                }
+
+                var type = value.getOption().type;
+                var element = null;
+
+                // checkbox and radio
+                if ($.inArray(type, ['checkbox', 'radio']) !== -1) {
+                    element = field.children('input');
+                    element.prop('checked', false);
+                }
+
+                // drop-down and multiselect
+                if ($.inArray(type, ['drop_down', 'multiple']) !== -1) {
+                    element = field.closest('select');
+                    field.prop('selected', false);
+                }
+
+                // update product price
+                var priceOptions = $(self.options.addToCartSelector).data('magePriceOptions');
+                if (!_.isUndefined(priceOptions) && !_.isNull(element)) {
+                    priceOptions._onOptionChanged({target: element});
+                }
+
+                return this;
+            },
 
                 $('[data-option_id]').each(function (index, option) {
 
@@ -607,21 +769,10 @@ define([
                     var optionObj = {}; // create emty option object to transfer the link to it to value
 
                     $(option).find('[data-option_type_id]').each(function (index, value) {
-                        var isAndDependencyType = false;
-                        if ($.inArray($(value).attr('data-option_type_id'), _.keys(self.options.andDependencyOptions)) !== -1) {
-                            isAndDependencyType = true;
-                        }
                         var valueObj = {
                             id: $(value).attr('data-option_type_id'),
-                            isAndDependencyType: isAndDependencyType,
-                            isValid: function () {
-                                return isValid(this);
-                            },
                             _getType: function (valueId) { // return option type by value
                                 return getType(valueId);
-                            },
-                            toggle: function () {
-                                return toggle(this);
                             },
                             reset: function () {
                                 return reset(this);
@@ -634,41 +785,15 @@ define([
                         values.push(valueObj);
                     });
 
-                    var isAndDependencyType = false;
-                    if ($.inArray($(option).attr('data-option_id'), _.keys(self.options.andDependencyOptions)) !== -1) {
-                        isAndDependencyType = true;
-                    }
                     optionObj = {
-                        id: $(option).attr('data-option_id'),
+                        id: parseInt($(option).attr('data-option_id')),
                         type: self.options.optionTypes[$(option).attr('data-option_id')],
-                        isAndDependencyType: isAndDependencyType,
                         values: values,
-                        isValid: function () { // option is valid if it is not SELECT type or if any of values is valid
-                            // 1. check if not SELECT option type
-                            // If not SELECT - get parent values and validate
-                            if (_.isEmpty(this.values)) {
-                                return isValid(this);
-                            }
-
-                            // 2. If option is SELECT type - check if any of his values is valid
-                            var valuesIsValid = false;
-                            $.each(this.values, function (index, value) {
-                                if (value.isValid()) {
-                                    valuesIsValid = true;
-                                    return;
-                                }
-                            });
-
-                            return valuesIsValid;
-                        },
                         _getType: function (valueId) { // return option type by value
                             return getType(valueId);
                         },
                         reset: function () {
                             return reset(this);
-                        },
-                        toggle: function () {
-                            return toggle(this);
                         }
                     };
 
@@ -703,32 +828,20 @@ define([
          * @param enable
          */
         setDatetimeValidation: function (field, enable) {
-            var fromKey = enable ? '_date_' : '_datetime_';
-            var toKey = enable ? '_datetime_' : '_date_';
-            var datetimeValidationField = field.find("input:hidden[name^='validate" + fromKey + "']");
+            var fromKey = enable ? 'date' : 'datetime';
+            var toKey = enable ? 'datetime' : 'date';
+            var datetimeValidationField = field.find("input:hidden[name^='validate_" + fromKey + "_']");
             if (!_.isUndefined(datetimeValidationField) && datetimeValidationField.length > 0) {
                 datetimeValidationField.attr(
                     'name',
                     datetimeValidationField.attr('name').replace(fromKey, toKey)
                 );
+                datetimeValidationField.attr(
+                    'class',
+                    datetimeValidationField.attr('class').replace(fromKey, toKey)
+                );
             }
-        },
-
-        /**
-         * Check if it is needed to skip toggle option
-         *
-         * @param valueObj
-         */
-        isNeedToSkipToggleOptionProcess: function (valueObj) {
-            if (!_.isUndefined(valueObj.type)) {
-                return true;
-            }
-            if (_.isUndefined(valueObj.getOption().id)
-                || _.isUndefined(window.apoData[valueObj.getOption().id])
-            ) {
-                return true;
-            }
-            return false;
+            field.find('select').attr('data-validate', '{"datetime-validation": ' + enable + '}');
         }
     });
 

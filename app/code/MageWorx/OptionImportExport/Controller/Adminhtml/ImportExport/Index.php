@@ -36,7 +36,7 @@ class Index extends \Magento\Backend\App\Action
                 \MageWorx\OptionImportExport\Block\Adminhtml\ImportExport::class
             )
         );
-        $resultPage->getConfig()->getTitle()->prepend(__('MageWorx Option Templates Import/Export '));
+        $resultPage->getConfig()->getTitle()->prepend(__('MageWorx Options Import'));
         return $resultPage;
     }
 }

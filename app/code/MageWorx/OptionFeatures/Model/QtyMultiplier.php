@@ -10,34 +10,27 @@ use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\Data\ProductOptionInterface;
 use MageWorx\OptionBase\Helper\Data as BaseHelper;
 use MageWorx\OptionFeatures\Helper\Data as Helper;
+use MageWorx\OptionBase\Helper\System as SystemHelper;
+use Magento\Framework\Locale\FormatInterface;
 
 class QtyMultiplier
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
+    protected Helper $helper;
+    protected BaseHelper $baseHelper;
+    protected array $buyRequest;
+    protected SystemHelper $systemHelper;
+    protected FormatInterface $localeFormat;
 
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
-
-    /**
-     * @var array
-     */
-    protected $buyRequest;
-
-    /**
-     * @param Helper $helper
-     * @param BaseHelper $baseHelper
-     */
     public function __construct(
         Helper $helper,
-        BaseHelper $baseHelper
+        BaseHelper $baseHelper,
+        SystemHelper $systemHelper,
+        FormatInterface $localeFormat
     ) {
-        $this->helper     = $helper;
-        $this->baseHelper = $baseHelper;
+        $this->helper       = $helper;
+        $this->baseHelper   = $baseHelper;
+        $this->systemHelper = $systemHelper;
+        $this->localeFormat = $localeFormat;
     }
 
     /**
@@ -50,10 +43,15 @@ class QtyMultiplier
      */
     public function getTotalQtyMultiplierQuantity(array $options, $buyRequest, $quoteProduct)
     {
-        $this->buyRequest = $buyRequest;
-        $productQty       = isset($buyRequest['qty']) ? $buyRequest['qty'] : 1;
-
         $qtyMultiplierTotalQty = 0;
+
+        if (!$options || !is_array($options)) {
+            return $qtyMultiplierTotalQty;
+        }
+
+        $this->buyRequest = $buyRequest;
+        $productQty       = (string)$this->localeFormat->getNumber($buyRequest['qty'] ?? 1);
+
         foreach ($options as $optionId => $values) {
             $option = $quoteProduct->getOptionById($optionId);
             if (!$option) {
@@ -69,6 +67,7 @@ class QtyMultiplier
                 );
             }
         }
+
         return $qtyMultiplierTotalQty;
     }
 
@@ -93,6 +92,10 @@ class QtyMultiplier
             }
             $value = $option->getValueById($optionTypeId);
 
+            if (!$value) {
+                continue;
+            }
+
             $qtyMultiplier = $value->getQtyMultiplier();
 
             $optionQty = $this->helper->getOptionQty($this->buyRequest, $optionId, $optionTypeId);
@@ -102,5 +105,60 @@ class QtyMultiplier
         }
 
         return $totalQty;
+    }
+
+    /**
+     * Calculated qtyMultiplierQty for current item qty
+     *
+     * @param $orderItem
+     * @param $currentQty
+     * @return float|int
+     * @throws \Magento\Framework\Exception\FileSystemException
+     */
+    public function getQtyMultiplierQtyForCurrentItemQty(
+        \Magento\Sales\Model\Order\Item $orderItem,
+        float $currentQty
+    ): float {
+        return $this->getQtyMultiplierFromOrderItem($orderItem) * $currentQty;
+    }
+
+    /**
+     * @param \Magento\Sales\Model\Order\Item $orderItem
+     * @return float
+     * @throws \Magento\Framework\Exception\FileSystemException
+     */
+    public function getQtyMultiplierFromOrderItem(\Magento\Sales\Model\Order\Item $orderItem): float
+    {
+        // This code was added as quick fix for merge mainline
+        // https://github.com/magento-engcom/msi/issues/1586
+        if (null === $orderItem) {
+            return 0;
+        }
+
+        $buyRequest = $orderItem->getBuyRequest();
+        if (!$buyRequest->getOptions()) {
+            return 0;
+        }
+
+        if ($this->baseHelper->checkModuleVersion('101.2.2', '', '>=', '', 'Magento_Quote') &&
+            !$this->systemHelper->isAdmin()
+        ) {
+            $qtyMultiplierQty = $buyRequest->getQtyMultiplierQty();
+            $originalQty      = $buyRequest->getOriginalQty();
+        } else {
+            /* Using for magento lower than 2.4.2 because magento rewrite quote item buy_request */
+            $qtyMultiplierQty = $this->getTotalQtyMultiplierQuantity(
+                $buyRequest->getOptions(),
+                $buyRequest->toArray(),
+                $orderItem->getProduct()
+            );
+            $originalQty      = $buyRequest->getData('qty');
+        }
+
+        if (!$qtyMultiplierQty) {
+            return 0;
+        }
+
+        return $qtyMultiplierQty / (float)$originalQty;
     }
 }

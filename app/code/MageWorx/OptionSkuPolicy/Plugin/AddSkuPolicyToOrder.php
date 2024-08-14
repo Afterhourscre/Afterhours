@@ -6,32 +6,35 @@
 
 namespace MageWorx\OptionSkuPolicy\Plugin;
 
+use Magento\Catalog\Helper\Product as ProductHelper;
 use Magento\Quote\Model\QuoteManagement;
+use MageWorx\OptionBase\Helper\Data as BaseHelper;
 use MageWorx\OptionSkuPolicy\Helper\Data as Helper;
 use Magento\Checkout\Model\Cart;
 
 class AddSkuPolicyToOrder
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
+    protected Helper $helper;
+    protected BaseHelper $baseHelper;
+    protected Cart $cart;
+    protected ProductHelper $productHelper;
 
     /**
-     * @var Cart
-     */
-    protected $cart;
-
-    /**
+     * @param ProductHelper $productHelper
+     * @param BaseHelper $baseHelper
      * @param Helper $helper
      * @param Cart $cart
      */
     public function __construct(
         Helper $helper,
+        BaseHelper $baseHelper,
+        ProductHelper $productHelper,
         Cart $cart
     ) {
-        $this->helper = $helper;
-        $this->cart   = $cart;
+        $this->productHelper = $productHelper;
+        $this->helper        = $helper;
+        $this->baseHelper    = $baseHelper;
+        $this->cart          = $cart;
     }
 
     /**
@@ -49,7 +52,16 @@ class AddSkuPolicyToOrder
         if ($quote->getAllVisibleItems() && !$this->helper->isSkuPolicyAppliedToCartAndOrder()) {
             $quote->setCanApplySkuPolicyToOrder(true);
             $quote->setTotalsCollectedFlag(false);
-            $this->cart->save();
+            $quote->setIsSuperMode(true);
+            $this->productHelper->setSkipSaleableCheck(true);
+            if ($this->baseHelper->getFullActionName() === 'sales_order_create_save'
+                || $this->baseHelper->getFullActionName() === '__'
+                || $this->baseHelper->getFullActionName() === 'paypal_express_onAuthorization')
+            {
+                $quote->collectTotals();
+            } else {
+                $this->cart->save();
+            }
         }
 
         return [$quote, $orderData];

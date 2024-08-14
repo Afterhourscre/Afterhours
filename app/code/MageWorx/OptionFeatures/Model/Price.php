@@ -6,49 +6,64 @@
 
 namespace MageWorx\OptionFeatures\Model;
 
+use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\Product\Option\Value;
 use Magento\Framework\DataObject;
 use Magento\Framework\Model\AbstractModel;
 use MageWorx\OptionBase\Helper\Data as BaseHelper;
+use MageWorx\OptionBase\Helper\Price as BasePriceHelper;
+use Magento\Framework\Event\ManagerInterface;
+use MageWorx\OptionFeatures\Model\ResourceModel\BundleSelected;
 
-class Price
+class Price extends DataObject
 {
-    /**
-     * @var ProductRepositoryInterface
-     */
-    protected $productRepository;
+    protected ProductRepositoryInterface $productRepository;
+    protected DataObject $specialPriceModel;
+    protected DataObject $tierPriceModel;
+    protected BaseHelper $baseHelper;
+    protected BasePriceHelper $basePriceHelper;
 
     /**
-     * @var DataObject
+     * Core event manager proxy
+     *
+     * @var ManagerInterface
      */
-    protected $specialPriceModel;
+    protected ManagerInterface $eventManager;
+    protected BundleSelected $bundleSelected;
+    private \Magento\Framework\ObjectManagerInterface $objectManager;
 
     /**
-     * @var DataObject
-     */
-    protected $tierPriceModel;
-
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
-
-    /**
+     * Price constructor.
+     *
      * @param ProductRepositoryInterface $productRepository
      * @param DataObject $specialPriceModel
      * @param DataObject $tierPriceModel
+     * @param ManagerInterface $eventManager
      * @param BaseHelper $baseHelper
+     * @param BasePriceHelper $basePriceHelper
+     * @param \Magento\Framework\ObjectManagerInterface $objectmanager
+     * @param BundleSelected $bundleSelected
      */
     public function __construct(
         ProductRepositoryInterface $productRepository,
         DataObject $specialPriceModel,
         DataObject $tierPriceModel,
-        BaseHelper $baseHelper
+        ManagerInterface $eventManager,
+        BaseHelper $baseHelper,
+        BasePriceHelper $basePriceHelper,
+        \Magento\Framework\ObjectManagerInterface $objectManager,
+        BundleSelected $bundleSelected
     ) {
         $this->productRepository = $productRepository;
         $this->specialPriceModel = $specialPriceModel;
         $this->tierPriceModel    = $tierPriceModel;
         $this->baseHelper        = $baseHelper;
+        $this->eventManager      = $eventManager;
+        $this->basePriceHelper   = $basePriceHelper;
+        $this->objectManager     = $objectManager;
+        $this->bundleSelected    = $bundleSelected;
+        parent::__construct();
     }
 
     /**
@@ -67,10 +82,13 @@ class Price
         }
 
         $originalProduct = $option->getProduct();
-        $infoBuyRequest = $this->baseHelper->getInfoBuyRequest($originalProduct);
+        $infoBuyRequest  = $this->baseHelper->getInfoBuyRequest($originalProduct);
 
-        $valueQty = $this->getValueQty($option, $value, $infoBuyRequest);
-        $productQty = !empty($infoBuyRequest['qty']) ? $infoBuyRequest['qty'] : 1;
+        $valueQty   = $this->getValueQty($option, $value, $infoBuyRequest);
+        $productQty = $this->getProductQty();
+        if (empty($productQty)) {
+            $productQty = !empty($infoBuyRequest['qty']) ? $infoBuyRequest['qty'] : 1;
+        }
 
         $originalProductOptions = $originalProduct->getData('options');
         foreach ($originalProductOptions as $originalProductOption) {
@@ -96,7 +114,11 @@ class Price
             $totalQty = $productQty * $valueQty;
         }
 
-        if (!isset($tierPrices[$totalQty])) {
+        /**
+         * Without specifying the type we get Implicit conversion of a float number to an integer number
+         * Eg. 0.5 -> 0, 1.3 -> 1
+         */
+        if (!isset($tierPrices[(string)$totalQty])) {
             foreach ($tierPrices as $tierPriceItemQty => $tierPriceItem) {
                 if ($suitableTierPriceQty < $tierPriceItemQty && $totalQty >= $tierPriceItemQty) {
                     $suitableTierPrice    = $tierPriceItem;
@@ -104,21 +126,31 @@ class Price
                 }
             }
         } else {
-            $suitableTierPrice = $tierPrices[$totalQty];
+            $suitableTierPrice = $tierPrices[(string)$totalQty];
         }
 
-        if ($suitableTierPrice && ($suitableTierPrice['price'] < $specialPrice || $specialPrice === null)) {
-            $price = $suitableTierPrice['price'];
+        $actualTierPrice = isset($suitableTierPrice['price']) ? $suitableTierPrice['price'] : null;
+
+        if ($suitableTierPrice && ($actualTierPrice < $specialPrice || $specialPrice === null)) {
+            $price = $actualTierPrice;
         } elseif ($specialPrice !== null) {
             $price = $specialPrice;
         } else {
-            $price = $originalValue->getPriceType() == 'percent' ?
-                $price = $originalProduct
-                        ->getPriceModel()
-                        ->getBasePrice($originalProduct, $totalQty) * $originalValue->getPrice() / 100 :
-                $originalValue->getPrice();
-        }
+            if ($originalValue->getPriceType() == 'percent') {
+                $productFinalPrice = $originalProduct->getPriceModel()->getBasePrice($originalProduct, $totalQty);
+                $originalProduct->setFinalPrice($productFinalPrice);
+                $this->eventManager->dispatch(
+                    'catalog_product_get_final_price',
+                    ['product' => $originalProduct, 'qty' => $totalQty]
+                );
+                $productFinalPrice = $originalProduct->getData('final_price');
 
+                $price = $productFinalPrice * $originalValue->getPrice() / 100;
+            } else {
+                $price = $originalValue->getPrice();
+            }
+        }
+        
         return $price;
     }
 
@@ -138,6 +170,43 @@ class Price
         } elseif (!empty($infoBuyRequest['options_qty'][$option->getOptionId()])) {
             $valueQty = $infoBuyRequest['options_qty'][$option->getOptionId()];
         }
+
         return $valueQty;
+    }
+
+    public function getBundleTotalPrice(ProductInterface $product): float
+    {
+        $buyRequest              = $this->baseHelper->getInfoBuyRequest($product);
+        $selectedIds             = '';
+        $bundleProductPriceTotal = 0;
+
+        if (!isset($buyRequest['bundle_option'])) {
+            return $bundleProductPriceTotal;
+        }
+
+        foreach ($buyRequest['bundle_option'] as $selectionIds) {
+            if (!is_array($selectionIds)) {
+                $selectionIds = [$selectionIds];
+            }
+            foreach ($selectionIds as $id) {
+                $selectedIds .= ', ' . $id;
+            }
+        }
+
+        $selectedIds = substr($selectedIds, 1);
+        $valueData   = $this->bundleSelected->getBundleSelectedData($selectedIds);
+        foreach ($valueData as $key => $value) {
+            $result = $value['selection_price_value'];
+            if (isset($buyRequest['bundle_option_qty'])
+                && isset($buyRequest['bundle_option_qty'][$value['option_id']])
+            ) {
+                $result *= (float)$buyRequest['bundle_option_qty'][$value['option_id']];
+            } elseif (!$value['selection_can_change_qty']) {
+                $result *= (float)$value['selection_qty'];
+            }
+            $bundleProductPriceTotal += $result;
+        }
+
+        return $bundleProductPriceTotal;
     }
 }

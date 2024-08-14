@@ -16,24 +16,21 @@ use \Magento\Store\Model\StoreManagerInterface;
  */
 class BeforeDelete
 {
-    /**
-     * @var \MageWorx\OptionLink\Model\OptionValue
-     */
-    protected $modelOptionValue;
+    protected ModelOptionValue $modelOptionValue;
 
     /**
      * Magento register
      *
      * @var \Magento\Framework\Registry
      */
-    protected $registry;
+    protected Registry $registry;
 
     /**
      * Store manager
      *
      * @var \Magento\Store\Model\StoreManagerInterface
      */
-    protected $storeManager;
+    protected StoreManagerInterface $storeManager;
 
     /**
      * BeforeDelete constructor.

@@ -18,7 +18,4 @@
     <event name="catalog_product_save_before">
         <observer name="mageworx_optionbase_product_save_before" instance="MageWorx\OptionBase\Observer\EntitySaveBefore" />
     </event>
-    <event name="mageworx_attributes_save_trigger">
-        <observer name="mageworx_optionbase_apply_attributes_on_product" instance="MageWorx\OptionBase\Observer\ApplyAttributesOnProduct" />
-    </event>
 </config>

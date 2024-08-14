@@ -6,6 +6,7 @@
 
 namespace MageWorx\OptionVisibility\Model\CollectionUpdater\Option;
 
+use MageWorx\OptionBase\Helper\Data as BaseHelper;
 use MageWorx\OptionBase\Model\Product\Option\AbstractUpdater;
 use MageWorx\OptionVisibility\Model\OptionStoreView as StoreViewModel;
 use Magento\Framework\App\ResourceConnection;
@@ -18,25 +19,11 @@ class StoreView extends AbstractUpdater
 {
     const ALIAS_TABLE_STORE_VIEW = 'option_store_view';
 
-    /**
-     * @var VisibilityHelper
-     */
-    protected $visibilityHelper;
-
-    /**
-     * @var CustomerHelper
-     */
-    protected $customerHelper;
-
-    /**
-     * @var bool
-     */
-    protected $isVisibilityFilterRequired;
-
-    /**
-     * @var bool
-     */
-    protected $isVisibilityStoreView;
+    protected VisibilityHelper $visibilityHelper;
+    protected CustomerHelper   $customerHelper;
+    protected bool             $isVisibilityFilterRequired;
+    protected bool             $isVisibilityStoreView;
+    protected BaseHelper       $baseHelper;
 
     /**
      * CustomerGroup constructor.
@@ -50,15 +37,17 @@ class StoreView extends AbstractUpdater
      */
     public function __construct(
         ResourceConnection $resource,
-        Helper $helper,
-        SystemHelper $systemHelper,
-        VisibilityHelper $visibilityHelper,
-        CustomerHelper $customerHelper
+        Helper             $helper,
+        SystemHelper       $systemHelper,
+        VisibilityHelper   $visibilityHelper,
+        CustomerHelper     $customerHelper,
+        BaseHelper         $baseHelper
     ) {
         $this->visibilityHelper           = $visibilityHelper;
         $this->customerHelper             = $customerHelper;
         $this->isVisibilityFilterRequired = $this->customerHelper->isVisibilityFilterRequired();
         $this->isVisibilityStoreView      = $this->visibilityHelper->isVisibilityStoreViewEnabled();
+        $this->baseHelper                 = $baseHelper;
 
         parent::__construct($resource, $helper, $systemHelper);
     }
@@ -87,13 +76,13 @@ class StoreView extends AbstractUpdater
      * @param string $entityType
      * @return string
      */
-    public function getTableName($entityType)
+    public function getTableName($entityType): string
     {
         if ($entityType == 'group') {
             return $this->resource->getTableName(StoreViewModel::OPTIONTEMPLATES_TABLE_NAME);
         }
 
-        return $this->resource->getTableName(StoreViewModel::TABLE_NAME);
+        return (string)$this->resource->getTableName(StoreViewModel::TABLE_NAME);
     }
 
     /**
@@ -110,7 +99,7 @@ class StoreView extends AbstractUpdater
                 . " AND " . $this->getTableAlias() . "." . StoreViewModel::COLUMN_NAME_STORE_ID
                 . " = '" . $customerStoreId . "'";
 
-            return $conditions;
+            return (string)$conditions;
         }
 
         return 'main_table.' . StoreViewModel::COLUMN_NAME_OPTION_ID . ' = '
@@ -131,7 +120,6 @@ class StoreView extends AbstractUpdater
                 'IF(' . self::ALIAS_TABLE_STORE_VIEW . '.' . StoreViewModel::COLUMN_NAME_STORE_ID . ' IS NULL,0,1)'
             );
 
-
             return [
                 'visibility_by_customer_store_id' => $customerStoreExpr
             ];
@@ -149,7 +137,7 @@ class StoreView extends AbstractUpdater
      */
     public function getTableAlias()
     {
-        return $this->resource->getConnection()->getTableName(self::ALIAS_TABLE_STORE_VIEW);
+        return (string)$this->resource->getConnection()->getTableName(self::ALIAS_TABLE_STORE_VIEW);
     }
 
     /**
@@ -162,8 +150,6 @@ class StoreView extends AbstractUpdater
     {
         $entityType = $conditions['entity_type'];
         $tableName  = $this->getTableName($entityType);
-
-        $this->resource->getConnection()->query('SET SESSION group_concat_max_len = 100000;');
 
         $selectExpr = "SELECT " . StoreViewModel::COLUMN_NAME_OPTION_ID . " as "
             . StoreViewModel::FIELD_OPTION_ID_ALIAS . ","
@@ -201,5 +187,13 @@ class StoreView extends AbstractUpdater
             . " FROM " . $tableName;
 
         return new \Zend_Db_Expr('(' . $selectExpr . ')');
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function determineJoinNecessity(): bool
+    {
+        return $this->isVisibilityFilterRequired && $this->isVisibilityStoreView && $this->baseHelper->isEnabledVisibilityPerCustomerStoreView();
     }
 }

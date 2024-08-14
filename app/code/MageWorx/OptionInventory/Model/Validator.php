@@ -1,48 +1,75 @@
 <?php
 /**
- * Copyright © 2016 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
 namespace MageWorx\OptionInventory\Model;
+
+use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
+use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Api\Data\ProductOptionInterface;
+use Magento\Catalog\Model\Product\Option;
+use Magento\Catalog\Model\Product\Option\Type\DefaultType;
+use Magento\Framework\Data\Collection\AbstractDb;
+use Magento\Framework\DataObject;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Model\AbstractModel;
+use Magento\Framework\Model\Context;
+use Magento\Framework\Model\ResourceModel\AbstractResource;
+use Magento\Framework\ObjectManagerInterface;
+use Magento\Framework\Registry;
+use MageWorx\OptionBase\Api\Data\ProductCustomOptionValuesInterface;
+use MageWorx\OptionBase\Helper\Data as BaseHelper;
+use MageWorx\OptionInventory\Helper\Data as HelperData;
+use MageWorx\OptionInventory\Helper\Stock;
+use MageWorx\OptionInventory\Model\ResourceModel\Product\Option\Value\Collection;
+use MageWorx\OptionInventory\Model\ResourceModel\Product\Option\Value\CollectionFactory as OptionValueCollectionFactory;
 
 /**
  * Validator model
+ *
  * @package MageWorx\OptionInventory\Model
  */
-class Validator extends \Magento\Framework\Model\AbstractModel
+class Validator extends AbstractModel
 {
-    /**
-     * @var ObjectManager
-     */
-    protected $objectManager;
-
-    /**
-     * @var \MageWorx\OptionInventory\Helper\Stock
-     */
-    protected $stockHelper;
+    protected ObjectManagerInterface $objectManager;
+    protected Stock $stockHelper;
+    protected OptionValueCollectionFactory $optionValueCollectionFactory;
+    protected HelperData $helperData;
+    protected BaseHelper $baseHelper;
 
     /**
      * Validator constructor.
      *
-     * @param \Magento\Framework\ObjectManagerInterface $objectManager
-     * @param \Magento\Framework\Model\Context $context
-     * @param \Magento\Framework\Registry $registry
-     * @param \MageWorx\OptionInventory\Helper\Stock $stockHelper
-     * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
-     * @param \Magento\Framework\Data\Collection\AbstractDb|null $resourceCollection
+     * @param ObjectManagerInterface $objectManager
+     * @param Context $context
+     * @param Registry $registry
+     * @param Stock $stockHelper
+     * @param OptionValueCollectionFactory $optionValueCollectionFactory
+     * @param HelperData $helperData
+     * @param AbstractResource|null $resource
+     * @param AbstractDb|null $resourceCollection
      * @param array $data
      */
     public function __construct(
-        \Magento\Framework\ObjectManagerInterface $objectManager,
-        \Magento\Framework\Model\Context $context,
-        \Magento\Framework\Registry $registry,
-        \MageWorx\OptionInventory\Helper\Stock $stockHelper,
-        \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
-        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
+        ObjectManagerInterface $objectManager,
+        Context $context,
+        Registry $registry,
+        Stock $stockHelper,
+        OptionValueCollectionFactory $optionValueCollectionFactory,
+        HelperData $helperData,
+        BaseHelper $baseHelper,
+        AbstractResource $resource = null,
+        AbstractDb $resourceCollection = null,
         array $data = []
     ) {
-        $this->objectManager = $objectManager;
-        $this->stockHelper = $stockHelper;
+        $this->objectManager                = $objectManager;
+        $this->stockHelper                  = $stockHelper;
+        $this->optionValueCollectionFactory = $optionValueCollectionFactory;
+        $this->helperData                   = $helperData;
+        $this->baseHelper                   = $baseHelper;
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
     }
 
@@ -51,9 +78,9 @@ class Validator extends \Magento\Framework\Model\AbstractModel
      *
      * @param array $requestedData Requested Option Values
      * @param array $originData Original Option Values
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      */
-    public function validate($requestedData, $originData)
+    public function validate(array $requestedData, array $originData): void
     {
         foreach ($requestedData as $requestedValue) {
             $originValue = isset($originData[$requestedValue->getId()]) ? $originData[$requestedValue->getId()] : null;
@@ -66,12 +93,14 @@ class Validator extends \Magento\Framework\Model\AbstractModel
     /**
      * Check if allow original qty add requested qty
      *
-     * @param \Magento\Framework\DataObject $requestedValue
-     * @param \Magento\Catalog\Model\Product\Option\Value $originValue
+     * @param DataObject $requestedValue
+     * @param ProductCustomOptionValuesInterface $originValue
      * @return bool
      */
-    protected function isAllow($requestedValue, $originValue)
-    {
+    protected function isAllow(
+        DataObject $requestedValue,
+        ProductCustomOptionValuesInterface $originValue
+    ): bool {
         if (!$originValue) {
             return true;
         }
@@ -94,24 +123,33 @@ class Validator extends \Magento\Framework\Model\AbstractModel
     /**
      * Throw exception
      *
-     * @param \Magento\Catalog\Model\Product\Option\Value $value
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @param ProductCustomOptionValuesInterface $value
+     * @param DataObject $requestedValue
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
-    protected function addError($value, $requestedValue)
-    {
+    protected function addError(
+        ProductCustomOptionValuesInterface $value,
+        DataObject $requestedValue
+    ): void {
         $this->correctData($value);
 
         if ($value->getProductId()) {
-            $formattedQty = $this->stockHelper->floatingQty($value->getQty(), $value->getProductId());
+            $formattedQty = $this->stockHelper->isfloatingQty((int)$value->getProductId())
+                ? (float)$value->getQty()
+                : (int)$value->getQty();
         } else {
             $formattedQty = $value->getQty();
         }
-        $e = new \Magento\Framework\Exception\LocalizedException(
-            __('We don\'t have as many  "%1" : "%2" - "%3"  as you requested (available qty: "%4").',
+        $e = new LocalizedException(
+            __(
+                'We don\'t have as many  "%1" : "%2" - "%3"  as you requested (available qty: "%4").',
                 $requestedValue->getName(),
                 $requestedValue->getOptionTitle(),
                 $requestedValue->getValueTitle(),
-                $formattedQty));
+                $formattedQty
+            )
+        );
         throw $e;
     }
 
@@ -121,15 +159,13 @@ class Validator extends \Magento\Framework\Model\AbstractModel
      *
      * SkuIsValid - this property set the OptionLink module.
      *
-     * @param \Magento\Catalog\Model\Product\Option\Value $value
-     * @return void
+     * @param ProductCustomOptionValuesInterface $value
      */
-    protected function correctData($value)
+    protected function correctData(ProductCustomOptionValuesInterface $value): void
     {
         if ($value->getSkuIsValid()) {
-            $valuesCollection = $this->objectManager
-                ->create('\Magento\Catalog\Model\ResourceModel\Product\Option\Value\CollectionFactory')
-                ->create();
+            /** @var Collection $valuesCollection */
+            $valuesCollection = $this->optionValueCollectionFactory->create();
 
             $valuesCollection
                 ->addTitleToResult(1)
@@ -143,12 +179,12 @@ class Validator extends \Magento\Framework\Model\AbstractModel
     /**
      * This function checks from where to take away quantity.
      *
-     * @param array $value
+     * @param ProductCustomOptionValuesInterface $value
      * @return string
      */
-    public function getItemType($value)
+    public function getItemType(ProductCustomOptionValuesInterface $value): string
     {
-        $optionType = 'option';
+        $optionType  = 'option';
         $productType = 'product';
 
         if (!isset($value['sku_is_valid'])) {
@@ -162,5 +198,60 @@ class Validator extends \Magento\Framework\Model\AbstractModel
         }
 
         return $optionType;
+    }
+
+    /**
+     * Run validation process for add to cart action
+     *
+     * @param DataObject $subject
+     * @param array $values
+     * @return bool
+     */
+    public function canValidateAddToCart(
+        DataObject $subject,
+        array $values
+    ): bool {
+        return $this->process($subject->getOption());
+    }
+
+    /**
+     * Run validation process for cart and checkout
+     *
+     * @param ProductInterface $product
+     * @param ProductOptionInterface
+     * @return bool
+     */
+    public function canValidateCartCheckout(ProductInterface $product, ProductCustomOptionInterface $option): bool
+    {
+        $product = $this->baseHelper->getInfoBuyRequest($product);
+        if (!$product) {
+            return true;
+        }
+
+        return $this->process($option);
+    }
+
+    /**
+     * Check out of stock option values, if display out of stok is hidden - skip validation
+     *
+     * @param ProductCustomOptionInterface $option
+     */
+    protected function process(ProductCustomOptionInterface $option): bool
+    {
+
+        if ($this->helperData->isDisplayOutOfStockOptions()) {
+            return true;
+        }
+
+        if ($option->getValues()) {
+            foreach ($option->getValues() as $value) {
+                if (!$this->stockHelper->isOutOfStockOption($value)) {
+
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

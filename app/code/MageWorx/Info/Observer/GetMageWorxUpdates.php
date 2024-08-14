@@ -48,7 +48,10 @@ class GetMageWorxUpdates implements ObserverInterface
      */
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
-        if ($this->backendSession->isLoggedIn() && $this->helper->isUpdatesNotificationEnabled()) {
+        if ($this->backendSession->isLoggedIn()
+            && $this->helper->isNotificationExtensionEnabled()
+            && $this->helper->isUpdatesNotificationEnabled()
+        ) {
             $feedModel = $this->feedFactory->create();
             /* @var $feedModel \MageWorx\Info\Model\OffersFeed */
             $feedModel->checkUpdate();

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2017 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
 
@@ -17,51 +17,16 @@ use MageWorx\OptionFeatures\Model\Config\Features as FeaturesConfig;
 
 class Features extends Template
 {
-    /**
-     * @var EncoderInterface
-     */
-    protected $jsonEncoder;
+    protected EncoderInterface $jsonEncoder;
+    protected Helper $helper;
+    protected SystemHelper $systemHelper;
+    protected BaseHelper $baseHelper;
+    protected Registry $registry;
+    protected FeaturesConfig $featuresConfig;
+    protected array $selectionLimitCache = [];
+    protected string $jsonData = '';
+    protected string $isDefaultJsonData = '';
 
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var SystemHelper
-     */
-    protected $systemHelper;
-
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
-
-    /**
-     * @var Registry
-     */
-    protected $registry;
-
-    /**
-     * @var FeaturesConfig
-     */
-    protected $featuresConfig;
-
-    /**
-     * @var array
-     */
-    protected $selectionLimitCache = [];
-
-    /**
-     * @param Context $context
-     * @param EncoderInterface $jsonEncoder
-     * @param Helper $helper
-     * @param SystemHelper $systemHelper
-     * @param BaseHelper $baseHelper
-     * @param Registry $registry
-     * @param FeaturesConfig $featuresConfig
-     * @param array $data
-     */
     public function __construct(
         Context $context,
         EncoderInterface $jsonEncoder,
@@ -87,49 +52,64 @@ class Features extends Template
     /**
      * @return string
      */
-    public function getJsonData()
+    public function getJsonData(): string
     {
+        if (!empty($this->jsonData)) {
+            return $this->jsonData;
+        }
+
         $data = [
-            'question_image'             => $this->getViewFileUrl('MageWorx_OptionFeatures::image/question.png'),
-            'value_description_enabled'  => $this->helper->isValueDescriptionEnabled(),
-            'option_description_enabled' => $this->helper->isOptionDescriptionEnabled(),
-            'option_description_mode'    => $this->helper->getOptionDescriptionMode(),
-            'option_description_modes'   => [
+            'question_image'                        => $this->getViewFileUrl(
+                'MageWorx_OptionFeatures::image/question.png'
+            ),
+            'value_description_enabled'             => $this->helper->isValueDescriptionEnabled(),
+            'option_description_enabled'            => $this->helper->isOptionDescriptionEnabled(),
+            'option_description_mode'               => $this->helper->getOptionDescriptionMode(),
+            'option_description_modes'              => [
                 'disabled' => Helper::OPTION_DESCRIPTION_DISABLED,
                 'tooltip'  => Helper::OPTION_DESCRIPTION_TOOLTIP,
                 'text'     => Helper::OPTION_DESCRIPTION_TEXT,
-            ]
+            ],
+            'product_price_display_mode'            => $this->helper->getProductPriceDisplayMode(),
+            'additional_product_price_display_mode' => $this->helper->getAdditionalProductPriceFieldMode()
         ];
 
-        return $this->jsonEncoder->encode($data);
+        $storeId = $this->getProduct() ? $this->getProduct()->getStoreId() : 0;
+        $data['shareable_link_hint_text'] = $this->helper->getShareableLinkHintText($storeId);
+
+        $this->jsonData = (string)$this->jsonEncoder->encode($data);
+
+        return $this->jsonData;
     }
 
     /**
-     * @param string $area
+     * @return \Magento\Catalog\Model\Product|null
+     */
+    protected function getProduct()
+    {
+        $product = $this->registry->registry('product');
+        if (!$product || !$product->getId()) {
+            return null;
+        }
+        return $product;
+    }
+
+    /**
      * @return string
      */
-    public function getIsDefaultJsonData($area)
+    public function getIsDefaultJsonData(): string
     {
-        $router = '';
-        if ($this->getRequest()->getRouteName() == 'checkout') {
-            $router = 'checkout';
-        }
-        if ($this->getRequest()->getRouteName() == 'sales'
-            && $this->getRequest()->getControllerName() == 'order_create'
-        ) {
-            $router = 'admin_order_create';
+        if (!empty($this->isDefaultJsonData)) {
+            return $this->isDefaultJsonData;
         }
 
         $data = [
-            'is_default_values'  => $this->helper->isDefaultEnabled() ?
-                $this->featuresConfig->getIsDefaultArray($this->registry->registry('product')) :
-                [],
-            'is_default_enabled' => $this->helper->isDefaultEnabled(),
-            'area'               => $area == '' ? 'frontend' : $area,
-            'router'             => $router
+            'is_default_values' => $this->featuresConfig->getIsDefaultArray($this->registry->registry('product'))
         ];
 
-        return $this->jsonEncoder->encode($data);
+        $this->isDefaultJsonData = (string)$this->jsonEncoder->encode($data);
+
+        return $this->isDefaultJsonData;
     }
 
     /**
@@ -139,12 +119,9 @@ class Features extends Template
     {
         $data = [];
 
-        /** @var \Magento\Catalog\Block\Product\View $productMainBlock */
-        $productMainBlock = $this->getLayout()->getBlockSingleton('Magento\Catalog\Block\Product\View');
-        /** @var \Magento\Catalog\Model\Product $product */
-        $product = $productMainBlock->getProduct();
-        if (!$product || !$product->getId()) {
-            return json_encode($data);
+        $product = $this->getProduct();
+        if (!$product) {
+            return $this->jsonEncoder->encode($data);
         }
 
         if (!empty($this->selectionLimitCache[$product->getId()])) {

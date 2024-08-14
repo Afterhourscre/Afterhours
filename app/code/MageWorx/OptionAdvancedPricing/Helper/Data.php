@@ -9,17 +9,35 @@ namespace MageWorx\OptionAdvancedPricing\Helper;
 use Magento\Catalog\Model\Product\Option\Value as ProductOptionValue;
 use Magento\Catalog\Pricing\Price\BasePrice;
 use Magento\Store\Model\ScopeInterface;
+use MageWorx\OptionBase\Helper\Price as BasePriceHelper;
+use Magento\Framework\Pricing\PriceCurrencyInterface;
 
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
-    const XML_PATH_ENABLE_SPECIAL_PRICE                  = 'mageworx_apo/option_advanced_pricing/enable_special_price';
-    const XML_PATH_ENABLE_TIER_PRICE                     = 'mageworx_apo/option_advanced_pricing/enable_tier_price';
-    const XML_PATH_DISPLAY_TIER_PRICE_TABLE              =
-        'mageworx_apo/option_advanced_pricing/display_tier_price_table';
-    const XML_PATH_OPTION_SPECIAL_PRICE_DISPLAY_TEMPLATE =
+    const XML_PATH_ENABLE_SPECIAL_PRICE     = 'mageworx_apo/option_advanced_pricing/enable_special_price';
+    const XML_PATH_ENABLE_TIER_PRICE        = 'mageworx_apo/option_advanced_pricing/enable_tier_price';
+    const XML_PATH_DISPLAY_TIER_PRICE_TABLE = 'mageworx_apo/option_advanced_pricing/display_tier_price_table';
+
+    const XML_PATH_OPTION_SPECIAL_PRICE_DISPLAY_TEMPLATE               =
         'mageworx_apo/option_advanced_pricing/option_special_price_display_template';
-    const PRICE_TYPE_FIXED                               = 'fixed';
-    const PRICE_TYPE_PERCENTAGE_DISCOUNT                 = 'percentage_discount';
+
+    const PRICE_TYPE_FIXED               = 'fixed';
+    const PRICE_TYPE_PERCENTAGE_DISCOUNT = 'percentage_discount';
+    const PRICE_TYPE_PER_CHARACTER       = 'char';
+
+    protected BasePriceHelper $basePriceHelper;
+    protected PriceCurrencyInterface $priceCurrency;
+    protected string $template;
+
+    public function __construct(
+        BasePriceHelper $basePriceHelper,
+        PriceCurrencyInterface $priceCurrency,
+        \Magento\Framework\App\Helper\Context $context
+    ) {
+        $this->basePriceHelper = $basePriceHelper;
+        $this->priceCurrency   = $priceCurrency;
+        parent::__construct($context);
+    }
 
     /**
      * Check if special price is enabled
@@ -42,9 +60,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param int $storeId
      * @return string
      */
-    public function getOptionSpecialPriceDisplayTemplate($storeId = null)
+    public function getOptionSpecialPriceDisplayTemplate($storeId = null): string
     {
-        return $this->scopeConfig->getValue(
+        return (string)$this->scopeConfig->getValue(
             self::XML_PATH_OPTION_SPECIAL_PRICE_DISPLAY_TEMPLATE,
             ScopeInterface::SCOPE_STORE,
             $storeId
@@ -124,21 +142,55 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Get special price node according to option special price display template
      *
-     * @param float $specialPrice
-     * @param float $oldPrice
+     * @param array $priceConfig
      * @param array $priceItem
      * @return string
      */
-    public function getSpecialPriceDisplayNode($specialPrice, $oldPrice, $priceItem)
+    public function getSpecialPriceDisplayNode($priceConfig, $priceItem): string
     {
+        $this->template = $this->getOptionSpecialPriceDisplayTemplate();
 
-        $template = $this->getOptionSpecialPriceDisplayTemplate();
-        if (strpos($specialPrice, '-') !== false) {
-            $template = str_replace('+', '', $template);
+        $specialPriceExclTax = $priceConfig['basePrice']['amount'];
+        $specialPriceInclTax = $priceConfig['finalPrice']['amount'];
+        $oldPriceExclTax     = $priceConfig['oldPrice']['amount_excl_tax'];
+        $oldPriceInclTax     = $priceConfig['oldPrice']['amount_incl_tax'];
+
+        $formattedSpecialPriceInclTax = $this->priceCurrency->format($specialPriceInclTax, false);
+        if (strpos($formattedSpecialPriceInclTax, '-') !== false) {
+            $this->replaceTemplateNodeItem('+', '');
         }
-        $template = str_replace('{special_price}', $specialPrice, $template);
-        $template = str_replace('{price}', $oldPrice, $template);
-        $comment  = !empty($priceItem['comment']) ? htmlspecialchars_decode($priceItem['comment']) : '';
-        return str_replace('{special_price_comment}', $comment, $template);
+        $this->replaceTemplateNodeItem(
+            '{special_price}',
+            $formattedSpecialPriceInclTax
+        );
+        $this->replaceTemplateNodeItem(
+            '{special_price_excl_tax}',
+            $this->priceCurrency->format($specialPriceExclTax, false)
+        );
+        $this->replaceTemplateNodeItem(
+            '{price_excl_tax}',
+            $this->priceCurrency->format($oldPriceExclTax, false)
+        );
+        $this->replaceTemplateNodeItem(
+            '{price}',
+            $this->priceCurrency->format($oldPriceInclTax, false)
+        );
+
+        $comment = !empty($priceItem['comment']) ? htmlspecialchars_decode($priceItem['comment']) : '';
+        $this->replaceTemplateNodeItem('{special_price_comment}', $comment);
+
+        return (string)$this->template;
+    }
+
+    /**
+     * Replacer for template node item
+     *
+     * @param string $search
+     * @param float|int $value
+     * @return void
+     */
+    protected function replaceTemplateNodeItem($search, $value)
+    {
+        $this->template = str_replace($search, $value, $this->template);
     }
 }

@@ -46,70 +46,19 @@ class Visibility extends AbstractModifier implements ModifierInterface
     const KEY_CUSTOMER_GROUP = 'customer_group';
     const KEY_STORE_VIEW     = 'store_view';
 
-    /**
-     * @var UrlInterface
-     */
-    protected $urlBuilder;
-
-    /**
-     * @var \Magento\Catalog\Model\Locator\LocatorInterface
-     */
-    protected $locator;
-
-    /**
-     * @var ArrayManager
-     */
-    protected $arrayManager;
-
-    /**
-     * @var StoreManagerInterface
-     */
-    protected $storeManager;
-
-    /**
-     * @var Data
-     */
-    protected $directoryHelper;
-
-    /**
-     * @var SearchCriteriaBuilder
-     */
-    protected $searchCriteriaBuilder;
-
-    /**
-     * @var GroupRepositoryInterface
-     */
-    protected $groupRepository;
-
-    /**
-     * @var GroupManagementInterface
-     */
-    protected $groupManagement;
-
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var Helper
-     */
-    protected $helperBase;
-
-    /**
-     * @var HttpRequest
-     */
-    protected $request;
-
-    /**
-     * @var array
-     */
-    protected $meta = [];
-
-    /**
-     * @var string
-     */
-    protected $form = self::FORM_NAME;
+    protected UrlInterface $urlBuilder;
+    protected LocatorInterface $locator;
+    protected ArrayManager $arrayManager;
+    protected StoreManagerInterface $storeManager;
+    protected Data $directoryHelper;
+    protected SearchCriteriaBuilder $searchCriteriaBuilder;
+    protected GroupRepositoryInterface $groupRepository;
+    protected GroupManagementInterface $groupManagement;
+    protected Helper $helper;
+    protected HelperBase $helperBase;
+    protected HttpRequest $request;
+    protected array $meta = [];
+    protected string $form = self::FORM_NAME;
 
     /**
      * @param ArrayManager $arrayManager
@@ -455,6 +404,24 @@ class Visibility extends AbstractModifier implements ModifierInterface
      */
     protected function getVisibilityButtonConfig($sortOrder, $additionalForGroup = false)
     {
+        $params = [
+            'provider'               => '${ $.provider }',
+            'dataScope'              => '${ $.dataScope }',
+            'formName'               => $this->form,
+            'buttonName'             => '${ $.name }',
+            'isCustomerGroupEnabled' => $this->helper->isVisibilityCustomerGroupEnabled(),
+            'isStoreViewEnabled'     => $this->helper->isVisibilityStoreViewEnabled(),
+            'isDisableEnabled'       => $this->helper->isEnabledIsDisabled()
+        ];
+
+        if ($this->helperBase->checkModuleVersion('104.0.0')) {
+            $params['__disableTmpl'] = [
+                'provider'   => false,
+                'dataScope'  => false,
+                'buttonName' => false
+            ];
+        }
+
         $field[static::VISIBILITY_BUTTON_NAME] = [
             'arguments' => [
                 'data' => [
@@ -488,15 +455,7 @@ class Visibility extends AbstractModifier implements ModifierInterface
                                     . static::VISIBILITY_MODAL_INDEX,
                                 'actionName' => 'reloadModal',
                                 'params'     => [
-                                    [
-                                        'provider'               => '${ $.provider }',
-                                        'dataScope'              => '${ $.dataScope }',
-                                        'formName'               => $this->form,
-                                        'buttonName'            => '${ $.name }',
-                                        'isCustomerGroupEnabled' => $this->helper->isVisibilityCustomerGroupEnabled(),
-                                        'isStoreViewEnabled'     => $this->helper->isVisibilityStoreViewEnabled(),
-                                        'isDisableEnabled'       => $this->helper->isEnabledIsDisabled(),
-                                    ],
+                                    $params,
                                 ],
                             ],
                         ],
@@ -517,14 +476,23 @@ class Visibility extends AbstractModifier implements ModifierInterface
     {
         $attributes = [];
         if ($this->helper->isEnabledIsDisabled()) {
-            $attributes[] = '${ $.dataScope }' . '.' . Helper::KEY_DISABLED;
+            $attributes[Helper::KEY_DISABLED] = '${ $.dataScope }' . '.' . Helper::KEY_DISABLED;
         }
         if ($this->helper->isVisibilityCustomerGroupEnabled()) {
-            $attributes[] = '${ $.dataScope }' . '.' . static::KEY_CUSTOMER_GROUP;
+            $attributes[static::KEY_CUSTOMER_GROUP] = '${ $.dataScope }' . '.' . static::KEY_CUSTOMER_GROUP;
         }
         if ($this->helper->isVisibilityStoreViewEnabled()) {
-            $attributes[] = '${ $.dataScope }' . '.' . static::KEY_STORE_VIEW;
+            $attributes[static::KEY_STORE_VIEW] = '${ $.dataScope }' . '.' . static::KEY_STORE_VIEW;
         }
+
+        if ($this->helperBase->checkModuleVersion('104.0.0')) {
+            $attributes['__disableTmpl'] = [
+                Helper::KEY_DISABLED       => false,
+                static::KEY_CUSTOMER_GROUP => false,
+                static::KEY_STORE_VIEW     => false,
+            ];
+        }
+
         return $attributes;
     }
 
@@ -664,8 +632,8 @@ class Visibility extends AbstractModifier implements ModifierInterface
                         'fit'           => true,
                         'tooltip'       => [
                             'description' => __(
-                                'This setting disables the particular option with all its values 
-                                despite of the selected customer groups and the store views. If you need to 
+                                'This setting disables the particular option with all its values
+                                despite of the selected customer groups and the store views. If you need to
                                 disable a particular option value, you should enable this setting for that value.'
                             )
                         ],

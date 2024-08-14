@@ -3,28 +3,21 @@
  * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+declare(strict_types=1);
+
 namespace MageWorx\OptionBase\Plugin;
 
+use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
 use MageWorx\OptionBase\Model\ValidationResolver;
 use MageWorx\OptionBase\Helper\Data as BaseHelper;
 use Magento\Catalog\Model\Product\Type\AbstractType;
+use Magento\Catalog\Model\Product;
 
 class ValidateCartCheckout
 {
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
+    protected BaseHelper $baseHelper;
+    protected ValidationResolver $validationResolver;
 
-    /**
-     * @var ValidationResolver
-     */
-    protected $validationResolver;
-
-    /**
-     * @param ValidationResolver $validationResolver
-     * @param BaseHelper $baseHelper
-     */
     public function __construct(
         ValidationResolver $validationResolver,
         BaseHelper $baseHelper
@@ -65,11 +58,8 @@ class ValidateCartCheckout
     /**
      * Check validation permission from APO modules
      *
-     * @param \Magento\Catalog\Model\Product $product
-     * @param \Magento\Catalog\Model\Product\Option $option
-     * @return bool
      */
-    protected function hasValidationPermission($product, $option)
+    protected function hasValidationPermission(Product $product, ProductCustomOptionInterface $option): bool
     {
         if (!$this->validationResolver->getValidators()) {
             return true;

@@ -15,6 +15,8 @@ Quantity,Quantity
 "Display Option Inventory on Front-end","Display Option Inventory on Front-end"
 "Out-Of-Stock options","Out-Of-Stock options"
 "Display Out-Of-Stock message","Display Out-Of-Stock message"
+"Display Out-Of-Stock message on options level","Display Out-Of-Stock message on options level"
+"Show required 'Out of stock' options","Show required 'Out of stock' options"
 "Product Id","Product Id"
 "Product Name","Product Name"
 "Product Sku","Product Sku"

@@ -1,76 +1,65 @@
 <?php
 /**
- * Copyright © 2016 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+declare(strict_types=1);
+
 namespace MageWorx\OptionInventory\Model;
 
+use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
+use Magento\Catalog\Model\Product\Option;
 use Magento\Framework\DataObjectFactory;
-use Magento\Framework\ObjectManagerInterface as ObjectManager;
 use MageWorx\OptionInventory\Helper\Stock as StockHelper;
 use MageWorx\OptionBase\Helper\Data as BaseHelper;
 use MageWorx\OptionInventory\Model\ResourceModel\Product\Option\Value\CollectionFactory as OptionValueCollectionFactory;
+use Magento\Catalog\Model\Product\Option\ValueFactory as OptionValueFactory;
+use Magento\Catalog\Model\Product\OptionFactory as OptionFactory;
 
 /**
  * StockProvider model.
+ *
  * @package MageWorx\OptionInventory\Model
  */
 class StockProvider
 {
     /**
-     * @var ObjectManager
-     */
-    protected $objectManager;
-
-    /**
      * OptionInventory Stock helper
      *
      * @var StockHelper
      */
-    protected $stockHelper;
-
-    /**
-     * @var DataObjectFactory
-     */
-    protected $dataObjectFactory;
-
-    /**
-     * @var \MageWorx\OptionBase\Helper\Data
-     */
-    protected $baseHelper;
-
-    /**
-     * @var OptionValueCollectionFactory
-     */
-    protected $optionValueCollectionFactory;
-
-    /**
-     * @var array
-     */
-    protected $cachedOptions;
+    protected StockHelper $stockHelper;
+    protected DataObjectFactory $dataObjectFactory;
+    protected BaseHelper $baseHelper;
+    protected OptionValueCollectionFactory $optionValueCollectionFactory;
+    protected array $cachedOptions;
+    protected OptionValueFactory $optionValueFactory;
+    protected OptionFactory $optionFactory;
 
     /**
      * StockProvider constructor.
      *
-     * @param ObjectManager $objectManager
      * @param StockHelper $stockHelper
      * @param DataObjectFactory $dataObjectFactory
      * @param BaseHelper $baseHelper
      * @param OptionValueCollectionFactory $optionValueCollectionFactory
+     * @param OptionValueFactory $optionValueFactory
+     * @param OptionFactory $optionFactory
      */
     public function __construct(
-        ObjectManager $objectManager,
         StockHelper $stockHelper,
         DataObjectFactory $dataObjectFactory,
         BaseHelper $baseHelper,
-        OptionValueCollectionFactory $optionValueCollectionFactory
+        OptionValueCollectionFactory $optionValueCollectionFactory,
+        OptionValueFactory $optionValueFactory,
+        OptionFactory $optionFactory
     ) {
-
-        $this->objectManager = $objectManager;
-        $this->stockHelper = $stockHelper;
-        $this->dataObjectFactory = $dataObjectFactory;
-        $this->baseHelper = $baseHelper;
+        $this->stockHelper                  = $stockHelper;
+        $this->dataObjectFactory            = $dataObjectFactory;
+        $this->baseHelper                   = $baseHelper;
         $this->optionValueCollectionFactory = $optionValueCollectionFactory;
+        $this->optionValueFactory           = $optionValueFactory;
+        $this->optionFactory                = $optionFactory;
     }
 
     /**
@@ -79,7 +68,7 @@ class StockProvider
      * @param array $requestedData Options array
      * @return array
      */
-    public function getOriginData($requestedData)
+    public function getOriginData(array $requestedData): array
     {
         $originalData = [];
 
@@ -102,7 +91,7 @@ class StockProvider
      * @param array $cart Option array retrieved from POST
      * @return array
      */
-    public function getRequestedData($items, $cart)
+    public function getRequestedData(array $items, array $cart): array
     {
         $requestedData = [];
 
@@ -127,16 +116,17 @@ class StockProvider
     /**
      * Retrieve item option values data
      *
-     * @param \Magento\Quote\Model\Quote\Item $item Quote item
-     * @param array $cart Option array retrieved from POST
+     * @param \Magento\Quote\Model\Quote\Item $item
+     * @param array $cart
      * @return array
+     * @throws \Exception
      */
-    public function getItemData($item, $cart = [])
+    public function getItemData(\Magento\Quote\Model\Quote\Item $item, array $cart = []): array
     {
         $requestedData = [];
 
-        $itemInfo = $this->getItemInfo($item);
-        $itemOptions = isset($itemInfo['options']) ? $itemInfo['options'] : [];
+        $itemInfo            = $this->getItemInfo($item);
+        $itemOptions         = isset($itemInfo['options']) ? $itemInfo['options'] : [];
         $tempOptionValueData = [];
         foreach ($itemOptions as $optionId => $values) {
             $productOption = $item->getProduct()->getOptionById($optionId);
@@ -185,19 +175,19 @@ class StockProvider
         }
 
         foreach ($tempOptionValueData as $valueId => $valueData) {
-            $qty = $this->baseHelper->getOptionValueQty($valueId, $valueData, $item, $cart);
-            $currentProductName = $item->getName();
-            $optionData = $item->getProduct()->getOptionById($valueData['option_id']);
-            $currentOptionName = $optionData->getTitle();
-            $currentValueName = $optionData->getValueById($valueId)->getTitle();
+            $qty                     = $this->baseHelper->getOptionValueQty($valueId, $valueData, $item, $cart);
+            $currentProductName      = $item->getName();
+            $optionData              = $item->getProduct()->getOptionById($valueData['option_id']);
+            $currentOptionName       = $optionData->getTitle();
+            $currentValueName        = $optionData->getValueById($valueId)->getTitle();
             $requestedData[$valueId] = $this->dataObjectFactory->create(
                 [
                     'data' => [
-                        'id' => $valueId,
-                        'qty' => $qty,
-                        'name' => $currentProductName,
+                        'id'           => $valueId,
+                        'qty'          => $qty,
+                        'name'         => $currentProductName,
                         'option_title' => $currentOptionName,
-                        'value_title' => $currentValueName
+                        'value_title'  => $currentValueName
                     ]
                 ]
             );
@@ -210,9 +200,9 @@ class StockProvider
      * Retrieve item info
      *
      * @param \Magento\Quote\Model\Quote\Item $item Quote Item
-     * @return mixed
+     * @return array
      */
-    protected function getItemInfo($item)
+    protected function getItemInfo(\Magento\Quote\Model\Quote\Item $item): array
     {
         $itemOptions = $item->getOptionsByCode();
 
@@ -221,54 +211,89 @@ class StockProvider
             return [];
         }
 
-        $itemInfoBuyRequest = $itemOptions['info_buyRequest'];
-        $itemData = $this->baseHelper->decodeBuyRequestValue($itemInfoBuyRequest->getData('value'));
+        if (!isset($itemOptions['info_buyRequest'])) {
+            return [];
+        }
 
-        return $itemData;
+        $itemInfoBuyRequest = $itemOptions['info_buyRequest'];
+
+        return $this->baseHelper->decodeBuyRequestValue($itemInfoBuyRequest->getData('value'));
     }
 
     /**
      * This method updates options stock message
      *
-     * @param $options
-     * @return mixed
+     * @param array $options
+     * @return array
      */
-    public function updateOptionsStockMessage($options)
+    public function updateOptionsStockMessage(array $options): array
     {
-        $optionModel = $this->objectManager
-            ->create('Magento\Catalog\Model\Product\Option');
+        \Magento\Framework\Profiler::start('optionInventory-stockProvider-updateOptionsStockMessage');
 
-        $optionValuesId = $this->stockHelper->getOptionValuesId($options);
+        $optionIds          = array_keys($options);
+        $manageStockOptions = $this->stockHelper->getOptionsContainManageStockValues($optionIds);
+        $optionValueIds     = $this->stockHelper->getOptionValueIds($options, $manageStockOptions);
 
-        $hash = md5(implode(',', $optionValuesId));
+        $hash = hash('sha256', implode(',', $optionValueIds));
         if (isset($this->cachedOptions[$hash])) {
+
+            \Magento\Framework\Profiler::stop('optionInventory-stockProvider-updateOptionsStockMessage');
+
             return $this->cachedOptions[$hash];
         }
 
-        $optionValuesCollection = $this->loadOptionValues($optionValuesId);
-        $optionCollection = $optionModel
-            ->getCollection()
-            ->addFieldToFilter(
-                'option_id',
-                ['in' => array_keys($options)]
-            );
-
-        foreach ($options as $optionId => $values) {
-            $option = $optionCollection->getItemById($optionId);
+        $optionValuesCollection = $this->loadOptionValues($optionValueIds);
+        $optionCollection       = $this->optionFactory->create()
+                                                      ->getCollection()
+                                                      ->addFieldToFilter(
+                                                          'option_id',
+                                                          ['in' => implode(',', $manageStockOptions)]
+                                                      );
+        $optionsCollection      = $optionCollection->getItems();
+        $optionsToUpdate        = array_intersect_key($options, array_flip($manageStockOptions));
+        foreach ($optionsToUpdate as $optionId => $values) {
+            $option = $optionsCollection[$optionId];
             if (!is_object($option)) {
                 continue;
             }
 
-            if ($option->getGroupByType() == \Magento\Catalog\Model\Product\Option::OPTION_GROUP_SELECT) {
+            if ($option->getGroupByType() == ProductCustomOptionInterface::OPTION_GROUP_SELECT) {
                 foreach ($values as $valueId => $valueData) {
-                    $value = $this->getValueById($optionValuesCollection, $valueId);
-                    $stockMessage = $this->stockHelper->getStockMessage($value, $option->getProductId());
-                    $options[$optionId][$valueId]['stockMessage'] = $stockMessage;
+                    $valueModel = $this->getValueById($optionValuesCollection, (int)$valueId);
+                    if ($valueModel->getManageStock()) {
+                        $stockMessage = $this->stockHelper->getStockMessage($valueModel, $option->getProductId());
+
+                        $options[$optionId][$valueId]['stockMessage'] = $stockMessage;
+                    }
                 }
             }
         }
 
         $this->cachedOptions[$hash] = $options;
+
+
+        /* Front Product
+         *
+         * Origin code
+         *
+         * time - 2.025992 (2.009212)
+         * avg - 2.025992 (2.009212)
+         * count - 1
+         * memory - 1,947,424
+         * real memory - 4,194,304
+         *
+         * -------------------------
+         *
+         * Updated code
+         *
+         * time - 1.487559 (1.476566)
+         * avg - 1.487559  (1.476566)
+         * memory - 1,617,384
+         * real memory - 4,194,304
+         *
+         */
+        \Magento\Framework\Profiler::stop('optionInventory-stockProvider-updateOptionsStockMessage');
+
         return $options;
     }
 
@@ -277,27 +302,18 @@ class StockProvider
      * If OptionLink module is enabled this method will return data
      * taking into account products linked by SKU to options.
      *
-     * @param int $valuesId
+     * @param array $valuesId
      * @return array
      */
-    protected function loadOptionValues($valuesId)
+    protected function loadOptionValues(array $valuesId): array
     {
-        $valueCollection = $this->objectManager
-            ->get('Magento\Catalog\Model\ResourceModel\Product\Option\Value\CollectionFactory')
-            ->create();
+        /** @var \MageWorx\OptionInventory\Model\ResourceModel\Product\Option\Value\Collection $valuesCollection */
+        $valuesCollection = $this->optionValueCollectionFactory->create();
+        $valuesCollection->setFlag('mw_avoid_adding_attributes', true);
+        $valuesCollection->getSelect()
+                         ->where('main_table.option_type_id IN (?)', array_filter($valuesId, 'is_numeric'));
 
-        $valueCollection
-            ->addTitleToResult(1)
-            ->addPriceToResult(1);
-
-        $valueCollection->getSelect()
-            ->where('main_table.option_type_id IN (?)', array_filter($valuesId, 'is_numeric'));
-
-        $options = $valueCollection
-            ->load()
-            ->getData();
-
-        return $options;
+        return $valuesCollection->load()->getData();
     }
 
     /**
@@ -305,14 +321,14 @@ class StockProvider
      *
      * @param array $values
      * @param int $valueId
-     * @return \Magento\Framework\DataObject
+     * @return \Magento\Catalog\Model\Product\Option\Value
      */
-    protected function getValueById($values, $valueId)
+    protected function getValueById(array $values, int $valueId): \Magento\Catalog\Model\Product\Option\Value
     {
         foreach ($values as $value) {
             if ($value['option_type_id'] == $valueId) {
-                $obj = new \Magento\Framework\DataObject($value);
-                return $obj;
+
+                return $this->optionValueFactory->create()->setData($value);
             }
         }
     }

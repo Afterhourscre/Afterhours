@@ -15,38 +15,12 @@ use MageWorx\OptionBase\Helper\System as SystemHelper;
 
 class CollectProductConditions
 {
-    /**
-     * @var CollectionUpdaterRegistry
-     */
-    private $collectionUpdaterRegistry;
+    private CollectionUpdaterRegistry $collectionUpdaterRegistry;
+    protected OptionValueCollectionFactory $optionValueCollectionFactory;
+    protected StoreManager $storeManager;
+    protected SystemHelper $systemHelper;
+    protected OptionCollectionFactory $optionCollectionFactory;
 
-    /**
-     * @var OptionValueCollectionFactory
-     */
-    protected $optionValueCollectionFactory;
-
-    /**
-     * @var StoreManager
-     */
-    protected $storeManager;
-
-    /**
-     * @var SystemHelper
-     */
-    protected $systemHelper;
-
-    /**
-     * @var OptionCollectionFactory
-     */
-    protected $optionCollectionFactory;
-
-    /**
-     * @param CollectionUpdaterRegistry $collectionUpdaterRegistry
-     * @param OptionValueCollectionFactory $optionValueCollectionFactory
-     * @param SystemHelper $systemHelper
-     * @param OptionCollectionFactory $optionCollectionFactory
-     * @param StoreManager $storeManager
-     */
     public function __construct(
         CollectionUpdaterRegistry $collectionUpdaterRegistry,
         OptionValueCollectionFactory $optionValueCollectionFactory,

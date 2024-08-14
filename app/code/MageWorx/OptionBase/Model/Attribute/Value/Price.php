@@ -7,29 +7,27 @@
 namespace MageWorx\OptionBase\Model\Attribute\Value;
 
 use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\DataObjectFactory;
+use Magento\Framework\Serialize\Serializer\Json as Serializer;
 use Magento\Store\Model\Store;
 use MageWorx\OptionBase\Helper\Data as BaseHelper;
-use MageWorx\OptionBase\Api\AttributeInterface;
 use MageWorx\OptionBase\Model\OptionTypePrice;
 use MageWorx\OptionBase\Model\Product\Option\AbstractAttribute;
 
-class Price extends AbstractAttribute implements AttributeInterface
+class Price extends AbstractAttribute
 {
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
+    const FIELD_MAGE_ONE_OPTIONS_IMPORT = '_custom_option_row_price';
 
-    /**
-     * @param ResourceConnection $resource
-     * @param BaseHelper $baseHelper
-     */
+    protected Serializer $serializer;
+
     public function __construct(
         ResourceConnection $resource,
-        BaseHelper $baseHelper
+        BaseHelper $baseHelper,
+        DataObjectFactory $dataObjectFactory,
+        Serializer $serializer
     ) {
-        $this->baseHelper = $baseHelper;
-        parent::__construct($resource);
+        $this->serializer = $serializer;
+        parent::__construct($resource, $baseHelper, $dataObjectFactory);
     }
 
     /**
@@ -60,6 +58,7 @@ class Price extends AbstractAttribute implements AttributeInterface
         if (!$type) {
             return $map[$this->entity->getType()];
         }
+
         return $map[$type];
     }
 
@@ -110,10 +109,12 @@ class Price extends AbstractAttribute implements AttributeInterface
         $data = [];
 
         foreach ($savedItems as $savedItemKey => $savedItemValue) {
-            $decodedJsonData = json_decode($savedItemValue, true);
+            $decodedJsonData = $savedItemValue ? $this->serializer->unserialize($savedItemValue) : null;
+
             if (empty($decodedJsonData)) {
                 continue;
             }
+
             $data['delete'][] = [
                 OptionTypePrice::FIELD_OPTION_TYPE_ID => $savedItemKey,
             ];
@@ -127,6 +128,7 @@ class Price extends AbstractAttribute implements AttributeInterface
                 ];
             }
         }
+
         return $data;
     }
 
@@ -198,5 +200,155 @@ class Price extends AbstractAttribute implements AttributeInterface
     public function prepareDataForFrontend($object)
     {
         return [];
+    }
+
+    /**
+     * Collect system data (customer group ids, store ids) from Magento 1 product csv
+     *
+     * @param array $systemData
+     * @param array $productData
+     * @param array $optionData
+     * @param array $valueData
+     */
+    public function collectOptionsSystemDataMageOne(&$systemData, $productData, $optionData, $valueData = [])
+    {
+        if (empty($valueData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT])
+            || !is_array($valueData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT])
+        ) {
+            return;
+        }
+
+        foreach ($valueData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT] as $datumStore => $datumValue) {
+            $systemData['store'][$datumStore] = $datumStore;
+        }
+    }
+
+    /**
+     * Collect system data (customer group ids, store ids) from Magento 2 template data
+     *
+     * @param array $data
+     * @return array
+     */
+    public function collectTemplateSystemDataMageTwo($data)
+    {
+        return $this->collectStoresDataByKey($data, 'mageworx_option_price');
+    }
+
+    /**
+     * Prepare data from Magento 1 product csv for future import
+     *
+     * @param array $systemData
+     * @param array $productData
+     * @param array $optionData
+     * @param array $preparedOptionData
+     * @param array $valueData
+     * @param array $preparedValueData
+     * @return void
+     */
+    public function prepareOptionsMageOne(
+        $systemData,
+        $productData,
+        $optionData,
+        &$preparedOptionData,
+        $valueData = [],
+        &$preparedValueData = []
+    ) {
+        if (empty($valueData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT])
+            || !is_array($valueData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT])
+        ) {
+            return;
+        }
+
+        $mageworxPrice = [];
+        foreach ($valueData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT] as $datumStore => $datumValue) {
+            if (!$this->hasStoreEquivalent($systemData, $datumStore)) {
+                continue;
+            }
+            $priceType = substr($datumValue, -1) === '%'
+                ? 'percent'
+                : 'fixed';
+            $price     = (float)rtrim($datumValue, '%');
+
+            $mageworxPrice[] = [
+                OptionTypePrice::FIELD_STORE_ID   => $systemData['map']['store'][$datumStore],
+                OptionTypePrice::FIELD_PRICE      => $price,
+                OptionTypePrice::FIELD_PRICE_TYPE => $priceType,
+            ];
+        }
+        $preparedValueData[static::getName()] = $this->baseHelper->jsonEncode($mageworxPrice);
+    }
+
+    /**
+     * Collect data for magento2 product export
+     *
+     * @param array $row
+     * @param array $data
+     * @return void
+     */
+    public function collectExportDataMageTwo(&$row, $data)
+    {
+        $prefix        = 'custom_option_row_';
+        $attributeData = null;
+        if (!empty($data[$this->getName()])) {
+            $attributeData = $this->baseHelper->jsonDecode($data[$this->getName()]);
+        }
+        if (empty($attributeData) || !is_array($attributeData)) {
+            $row[$prefix . $this->getName()] = null;
+
+            return;
+        }
+        $result = [];
+        foreach ($attributeData as $datum) {
+            $parts = [];
+            foreach ($datum as $datumKey => $datumValue) {
+                $datumValue = $this->encodeSymbols($datumValue);
+                $parts[]    = $datumKey . '=' . $datumValue . '';
+            }
+            $result[] = implode(',', $parts);
+        }
+        $row[$prefix . $this->getName()] = $result ? implode('|', $result) : null;
+    }
+
+    /**
+     * Collect data for magento2 product import
+     *
+     * @param array $data
+     * @return array|null
+     */
+    public function collectImportDataMageTwo($data)
+    {
+        if (!$this->hasOwnTable()) {
+            return null;
+        }
+
+        if (!isset($data['custom_option_row_' . $this->getName()])) {
+            return null;
+        }
+
+        $this->entity = $this->dataObjectFactory->create();
+        $this->entity->setType('product');
+
+        $prices       = [];
+        $preparedData = [];
+        $iterator     = 0;
+
+        $attributeData = $data['custom_option_row_' . $this->getName()];
+        if (empty($attributeData)) {
+            return $this->collectPrices([], $prices);
+        }
+
+        $step1 = explode('|', $attributeData);
+        foreach ($step1 as $step1Item) {
+            $step2 = explode(',', $step1Item);
+            foreach ($step2 as $step2Item) {
+                $step3Item                              = explode('=', $step2Item);
+                $step3Item[1]                           = $this->decodeSymbols($step3Item[1]);
+                $preparedData[$iterator][$step3Item[0]] = $step3Item[1];
+            }
+            $iterator++;
+        }
+        $prices[$data['custom_option_row_id']] = $this->baseHelper->jsonEncode($preparedData);
+
+        return $this->collectPrices([], $prices);
     }
 }

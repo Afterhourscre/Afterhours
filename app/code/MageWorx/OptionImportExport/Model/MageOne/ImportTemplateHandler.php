@@ -11,10 +11,10 @@ use Magento\Framework\Exception\IntegrationException;
 use Magento\Framework\Filesystem;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Event\ManagerInterface as EventManager;
-use Magento\Framework\App\Request\Http as HttpRequest;
+use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Escaper;
-use Magento\Framework\File\Csv as FileCsv;
-use Magento\Backend\Model\Session as BackendSession;
+use Magento\Framework\Registry;
+use Magento\Framework\Serialize\Serializer\Serialize as Serializer;
 use MageWorx\OptionBase\Model\Product\Attributes as ProductAttributes;
 use MageWorx\OptionBase\Model\Product\Option\Attributes as OptionAttributes;
 use MageWorx\OptionBase\Model\Product\Option\Value\Attributes as ValueAttributes;
@@ -26,7 +26,10 @@ use MageWorx\OptionFeatures\Helper\Image as ImageHelper;
 
 class ImportTemplateHandler
 {
-    const SEPARATOR = '/';
+    const SEPARATOR                  = '/';
+    const IMPORT_MODE_FULL           = 'full';
+    const IMPORT_MODE_OPTIONS_ONLY   = 'options_only';
+    const IMPORT_MODE_TEMPLATES_ONLY = 'templates_only';
 
     /**
      * @var Filesystem
@@ -39,11 +42,9 @@ class ImportTemplateHandler
     protected $mediaDirectory;
 
     /**
-     * CSV Processor
-     *
-     * @var FileCsv
+     * @var Serializer
      */
-    protected $csvProcessor;
+    protected $serializer;
 
     /**
      * @var Escaper
@@ -96,14 +97,9 @@ class ImportTemplateHandler
     protected $eventManager;
 
     /**
-     * @var HttpRequest
+     * @var Registry
      */
-    protected $request;
-
-    /**
-     * @var BackendSession
-     */
-    protected $backendSession;
+    protected $registry;
 
     /**
      * List of fields that must be validated in group, except APO attributes
@@ -223,12 +219,40 @@ class ImportTemplateHandler
      */
     protected $currentTemplateName = '';
 
+    /**
+     * @var array
+     */
+    protected $storeIds = [];
+
+    /**
+     * @var array
+     */
+    protected $customerGroupIds = [];
+
+    /**
+     * @var bool
+     */
+    protected $isSystemDataRequired = false;
+
+    /**
+     * @var string
+     */
+    protected $importMode = '';
+
+    /**
+     * @var array
+     */
+    protected $templateMap = [];
+
+    /**
+     * @var ResourceConnection
+     */
+    protected $resource;
 
     /**
      * ImportTemplateHandler constructor.
      *
      * @param Escaper $escaper
-     * @param FileCsv $csvProcessor
      * @param ProductAttributes $productAttributes
      * @param OptionAttributes $optionAttributes
      * @param ValueAttributes $valueAttributes
@@ -237,14 +261,14 @@ class ImportTemplateHandler
      * @param ImageHelper $imageHelper
      * @param EventManager $eventManager
      * @param Filesystem $filesystem
-     * @param HttpRequest $request
+     * @param ResourceConnection $resource
      * @param GroupFactory $groupFactory
      * @param GroupOptionFactory $groupOptionFactory
-     * @param BackendSession $backendSession
+     * @param Registry $registry
+     * @param Serializer $serializer
      */
     public function __construct(
         Escaper $escaper,
-        FileCsv $csvProcessor,
         ProductAttributes $productAttributes,
         OptionAttributes $optionAttributes,
         ValueAttributes $valueAttributes,
@@ -253,13 +277,14 @@ class ImportTemplateHandler
         ImageHelper $imageHelper,
         EventManager $eventManager,
         Filesystem $filesystem,
-        HttpRequest $request,
-        BackendSession $backendSession,
+        ResourceConnection $resource,
         GroupFactory $groupFactory,
+        Serializer $serializer,
+        Registry $registry,
         GroupOptionFactory $groupOptionFactory
     ) {
-        $this->csvProcessor       = $csvProcessor;
         $this->escaper            = $escaper;
+        $this->serializer         = $serializer;
         $this->productAttributes  = $productAttributes;
         $this->optionAttributes   = $optionAttributes;
         $this->valueAttributes    = $valueAttributes;
@@ -269,8 +294,8 @@ class ImportTemplateHandler
         $this->groupFactory       = $groupFactory;
         $this->groupOptionFactory = $groupOptionFactory;
         $this->eventManager       = $eventManager;
-        $this->request            = $request;
-        $this->backendSession     = $backendSession;
+        $this->resource           = $resource;
+        $this->registry           = $registry;
         $this->mediaDirectory     = $filesystem->getDirectoryWrite('media');
     }
 
@@ -289,15 +314,15 @@ class ImportTemplateHandler
         if (!isset($file['tmp_name'])) {
             throw new LocalizedException(__('Invalid file upload attempt'));
         }
-        $fileData = $this->csvProcessor->getData($file['tmp_name']);
-        if (!is_array($fileData) || !$fileData) {
+
+        $fileData = file_get_contents($file['tmp_name']);
+        if (!$fileData) {
             throw new LocalizedException(
                 __('Invalid file data')
             );
         }
 
-        $serializedData = implode(',', $fileData[0]);
-        $data           = unserialize($serializedData);
+        $data = $this->serializer->unserialize($fileData);
         if (!is_array($data) || !$data) {
             throw new LocalizedException(
                 __('Data for import not found')
@@ -305,15 +330,47 @@ class ImportTemplateHandler
         }
 
         $this->validateData($data);
-        if (!empty($map['mageworx_optiontemplates_import_mage_one_customer_groups'])) {
-            $this->customerEquivalentMap          = $map['mageworx_optiontemplates_import_mage_one_customer_groups'];
-            $this->customerEquivalentMap['32000'] = '32000';
-        }
-        if (!empty($map['mageworx_optiontemplates_import_mage_one_stores'])) {
-            $this->storeEquivalentMap = $map['mageworx_optiontemplates_import_mage_one_stores'];
-        }
+        $this->setEquivalentMaps($map);
         $this->validateSystemData($data);
-        $this->importData($data);
+
+        if ($this->importMode === static::IMPORT_MODE_FULL
+            && ($this->isSystemDataEquivalentMapNeeded() || !$this->isSetMigrationMode($map))
+        ) {
+            return;
+        }
+
+        $this->resource->getConnection()->beginTransaction();
+        try {
+            $this->importData($data);
+        } catch (\Exception $e) {
+            $this->resource->getConnection()->rollBack();
+            throw $e;
+        }
+        $this->resource->getConnection()->commit();
+        $this->clearTempVariables();
+    }
+
+    /**
+     * @return void
+     */
+    protected function clearTempVariables()
+    {
+        $this->storeIds         = [];
+        $this->customerGroupIds = [];
+    }
+
+    /**
+     * Check of migration mode is set
+     *
+     * @param array $map
+     * @return bool
+     */
+    protected function isSetMigrationMode($map)
+    {
+        if (!empty($map['mageworx_mage_one_migration_mode'])) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -335,6 +392,21 @@ class ImportTemplateHandler
     }
 
     /**
+     * @param array $map
+     * @return void
+     */
+    protected function setEquivalentMaps($map)
+    {
+        if (!empty($map['mageworx_optiontemplates_import_from_customer_groups'])) {
+            $this->customerEquivalentMap          = $map['mageworx_optiontemplates_import_from_customer_groups'];
+            $this->customerEquivalentMap[BaseHelper::ALL_CUSTOMER_GROUP_ID] = BaseHelper::ALL_CUSTOMER_GROUP_ID;
+        }
+        if (!empty($map['mageworx_optiontemplates_import_from_stores'])) {
+            $this->storeEquivalentMap = $map['mageworx_optiontemplates_import_from_stores'];
+        }
+    }
+
+    /**
      * Validate group integrity
      *
      * @param array $data
@@ -342,8 +414,8 @@ class ImportTemplateHandler
      */
     protected function validateGroup($data)
     {
-        $this->dependencies   = [];
-        $this->optionValueMap = [];
+        $this->dependencies        = [];
+        $this->optionValueMap      = [];
         $this->currentTemplateName = $data['title'];
         $this->validateGroupDefaults($data);
         $this->validateGroupAttributes($data);
@@ -402,22 +474,15 @@ class ImportTemplateHandler
         if (!isset($data['hash_options'])) {
             return;
         }
-        $options = unserialize($data['hash_options']);
+        $options = $this->serializer->unserialize($data['hash_options']);
         if (!is_array($options)) {
             return;
         }
 
         foreach ($options as $optionData) {
-            if (isset($optionData['in_group_id'])) {
-                $this->optionValueMap[$optionData['in_group_id']][$optionData['option_id']] = '';
-            }
             $this->validateOptionDefaults($optionData);
             $this->validateOptionAttributes($optionData);
             $this->validateValues($optionData);
-        }
-
-        foreach ($options as $optionData) {
-            $this->addDependenciesChildPart($optionData);
         }
     }
 
@@ -457,8 +522,8 @@ class ImportTemplateHandler
     {
         $optionAttributes = $this->optionAttributes->getData();
         foreach ($optionAttributes as $optionAttribute) {
-            /** @var \MageWorx\OptionBase\Api\AttributeInterface $optionAttribute */
-            $optionAttribute->validateTemplateImportMageOne($data);
+            /** @var \MageWorx\OptionBase\Api\ImportInterface $optionAttribute */
+            $optionAttribute->validateTemplateMageOne($data);
         }
     }
 
@@ -482,8 +547,6 @@ class ImportTemplateHandler
         foreach ($data['values'] as $valueData) {
             $this->validateValueDefaults($valueData);
             $this->validateValueAttributes($valueData);
-
-            $this->collectMageOneDependencies($data, $valueData);
         }
     }
 
@@ -523,39 +586,8 @@ class ImportTemplateHandler
     {
         $valueAttributes = $this->valueAttributes->getData();
         foreach ($valueAttributes as $valueAttribute) {
-            /** @var \MageWorx\OptionBase\Api\AttributeInterface $valueAttribute */
-            $valueAttribute->validateTemplateImportMageOne($data);
-        }
-    }
-
-    /**
-     * Collect M1 dependencies
-     *
-     * @param array $m1option
-     * @param array $m1value
-     * @return void
-     */
-    protected function collectMageOneDependencies($m1option, $m1value)
-    {
-        if (!isset($m1value['in_group_id'])) {
-            return;
-        }
-        $this->optionValueMap[$m1value['in_group_id']][$m1option['option_id']] = $m1value['option_type_id'];
-
-        if (empty($m1value['dependent_ids'])) {
-            return;
-        }
-
-        $childDependencyIds = explode(',', $m1value['dependent_ids']);
-        foreach ($childDependencyIds as $childDependencyId) {
-            $this->dependencies[] = [
-                'parent_option_id'      => $m1option['option_id'],
-                'parent_option_type_id' => $m1value['option_type_id'],
-                'child_option_id'       => '',
-                'child_option_type_id'  => '',
-                'in_group_id'           => $childDependencyId,
-                'dependency_type'       => isset($m1option['is_dependent']) ? (int)$m1option['is_dependent'] : 0,
-            ];
+            /** @var \MageWorx\OptionBase\Api\ImportInterface $valueAttribute */
+            $valueAttribute->validateTemplateMageOne($data);
         }
     }
 
@@ -573,17 +605,22 @@ class ImportTemplateHandler
         }
 
         if ($this->isSystemDataEquivalentMapNeeded()) {
-            $this->backendSession->setStoreIds($this->storeIdMap);
-            $this->backendSession->setCustomerGroupIds($this->customerGroupMap);
-            throw new IntegrationException(
-                __("Please, link system specific data for Magento/Magento 2 and upload the file once again.")
-            );
+            $this->storeIds             = $this->storeIdMap;
+            $this->customerGroupIds     = $this->customerGroupMap;
+            $this->isSystemDataRequired = true;
+            if ($this->importMode !== static::IMPORT_MODE_FULL) {
+                throw new IntegrationException(
+                    __("Please, link system specific data for Magento/Magento 2 and upload the file once again.")
+                );
+            }
         } elseif ($this->hasSystemDataEquivalentMapDuplicates()) {
-            $this->backendSession->setStoreIds($this->storeIdMap);
-            $this->backendSession->setCustomerGroupIds($this->customerGroupMap);
-            throw new IntegrationException(
-                __("Please, avoid assignment of stores and customer groups to the same entities.")
-            );
+            $this->storeIds         = $this->storeIdMap;
+            $this->customerGroupIds = $this->customerGroupMap;
+            if ($this->importMode !== static::IMPORT_MODE_FULL) {
+                throw new IntegrationException(
+                    __("Please, avoid assignment of stores and customer groups to the same entities.")
+                );
+            }
         }
     }
 
@@ -665,7 +702,7 @@ class ImportTemplateHandler
         if (!isset($data['hash_options'])) {
             return;
         }
-        $options = unserialize($data['hash_options']);
+        $options = $this->serializer->unserialize($data['hash_options']);
         if (!is_array($options)) {
             return;
         }
@@ -679,7 +716,7 @@ class ImportTemplateHandler
 
             if (isset($optionData['customer_groups']) && is_array($optionData['customer_groups'])) {
                 foreach ($optionData['customer_groups'] as $customerGroup) {
-                    if ($customerGroup == '32000') {
+                    if ($this->baseHelper->isAllCustomerGroupId((string)$customerGroup)) {
                         continue;
                     }
                     $this->customerGroupMap[$customerGroup] = $customerGroup;
@@ -693,7 +730,7 @@ class ImportTemplateHandler
             foreach ($optionData['values'] as $valueData) {
                 if (isset($valueData['specials']) && is_array($valueData['specials'])) {
                     foreach ($valueData['specials'] as $item) {
-                        if ($item['customer_group_id'] == '32000') {
+                        if ($this->baseHelper->isAllCustomerGroupId((string)$item['customer_group_id'])) {
                             continue;
                         }
                         $this->customerGroupMap[$item['customer_group_id']] = $item['customer_group_id'];
@@ -702,7 +739,7 @@ class ImportTemplateHandler
 
                 if (isset($valueData['tiers']) && is_array($valueData['tiers'])) {
                     foreach ($valueData['tiers'] as $item) {
-                        if ($item['customer_group_id'] == '32000') {
+                        if ($this->baseHelper->isAllCustomerGroupId((string)$item['customer_group_id'])) {
                             continue;
                         }
                         $this->customerGroupMap[$item['customer_group_id']] = $item['customer_group_id'];
@@ -740,6 +777,8 @@ class ImportTemplateHandler
         foreach ($data as $dataItem) {
             $this->importGroup($dataItem);
         }
+        $this->registry->unregister('mageworx_optiontemplates_group_id');
+        $this->registry->unregister('mageworx_optiontemplates_group_option_ids');
     }
 
     /**
@@ -752,10 +791,11 @@ class ImportTemplateHandler
         /** @var $group \MageWorx\OptionTemplates\Model\Group */
         $group                       = $this->groupFactory->create();
         $this->currentMageOneGroupId = $data['group_id'];
-        $this->prepareSkuPolicy($data);
 
-        $this->storeOptionDescriptions = [];
-        $this->storeValueDescriptions  = [];
+        $this->customerEquivalentMap[BaseHelper::ALL_CUSTOMER_GROUP_ID] = BaseHelper::ALL_CUSTOMER_GROUP_ID;
+
+        $this->prepareSkuPolicy($data);
+        $this->collectDependencies($data);
         $this->collectStoreViewDescriptions($data);
 
         if (!isset($data['hash_options'])) {
@@ -764,7 +804,7 @@ class ImportTemplateHandler
             $group->unsetData($group->getIdFieldName());
             $group->setId(null);
         } else {
-            $options = unserialize($data['hash_options']);
+            $options = $this->serializer->unserialize($data['hash_options']);
             if (is_array($options)) {
                 $preparedOptions = $this->prepareOptions($options);
                 if ($preparedOptions) {
@@ -782,6 +822,129 @@ class ImportTemplateHandler
 
         $group->setIsUniqueTitleNeeded(true);
         $group->save();
+        $this->templateMap[$this->currentMageOneGroupId]['group_id'] = $group->getGroupId();
+    }
+
+    /**
+     * Collect dependencies
+     *
+     * @param array $data
+     */
+    protected function collectDependencies($data)
+    {
+        $this->dependencies   = [];
+        $this->optionValueMap = [];
+
+        $this->collectDependenciesFromOptions($data);
+    }
+
+    /**
+     * Collect dependencies from options
+     *
+     * @param array $data
+     * @throws LocalizedException
+     */
+    protected function collectDependenciesFromOptions($data)
+    {
+        if (!isset($data['hash_options'])) {
+            return;
+        }
+        $options = $this->serializer->unserialize($data['hash_options']);
+        if (!is_array($options)) {
+            return;
+        }
+
+        foreach ($options as $optionData) {
+            if (isset($optionData['in_group_id'])) {
+                $this->optionValueMap[$optionData['in_group_id']][$optionData['option_id']] = '';
+            }
+            $this->collectDependenciesFromValues($optionData);
+        }
+
+        foreach ($options as $optionData) {
+            $this->addDependenciesChildPart($optionData);
+        }
+    }
+
+    /**
+     * Add dependencies dp_child_option_id, dp_child_option_type_id according to M1 in_group_id
+     *
+     * @param array $option
+     * @return void
+     */
+    protected function addDependenciesChildPart($option)
+    {
+        foreach ($this->optionValueMap[$option['in_group_id']] as $optionId => $optionTypeId) {
+            foreach ($this->dependencies as &$dependency) {
+                if ($dependency['in_group_id'] == $option['in_group_id']) {
+                    $dependency['dp_child_option_id']      = $optionId;
+                    $dependency['dp_child_option_type_id'] = $optionTypeId;
+                }
+            }
+        }
+
+        if (empty($option['values'])) {
+            return;
+        }
+
+        foreach ($option['values'] as $value) {
+            foreach ($this->optionValueMap[$value['in_group_id']] as $optionId => $optionTypeId) {
+                foreach ($this->dependencies as &$dependency) {
+                    if ($dependency['in_group_id'] == $value['in_group_id']) {
+                        $dependency['dp_child_option_id']      = $optionId;
+                        $dependency['dp_child_option_type_id'] = $optionTypeId;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Collect dependencies from values
+     *
+     * @param array $data
+     * @throws LocalizedException
+     */
+    protected function collectDependenciesFromValues($data)
+    {
+        if ((!isset($data['values']) || !is_array($data['values']))) {
+            return;
+        }
+
+        foreach ($data['values'] as $valueData) {
+            $this->collectMageOneDependencies($data, $valueData);
+        }
+    }
+
+    /**
+     * Collect M1 dependencies
+     *
+     * @param array $m1option
+     * @param array $m1value
+     * @return void
+     */
+    protected function collectMageOneDependencies($m1option, $m1value)
+    {
+        if (!isset($m1value['in_group_id'])) {
+            return;
+        }
+        $this->optionValueMap[$m1value['in_group_id']][$m1option['option_id']] = $m1value['option_type_id'];
+
+        if (empty($m1value['dependent_ids'])) {
+            return;
+        }
+
+        $childDependencyIds = explode(',', $m1value['dependent_ids']);
+        foreach ($childDependencyIds as $childDependencyId) {
+            $this->dependencies[] = [
+                'dp_parent_option_id'      => $m1option['option_id'],
+                'dp_parent_option_type_id' => $m1value['option_type_id'],
+                'dp_child_option_id'       => '',
+                'dp_child_option_type_id'  => '',
+                'in_group_id'           => $childDependencyId,
+                'dependency_type'       => isset($m1option['is_dependent']) ? (int)$m1option['is_dependent'] : 0,
+            ];
+        }
     }
 
     /**
@@ -792,11 +955,14 @@ class ImportTemplateHandler
      */
     protected function collectStoreViewDescriptions($data)
     {
+        $this->storeOptionDescriptions = [];
+        $this->storeValueDescriptions  = [];
+
         foreach ($data['stores'] as $store) {
             if (!isset($store['hash_options']) || !isset($store['store_id'])) {
                 continue;
             }
-            $storeOptions = unserialize($store['hash_options']);
+            $storeOptions = $this->serializer->unserialize($store['hash_options']);
             if (!is_array($storeOptions)) {
                 continue;
             }
@@ -877,18 +1043,22 @@ class ImportTemplateHandler
                 $optionType            = 'multiple';
                 $m1option['is_swatch'] = 1;
             } elseif ($m1option['type'] == 'hidden') {
-                $optionType = 'checkbox';
+                $optionType             = 'checkbox';
+                $m1option['is_require'] = 1;
+                $m1option['is_hidden']  = 1;
             } else {
                 $optionType = $m1option['type'];
             }
             $this->prepareImages($m1option);
 
             $optionData = [
-                'record_id'  => $m1option['option_id'],
-                'type'       => $optionType,
-                'is_require' => $m1option['is_require'],
-                'sort_order' => (string)$sortOrderCounter
+                'record_id'   => $m1option['option_id'],
+                'type'        => $optionType,
+                'is_require'  => $m1option['is_require'],
+                'sort_order'  => (string)$sortOrderCounter,
+                'in_group_id' => $m1option['in_group_id']
             ];
+            $this->templateMap[$this->currentMageOneGroupId]['options'][$sortOrderCounter]['option_id'] = $m1option['in_group_id'];
 
             $standardOptionFields = [
                 'title',
@@ -914,11 +1084,11 @@ class ImportTemplateHandler
 
             $optionAttributes = $this->optionAttributes->getData();
             foreach ($optionAttributes as $optionAttribute) {
-                /** @var \MageWorx\OptionBase\Api\AttributeInterface $optionAttribute */
+                /** @var \MageWorx\OptionBase\Api\ImportInterface $optionAttribute */
                 $optionData[$optionAttribute->getName()] = $optionAttribute->importTemplateMageOne($m1option);
             }
             if (isset($m1option['values']) && is_array($m1option['values'])) {
-                $optionData['values'] = $this->prepareOptionValues($m1option);
+                $optionData['values'] = $this->prepareOptionValues($m1option, $sortOrderCounter);
             }
 
             $preparedOptions[] = $this->groupOptionFactory->create()->setData($optionData);
@@ -1041,7 +1211,7 @@ class ImportTemplateHandler
     }
 
     /**
-     * Add dependencies parent_option_id, parent_option_type_id and dependency_type
+     * Add dependencies dp_parent_option_id, dp_parent_option_type_id and dependency_type
      *
      * @param array $m1option
      * @return void
@@ -1055,10 +1225,10 @@ class ImportTemplateHandler
         $childOptionId = $m1option['option_id'];
         if (!in_array($m1option['type'], $this->baseHelper->getSelectableOptionTypes())) {
             foreach ($this->dependencies as $dependency) {
-                if ($dependency['child_option_id'] == $childOptionId && $dependency['child_option_type_id'] == '') {
+                if ($dependency['dp_child_option_id'] == $childOptionId && $dependency['dp_child_option_type_id'] == '') {
                     $m1option['dependency'][]    = [
-                        (int)$dependency['parent_option_id'],
-                        (int)$dependency['parent_option_type_id']
+                        (int)$dependency['dp_parent_option_id'],
+                        (int)$dependency['dp_parent_option_type_id']
                     ];
                     $m1option['dependency_type'] = (int)$dependency['dependency_type'];
                 }
@@ -1073,12 +1243,12 @@ class ImportTemplateHandler
             $childOptionTypeId = $m1value['option_type_id'];
 
             foreach ($this->dependencies as $dependency) {
-                if ($dependency['child_option_id'] == $childOptionId
-                    && $dependency['child_option_type_id'] == $childOptionTypeId
+                if ($dependency['dp_child_option_id'] == $childOptionId
+                    && $dependency['dp_child_option_type_id'] == $childOptionTypeId
                 ) {
                     $m1value['dependency'][]    = [
-                        (int)$dependency['parent_option_id'],
-                        (int)$dependency['parent_option_type_id']
+                        (int)$dependency['dp_parent_option_id'],
+                        (int)$dependency['dp_parent_option_type_id']
                     ];
                     $m1value['dependency_type'] = (int)$dependency['dependency_type'];
                 }
@@ -1090,9 +1260,10 @@ class ImportTemplateHandler
      * Prepare value's data for group import
      *
      * @param array $m1option
+     * @param int $optionSortOrder
      * @return array
      */
-    protected function prepareOptionValues($m1option)
+    protected function prepareOptionValues($m1option, $optionSortOrder)
     {
         $preparedOptionValues = [];
 
@@ -1101,17 +1272,23 @@ class ImportTemplateHandler
         }
         $sortOrderCounter = 1;
         foreach ($m1option['values'] as $m1value) {
-            $m1value['is_dependent'] = isset($m1option['is_dependent']) ? (int)$m1option['is_dependent'] : 0;
-            $valueData               = [
-                'record_id'  => $m1value['option_type_id'],
-                'price_type' => $m1value['price_type'] == 'fixed' ? 'fixed' : 'percent',
-                'price'      => $m1value['price'],
-                'title'      => $m1value['title'],
-                'sku'        => $m1value['sku'],
-                'sort_order' => (string)$sortOrderCounter
+            $m1value['is_dependent']        = $m1option['is_dependent'] ?? 0;
+            $m1value['exclude_first_image'] = $m1option['exclude_first_image'] ?? 0;
+            $m1value['image_mode']          = $m1option['image_mode'] ?? 0;
+            $valueData                      = [
+                'record_id'   => $m1value['option_type_id'],
+                'price_type'  => $m1value['price_type'] == 'fixed' ? 'fixed' : 'percent',
+                'price'       => $m1value['price'],
+                'title'       => $m1value['title'],
+                'sku'         => $m1value['sku'],
+                'sort_order'  => (string)$sortOrderCounter,
+                'in_group_id' => $m1value['in_group_id']
             ];
+            $this->templateMap[$this->currentMageOneGroupId]['options'][$optionSortOrder]['values'][$sortOrderCounter]['value_id'] = $m1value['in_group_id'];
 
-            if (!empty($m1option['default'])) {
+            if (!empty($m1option['is_hidden'])) {
+                $m1value['is_default'] = '1';
+            } elseif (!empty($m1option['default'])) {
                 $default = array_flip($m1option['default']);
                 if (array_key_exists($m1value['option_type_id'], $default)) {
                     $m1value['is_default'] = '1';
@@ -1122,7 +1299,7 @@ class ImportTemplateHandler
 
             $valueAttributes = $this->valueAttributes->getData();
             foreach ($valueAttributes as $valueAttribute) {
-                /** @var \MageWorx\OptionBase\Api\AttributeInterface $valueAttribute */
+                /** @var \MageWorx\OptionBase\Api\ImportInterface $valueAttribute */
                 $valueData[$valueAttribute->getName()] = $valueAttribute->importTemplateMageOne($m1value);
             }
 
@@ -1131,39 +1308,6 @@ class ImportTemplateHandler
         }
 
         return $preparedOptionValues;
-    }
-
-    /**
-     * Add dependencies child_option_id, child_option_type_id according to M1 in_group_id
-     *
-     * @param array $option
-     * @return void
-     */
-    protected function addDependenciesChildPart($option)
-    {
-        foreach ($this->optionValueMap[$option['in_group_id']] as $optionId => $optionTypeId) {
-            foreach ($this->dependencies as &$dependency) {
-                if ($dependency['in_group_id'] == $option['in_group_id']) {
-                    $dependency['child_option_id']      = $optionId;
-                    $dependency['child_option_type_id'] = $optionTypeId;
-                }
-            }
-        }
-
-        if (empty($option['values'])) {
-            return;
-        }
-
-        foreach ($option['values'] as $value) {
-            foreach ($this->optionValueMap[$value['in_group_id']] as $optionId => $optionTypeId) {
-                foreach ($this->dependencies as &$dependency) {
-                    if ($dependency['in_group_id'] == $value['in_group_id']) {
-                        $dependency['child_option_id']      = $optionId;
-                        $dependency['child_option_type_id'] = $optionTypeId;
-                    }
-                }
-            }
-        }
     }
 
     /**
@@ -1239,7 +1383,7 @@ class ImportTemplateHandler
                 if ($this->isColorCode($fileName)) {
                     $colorCode = $this->getColorCode($fileName);
                     $this->imageHelper->createColorFile($colorCode);
-                    $filePath =
+                    $filePath               =
                         self::SEPARATOR
                         . substr($colorCode, 0, 1)
                         . self::SEPARATOR
@@ -1277,8 +1421,8 @@ class ImportTemplateHandler
                             $this->missingImagesList[] = $sourcePath;
                             continue;
                         } else {
-                            $this->backendSession->setStoreIds($this->storeIdMap);
-                            $this->backendSession->setCustomerGroupIds($this->customerGroupMap);
+                            $this->storeIds         = $this->storeIdMap;
+                            $this->customerGroupIds = $this->customerGroupMap;
                             throw new FileSystemException(__("The '%1' file doesn't exist.", $sourcePath));
                         }
                     }
@@ -1320,5 +1464,49 @@ class ImportTemplateHandler
     public function getMissingImagesList()
     {
         return $this->missingImagesList ?: [];
+    }
+
+    /**
+     * @return array
+     */
+    public function getCustomerGroupIds()
+    {
+        return $this->customerGroupIds;
+    }
+
+    /**
+     * @return array
+     */
+    public function getStoreIds()
+    {
+        return $this->storeIds;
+    }
+
+    /**
+     * Set "full" import mode
+     */
+    public function setFullImportMode()
+    {
+        $this->importMode = static::IMPORT_MODE_FULL;
+    }
+
+    /**
+     * Is system data required for import
+     *
+     * @return bool
+     */
+    public function isSystemDataRequired()
+    {
+        return $this->isSystemDataRequired;
+    }
+
+    /**
+     * Get template map to proceed with options to template linking
+     *
+     * @return array
+     */
+    public function getTemplateMap()
+    {
+        return $this->templateMap;
     }
 }

@@ -20,11 +20,8 @@ class Weight
      *
      * @var \Magento\Store\Model\StoreManagerInterface
      */
-    private $storeManager;
+    private \Magento\Store\Model\StoreManagerInterface $storeManager;
 
-    /**
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     */
     public function __construct(\Magento\Store\Model\StoreManagerInterface $storeManager)
     {
         $this->storeManager = $storeManager;

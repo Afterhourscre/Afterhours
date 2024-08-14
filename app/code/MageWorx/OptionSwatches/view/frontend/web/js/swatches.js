@@ -9,7 +9,7 @@ define(
         'mage/translate',
         'Magento_Catalog/js/price-utils',
         'jquery/validate',
-        'jquery/ui',
+        'jquery-ui-modules/widget',
         'jquery/jquery.parsequery'
     ],
     function ($, _, $t, priceUtils) {
@@ -90,6 +90,7 @@ define(
                     $swatch.parent().css('display', 'inline-block');
                 } else if ($selectOption.css('display') == 'none') {
                     $swatch.parent().css('display', 'none');
+                    $swatch.removeClass('selected');
                 }
             },
 
@@ -113,13 +114,17 @@ define(
 
                 var labelText = [];
                 var isSelectedOptionExist = false;
+                var inArrayValue = -1;
                 if ($select.val()) {
                     $(selectOptions).each(function () {
-                        if (_.contains($select.val(), $(this).attr('value')) || $select.val() === $(this).attr('value')) {
+                        if (Array.isArray($select.val())) {
+                            inArrayValue = $.inArray($(this).attr('value'), $select.val());
+                        }
+                        if (inArrayValue !== -1 || $select.val() === $(this).attr('value')) {
                             isSelectedOptionExist = true;
                             var $swatch = $("[data-option-type-id='" + $(this).attr('value') + "']");
                             $swatch.addClass('selected');
-                            if ($swatch.attr('data-option-price') > 0) {
+                            if ($swatch.attr('data-option-price') >= 0) {
                                 labelText.push($(this).text());
                             } else {
                                 labelText.push($swatch.attr('data-option-label'));
@@ -164,6 +169,13 @@ define(
 
                 $('body').on('click', '.' + this.options.optionClass, function () {
                     self._onClick(this);
+                });
+
+                $('body').on('keydown', '.' + this.options.optionClass, function (e) {
+                    if (e.keyCode === 32 || e.keyCode === 13) {
+                        document.activeElement.click();
+                        e.preventDefault();
+                    }
                 });
             },
 
@@ -221,10 +233,18 @@ define(
                         }
                     } else {
                         if ($(this).val() == optionValueId) {
+                            var selectdOptionElement = $(option).parent().parent().find('.selected');
+
                             if ($(option).hasClass('selected')) {
                                 $(select).val('');
                                 $(option).parents('.field').find('label').parent().find('span#value').html('');
-                                $(option).parent().parent().find('.selected').removeClass('selected');
+                                selectdOptionElement.removeClass('selected');
+
+                                // for ADA support
+                                if ($(option).attr('aria-checked')) {
+                                    $(option).attr('aria-checked', 'false');
+                                }
+
                             } else {
                                 $(select).val(optionValueId);
                                 var $el = $(option).parents('.field').find('label').parent().find('span#value');
@@ -232,7 +252,13 @@ define(
                                 if ($(option).attr('data-option-price') > 0) {
                                     $el.html($el.html() + ' +' + priceUtils.formatPrice($(option).attr('data-option-price')));
                                 }
-                                $(option).parent().parent().find('.selected').removeClass('selected');
+
+                                // for ADA support
+                                if (!!$(option).attr('aria-checked')) {
+                                    $(option).attr('aria-checked', 'true');
+                                }
+                                selectdOptionElement.attr('aria-checked', 'false');
+                                selectdOptionElement.removeClass('selected');
                                 $(option).addClass('selected');
                             }
                             $(select).trigger('change');
@@ -248,9 +274,6 @@ define(
             _validateRequiredSwatches: function ()
             {
                 var self = this;
-                if (self.options.isEnabledRedirectToCart) {
-                    return;
-                }
                 $('#product_addtocart_form').mage('validation', {
                     ignore: ':hidden:not(.' + self.options.hiddenSelectClass + ')',
                     radioCheckboxClosest: '.nested',

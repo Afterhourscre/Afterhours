@@ -301,7 +301,7 @@ class Group extends \Magento\Framework\Model\AbstractModel
     public function getOptions()
     {
         $this->collectionUpdaterRegistry->setCurrentEntityType('group');
-        $this->collectionUpdaterRegistry->setCurrentEntityId($this->getGroupId());
+        $this->collectionUpdaterRegistry->setCurrentEntityIds([$this->getGroupId()]);
         $this->collectionUpdaterRegistry->setOptionIds([]);
         $this->collectionUpdaterRegistry->setOptionValueIds([]);
 
@@ -751,5 +751,50 @@ class Group extends \Magento\Framework\Model\AbstractModel
             return;
         }
         $this->getResource()->saveTitle($this->getGroupId(), $title);
+    }
+
+    /**
+     * Get template option in_group_id to option_id map
+     *
+     * @param array $templateMap
+     * @param array $templateIds
+     */
+    public function processTemplateMap(&$templateMap, $templateIds)
+    {
+        $groupIds = [];
+        foreach ($templateIds as $templateId) {
+            if (!isset($templateMap[$templateId]) || !isset($templateMap[$templateId]['group_id'])) {
+                continue;
+            }
+            $groupIds[$templateMap[$templateId]['group_id']] = $templateId;
+        }
+
+        if (!$groupIds) {
+            return;
+        }
+
+        $data = $this->getResource()->getTemplateMapForImport($groupIds);
+
+        if (!$data || !is_array($data)) {
+            return;
+        }
+
+        foreach ($data as $datum) {
+            $templateMap[$groupIds[$datum['group_id']]]['options'][$datum['option_sort_order']]['group_option_id'] = $datum['option_id'];
+            if (isset($datum['value_id'])) {
+                $templateMap[$groupIds[$datum['group_id']]]['options'][$datum['option_sort_order']]['values'][$datum['value_sort_order']]['group_value_id'] = $datum['value_id'];
+            }
+        }
+    }
+
+    /**
+     * Add relation between group and product
+     *
+     * @param int $groupId
+     * @param int $productId
+     */
+    public function addRelation($groupId, $productId)
+    {
+        $this->getResource()->addProductRelation($groupId, $productId);
     }
 }

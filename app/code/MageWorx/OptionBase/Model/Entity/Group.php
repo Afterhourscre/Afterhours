@@ -7,7 +7,7 @@ namespace MageWorx\OptionBase\Model\Entity;
 
 class Group extends Base
 {
-    protected $entityType = 'group';
+    protected string $entityType = 'group';
 
     /**
      * @return string

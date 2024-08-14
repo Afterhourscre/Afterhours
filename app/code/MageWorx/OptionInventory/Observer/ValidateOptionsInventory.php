@@ -9,6 +9,7 @@ namespace MageWorx\OptionInventory\Observer;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
+use MageWorx\OptionInventory\Helper\Data as HelperData;
 use MageWorx\OptionInventory\Model\StockProvider;
 use MageWorx\OptionInventory\Model\Validator;
 
@@ -20,20 +21,10 @@ use MageWorx\OptionInventory\Model\Validator;
  */
 class ValidateOptionsInventory implements ObserverInterface
 {
-    /**
-     * @var Validator
-     */
-    protected $validator;
-
-    /**
-     * @var StockProvider
-     */
-    protected $stockProvider;
-
-    /**
-     * @var RequestInterface
-     */
-    protected $request;
+    protected Validator $validator;
+    protected StockProvider $stockProvider;
+    protected RequestInterface $request;
+    protected HelperData $helperData;
 
     /**
      * ValidateOptionsInventory constructor.
@@ -45,49 +36,50 @@ class ValidateOptionsInventory implements ObserverInterface
     public function __construct(
         Validator $validator,
         StockProvider $stockProvider,
-        RequestInterface $request
+        RequestInterface $request,
+        HelperData $helperData
     ) {
-        $this->validator = $validator;
+        $this->validator     = $validator;
         $this->stockProvider = $stockProvider;
-        $this->request = $request;
+        $this->request       = $request;
+        $this->helperData    = $helperData;
     }
 
-    /**
-     * @param EventObserver $observer
-     */
     public function execute(EventObserver $observer)
     {
-        $item = $observer->getEvent()->getItem();
-        if (!$item ||
-            !$item->getProductId() ||
-            !$item->getQuote() ||
-            $item->getQuote()->getIsSuperMode()
-        ) {
-            return;
-        }
+        if ($this->helperData->isEnabledOptionInventory()) {
+            $item = $observer->getEvent()->getItem();
+            if (!$item ||
+                !$item->getProductId() ||
+                !$item->getQuote() ||
+                $item->getQuote()->getIsSuperMode()
+            ) {
+                return;
+            }
 
-        $quote = $item->getQuote();
-        $cart = $this->request->getParam('cart', []);
+            $quote = $item->getQuote();
+            $cart  = $this->request->getParam('cart', []);
 
-        $allQuoteItems = $quote->getAllItems();
-        $requestedValues = $this->stockProvider->getRequestedData($allQuoteItems, $cart);
-        $originQuoteValues = $this->stockProvider->getOriginData($requestedValues);
+            $allQuoteItems     = $quote->getAllItems();
+            $requestedValues   = $this->stockProvider->getRequestedData($allQuoteItems, $cart);
+            $originQuoteValues = $this->stockProvider->getOriginData($requestedValues);
 
-        try {
-            $this->validator->validate($requestedValues, $originQuoteValues);
-        } catch (\Magento\Framework\Exception\LocalizedException $e) {
-            $item->addErrorInfo(
-                'optioninventory',
-                \Magento\CatalogInventory\Helper\Data::ERROR_QTY,
-                $e->getMessage()
-            );
+            try {
+                $this->validator->validate($requestedValues, $originQuoteValues);
+            } catch (\Magento\Framework\Exception\LocalizedException $e) {
+                $item->addErrorInfo(
+                    'optioninventory',
+                    \Magento\CatalogInventory\Helper\Data::ERROR_QTY,
+                    $e->getMessage()
+                );
 
-            $quote->addErrorInfo(
-                'error',
-                'optioninventory',
-                \Magento\CatalogInventory\Helper\Data::ERROR_QTY,
-                $e->getMessage()
-            );
+                $quote->addErrorInfo(
+                    'error',
+                    'optioninventory',
+                    \Magento\CatalogInventory\Helper\Data::ERROR_QTY,
+                    $e->getMessage()
+                );
+            }
         }
     }
 }

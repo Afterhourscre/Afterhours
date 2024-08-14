@@ -17,15 +17,9 @@ use \Magento\Backend\Helper\Data as BackendHelper;
  */
 class ManageStock extends Column
 {
-    /**
-     * @var PriceCurrencyInterface
-     */
-    protected $backendHelper;
-
-    /**
-     * @var HelperStock
-     */
-    protected $helperStock;
+    // TODO unused ?
+    protected BackendHelper $backendHelper;
+    protected HelperStock $helperStock;
 
     /**
      * ManageStock constructor.

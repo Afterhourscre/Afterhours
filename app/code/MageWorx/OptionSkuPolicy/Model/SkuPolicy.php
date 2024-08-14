@@ -9,134 +9,85 @@ namespace MageWorx\OptionSkuPolicy\Model;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\Data\ProductOptionInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Framework\Event\Manager;
 use Magento\Quote\Model\Quote\Item;
 use MageWorx\OptionSkuPolicy\Helper\Data as Helper;
 use MageWorx\OptionBase\Helper\Data as BaseHelper;
+use MageWorx\OptionBase\Helper\System as SystemHelper;
 use MageWorx\OptionFeatures\Helper\Data as HelperFeatures;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\App\Request\Http as Request;
-use Magento\Catalog\Model\Product\Visibility;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
+use MageWorx\OptionFeatures\Model\Price as ModelPrice;
+use Magento\Framework\Pricing\PriceCurrencyInterface;
 
 class SkuPolicy
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
+    protected Helper $helper;
+    protected BaseHelper $baseHelper;
+    protected SystemHelper $systemHelper;
+    protected HelperFeatures $helperFeatures;
+    protected PriceCurrencyInterface $priceCurrency;
+    protected ProductRepositoryInterface $productRepository;
+    protected DataObjectFactory $dataObjectFactory;
+    protected ProductInterface $originalProduct;
+    protected ProductInterface $quoteProduct;
+    protected bool $isItemChanged;
+    protected bool $isItemRemoved;
+    protected \Magento\Framework\DataObject $buyRequest;
+    protected bool $isGroupedSkuPolicyOnly;
+    protected string $productSkuPolicy;
+    protected bool $toCart;
+    protected Item $quoteItem;
+    protected array $skuArray;
+    protected Request $request;
+    protected array $newQuoteItems = [];
+    protected Configurable $configurableEntity;
+    protected ModelPrice $modelPrice;
+    protected bool $isSubmitQuoteFlag = false;
+    protected Manager $eventManager;
+    protected bool $isAllOptionsPolicyStandard = true;
 
     /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
-
-    /**
-     * @var HelperFeatures
-     */
-    protected $helperFeatures;
-
-    /**
-     * @var ProductRepositoryInterface
-     */
-    protected $productRepository;
-
-    /**
-     * @var DataObjectFactory
-     */
-    protected $dataObjectFactory;
-
-    /**
-     * @var ProductInterface
-     */
-    protected $originalProduct;
-
-    /**
-     * @var ProductInterface
-     */
-    protected $quoteProduct;
-
-    /**
-     * @var bool
-     */
-    protected $isItemChanged;
-
-    /**
-     * @var bool
-     */
-    protected $isItemRemoved;
-
-    /**
-     * @var \Magento\Framework\DataObject
-     */
-    protected $buyRequest;
-
-    /**
-     * @var bool
-     */
-    protected $isGroupedSkuPolicyOnly;
-
-    /**
-     * @var string
-     */
-    protected $productSkuPolicy;
-
-    /**
-     * @var bool
-     */
-    protected $toCart;
-
-    /**
-     * @var \Magento\Quote\Model\Quote\Item
-     */
-    protected $quoteItem;
-
-    /**
-     * @var array
-     */
-    protected $skuArray;
-
-    /**
-     * @var Request
-     */
-    protected $request;
-
-    /**
-     * @var array
-     */
-    protected $newQuoteItems = [];
-
-    /**
-     * @var Configurable
-     */
-    protected $configurableEntity;
-
-
-    /**
+     * SkuPolicy constructor.
+     *
      * @param Helper $helper
      * @param BaseHelper $baseHelper
+     * @param SystemHelper $systemHelper
      * @param HelperFeatures $helperFeatures
+     * @param PriceCurrencyInterface $priceCurrency
      * @param DataObjectFactory $dataObjectFactory
      * @param Request $request
-     * @param ProductRepositoryInterface $productRepository
      * @param Configurable $configurableEntity
+     * @param ProductRepositoryInterface $productRepository
+     * @param ModelPrice $modelPrice
+     * @param Manager $eventManager
      */
     public function __construct(
         Helper $helper,
         BaseHelper $baseHelper,
+        SystemHelper $systemHelper,
         HelperFeatures $helperFeatures,
+        PriceCurrencyInterface $priceCurrency,
         DataObjectFactory $dataObjectFactory,
         Request $request,
         Configurable $configurableEntity,
-        ProductRepositoryInterface $productRepository
+        ProductRepositoryInterface $productRepository,
+        ModelPrice $modelPrice,
+        Manager $eventManager
     ) {
         $this->helper             = $helper;
         $this->baseHelper         = $baseHelper;
+        $this->systemHelper       = $systemHelper;
         $this->helperFeatures     = $helperFeatures;
+        $this->priceCurrency      = $priceCurrency;
         $this->dataObjectFactory  = $dataObjectFactory;
         $this->productRepository  = $productRepository;
         $this->request            = $request;
         $this->configurableEntity = $configurableEntity;
+        $this->modelPrice         = $modelPrice;
+        $this->eventManager       = $eventManager;
     }
 
     /**
@@ -160,6 +111,10 @@ class SkuPolicy
      */
     public function applySkuPolicyToOrder($quote, $shippingAssignment)
     {
+        if ($this->systemHelper->isEditingByOrderEditor()) {
+            $quote->setCanApplySkuPolicyToOrder(true);
+        }
+
         if (!$quote->getCanApplySkuPolicyToOrder()) {
             return;
         }
@@ -213,30 +168,49 @@ class SkuPolicy
                 $quote = $quoteItem->getQuote();
             }
 
-            $this->productSkuPolicy = $this->quoteProduct->getSkuPolicy() == Helper::SKU_POLICY_USE_CONFIG
-                ? $defaultSkuPolicy
-                : $this->quoteProduct->getSkuPolicy();
+            if ($this->quoteProduct->getSkuPolicy() !== Helper::SKU_POLICY_USE_CONFIG
+                && $this->quoteProduct->getSkuPolicy()
+            ) {
+                $this->productSkuPolicy = (string)$this->quoteProduct->getSkuPolicy();
+            } else {
+                $this->productSkuPolicy = $defaultSkuPolicy;
+            }
 
             /** @var array $options */
             $options = $this->buyRequest->getOptions();
             if (!$options) {
+                $this->newQuoteItems[] = $quoteItem;
                 continue;
             }
 
             $this->checkSkuPolicyGroupOnly($options);
             $this->processBuyRequestOptions($options);
             $this->addCustomSkuToBuyRequest();
-            $this->saveNewQuoteItemOptions($quote);
-            $this->modifyQuoteItem();
 
-            $this->quoteItem->setSku(implode('-', $this->skuArray));
+            if (!$this->systemHelper->isEditingByOrderEditor()) {
+                $this->saveNewQuoteItemOptions($quote);
+                $this->implodeQuoteSku($this->skuArray);
+                $this->modifyQuoteItem();
+            } else {
+                $this->implodeQuoteSku($this->skuArray);
+            }
+
             $this->quoteItem->setIsSkuPolicyApplied(true);
             if (!$this->isItemRemoved) {
                 $this->newQuoteItems[] = $this->quoteItem;
             }
         }
 
-        $this->processQuote($quote);
+        if (!$this->isAllOptionsPolicyStandard) {
+            $this->processQuote($quote);
+        }
+
+
+    }
+
+    protected function implodeQuoteSku($skuArray)
+    {
+        $this->quoteItem->setSku(implode('-', $skuArray));
     }
 
     /**
@@ -256,6 +230,7 @@ class SkuPolicy
         } else {
             $this->skuArray[] = $this->originalProduct->getSku();
         }
+
         return;
     }
 
@@ -286,6 +261,10 @@ class SkuPolicy
     protected function addCustomSkuToBuyRequest()
     {
         $infoBuyRequest = $this->quoteItem->getOptionByCode('info_buyRequest');
+        if (empty($infoBuyRequest)) {
+            return;
+        }
+
         $this->buyRequest->setData('sku_policy_sku', implode('-', $this->skuArray));
         $infoBuyRequest->setValue($this->baseHelper->encodeBuyRequestValue($this->buyRequest->getData()));
         $this->quoteItem->addOption($infoBuyRequest);
@@ -321,6 +300,7 @@ class SkuPolicy
                 : $option->getSkuPolicy();
             if ($skuPolicy != Helper::SKU_POLICY_GROUPED) {
                 $this->isGroupedSkuPolicyOnly = false;
+
                 return;
             }
         }
@@ -387,10 +367,12 @@ class SkuPolicy
             if ($skuPolicy == Helper::SKU_POLICY_STANDARD) {
                 $this->skuArray[] = $sku;
             } elseif ($skuPolicy == Helper::SKU_POLICY_REPLACEMENT) {
-                $this->skuArray[0] = implode('-', $replacementSkus);
+                $this->skuArray[0]          = implode('-', $replacementSkus);
+                $this->isAllOptionsPolicyStandard = false;
             } elseif ($skuPolicy == Helper::SKU_POLICY_GROUPED
                 || $skuPolicy == Helper::SKU_POLICY_INDEPENDENT
             ) {
+                $this->isAllOptionsPolicyStandard = false;
                 try {
                     $excludedItemCandidate = $this->productRepository->get($sku);
                 } catch (NoSuchEntityException $e) {
@@ -406,11 +388,13 @@ class SkuPolicy
                 $optionTotalQty = $isOneTime ? $optionQty : $optionQty * $this->quoteItem->getQty();
 
                 $request = $this->dataObjectFactory->create();
+                $request->setQty($optionTotalQty);
 
                 $excludedProduct = $this->productRepository->get($sku, false, $this->quoteItem->getStoreId(), true);
                 if ($this->helper->isSplitIndependents()) {
                     $excludedProduct->addCustomOption('parent_custom_option_id', $option->getOptionId());
                 }
+
                 $excludedItem = $this->quoteItem->getQuote()->addProduct(
                     $excludedProduct,
                     $request
@@ -418,10 +402,16 @@ class SkuPolicy
                 if (!is_object($excludedItem)) {
                     continue;
                 }
+
                 $this->quoteItem->getQuote()->setIsSuperMode(true);
-                $excludedItem->setCustomPrice($value->getPrice());
-                $excludedItem->setQty($excludedItem->getQty() - 1 + $optionTotalQty);
-                $excludedItem->setOriginalCustomPrice($value->getPrice());
+                $price = $this->modelPrice->getPrice($option, $value);
+                $price = $this->priceCurrency->convert(
+                    $price,
+                    $this->quoteItem->getQuote()->getStore()
+                );
+                $excludedItem->setOriginalCustomPrice($price);
+                $excludedItem->setCustomPrice($price);
+
                 if ($this->helperFeatures->isWeightEnabled()) {
                     $excludedItem->setWeight($value->getWeight());
                 }
@@ -429,7 +419,9 @@ class SkuPolicy
                     $excludedItem->setCost($value->getCost());
                 }
                 $excludedItem->setIsSkuPolicyApplied(true);
-                $this->newQuoteItems[] = $excludedItem;
+                if (!in_array($excludedItem, $this->newQuoteItems, true)) {
+                    $this->newQuoteItems[] = $excludedItem;
+                }
 
                 $this->removeOptionAndOptionValueFromItem(
                     $values,
@@ -447,6 +439,13 @@ class SkuPolicy
                 }
             }
         }
+
+        $this->eventManager->dispatch(
+            'mageworx_apo_add_independedt_quote_items',
+            [
+                'new_items' => $this->newQuoteItems
+            ]
+        );
     }
 
     /**
@@ -472,23 +471,28 @@ class SkuPolicy
         if ($skuPolicy == Helper::SKU_POLICY_STANDARD) {
             $this->skuArray[] = $sku;
         } elseif ($skuPolicy == Helper::SKU_POLICY_REPLACEMENT) {
-            $this->skuArray[0] = $sku;
+            $this->skuArray[0]          = $sku;
+            $this->isAllOptionsPolicyStandard = false;
         } elseif ($skuPolicy == Helper::SKU_POLICY_GROUPED
             || $skuPolicy == Helper::SKU_POLICY_INDEPENDENT
         ) {
+            $this->isAllOptionsPolicyStandard = false;
             try {
                 $excludedItemCandidate = $this->productRepository->get($sku);
             } catch (NoSuchEntityException $e) {
                 $this->skuArray[] = $sku;
+
                 return false;
             }
             if (!$this->isExcludedItemValid($excludedItemCandidate)) {
                 $this->skuArray[] = $sku;
+
                 return false;
             }
 
             $optionTotalQty = $isOneTime ? 1 : $this->quoteItem->getQty();
             $request        = $this->dataObjectFactory->create();
+            $request->setQty($optionTotalQty);
 
             $excludedProduct = $this->productRepository->get($sku, false, $this->quoteItem->getStoreId(), true);
             if ($this->helper->isSplitIndependents()) {
@@ -503,11 +507,17 @@ class SkuPolicy
             }
 
             $this->quoteItem->getQuote()->setIsSuperMode(true);
-            $excludedItem->setCustomPrice($option->getPrice());
-            $excludedItem->setOriginalCustomPrice($option->getPrice());
-            $excludedItem->setQty($excludedItem->getQty() - 1 + $optionTotalQty);
+            $price = $this->priceCurrency->convert(
+                $option->getPrice(),
+                $this->quoteItem->getQuote()->getStore()
+            );
+            $excludedItem->setCustomPrice($price);
+            $excludedItem->setOriginalCustomPrice($price);
+
             $excludedItem->setIsSkuPolicyApplied(true);
-            $this->newQuoteItems[] = $excludedItem;
+            if (!in_array($excludedItem, $this->newQuoteItems, true)) {
+                $this->newQuoteItems[] = $excludedItem;
+            }
 
             $this->removeOptionFromItem($optionId);
             if (!$this->toCart) {
@@ -519,6 +529,13 @@ class SkuPolicy
                 $this->isItemRemoved = true;
             }
         }
+
+        $this->eventManager->dispatch(
+            'mageworx_apo_add_independedt_quote_items',
+            [
+                'new_items' => $this->newQuoteItems
+            ]
+        );
     }
 
     /**
@@ -536,6 +553,7 @@ class SkuPolicy
         if ($quoteItem->getRequiredOptions()) {
             return false;
         }
+
         return true;
     }
 
@@ -561,6 +579,7 @@ class SkuPolicy
         } else {
             $isValuesEmpty = false;
         }
+
         return !$isValuesEmpty;
     }
 
@@ -577,16 +596,17 @@ class SkuPolicy
             $itemsCollection = $this->quoteItem->getQuote()->getItemsCollection();
             foreach ($itemsCollection as $key => $collectionItem) {
                 if ($collectionItem === $this->quoteItem) {
-                    $this->quoteItem->isDeleted(true);
-                    $this->quoteItem->save();
-                    $itemsCollection->removeItemByKey($key);
+                    $this->removeQuoteItem($itemsCollection, $key);
                 }
             }
         } elseif ($this->isItemChanged) {
             $itemsCollection     = $this->quoteItem->getQuote()->getItemsCollection();
             $this->isItemRemoved = false;
+            $isItemIncrease      = false;
             foreach ($itemsCollection as $key => $collectionItem) {
                 if ($collectionItem->getProductId() == $this->quoteItem->getProductId()
+                    && $collectionItem->getSku() == $this->quoteItem->getSku()
+                    && $collectionItem->getProductType() == $this->quoteItem->getProductType()
                     && $collectionItem !== $this->quoteItem
                 ) {
                     $currentOptions = !empty($this->buyRequest['options']) ? $this->buyRequest['options'] : false;
@@ -604,6 +624,7 @@ class SkuPolicy
                     if ($collectionOptions === $currentOptions) {
                         if (!$this->isUpdateCartItemAction()) {
                             $collectionItem->setQty($collectionItem->getQty() + $this->quoteItem->getQty());
+                            $isItemIncrease = true;
                         } else {
                             $collectionItem->setQty($this->quoteItem->getQty());
                         }
@@ -611,12 +632,22 @@ class SkuPolicy
                     }
                 }
                 if ($this->isItemRemoved && $collectionItem === $this->quoteItem && !$this->isUpdateCartItemAction()) {
-                    $this->quoteItem->isDeleted(true);
-                    $this->quoteItem->save();
-                    $itemsCollection->removeItemByKey($key);
+                    $this->removeQuoteItem($itemsCollection, $key);
+                }
+            }
+            foreach ($itemsCollection as $key => $collectionItem) {
+                if ($collectionItem === $this->quoteItem && $isItemIncrease) {
+                    $this->removeQuoteItem($itemsCollection, $key);
                 }
             }
         }
+    }
+
+    protected function removeQuoteItem($itemsCollection, $key)
+    {
+        $this->quoteItem->isDeleted(true);
+        $this->quoteItem->save();
+        $itemsCollection->removeItemByKey($key);
     }
 
     /**
@@ -632,6 +663,7 @@ class SkuPolicy
         ) {
             return true;
         }
+
         return false;
     }
 
@@ -643,13 +675,25 @@ class SkuPolicy
      */
     protected function removeOutdatedQuoteItemData()
     {
-        $requiredKeys = ['store_id', 'item_id', 'quote_id', 'product_id', 'product_type', 'sku', 'name', 'qty'];
+        $requiredKeys = [
+            'store_id',
+            'item_id',
+            'quote_id',
+            'product_id',
+            'product_type',
+            'sku',
+            'name',
+            'qty',
+            'custom_price',
+            'original_custom_price'
+        ];
         foreach ($this->quoteItem->getData() as $key => $value) {
             if (in_array($key, $requiredKeys)) {
                 continue;
             }
             $this->quoteItem->unsetData($key);
         }
+
         return;
     }
 
@@ -684,6 +728,10 @@ class SkuPolicy
      */
     protected function removeOptionAndOptionValueFromItem(&$values, $optionId, $index)
     {
+        //OrderEditor send values as string
+        if (!is_array($values) && $this->systemHelper->isEditingByOrderEditor()) {
+            $values = explode(',', $values);
+        }
         if (is_array($values)) {
             unset($values[$index]);
         } else {
@@ -772,9 +820,33 @@ class SkuPolicy
         if (!$originalProduct || !$quoteProduct) {
             return false;
         }
-        return $originalProduct->getHasOptions()
-            && $quoteProduct->getHasOptions()
-            && $originalProduct->getOptions()
-            && $quoteProduct->getOptions();
+
+        return ($originalProduct->getHasOptions() && $quoteProduct->getHasOptions())
+            || ($originalProduct->getOptions() && $quoteProduct->getOptions());
+    }
+
+    /**
+     * Set "is submit quote" flag
+     *
+     * @used to avoid additional validation for bundle products
+     *
+     * @param bool $status
+     * @return void
+     */
+    public function setIsSubmitQuoteFlag($status)
+    {
+        $this->isSubmitQuoteFlag = (bool)$status;
+    }
+
+    /**
+     * Get "is submit quote" flag
+     *
+     * @used to avoid additional validation for bundle products
+     *
+     * @return bool
+     */
+    public function getIsSubmitQuoteFlag()
+    {
+        return $this->isSubmitQuoteFlag;
     }
 }

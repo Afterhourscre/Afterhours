@@ -16,35 +16,12 @@ class All extends AbstractModifier implements \Magento\Ui\DataProvider\Modifier\
     const SCOPE_PRODUCT = 'product';
     const SCOPE_GROUP = 'group';
 
-    /**
-     * @var \Magento\Framework\Stdlib\ArrayManager
-     */
-    protected $arrayManager;
+    protected ArrayManager $arrayManager;
+    protected PoolInterface $pool;
+    protected array $meta = [];
+    protected string $scope = self::SCOPE_PRODUCT;
+    protected array $metaOrdered = [];
 
-    /**
-     * @var PoolInterface
-     */
-    protected $pool;
-
-    /**
-     * @var array
-     */
-    protected $meta = [];
-
-    /**
-     * @var string
-     */
-    protected $scope = self::SCOPE_PRODUCT;
-
-    /**
-     * @var array
-     */
-    protected $metaOrdered = [];
-
-    /**
-     * @param ArrayManager $arrayManager
-     * @param PoolInterface $pool
-     */
     public function __construct(
         ArrayManager $arrayManager,
         PoolInterface $pool
@@ -114,6 +91,6 @@ class All extends AbstractModifier implements \Magento\Ui\DataProvider\Modifier\
      */
     protected function getScope()
     {
-        return $this->scope;
+        return (string)$this->scope;
     }
 }

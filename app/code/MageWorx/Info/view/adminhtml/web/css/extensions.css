@@ -52,19 +52,9 @@
     margin-bottom: 10px;
 }
 
-#mageworx-installed-extenstions a {
+#mageworx-installed-extenstions .mw-ext__grid__item__name a {
     color: #41362f!important;
     text-decoration: none!important;
-}
-
-.mw-ext__grid__item__price {
-    margin-top: 110px;
-    text-align: center;
-    width: 100%;
-    font-size: 1.4rem;
-    font-weight: 600;
-    letter-spacing: .025em;
-    transition: color .15s linear;
 }
 
 .mw-ext__grid__item__price_line-through {

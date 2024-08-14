@@ -49,70 +49,19 @@ class OptionAdvancedPricing extends AbstractModifier implements ModifierInterfac
     const OPTION_VALUE_SPECIAL_PRICING = 'special_pricing';
     const OPTION_VALUE_TIER_PRICING    = 'tier_pricing';
 
-    /**
-     * @var UrlInterface
-     */
-    protected $urlBuilder;
-
-    /**
-     * @var \Magento\Catalog\Model\Locator\LocatorInterface
-     */
-    protected $locator;
-
-    /**
-     * @var ArrayManager
-     */
-    protected $arrayManager;
-
-    /**
-     * @var StoreManagerInterface
-     */
-    protected $storeManager;
-
-    /**
-     * @var Data
-     */
-    protected $directoryHelper;
-
-    /**
-     * @var SearchCriteriaBuilder
-     */
-    protected $searchCriteriaBuilder;
-
-    /**
-     * @var GroupRepositoryInterface
-     */
-    protected $groupRepository;
-
-    /**
-     * @var GroupManagementInterface
-     */
-    protected $groupManagement;
-
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var Helper
-     */
-    protected $helperBase;
-
-    /**
-     * @var HttpRequest
-     */
-    protected $request;
-
-    /**
-     * @var array
-     */
-    protected $meta = [];
-
-    /**
-     * @var string
-     */
-    protected $form = self::FORM_NAME;
+    protected UrlInterface $urlBuilder;
+    protected LocatorInterface $locator;
+    protected ArrayManager $arrayManager;
+    protected StoreManagerInterface $storeManager;
+    protected Data $directoryHelper;
+    protected SearchCriteriaBuilder $searchCriteriaBuilder;
+    protected GroupRepositoryInterface $groupRepository;
+    protected GroupManagementInterface $groupManagement;
+    protected Helper $helper;
+    protected HelperBase $helperBase;
+    protected HttpRequest $request;
+    protected array $meta = [];
+    protected string $form = self::FORM_NAME;
 
     /**
      * @param ArrayManager $arrayManager
@@ -163,6 +112,10 @@ class OptionAdvancedPricing extends AbstractModifier implements ModifierInterfac
         return 100;
     }
 
+    /**
+     * @param array $data
+     * @return array
+     */
     public function modifyData(array $data)
     {
         return $data;
@@ -242,6 +195,7 @@ class OptionAdvancedPricing extends AbstractModifier implements ModifierInterfac
                 ],
             ],
         ];
+
         return $field;
     }
 
@@ -267,6 +221,7 @@ class OptionAdvancedPricing extends AbstractModifier implements ModifierInterfac
                 ],
             ],
         ];
+
         return $field;
     }
 
@@ -355,6 +310,7 @@ class OptionAdvancedPricing extends AbstractModifier implements ModifierInterfac
         if ($this->helper->isTierPriceEnabled()) {
             $data[static::OPTION_VALUE_TIER_PRICING] = $this->getTierPriceStructure();
         }
+
         return $data;
     }
 
@@ -365,6 +321,8 @@ class OptionAdvancedPricing extends AbstractModifier implements ModifierInterfac
      */
     protected function getSpecialPriceStructure()
     {
+        $imports = $this->getImportsStructure('disabled', '${ $.parentName }:disabled');
+
         return [
             'arguments' => [
                 'data' => [
@@ -393,17 +351,18 @@ class OptionAdvancedPricing extends AbstractModifier implements ModifierInterfac
                                 'dataScope'     => '',
                                 'isTemplate'    => true,
                                 'is_collection' => true,
+                                'imports'       => $imports
                             ],
                         ],
                     ],
                     'children'  => [
-                        'customer_group_id' => $this->getCustomerGroupsConfig(),
-                        'price'             => $this->getPriceConfig(),
-                        'price_type'        => $this->getPriceTypeConfig(),
-                        'date_from'         => $this->getDateFromConfig(),
-                        'date_to'           => $this->getDateToConfig(),
+                        'customer_group_id' => $this->getCustomerGroupsConfig($imports),
+                        'price'             => $this->getPriceConfig($imports),
+                        'price_type'        => $this->getPriceTypeConfig($imports),
+                        'date_from'         => $this->getDateFromConfig($imports),
+                        'date_to'           => $this->getDateToConfig($imports),
                         'comment'           => $this->getCommentConfig(),
-                        'actionDelete'      => $this->getActionDeleteConfig(),
+                        'actionDelete'      => $this->getActionDeleteConfig($imports)
                     ],
                 ],
             ]
@@ -417,6 +376,8 @@ class OptionAdvancedPricing extends AbstractModifier implements ModifierInterfac
      */
     protected function getTierPriceStructure()
     {
+        $imports = $this->getImportsStructure('disabled', '${ $.parentName }:disabled');
+
         return [
             'arguments' => [
                 'data' => [
@@ -445,17 +406,18 @@ class OptionAdvancedPricing extends AbstractModifier implements ModifierInterfac
                                 'component'     => 'Magento_Ui/js/dynamic-rows/record',
                                 'dataScope'     => '',
                                 'isTemplate'    => true,
+                                'imports'       => $imports
                             ],
                         ],
                     ],
                     'children'  => [
-                        'customer_group_id' => $this->getCustomerGroupsConfig(),
-                        'qty'               => $this->getQtyConfig(),
-                        'price'             => $this->getPriceConfig(),
-                        'price_type'        => $this->getPriceTypeConfig(),
-                        'date_from'         => $this->getDateFromConfig(),
-                        'date_to'           => $this->getDateToConfig(),
-                        'actionDelete'      => $this->getActionDeleteConfig(),
+                        'customer_group_id' => $this->getCustomerGroupsConfig($imports),
+                        'qty'               => $this->getQtyConfig($imports),
+                        'price'             => $this->getPriceConfig($imports),
+                        'price_type'        => $this->getPriceTypeConfig($imports),
+                        'date_from'         => $this->getDateFromConfig($imports),
+                        'date_to'           => $this->getDateToConfig($imports),
+                        'actionDelete'      => $this->getActionDeleteConfig($imports)
                     ],
                 ],
             ]
@@ -463,162 +425,185 @@ class OptionAdvancedPricing extends AbstractModifier implements ModifierInterfac
     }
 
     /**
+     * @param string $key
+     * @param string $value
+     * @param bool $needDisableTmpl
+     * @return string[]
+     * @throws \Magento\Framework\Exception\FileSystemException
+     */
+    protected function getImportsStructure(string $key, string $value, bool $needDisableTmpl = true): array
+    {
+        $result = [$key => $value];
+
+        if ($needDisableTmpl && $this->helperBase->checkModuleVersion('104.0.0')) {
+            $result['__disableTmpl'] = [$key => false];
+        }
+
+        return $result;
+    }
+
+    /**
      * Get customer groups config
      *
+     * @param array|null $imports
      * @return array
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
-    protected function getCustomerGroupsConfig()
+    protected function getCustomerGroupsConfig(array $imports = null): array
     {
-        return [
-            'arguments' => [
-                'data' => [
-                    'config' => [
-                        'label'         => __('Customer Group'),
-                        'dataScope'     => 'customer_group_id',
-                        'formElement'   => Select::NAME,
-                        'componentType' => Field::NAME,
-                        'dataType'      => Text::NAME,
-                        'options'       => $this->getCustomerGroups(),
-                        'value'         => $this->getDefaultCustomerGroup(),
-                        'validation'    => [
-                            'required-entry' => true,
-                        ],
-                    ],
-                ],
-            ],
+        $config = [
+            'label'         => __('Customer Group'),
+            'dataScope'     => 'customer_group_id',
+            'formElement'   => Select::NAME,
+            'componentType' => Field::NAME,
+            'dataType'      => Text::NAME,
+            'options'       => $this->getCustomerGroups(),
+            'value'         => $this->getDefaultCustomerGroup(),
+            'validation'    => [
+                'required-entry' => true,
+            ]
         ];
+
+        if ($imports) {
+            $config['imports'] = $imports;
+        }
+
+        return ['arguments' => ['data' => ['config' => $config]]];
     }
 
     /**
      * Get price config
      *
+     * @param array|null $imports
      * @return array
      */
-    protected function getPriceConfig()
+    protected function getPriceConfig(array $imports = null): array
     {
-        return [
-            'arguments' => [
-                'data' => [
-                    'config' => [
-                        'label'         => __('Price'),
-                        'dataScope'     => 'price',
-                        'componentType' => Field::NAME,
-                        'formElement'   => Input::NAME,
-                        'dataType'      => Price::NAME,
-                        'enableLabel'   => true,
-                        'validation'    => [
-                            'required-entry'             => true,
-                            'validate-number'            => true,
-                        ],
-                        'addbefore'     => $this->locator->getStore()
-                                                         ->getBaseCurrency()
-                                                         ->getCurrencySymbol(),
-                    ],
-                ],
+        $config = [
+            'label'         => __('Price'),
+            'dataScope'     => 'price',
+            'componentType' => Field::NAME,
+            'formElement'   => Input::NAME,
+            'dataType'      => Price::NAME,
+            'enableLabel'   => true,
+            'validation'    => [
+                'required-entry'  => true,
+                'validate-number' => true,
             ],
+            'addbefore'     => $this->locator->getStore()->getBaseCurrency()->getCurrencySymbol()
         ];
+
+        if ($imports) {
+            $config['imports'] = $imports;
+        }
+
+        return ['arguments' => ['data' => ['config' => $config]]];
     }
 
     /**
      * Get price type config
      *
+     * @param array|null $imports
      * @return array
      */
-    protected function getPriceTypeConfig()
+    protected function getPriceTypeConfig(array $imports = null): array
     {
-        return [
-            'arguments' => [
-                'data' => [
-                    'config' => [
-                        'label'         => __('Price Type'),
-                        'dataScope'     => 'price_type',
-                        'formElement'   => Select::NAME,
-                        'componentType' => Field::NAME,
-                        'dataType'      => Text::NAME,
-                        'validation'    => [
-                            'required-entry' => true,
-                        ],
-                        'options'       => $this->getDefaultPriceType(),
-                    ],
-                ],
+        $config = [
+            'label'         => __('Price Type'),
+            'dataScope'     => 'price_type',
+            'formElement'   => Select::NAME,
+            'componentType' => Field::NAME,
+            'dataType'      => Text::NAME,
+            'validation'    => [
+                'required-entry' => true,
             ],
+            'options'       => $this->getDefaultPriceType()
         ];
+
+        if ($imports) {
+            $config['imports'] = $imports;
+        }
+
+        return ['arguments' => ['data' => ['config' => $config]]];
     }
 
     /**
      * Get date from config
      *
+     * @param array|null $imports
      * @return array
      */
-    protected function getDateFromConfig()
+    protected function getDateFromConfig(array $imports = null): array
     {
-        return [
-            'arguments' => [
-                'data' => [
-                    'config' => [
-                        'label'            => __('From'),
-                        'component'        => 'Magento_Ui/js/form/element/date',
-                        'componentType'    => Field::NAME,
-                        'formElement'      => Input::NAME,
-                        'dataType'         => Date::NAME,
-                        'dataScope'        => 'date_from',
-                        'inputDateFormat'  => 'y-MM-dd',
-                        'outputDateFormat' => 'y-MM-dd',
-                        'options'          => [
-                            'dateFormat' => 'y-MM-dd',
-                        ],
-                    ],
-                ],
-            ],
+        $config = [
+            'label'            => __('From'),
+            'component'        => 'Magento_Ui/js/form/element/date',
+            'componentType'    => Field::NAME,
+            'formElement'      => Input::NAME,
+            'dataType'         => Date::NAME,
+            'dataScope'        => 'date_from',
+            'inputDateFormat'  => 'y-MM-dd',
+            'outputDateFormat' => 'y-MM-dd',
+            'options'          => [
+                'dateFormat' => 'y-MM-dd',
+            ]
         ];
+
+        if ($imports) {
+            $config['imports'] = $imports;
+        }
+
+        return ['arguments' => ['data' => ['config' => $config]]];
     }
 
     /**
      * Get date to config
      *
+     * @param array|null $imports
      * @return array
      */
-    protected function getDateToConfig()
+    protected function getDateToConfig(array $imports = null): array
     {
-        return [
-            'arguments' => [
-                'data' => [
-                    'config' => [
-                        'label'            => __('To'),
-                        'component'        => 'Magento_Ui/js/form/element/date',
-                        'componentType'    => Field::NAME,
-                        'formElement'      => Input::NAME,
-                        'dataType'         => Date::NAME,
-                        'dataScope'        => 'date_to',
-                        'inputDateFormat'  => 'y-MM-dd',
-                        'outputDateFormat' => 'y-MM-dd',
-                        'options'          => [
-                            'dateFormat' => 'y-MM-dd',
-                        ],
-                    ],
-                ],
-            ],
+        $config = [
+            'label'            => __('To'),
+            'component'        => 'Magento_Ui/js/form/element/date',
+            'componentType'    => Field::NAME,
+            'formElement'      => Input::NAME,
+            'dataType'         => Date::NAME,
+            'dataScope'        => 'date_to',
+            'inputDateFormat'  => 'y-MM-dd',
+            'outputDateFormat' => 'y-MM-dd',
+            'options'          => [
+                'dateFormat' => 'y-MM-dd',
+            ]
         ];
+
+        if ($imports) {
+            $config['imports'] = $imports;
+        }
+
+        return ['arguments' => ['data' => ['config' => $config]]];
     }
 
     /**
      * Get action delete config
      *
+     * @param array|null $imports
      * @return array
      */
-    protected function getActionDeleteConfig()
+    protected function getActionDeleteConfig(array $imports = null): array
     {
-        return [
-            'arguments' => [
-                'data' => [
-                    'config' => [
-                        'label'         => '',
-                        'dataType'      => Text::NAME,
-                        'componentType' => 'actionDelete',
-                    ],
-                ],
-            ],
+        $config = [
+            'label'         => '',
+            'dataType'      => Text::NAME,
+            'componentType' => 'actionDelete'
         ];
+
+        if ($imports) {
+            $config['imports'] = $imports;
+        }
+
+        return ['arguments' => ['data' => ['config' => $config]]];
     }
 
     /**
@@ -646,34 +631,36 @@ class OptionAdvancedPricing extends AbstractModifier implements ModifierInterfac
     /**
      * Get qty config
      *
+     * @param array|null $imports
      * @return array
      */
-    protected function getQtyConfig()
+    protected function getQtyConfig(array $imports = null): array
     {
-        return [
-            'arguments' => [
-                'data' => [
-                    'config' => [
-                        'label'         => __('Qty'),
-                        'componentType' => Field::NAME,
-                        'formElement'   => Input::NAME,
-                        'dataType'      => Number::NAME,
-                        'dataScope'     => 'qty',
-                        'validation'    => [
-                            'required-entry'             => true,
-                            'validate-greater-than-zero' => true,
-                            'validate-number'            => true,
-                        ],
-                    ],
-                ],
-            ],
+        $config = [
+            'label'         => __('Qty'),
+            'componentType' => Field::NAME,
+            'formElement'   => Input::NAME,
+            'dataType'      => Number::NAME,
+            'dataScope'     => 'qty',
+            'validation'    => [
+                'required-entry'             => true,
+                'validate-greater-than-zero' => true,
+                'validate-number'            => true,
+            ]
         ];
+
+        if ($imports) {
+            $config['imports'] = $imports;
+        }
+
+        return ['arguments' => ['data' => ['config' => $config]]];
     }
 
     /**
      * Retrieve allowed customer groups
      *
      * @return array
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     protected function getCustomerGroups()
     {
@@ -699,7 +686,8 @@ class OptionAdvancedPricing extends AbstractModifier implements ModifierInterfac
     /**
      * Retrieve default value for customer group
      *
-     * @return int
+     * @return int|null
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     protected function getDefaultCustomerGroup()
     {
@@ -736,12 +724,30 @@ class OptionAdvancedPricing extends AbstractModifier implements ModifierInterfac
     /**
      * Get AdvancedPricing button config
      *
-     * @param int $sortOrder
+     * @param $sortOrder
      * @param bool $additionalForGroup
-     * @return array
+     * @return mixed
+     * @throws \Magento\Framework\Exception\FileSystemException
      */
     protected function getAdvancedPricingButtonConfig($sortOrder, $additionalForGroup = false)
     {
+        $params = [
+            'provider'              => '${ $.provider }',
+            'dataScope'             => '${ $.dataScope }',
+            'buttonName'            => '${ $.name }',
+            'formName'              => $this->form,
+            'isSpecialPriceEnabled' => $this->helper->isSpecialPriceEnabled(),
+            'isTierPriceEnabled'    => $this->helper->isTierPriceEnabled()
+        ];
+
+        if ($this->helperBase->checkModuleVersion('104.0.0')) {
+            $params['__disableTmpl'] = [
+                'provider'   => false,
+                'dataScope'  => false,
+                'buttonName' => false
+            ];
+        }
+
         $field[static::ADVANCED_PRICING_BUTTON_NAME] = [
             'arguments' => [
                 'data' => [
@@ -773,16 +779,7 @@ class OptionAdvancedPricing extends AbstractModifier implements ModifierInterfac
                                 'targetName' => 'ns=' . $this->form . ', index='
                                     . static::ADVANCED_PRICING_MODAL_INDEX,
                                 'actionName' => 'reloadModal',
-                                'params'     => [
-                                    [
-                                        'provider'              => '${ $.provider }',
-                                        'dataScope'             => '${ $.dataScope }',
-                                        'buttonName'            => '${ $.name }',
-                                        'formName'              => $this->form,
-                                        'isSpecialPriceEnabled' => $this->helper->isSpecialPriceEnabled(),
-                                        'isTierPriceEnabled'    => $this->helper->isTierPriceEnabled(),
-                                    ],
-                                ],
+                                'params'     => [$params],
                             ],
                         ],
                     ],
@@ -797,16 +794,25 @@ class OptionAdvancedPricing extends AbstractModifier implements ModifierInterfac
      * Get enabled attributes
      *
      * @return array
+     * @throws \Magento\Framework\Exception\FileSystemException
      */
     public function getEnabledAttributes()
     {
         $attributes = [];
         if ($this->helper->isSpecialPriceEnabled()) {
-            $attributes[] = '${ $.dataScope }' . '.' . static::OPTION_VALUE_SPECIAL_PRICE;
+            $attributes[static::OPTION_VALUE_SPECIAL_PRICE] = '${ $.dataScope }' . '.' . static::OPTION_VALUE_SPECIAL_PRICE;
         }
         if ($this->helper->isTierPriceEnabled()) {
-            $attributes[] = '${ $.dataScope }' . '.' . static::OPTION_VALUE_TIER_PRICE;
+            $attributes[static::OPTION_VALUE_TIER_PRICE] = '${ $.dataScope }' . '.' . static::OPTION_VALUE_TIER_PRICE;
         }
+
+        if ($this->helperBase->checkModuleVersion('104.0.0')) {
+            $attributes['__disableTmpl'] = [
+                static::OPTION_VALUE_SPECIAL_PRICE => false,
+                static::OPTION_VALUE_TIER_PRICE    => false,
+            ];
+        }
+
         return $attributes;
     }
 

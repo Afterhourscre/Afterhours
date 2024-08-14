@@ -45,8 +45,10 @@ define([
                     }, this);
                 }
 
+                delete mageworxAttributes['__disableTmpl'];
+
                 if (!_.isUndefined(mageworxAttributes)) {
-                    mageworxAttributes.forEach(function (mageworxAttribute) {
+                    Object.values(mageworxAttributes).forEach(function (mageworxAttribute) {
                         var mageworxAttributeData = registry.get(this.provider).get(mageworxAttribute);
                         if (!_.isUndefined(mageworxAttributeData)
                             && mageworxAttributeData !== ''

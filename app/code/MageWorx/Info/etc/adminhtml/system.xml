@@ -49,6 +49,13 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
             </group>
+            <group id="systeminfo" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>System Information</label>
+                <group id="main_settings" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Main Settings</label>
+                    <frontend_model>MageWorx\Info\Block\Adminhtml\SystemInfo</frontend_model>
+                </group>
+            </group>
         </section>
     </system>
 </config>

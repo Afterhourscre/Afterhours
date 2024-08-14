@@ -9,39 +9,29 @@ namespace MageWorx\OptionBase\Helper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Customer\Api\Data\GroupInterface;
+use Magento\Framework\App\Request\Http;
 use Magento\Framework\App\State;
 use MageWorx\OptionBase\Helper\System as SystemHelper;
 
 class CustomerVisibility extends AbstractHelper
 {
-    /**
-     * @var State
-     */
-    private $state;
-
-    /**
-     * @var \Magento\Framework\App\Request\Http
-     */
-    protected $request;
-
-    /**
-     * @var SystemHelper
-     */
-    protected $systemHelper;
+    private State $state;
+    protected Http $request;
+    protected System $systemHelper;
 
     /**
      * CustomerVisibility constructor.
      *
      * @param State $state
      * @param Context $context
-     * @param \Magento\Framework\App\Request\Http $request
+     * @param Http $request
      * @param SystemHelper $systemHelper
      */
     public function __construct(
         State $state,
         Context $context,
         SystemHelper $systemHelper,
-        \Magento\Framework\App\Request\Http $request
+        Http $request
     ) {
         $this->state           = $state;
         $this->request         = $request;
@@ -54,8 +44,6 @@ class CustomerVisibility extends AbstractHelper
      * Get current customer group ID
      *
      * @return int
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getCurrentCustomerGroupId()
     {
@@ -94,7 +82,8 @@ class CustomerVisibility extends AbstractHelper
      */
     public function isOrderCreate()
     {
-        return $this->request->getControllerName() == 'order_create';
+        return $this->request->getControllerName() == 'order_create'
+            || $this->request->getFullActionName() == 'mageworx_optionbase_config_get';
     }
 
     /**

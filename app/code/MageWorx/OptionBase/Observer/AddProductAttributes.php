@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2017 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
 
@@ -9,22 +9,20 @@ namespace MageWorx\OptionBase\Observer;
 use Magento\Catalog\Model\Product;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer as EventObserver;
+use MageWorx\OptionBase\Model\ProductAttributes as ProductAttributesEntity;
 use MageWorx\OptionBase\Model\Product\Attributes as ProductAttributes;
 
 class AddProductAttributes implements ObserverInterface
 {
-    /**
-     * @var ProductAttributes
-     */
-    protected $productAttributes;
+    protected ProductAttributes $productAttributes;
+    protected ProductAttributesEntity $productAttributesEntity;
 
-    /**
-     * @param ProductAttributes $productAttributes
-     */
     public function __construct(
-        ProductAttributes $productAttributes
+        ProductAttributes $productAttributes,
+        ProductAttributesEntity $productAttributesEntity
     ) {
-        $this->productAttributes = $productAttributes;
+        $this->productAttributes       = $productAttributes;
+        $this->productAttributesEntity = $productAttributesEntity;
     }
 
     /**
@@ -38,20 +36,11 @@ class AddProductAttributes implements ObserverInterface
             return $this;
         }
 
+        $item       = $this->productAttributesEntity->getItemByProduct($product);
         $attributes = $this->productAttributes->getData();
+        /** @var \MageWorx\OptionBase\Api\ProductAttributeInterface $attribute */
         foreach ($attributes as $attribute) {
-            $item = $attribute->getItemByProduct($product);
-            foreach ($attribute->getKeys() as $attributeKey) {
-
-                if ($attributeKey == 'absolute_price') {
-                    $defaultValue = strval($attribute->getDefaultValue($attributeKey));
-                } elseif ($attributeKey == 'sku_policy') {
-                    $defaultValue = 'use_config';
-                } else {
-                    $defaultValue = '0';
-                }
-                $product[$attributeKey] = isset($item[$attributeKey]) ? $item[$attributeKey] : $defaultValue;
-            }
+            $product[$attribute->getName()] = $item[$attribute->getName()] ?? $attribute->getDefaultValue();
         }
 
         return $this;

@@ -1,9 +1,12 @@
 <?php
 /**
- * Copyright © 2017 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+?>
+<?php
 /** @var \MageWorx\OptionSwatches\Block\Swatches $block */
+$jsonData = $block->getJsonData();
 ?>
 <script>
     require([
@@ -13,13 +16,13 @@
     ], function ($, optionSwatches, registry) {
         var optionBase = registry.get('mageworxOptionBase');
         if (optionBase) {
-            optionBase.addUpdater(20, optionSwatches(<?php echo $block->getJsonData() ?>));
+            optionBase.addUpdater(20, optionSwatches(<?= /* @noEscape */ $jsonData ?>));
         } else {
             var updaters = registry.get('mageworxOptionUpdaters');
             if (!updaters) {
                 updaters = {};
             }
-            updaters[20] = optionSwatches(<?php echo $block->getJsonData() ?>);
+            updaters[20] = optionSwatches(<?= /* @noEscape */ $jsonData ?>);
             registry.set('mageworxOptionUpdaters', updaters);
         }
     });

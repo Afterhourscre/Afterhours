@@ -27,31 +27,12 @@ use MageWorx\OptionFeatures\Helper\Data as FeaturesHelper;
  */
 class DisableFields extends AbstractModifier implements ModifierInterface
 {
-
-    /**
-     * @var \MageWorx\OptionLink\Helper\Attribute
-     */
-    protected $helperAttribute;
-
-    /**
-     * @var \Magento\Catalog\Model\Locator\LocatorInterface
-     */
-    protected $locator;
-
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
-    protected $storeManager;
-
-    /**
-     * @var \Magento\Framework\Stdlib\ArrayManager
-     */
-    protected $arrayManager;
-
-    /**
-     * @var array
-     */
-    protected $meta = [];
+    protected HelperAttribute $helperAttribute;
+    protected LocatorInterface $locator;
+    protected StoreManagerInterface $storeManager;
+    protected ArrayManager $arrayManager;
+    protected array $meta = [];
+    protected array $ignoredFields = [FeaturesHelper::KEY_COST, FeaturesHelper::KEY_WEIGHT];
 
     /**
      * DisableFields constructor.
@@ -65,12 +46,14 @@ class DisableFields extends AbstractModifier implements ModifierInterface
         ArrayManager $arrayManager,
         StoreManagerInterface $storeManager,
         LocatorInterface $locator,
-        HelperAttribute $helperAttribute
+        HelperAttribute $helperAttribute,
+        array $ignoredFields = []
     ) {
-        $this->arrayManager = $arrayManager;
-        $this->storeManager = $storeManager;
-        $this->locator = $locator;
+        $this->arrayManager    = $arrayManager;
+        $this->storeManager    = $storeManager;
+        $this->locator         = $locator;
         $this->helperAttribute = $helperAttribute;
+        $this->ignoredFields   = array_merge($this->ignoredFields, $ignoredFields);
     }
 
     /**
@@ -98,6 +81,7 @@ class DisableFields extends AbstractModifier implements ModifierInterface
                 $key = 'mageworx_optiontemplates_group';
             }
             $data[''][$key]['option_link_fields'] = $linkedFields;
+
             return $data;
         }
 
@@ -119,7 +103,7 @@ class DisableFields extends AbstractModifier implements ModifierInterface
     public function modifyMeta(array $meta)
     {
         $this->meta = $meta;
-        $fields = $this->helperAttribute->getConvertedAttributesToFields();
+        $fields     = $this->helperAttribute->getConvertedAttributesToFields();
 
         $this->addSkuIsValid();
 
@@ -139,10 +123,11 @@ class DisableFields extends AbstractModifier implements ModifierInterface
     protected function addSkuIsValid()
     {
         $groupCustomOptionsName = CustomOptions::GROUP_CUSTOM_OPTIONS_NAME;
-        $optionContainerName = CustomOptions::CONTAINER_OPTION;
+        $optionContainerName    = CustomOptions::CONTAINER_OPTION;
 
         // Add fields to the values
         $skuIsValidConfig = $this->getSkuIsValidConfig(250);
+
         $this->meta[$groupCustomOptionsName]['children']['options']['children']['record']['children']
         [$optionContainerName]['children']['values']['children']['record']['children'] = array_replace_recursive(
             $this->meta[$groupCustomOptionsName]['children']['options']['children']['record']['children']
@@ -159,15 +144,15 @@ class DisableFields extends AbstractModifier implements ModifierInterface
      */
     protected function getSkuIsValidConfig($sortOrder)
     {
-        $field[CollectionUpdater::KEY_FIELD_SKU_IS_VALID] =  [
+        $field[CollectionUpdater::KEY_FIELD_SKU_IS_VALID] = [
             'arguments' => [
                 'data' => [
                     'config' => [
                         'componentType' => Field::NAME,
-                        'formElement' => Hidden::NAME,
-                        'dataScope' => CollectionUpdater::KEY_FIELD_SKU_IS_VALID,
-                        'dataType' => Number::NAME,
-                        'sortOrder' => $sortOrder,
+                        'formElement'   => Hidden::NAME,
+                        'dataScope'     => CollectionUpdater::KEY_FIELD_SKU_IS_VALID,
+                        'dataType'      => Number::NAME,
+                        'sortOrder'     => $sortOrder,
                     ],
                 ],
             ],
@@ -185,12 +170,12 @@ class DisableFields extends AbstractModifier implements ModifierInterface
      */
     protected function disableFieldLinkedBySku($field)
     {
-        if (in_array($field, [FeaturesHelper::KEY_COST, FeaturesHelper::KEY_WEIGHT])) {
+        if (in_array($field, $this->ignoredFields)) {
             return;
         }
 
         $groupCustomOptionsName = CustomOptions::GROUP_CUSTOM_OPTIONS_NAME;
-        $optionContainerName = CustomOptions::CONTAINER_OPTION;
+        $optionContainerName    = CustomOptions::CONTAINER_OPTION;
 
         // Add field to the values
         $this->meta[$groupCustomOptionsName]['children']['options']['children']['record']['children']
@@ -202,8 +187,9 @@ class DisableFields extends AbstractModifier implements ModifierInterface
             [$field]['arguments']['data']['config'],
             [
                 'component' => 'MageWorx_OptionLink/js/components/disable-field-handler',
-                'imports' => [
-                    'setDisabled' => '${ $.provider }:${ $.parentScope }.'.CollectionUpdater::KEY_FIELD_SKU_IS_VALID,
+                'imports'   => [
+                    'setDisabled'   => '${ $.provider }:${ $.parentScope }.' . CollectionUpdater::KEY_FIELD_SKU_IS_VALID,
+                    '__disableTmpl' => ['setDisabled' => false]
                 ],
             ]
         );

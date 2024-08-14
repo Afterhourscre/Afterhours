@@ -1,41 +1,25 @@
 <?php
+
 namespace Braintree\Transaction;
 
 use Braintree\Instance;
 
 /**
  * PayPal details from a transaction
- *
- * @package    Braintree
- * @subpackage Transaction
  */
 
 /**
  * creates an instance of PayPalDetails
  *
- *
- * @package    Braintree
- * @subpackage Transaction
- *
- * @property-read string $payerEmail
- * @property-read string $paymentId
- * @property-read string $authorizationId
- * @property-read string $token
- * @property-read string $imageUrl
- * @property-read string $transactionFeeAmount
- * @property-read string $transactionFeeCurrencyIsoCode
- * @property-read string $description
+ * See our {@link https://developer.paypal.com/braintree/docs/reference/response/transaction#paypal_details developer docs} for information on attributes
  */
 class PayPalDetails extends Instance
 {
     protected $_attributes = [];
 
-    /**
-     * @ignore
-     */
+    // phpcs:ignore PEAR.Commenting.FunctionComment.Missing
     public function __construct($attributes)
     {
         parent::__construct($attributes);
     }
 }
-class_alias('Braintree\Transaction\PayPalDetails', 'Braintree_Transaction_PayPalDetails');

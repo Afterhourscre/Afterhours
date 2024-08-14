@@ -5,25 +5,27 @@
  */
 namespace Magento\Review\Controller\Adminhtml\Product;
 
+use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Review\Controller\Adminhtml\Product as ProductController;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Controller\ResultFactory;
 
-class MassVisibleIn extends ProductController
+/**
+ * Class MassVisibleIn
+ */
+class MassVisibleIn extends ProductController implements HttpPostActionInterface
 {
+
     /**
+     * Execute action
+     *
      * @return \Magento\Backend\Model\View\Result\Redirect
-     * @throws \Magento\Framework\Exception\NotFoundException
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new \Magento\Framework\Exception\NotFoundException(__('Page not found.'));
-        }
-
         $reviewsIds = $this->getRequest()->getParam('reviews');
         if (!is_array($reviewsIds)) {
-            $this->messageManager->addError(__('Please select review(s).'));
+            $this->messageManager->addErrorMessage(__('Please select review(s).'));
         } else {
             try {
                 $stores = $this->getRequest()->getParam('stores');
@@ -32,13 +34,13 @@ class MassVisibleIn extends ProductController
                     $model->setSelectStores($stores);
                     $model->save();
                 }
-                $this->messageManager->addSuccess(
+                $this->messageManager->addSuccessMessage(
                     __('A total of %1 record(s) have been updated.', count($reviewsIds))
                 );
             } catch (LocalizedException $e) {
-                $this->messageManager->addError($e->getMessage());
+                $this->messageManager->addErrorMessage($e->getMessage());
             } catch (\Exception $e) {
-                $this->messageManager->addException(
+                $this->messageManager->addExceptionMessage(
                     $e,
                     __('Something went wrong while updating these review(s).')
                 );

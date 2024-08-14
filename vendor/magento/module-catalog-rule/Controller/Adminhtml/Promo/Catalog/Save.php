@@ -7,15 +7,20 @@
 namespace Magento\CatalogRule\Controller\Adminhtml\Promo\Catalog;
 
 use Magento\Backend\App\Action\Context;
+use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
+use Magento\Framework\App\Request\DataPersistorInterface;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Filter\FilterInput;
 use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime\Filter\Date;
-use Magento\Framework\App\Request\DataPersistorInterface;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 
 /**
+ * Save action for catalog rule
+ *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class Save extends \Magento\CatalogRule\Controller\Adminhtml\Promo\Catalog
+class Save extends \Magento\CatalogRule\Controller\Adminhtml\Promo\Catalog implements HttpPostActionInterface
 {
     /**
      * @var DataPersistorInterface
@@ -23,34 +28,43 @@ class Save extends \Magento\CatalogRule\Controller\Adminhtml\Promo\Catalog
     protected $dataPersistor;
 
     /**
+     * @var TimezoneInterface
+     */
+    private $localeDate;
+
+    /**
      * @param Context $context
      * @param Registry $coreRegistry
      * @param Date $dateFilter
      * @param DataPersistorInterface $dataPersistor
+     * @param TimezoneInterface $localeDate
      */
     public function __construct(
         Context $context,
         Registry $coreRegistry,
         Date $dateFilter,
-        DataPersistorInterface $dataPersistor
+        DataPersistorInterface $dataPersistor,
+        TimezoneInterface $localeDate
     ) {
         $this->dataPersistor = $dataPersistor;
+        $this->localeDate = $localeDate;
         parent::__construct($context, $coreRegistry, $dateFilter);
     }
 
     /**
-     * @return void
+     * Execute save action from catalog rule
+     *
+     * @return \Magento\Framework\App\ResponseInterface|\Magento\Framework\Controller\ResultInterface|void
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function execute()
     {
         if ($this->getRequest()->getPostValue()) {
-
             /** @var \Magento\CatalogRule\Api\CatalogRuleRepositoryInterface $ruleRepository */
             $ruleRepository = $this->_objectManager->get(
                 \Magento\CatalogRule\Api\CatalogRuleRepositoryInterface::class
             );
-
             /** @var \Magento\CatalogRule\Model\Rule $model */
             $model = $this->_objectManager->create(\Magento\CatalogRule\Model\Rule::class);
 
@@ -60,12 +74,14 @@ class Save extends \Magento\CatalogRule\Controller\Adminhtml\Promo\Catalog
                     ['request' => $this->getRequest()]
                 );
                 $data = $this->getRequest()->getPostValue();
-
+                if (!$this->getRequest()->getParam('from_date')) {
+                    $data['from_date'] = $this->localeDate->formatDate();
+                }
                 $filterValues = ['from_date' => $this->_dateFilter];
                 if ($this->getRequest()->getParam('to_date')) {
                     $filterValues['to_date'] = $this->_dateFilter;
                 }
-                $inputFilter = new \Zend_Filter_Input(
+                $inputFilter = new FilterInput(
                     $filterValues,
                     [],
                     $data
@@ -131,8 +147,9 @@ class Save extends \Magento\CatalogRule\Controller\Adminhtml\Promo\Catalog
                     __('Something went wrong while saving the rule data. Please review the error log.')
                 );
                 $this->_objectManager->get(\Psr\Log\LoggerInterface::class)->critical($e);
-                $this->_objectManager->get(\Magento\Backend\Model\Session::class)->setPageData($data);
-                $this->dataPersistor->set('catalog_rule', $data);
+                $ruleData = $data ?? $this->getRequest()->getPostValue();
+                $this->_objectManager->get(\Magento\Backend\Model\Session::class)->setPageData($ruleData);
+                $this->dataPersistor->set('catalog_rule', $ruleData);
                 $this->_redirect('catalog_rule/*/edit', ['id' => $this->getRequest()->getParam('rule_id')]);
                 return;
             }

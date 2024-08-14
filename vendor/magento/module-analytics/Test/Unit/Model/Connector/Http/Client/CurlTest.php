@@ -3,93 +3,82 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Analytics\Test\Unit\Model\Connector\Http\Client;
 
+use Laminas\Http\Exception\RuntimeException;
+use Laminas\Http\Request;
+use Laminas\Http\Response;
+use Magento\Analytics\Model\Connector\Http\Client\Curl;
 use Magento\Analytics\Model\Connector\Http\ConverterInterface;
 use Magento\Analytics\Model\Connector\Http\JsonConverter;
 use Magento\Framework\HTTP\Adapter\CurlFactory;
+use Magento\Framework\HTTP\ResponseFactory;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * A unit test for testing of the CURL HTTP client.
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class CurlTest extends \PHPUnit\Framework\TestCase
+class CurlTest extends TestCase
 {
     /**
-     * @var \Magento\Analytics\Model\Connector\Http\Client\Curl
+     * @var Curl
      */
-    private $subject;
+    private $curl;
 
     /**
-     * @var \Magento\Framework\HTTP\Adapter\Curl|\PHPUnit_Framework_MockObject_MockObject
+     * @var \Magento\Framework\HTTP\Adapter\Curl|MockObject
      */
-    private $curlMock;
+    private $curlAdapterMock;
 
     /**
-     * @var \Psr\Log\LoggerInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var LoggerInterface|MockObject
      */
     private $loggerMock;
 
     /**
-     * @var CurlFactory|\PHPUnit_Framework_MockObject_MockObject
-     */
-    private $curlFactoryMock;
-
-    /**
-     * @var \Magento\Analytics\Model\Connector\Http\ResponseFactory|\PHPUnit_Framework_MockObject_MockObject
+     * @var ResponseFactory|MockObject
      */
     private $responseFactoryMock;
 
     /**
-     * @var ConverterInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var ConverterInterface|MockObject
      */
     private $converterMock;
 
     /**
-     * @var \Magento\Framework\TestFramework\Unit\Helper\ObjectManager
+     * @inheritdoc
      */
-    private $objectManagerHelper;
-
-    /**
-     * @return void
-     */
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->curlMock = $this->getMockBuilder(
-            \Magento\Framework\HTTP\Adapter\Curl::class
-        )
-        ->disableOriginalConstructor()
-        ->getMock();
+        $this->curlAdapterMock = $this->createMock(\Magento\Framework\HTTP\Adapter\Curl::class);
 
-        $this->loggerMock = $this->getMockBuilder(
-            \Psr\Log\LoggerInterface::class
-        )
-        ->disableOriginalConstructor()
-        ->getMock();
-        $this->curlFactoryMock = $this->getMockBuilder(CurlFactory::class)
-            ->setMethods(['create'])
+        $this->loggerMock = $this->getMockForAbstractClass(LoggerInterface::class);
+        $curlFactoryMock = $this->getMockBuilder(CurlFactory::class)
+            ->onlyMethods(['create'])
             ->disableOriginalConstructor()
             ->getMock();
-        $this->curlFactoryMock->expects($this->any())
+        $curlFactoryMock
             ->method('create')
-            ->willReturn($this->curlMock);
+            ->willReturn($this->curlAdapterMock);
 
-        $this->responseFactoryMock = $this->getMockBuilder(
-            \Magento\Analytics\Model\Connector\Http\ResponseFactory::class
-        )
-        ->disableOriginalConstructor()
-        ->getMock();
+        $this->responseFactoryMock = $this->createMock(ResponseFactory::class);
         $this->converterMock = $this->createJsonConverter();
 
-        $this->objectManagerHelper =
-            new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
+        $objectManagerHelper = new ObjectManager($this);
 
-        $this->subject = $this->objectManagerHelper->getObject(
-            \Magento\Analytics\Model\Connector\Http\Client\Curl::class,
+        $this->curl = $objectManagerHelper->getObject(
+            Curl::class,
             [
-                'curlFactory' => $this->curlFactoryMock,
+                'curlFactory' => $curlFactoryMock,
                 'responseFactory' => $this->responseFactoryMock,
                 'converter' => $this->converterMock,
-                'logger' => $this->loggerMock,
+                'logger' => $this->loggerMock
             ]
         );
     }
@@ -107,76 +96,76 @@ class CurlTest extends \PHPUnit\Framework\TestCase
                     'version' => '1.1',
                     'body'=> ['name' => 'value'],
                     'url' => 'http://www.mystore.com',
-                    'headers' => [JsonConverter::CONTENT_TYPE_HEADER],
-                    'method' => \Magento\Framework\HTTP\ZendClient::POST,
+                    'method' => Request::METHOD_POST
                 ]
             ]
         ];
     }
 
     /**
+     * @param array $data
      * @return void
+     * @throws RuntimeException
      * @dataProvider getTestData
      */
     public function testRequestSuccess(array $data)
     {
         $responseString = 'This is response.';
-        $response = new  \Zend_Http_Response(201, [], $responseString);
-        $this->curlMock->expects($this->once())
+        $response = new Response();
+        $response->setStatusCode(Response::STATUS_CODE_201);
+        $response->setContent($responseString);
+        $this->curlAdapterMock->expects($this->once())
             ->method('write')
             ->with(
                 $data['method'],
                 $data['url'],
                 $data['version'],
-                $data['headers'],
+                [$this->converterMock->getContentTypeHeader()],
                 json_encode($data['body'])
             );
-        $this->curlMock->expects($this->once())
+        $this->curlAdapterMock->expects($this->once())
             ->method('read')
             ->willReturn($responseString);
-        $this->curlMock->expects($this->any())
-            ->method('getErrno')
-            ->willReturn(0);
-
-        $this->responseFactoryMock->expects($this->any())
-            ->method('create')
-            ->with($responseString)
-            ->willReturn($response);
+        $this->curlAdapterMock->method('getErrno')->willReturn(0);
+        $this->responseFactoryMock->method('create')->with($responseString)->willReturn($response);
 
         $this->assertEquals(
             $response,
-            $this->subject->request(
+            $this->curl->request(
                 $data['method'],
                 $data['url'],
                 $data['body'],
-                $data['headers'],
+                [$this->converterMock->getContentTypeHeader()],
                 $data['version']
             )
         );
     }
 
     /**
+     * @param array $data
      * @return void
+     * @throws RuntimeException
      * @dataProvider getTestData
      */
     public function testRequestError(array $data)
     {
-        $response = new  \Zend_Http_Response(0, []);
-        $this->curlMock->expects($this->once())
+        $response = new Response();
+        $response->setCustomStatusCode(Response::STATUS_CODE_CUSTOM);
+        $this->curlAdapterMock->expects($this->once())
             ->method('write')
             ->with(
                 $data['method'],
                 $data['url'],
                 $data['version'],
-                $data['headers'],
+                [$this->converterMock->getContentTypeHeader()],
                 json_encode($data['body'])
             );
-        $this->curlMock->expects($this->once())
+        $this->curlAdapterMock->expects($this->once())
             ->method('read');
-        $this->curlMock->expects($this->atLeastOnce())
+        $this->curlAdapterMock->expects($this->atLeastOnce())
             ->method('getErrno')
             ->willReturn(1);
-        $this->curlMock->expects($this->atLeastOnce())
+        $this->curlAdapterMock->expects($this->atLeastOnce())
             ->method('getError')
             ->willReturn('CURL error.');
 
@@ -190,29 +179,28 @@ class CurlTest extends \PHPUnit\Framework\TestCase
 
         $this->assertEquals(
             $response,
-            $this->subject->request(
+            $this->curl->request(
                 $data['method'],
                 $data['url'],
                 $data['body'],
-                $data['headers'],
+                [$this->converterMock->getContentTypeHeader()],
                 $data['version']
             )
         );
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject
+     * @return MockObject
      */
     private function createJsonConverter()
     {
-        $converterMock = $this->getMockBuilder(ConverterInterface::class)
-            ->getMockForAbstractClass();
-        $converterMock->expects($this->any())->method('toBody')->willReturnCallback(function ($value) {
+        $converterMock = $this->getMockBuilder(JsonConverter::class)
+            ->onlyMethods(['getContentTypeHeader','toBody'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $converterMock->method('toBody')->willReturnCallback(function ($value) {
             return json_encode($value);
         });
-        $converterMock->expects($this->any())
-            ->method('getContentTypeHeader')
-            ->willReturn(JsonConverter::CONTENT_TYPE_HEADER);
         return $converterMock;
     }
 }

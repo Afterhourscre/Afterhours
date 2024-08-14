@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of PHP CS Fixer.
  *
@@ -15,6 +17,7 @@ namespace PhpCsFixer\Fixer\Whitespace;
 use PhpCsFixer\AbstractFixer;
 use PhpCsFixer\FixerDefinition\CodeSample;
 use PhpCsFixer\FixerDefinition\FixerDefinition;
+use PhpCsFixer\FixerDefinition\FixerDefinitionInterface;
 use PhpCsFixer\Preg;
 use PhpCsFixer\Tokenizer\Token;
 use PhpCsFixer\Tokenizer\Tokens;
@@ -29,50 +32,58 @@ use PhpCsFixer\Tokenizer\Tokens;
  */
 final class NoTrailingWhitespaceFixer extends AbstractFixer
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function getDefinition()
+    public function getDefinition(): FixerDefinitionInterface
     {
         return new FixerDefinition(
             'Remove trailing whitespace at the end of non-blank lines.',
-            array(new CodeSample("<?php\n\$a = 1;     \n"))
+            [new CodeSample("<?php\n\$a = 1;     \n")]
         );
     }
 
     /**
      * {@inheritdoc}
+     *
+     * Must run after CombineConsecutiveIssetsFixer, CombineConsecutiveUnsetsFixer, EmptyLoopBodyFixer, EmptyLoopConditionFixer, FunctionToConstantFixer, ModernizeStrposFixer, NoEmptyCommentFixer, NoEmptyPhpdocFixer, NoEmptyStatementFixer, NoUnneededControlParenthesesFixer, NoUselessElseFixer, StringLengthToEmptyFixer, TernaryToElvisOperatorFixer.
      */
-    public function getPriority()
+    public function getPriority(): int
     {
-        // should be run after NoEmptyPhpdocFixer, NoUnneededControlParenthesesFixer, ClassDefinitionFixer, CombineConsecutiveUnsetsFixer, NoEmptyStatementFixer and NoUselessElseFixer.
         return 0;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function isCandidate(Tokens $tokens)
+    public function isCandidate(Tokens $tokens): bool
     {
         return true;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function applyFix(\SplFileInfo $file, Tokens $tokens)
+    protected function applyFix(\SplFileInfo $file, Tokens $tokens): void
     {
-        foreach ($tokens as $index => $token) {
+        for ($index = \count($tokens) - 1; $index >= 0; --$index) {
+            $token = $tokens[$index];
+            if (
+                $token->isGivenKind(T_OPEN_TAG)
+                && $tokens->offsetExists($index + 1)
+                && $tokens[$index + 1]->isWhitespace()
+                && Preg::match('/(.*)\h$/', $token->getContent(), $openTagMatches)
+                && Preg::match('/^(\R)(.*)$/s', $tokens[$index + 1]->getContent(), $whitespaceMatches)
+            ) {
+                $tokens[$index] = new Token([T_OPEN_TAG, $openTagMatches[1].$whitespaceMatches[1]]);
+                $tokens->ensureWhitespaceAtIndex($index + 1, 0, $whitespaceMatches[2]);
+
+                continue;
+            }
+
             if (!$token->isWhitespace()) {
                 continue;
             }
 
-            $lines = Preg::split("/([\r\n]+)/", $token->getContent(), -1, PREG_SPLIT_DELIM_CAPTURE);
-            $linesSize = count($lines);
+            $lines = Preg::split('/(\R+)/', $token->getContent(), -1, PREG_SPLIT_DELIM_CAPTURE);
+            $linesSize = \count($lines);
 
             // fix only multiline whitespaces or singleline whitespaces at the end of file
             if ($linesSize > 1 || !isset($tokens[$index + 1])) {
-                $lines[0] = rtrim($lines[0], " \t");
+                if (!$tokens[$index - 1]->isGivenKind(T_OPEN_TAG) || !Preg::match('/(.*)\R$/', $tokens[$index - 1]->getContent())) {
+                    $lines[0] = rtrim($lines[0], " \t");
+                }
 
                 for ($i = 1; $i < $linesSize; ++$i) {
                     $trimmedLine = rtrim($lines[$i], " \t");
@@ -81,9 +92,9 @@ final class NoTrailingWhitespaceFixer extends AbstractFixer
                     }
                 }
 
-                $content = implode($lines);
+                $content = implode('', $lines);
                 if ('' !== $content) {
-                    $tokens[$index] = new Token(array($token->getId(), $content));
+                    $tokens[$index] = new Token([$token->getId(), $content]);
                 } else {
                     $tokens->clearAt($index);
                 }

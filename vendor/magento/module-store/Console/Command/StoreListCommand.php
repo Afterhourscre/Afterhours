@@ -6,12 +6,10 @@
  */
 namespace Magento\Store\Console\Command;
 
-use Magento\Framework\App\ObjectManager;
+use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Helper\Table as TableHelper;
-use Symfony\Component\Console\Helper\TableFactory as TableHelperFactory;
 
 /**
  * Class StoreListCommand
@@ -26,24 +24,17 @@ class StoreListCommand extends Command
     private $storeManager;
 
     /**
-     * @var TableHelperFactory
-     */
-    private $tableHelperFactory;
-
-    /**
-     * @inheritDoc
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      */
     public function __construct(
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        TableHelperFactory $tableHelperFactory = null
+        \Magento\Store\Model\StoreManagerInterface $storeManager
     ) {
         $this->storeManager = $storeManager;
-        $this->tableHelperFactory = $tableHelperFactory ?? ObjectManager::getInstance()->get(TableHelperFactory::class);
         parent::__construct();
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected function configure()
     {
@@ -54,13 +45,12 @@ class StoreListCommand extends Command
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         try {
-            /** @var TableHelper $table */
-            $table = $this->tableHelperFactory->create(['output' => $output]);
+            $table = new Table($output);
             $table->setHeaders(['ID', 'Website ID', 'Group ID', 'Name', 'Code', 'Sort Order', 'Is Active']);
 
             foreach ($this->storeManager->getStores(true, true) as $store) {

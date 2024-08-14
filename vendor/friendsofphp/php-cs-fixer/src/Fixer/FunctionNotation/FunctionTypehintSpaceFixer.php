@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of PHP CS Fixer.
  *
@@ -12,78 +14,47 @@
 
 namespace PhpCsFixer\Fixer\FunctionNotation;
 
-use PhpCsFixer\AbstractFixer;
+use PhpCsFixer\AbstractProxyFixer;
+use PhpCsFixer\Fixer\DeprecatedFixerInterface;
+use PhpCsFixer\Fixer\Whitespace\TypeDeclarationSpacesFixer;
 use PhpCsFixer\FixerDefinition\CodeSample;
 use PhpCsFixer\FixerDefinition\FixerDefinition;
-use PhpCsFixer\Tokenizer\Token;
+use PhpCsFixer\FixerDefinition\FixerDefinitionInterface;
 use PhpCsFixer\Tokenizer\Tokens;
 
 /**
  * @author Dariusz Rumiński <dariusz.ruminski@gmail.com>
+ *
+ * @deprecated
  */
-final class FunctionTypehintSpaceFixer extends AbstractFixer
+final class FunctionTypehintSpaceFixer extends AbstractProxyFixer implements DeprecatedFixerInterface
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function getDefinition()
+    public function getDefinition(): FixerDefinitionInterface
     {
         return new FixerDefinition(
-            'Add missing space between function\'s argument and its typehint.',
-            array(new CodeSample("<?php\nfunction sample(array\$a)\n{}"))
+            'Ensure single space between function\'s argument and its typehint.',
+            [
+                new CodeSample("<?php\nfunction sample(array\$a)\n{}\n"),
+                new CodeSample("<?php\nfunction sample(array  \$a)\n{}\n"),
+            ]
         );
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function isCandidate(Tokens $tokens)
+    public function isCandidate(Tokens $tokens): bool
     {
-        return $tokens->isTokenKindFound(T_FUNCTION);
+        return $tokens->isAnyTokenKindsFound([T_FUNCTION, T_FN]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function applyFix(\SplFileInfo $file, Tokens $tokens)
+    public function getSuccessorsNames(): array
     {
-        for ($index = $tokens->count() - 1; $index >= 0; --$index) {
-            $token = $tokens[$index];
+        return array_keys($this->proxyFixers);
+    }
 
-            if (!$token->isGivenKind(T_FUNCTION)) {
-                continue;
-            }
+    protected function createProxyFixers(): array
+    {
+        $fixer = new TypeDeclarationSpacesFixer();
+        $fixer->configure(['elements' => ['function']]);
 
-            $startParenthesisIndex = $tokens->getNextTokenOfKind($index, array('(', ';', array(T_CLOSE_TAG)));
-            if (!$tokens[$startParenthesisIndex]->equals('(')) {
-                continue;
-            }
-
-            $endParenthesisIndex = $tokens->findBlockEnd(Tokens::BLOCK_TYPE_PARENTHESIS_BRACE, $startParenthesisIndex);
-
-            for ($iter = $endParenthesisIndex - 1; $iter > $startParenthesisIndex; --$iter) {
-                if (!$tokens[$iter]->isGivenKind(T_VARIABLE)) {
-                    continue;
-                }
-
-                // skip ... before $variable for variadic parameter
-                if (defined('T_ELLIPSIS')) {
-                    $prevNonWhitespaceIndex = $tokens->getPrevNonWhitespace($iter);
-                    if ($tokens[$prevNonWhitespaceIndex]->isGivenKind(T_ELLIPSIS)) {
-                        $iter = $prevNonWhitespaceIndex;
-                    }
-                }
-
-                // skip & before $variable for parameter passed by reference
-                $prevNonWhitespaceIndex = $tokens->getPrevNonWhitespace($iter);
-                if ($tokens[$prevNonWhitespaceIndex]->equals('&')) {
-                    $iter = $prevNonWhitespaceIndex;
-                }
-
-                if (!$tokens[$iter - 1]->equalsAny(array(array(T_WHITESPACE), array(T_COMMENT), array(T_DOC_COMMENT), '(', ','))) {
-                    $tokens->insertAt($iter, new Token(array(T_WHITESPACE, ' ')));
-                }
-            }
-        }
+        return [$fixer];
     }
 }

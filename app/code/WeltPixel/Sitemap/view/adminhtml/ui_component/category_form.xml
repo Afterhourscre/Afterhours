@@ -15,8 +15,8 @@
                     <item name="sortOrder" xsi:type="number">100</item>
                     <item name="dataType" xsi:type="string">boolean</item>
                     <item name="formElement" xsi:type="string">checkbox</item>
-                    <item name="scopeLabel" xsi:type="string">[STORE VIEW]</item>
-                    <item name="label" xsi:type="string" translate="true">Exclude from Sitemap</item>
+                   
+                    <item name="label" xsi:type="string" translate="true">Exclude from Sitemap ==</item>
                     <item name="prefer" xsi:type="string">toggle</item>
                     <item name="valueMap" xsi:type="array">
                         <item name="true" xsi:type="string">1</item>
@@ -28,3 +28,7 @@
         </field>
     </fieldset>
 </form>
+
+
+
+

@@ -8,38 +8,41 @@
 
 <tests xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:noNamespaceSchemaLocation="urn:magento:mftf:Test/etc/testSchema.xsd">
-    <test name="AdminCreateInvoiceTest">
+    <test name="AdminCreateInvoiceTest" deprecated="Use AdminInvoiceOrderTest instead">
         <annotations>
-            <features value="Invoice Creation"/>
+            <features value="Sales"/>
             <stories value="Create an Invoice via the Admin"/>
-            <title value="Create Invoice"/>
-            <description value="Should be able to create an invoice via the admin."/>
+            <title value="DEPRECATED. Admin should be able to create an invoice"/>
+            <description value="Admin should be able to create an invoice"/>
             <severity value="MAJOR"/>
             <testCaseId value="MAGETWO-72096"/>
             <group value="sales"/>
+            <skip>
+             <issueId value="DEPRECATED">Use AdminInvoiceOrderTest instead</issueId>
+            </skip>
+            <group value="pr_exclude"/>
         </annotations>
         <before>
             <createData entity="_defaultCategory" stepKey="createCategory"/>
             <createData entity="_defaultProduct" stepKey="createProduct">
                 <requiredEntity createDataKey="createCategory"/>
             </createData>
-            <actionGroup ref="LoginAsAdmin" stepKey="loginAsAdmin"/>
         </before>
         <after>
+            <actionGroup ref="AdminLogoutActionGroup" stepKey="adminLogout"/>
             <deleteData createDataKey="createCategory" stepKey="deleteProduct1"/>
             <deleteData createDataKey="createProduct" stepKey="deleteCategory1"/>
-            <actionGroup ref="AdminOrdersGridClearFiltersActionGroup" stepKey="clearOrderGridFilters"/>
-            <amOnPage url="{{InvoicesPage.url}}" stepKey="navigateToInvoicesGridPage"/>
-            <actionGroup ref="clearFiltersAdminDataGrid" stepKey="clearInvoicesGridFilters"/>
-            <actionGroup ref="logout" stepKey="logoutFromAdmin"/>
         </after>
 
         <!-- todo: Create an order via the api instead of driving the browser  -->
-        <amOnPage url="{{StorefrontProductPage.url($$createProduct.custom_attributes[url_key]$$)}}" stepKey="navigateToProductPage"/>
-        <actionGroup ref="addToCartFromStorefrontProductPage" stepKey="addProductToCart">
-            <argument name="productName" value="$$createProduct.name$$"/>
-        </actionGroup>
-        <actionGroup ref="GoToCheckoutFromMinicartActionGroup" stepKey="goToCheckoutFromMinicart"/>
+        <amOnPage url="{{StorefrontCategoryPage.url($$createCategory.custom_attributes[url_key]$$)}}" stepKey="onCategoryPage"/>
+        <waitForPageLoad stepKey="waitForPageLoad1"/>
+        <actionGroup ref="StorefrontHoverProductOnCategoryPageActionGroup" stepKey="hoverProduct"/>
+        <actionGroup ref="StorefrontClickAddToCartButtonActionGroup" stepKey="addToCart"/>
+        <waitForElementVisible selector="{{StorefrontCategoryMainSection.SuccessMsg}}" time="30" stepKey="waitForProductAdded"/>
+        <actionGroup ref="StorefrontClickOnMiniCartActionGroup" stepKey="clickCart"/>
+        <click selector="{{StorefrontMinicartSection.goToCheckout}}" stepKey="goToCheckout"/>
+        <waitForPageLoad stepKey="waitForPageLoad2"/>
         <fillField selector="{{CheckoutShippingGuestInfoSection.email}}" userInput="{{CustomerEntityOne.email}}" stepKey="enterEmail"/>
         <fillField selector="{{CheckoutShippingGuestInfoSection.firstName}}" userInput="{{CustomerEntityOne.firstname}}" stepKey="enterFirstName"/>
         <fillField selector="{{CheckoutShippingGuestInfoSection.lastName}}" userInput="{{CustomerEntityOne.lastname}}" stepKey="enterLastName"/>
@@ -48,35 +51,44 @@
         <selectOption selector="{{CheckoutShippingGuestInfoSection.region}}" userInput="{{CustomerAddressSimple.state}}" stepKey="selectRegion"/>
         <fillField selector="{{CheckoutShippingGuestInfoSection.postcode}}" userInput="{{CustomerAddressSimple.postcode}}" stepKey="enterPostcode"/>
         <fillField selector="{{CheckoutShippingGuestInfoSection.telephone}}" userInput="{{CustomerAddressSimple.telephone}}" stepKey="enterTelephone"/>
-        <waitForLoadingMaskToDisappear stepKey="waitForLoadingMask"/>
-        <click selector="{{CheckoutShippingMethodsSection.firstShippingMethod}}" stepKey="selectFirstShippingMethod"/>
-        <waitForLoadingMaskToDisappear stepKey="waitForLoadingMask2"/>
-        <waitForElement selector="{{CheckoutShippingMethodsSection.next}}" time="30" stepKey="waitForNextButton"/>
-        <click selector="{{CheckoutShippingMethodsSection.next}}" stepKey="clickNext"/>
+        <waitForPageLoad stepKey="waitForLoadingMask"/>
+        <actionGroup ref="StorefrontSelectFirstShippingMethodActionGroup" stepKey="selectFirstShippingMethod"/>
+        <comment userInput="Adding the comment to replace waitForLoadingMask2 action for preserving Backward Compatibility" stepKey="waitForLoadingMask2"/>
+        <actionGroup ref="StorefrontCheckoutClickNextButtonActionGroup" stepKey="clickNext"/>
         <!-- Checkout select Check/Money Order payment -->
         <actionGroup ref="CheckoutSelectCheckMoneyOrderPaymentActionGroup" stepKey="selectCheckMoneyPayment"/>
-        <waitForElement selector="{{CheckoutPaymentSection.placeOrder}}" time="30" stepKey="waitForPlaceOrderButton"/>
-        <click selector="{{CheckoutPaymentSection.placeOrder}}" stepKey="clickPlaceOrder"/>
+        <comment userInput="BIC workaround" stepKey="waitForPlaceOrderButton"/>
+        <actionGroup ref="ClickPlaceOrderActionGroup" stepKey="clickPlaceOrder"/>
         <grabTextFrom selector="{{CheckoutSuccessMainSection.orderNumber}}" stepKey="grabOrderNumber"/>
         <!-- end todo -->
 
-        <actionGroup ref="OpenOrderById" stepKey="openCreatedOrder">
-            <argument name="orderId" value="{$grabOrderNumber}"/>
-        </actionGroup>
-        <!--Create invoice-->
-        <actionGroup ref="StartCreateInvoiceFromOrderPage" stepKey="startCreateInvoice"/>
-        <!--Submit invoice-->
-        <actionGroup ref="SubmitInvoice" stepKey="submitInvoice"/>
+        <actionGroup ref="AdminLoginActionGroup" stepKey="loginAsAdmin1"/>
 
-        <see selector="{{OrderDetailsInformationSection.orderStatus}}" userInput="Processing" stepKey="seeOrderStatus"/>
-        <click selector="{{OrderDetailsOrderViewSection.invoices}}" stepKey="clickInvoices"/>
-        <waitForLoadingMaskToDisappear stepKey="waitForLoadingMask5" />
-        <see selector="{{OrderDetailsInvoicesSection.content}}" userInput="{$grabOrderNumber}" stepKey="seeInvoice1"/>
-        <see selector="{{OrderDetailsInvoicesSection.content}}" userInput="{{CustomerEntityOne.fullname}}" stepKey="seeInvoice2"/>
+        <amOnPage url="{{AdminOrdersPage.url}}" stepKey="onOrdersPage"/>
+        <waitForPageLoad stepKey="waitForLoadingMask3"/>
+        <actionGroup ref="ClearFiltersAdminDataGridActionGroup" stepKey="clearGridFilter"/>
+        <fillField selector="{{AdminOrdersGridSection.search}}" userInput="{$grabOrderNumber}" stepKey="searchOrderNum"/>
+        <click selector="{{AdminOrdersGridSection.submitSearch}}" stepKey="submitSearch"/>
+        <waitForPageLoad stepKey="waitForLoadingMask4"/>
 
-        <actionGroup ref="openInvoiceByOrderId" stepKey="openAndFilterInvoicesGrid">
-            <argument name="orderId" value="{$grabOrderNumber}"/>
-        </actionGroup>
-        <see selector="{{InvoiceDetailsInformationSection.orderStatus}}" userInput="Processing" stepKey="seeCorrectOrderStatus"/>
+        <actionGroup ref="AdminOrderGridClickFirstRowActionGroup" stepKey="clickOrderRow"/>
+        <actionGroup ref="AdminClickInvoiceButtonOrderViewActionGroup" stepKey="clickInvoice"/>
+        <actionGroup ref="AdminInvoiceClickSubmitActionGroup" stepKey="clickSubmitInvoice"/>
+        <see selector="{{AdminOrderDetailsMessagesSection.successMessage}}" userInput="The invoice has been created." stepKey="seeSuccessMessage"/>
+        <click selector="{{AdminOrderDetailsOrderViewSection.invoices}}" stepKey="clickInvoices"/>
+        <waitForPageLoad stepKey="waitForLoadingMask5" />
+        <see selector="{{AdminOrderDetailsInvoicesSection.content}}" userInput="{$grabOrderNumber}" stepKey="seeInvoice1"/>
+        <see selector="{{AdminOrderDetailsInvoicesSection.content}}" userInput="John Doe" stepKey="seeInvoice2"/>
+        <click selector="{{AdminOrderDetailsOrderViewSection.information}}" stepKey="clickInformation"/>
+        <waitForPageLoad stepKey="waitForOrderInformationTabLoadingMask"/>
+        <see selector="{{AdminOrderDetailsInformationSection.orderStatus}}" userInput="Processing" stepKey="seeOrderStatus"/>
+        <amOnPage url="{{AdminInvoicesPage.url}}" stepKey="goToInvoices"/>
+        <waitForPageLoad stepKey="waitForLoadingMask6" />
+        <actionGroup ref="ResetProductGridToDefaultViewActionGroup" stepKey="resetGridInitial"/>
+        <click selector="{{AdminInvoicesGridSection.filter}}" stepKey="clickFilters"/>
+        <fillField selector="{{AdminInvoicesFiltersSection.orderNum}}" userInput="{$grabOrderNumber}" stepKey="searchOrderNum2"/>
+        <click selector="{{AdminInvoicesFiltersSection.applyFilters}}" stepKey="clickApplyFilters"/>
+        <click selector="{{AdminInvoicesGridSection.firstRow}}" stepKey="clickInvoice2"/>
+        <see selector="{{AdminInvoiceDetailsInformationSection.orderStatus}}" userInput="Processing" stepKey="seeOrderStatus2"/>
     </test>
 </tests>

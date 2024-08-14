@@ -46,7 +46,7 @@ class PriceCurrency implements \Magento\Framework\Pricing\PriceCurrencyInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function convert($amount, $scope = null, $currency = null)
     {
@@ -58,17 +58,15 @@ class PriceCurrency implements \Magento\Framework\Pricing\PriceCurrencyInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function convertAndRound($amount, $scope = null, $currency = null, $precision = self::DEFAULT_PRECISION)
     {
-        $currentCurrency = $this->getCurrency($scope, $currency);
-        $convertedValue = $this->getStore($scope)->getBaseCurrency()->convert($amount, $currentCurrency);
-        return round($convertedValue, $precision);
+        return $this->roundPrice($this->convert($amount, $scope, $currency), $precision);
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function format(
         $amount,
@@ -77,11 +75,12 @@ class PriceCurrency implements \Magento\Framework\Pricing\PriceCurrencyInterface
         $scope = null,
         $currency = null
     ) {
-        return $this->createCurrency($scope, $currency)->formatPrecision($amount, $precision, [], $includeContainer);
+        return $this->getCurrency($scope, $currency)
+            ->formatPrecision($amount, $precision, [], $includeContainer);
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function convertAndFormat(
         $amount,
@@ -96,14 +95,29 @@ class PriceCurrency implements \Magento\Framework\Pricing\PriceCurrencyInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getCurrency($scope = null, $currency = null)
     {
-        return $this->createCurrency($scope, $currency, true);
+        if ($currency instanceof Currency) {
+            $currentCurrency = $currency;
+        } elseif (is_string($currency)) {
+            $currency = $this->currencyFactory->create()
+                ->load($currency);
+            $baseCurrency = $this->getStore($scope)
+                ->getBaseCurrency();
+            $currentCurrency = $baseCurrency->getRate($currency) ? $currency : $baseCurrency;
+        } else {
+            $currentCurrency = $this->getStore($scope)
+                ->getCurrentCurrency();
+        }
+
+        return $currentCurrency;
     }
 
     /**
+     * Get currrency symbol
+     *
      * @param null|string|bool|int|\Magento\Framework\App\ScopeInterface $scope
      * @param \Magento\Framework\Model\AbstractModel|string|null $currency
      * @return string
@@ -134,39 +148,22 @@ class PriceCurrency implements \Magento\Framework\Pricing\PriceCurrencyInterface
     }
 
     /**
-     * Round price
-     *
-     * @param float $price
-     * @return float
+     * @inheritdoc
      */
     public function round($price)
     {
-        return round($price, 2);
+        return round((float) $price, 2);
     }
 
     /**
-     * Get currency considering currency rate configuration.
+     * Round price with precision
      *
-     * @param null|string|bool|int|\Magento\Framework\App\ScopeInterface $scope
-     * @param \Magento\Framework\Model\AbstractModel|string|null $currency
-     * @param bool $includeRate
-     *
-     * @return Currency
+     * @param float $price
+     * @param int $precision
+     * @return float
      */
-    private function createCurrency($scope, $currency, bool $includeRate = false)
+    public function roundPrice($price, $precision = self::DEFAULT_PRECISION)
     {
-        if ($currency instanceof Currency) {
-            $currentCurrency = $currency;
-        } elseif (is_string($currency)) {
-            $currentCurrency = $this->currencyFactory->create()->load($currency);
-            if ($includeRate) {
-                $baseCurrency = $this->getStore($scope)->getBaseCurrency();
-                $currentCurrency = $baseCurrency->getRate($currentCurrency) ? $currentCurrency : $baseCurrency;
-            }
-        } else {
-            $currentCurrency = $this->getStore($scope)->getCurrentCurrency();
-        }
-
-        return $currentCurrency;
+        return round((float) $price, $precision);
     }
 }

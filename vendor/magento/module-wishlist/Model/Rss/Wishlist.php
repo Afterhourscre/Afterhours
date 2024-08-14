@@ -11,13 +11,12 @@ use Magento\Store\Model\ScopeInterface;
 
 /**
  * Wishlist RSS model
+ *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Wishlist implements DataProviderInterface
 {
     /**
-     * Url Builder
-     *
      * @var \Magento\Framework\UrlInterface
      */
     protected $urlBuilder;
@@ -71,6 +70,8 @@ class Wishlist implements DataProviderInterface
     protected $customerFactory;
 
     /**
+     * Wishlist constructor.
+     *
      * @param \Magento\Wishlist\Helper\Rss $wishlistHelper
      * @param \Magento\Wishlist\Block\Customer\Wishlist $wishlistBlock
      * @param \Magento\Catalog\Helper\Output $outputHelper
@@ -116,13 +117,14 @@ class Wishlist implements DataProviderInterface
     public function isAllowed()
     {
         return $this->scopeConfig->isSetFlag('rss/wishlist/active', ScopeInterface::SCOPE_STORE)
-            && $this->getWishlist()->getCustomerId() == $this->wishlistHelper->getCustomer()->getId();
+            && $this->getWishlist()->getCustomerId() === $this->wishlistHelper->getCustomer()->getId();
     }
 
     /**
      * Get RSS feed items
      *
      * @return array
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getRssData()
     {
@@ -161,7 +163,7 @@ class Wishlist implements DataProviderInterface
                 }
                 $description .= '</p>';
 
-                if (trim($product->getDescription()) != '') {
+                if (is_string($product->getDescription()) && trim($product->getDescription()) !== '') {
                     $description .= '<p>' . __('Comment:') . ' '
                         . $this->outputHelper->productAttribute(
                             $product,
@@ -190,6 +192,8 @@ class Wishlist implements DataProviderInterface
     }
 
     /**
+     * GetCacheKey
+     *
      * @return string
      */
     public function getCacheKey()
@@ -198,6 +202,8 @@ class Wishlist implements DataProviderInterface
     }
 
     /**
+     * Get Cache Lifetime
+     *
      * @return int
      */
     public function getCacheLifetime()
@@ -263,7 +269,7 @@ class Wishlist implements DataProviderInterface
     }
 
     /**
-     * @return array
+     * @inheritdoc
      */
     public function getFeeds()
     {
@@ -271,7 +277,7 @@ class Wishlist implements DataProviderInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function isAuthRequired()
     {

@@ -1,30 +1,26 @@
 <?php
 /**
+ *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
 namespace Magento\Newsletter\Controller\Adminhtml\Queue;
 
-use Magento\Framework\Exception\NotFoundException;
+use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
 
-class Save extends \Magento\Newsletter\Controller\Adminhtml\Queue
+class Save extends \Magento\Newsletter\Controller\Adminhtml\Queue implements HttpPostActionInterface
 {
     /**
-     * Save newsletter queue.
+     * Save Newsletter queue
      *
-     * @return void
      * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws NotFoundException
+     * @return void
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function execute()
     {
         try {
-            if (!$this->getRequest()->isPost()) {
-                throw new NotFoundException(__('Page not found'));
-            }
-
             /* @var $queue \Magento\Newsletter\Model\Queue */
             $queue = $this->_objectManager->create(\Magento\Newsletter\Model\Queue::class);
 
@@ -92,7 +88,7 @@ class Save extends \Magento\Newsletter\Controller\Adminhtml\Queue
 
             $this->_redirect('*/*');
         } catch (\Magento\Framework\Exception\LocalizedException $e) {
-            $this->messageManager->addError($e->getMessage());
+            $this->messageManager->addErrorMessage($e->getMessage());
             $id = $this->getRequest()->getParam('id');
             if ($id) {
                 $this->_redirect('*/*/edit', ['id' => $id]);

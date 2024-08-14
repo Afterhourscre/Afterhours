@@ -7,33 +7,35 @@ declare(strict_types=1);
 
 namespace Magento\Checkout\Test\Unit\Block\Checkout;
 
+use Magento\Checkout\Block\Checkout\AttributeMerger;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Magento\Customer\Helper\Address as AddressHelper;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Directory\Helper\Data as DirectoryHelper;
-use Magento\Checkout\Block\Checkout\AttributeMerger;
+use PHPUnit\Framework\TestCase;
+use Magento\Directory\Model\AllowedCountries;
 
-class AttributeMergerTest extends \PHPUnit\Framework\TestCase
+class AttributeMergerTest extends TestCase
 {
     /**
      * @var CustomerRepository
      */
-    private $customerRepositoryMock;
+    private $customerRepository;
 
     /**
      * @var CustomerSession
      */
-    private $customerSessionMock;
+    private $customerSession;
 
     /**
      * @var AddressHelper
      */
-    private $addressHelperMock;
+    private $addressHelper;
 
     /**
      * @var DirectoryHelper
      */
-    private $directoryHelperMock;
+    private $directoryHelper;
 
     /**
      * @var AttributeMerger
@@ -41,43 +43,48 @@ class AttributeMergerTest extends \PHPUnit\Framework\TestCase
     private $attributeMerger;
 
     /**
+     * @var AllowedCountries
+     */
+    private $allowedCountryReader;
+
+    /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
-
-        $this->customerRepositoryMock = $this->createMock(CustomerRepository::class);
-        $this->customerSessionMock = $this->createMock(CustomerSession::class);
-        $this->addressHelperMock = $this->createMock(AddressHelper::class);
-        $this->directoryHelperMock = $this->createMock(DirectoryHelper::class);
+        $this->customerRepository = $this->createMock(CustomerRepository::class);
+        $this->customerSession = $this->createMock(CustomerSession::class);
+        $this->addressHelper = $this->createMock(AddressHelper::class);
+        $this->directoryHelper = $this->createMock(DirectoryHelper::class);
+        $this->allowedCountryReader = $this->createMock(AllowedCountries::class);
 
         $this->attributeMerger = new AttributeMerger(
-            $this->addressHelperMock,
-            $this->customerSessionMock,
-            $this->customerRepositoryMock,
-            $this->directoryHelperMock
+            $this->addressHelper,
+            $this->customerSession,
+            $this->customerRepository,
+            $this->directoryHelper,
+            $this->allowedCountryReader
         );
     }
 
     /**
      * Tests of element attributes merging.
      *
-     * @param string $validationRule
-     * @param string $expectedValidation
-     * @return void
+     * @param String $validationRule - validation rule.
+     * @param String $expectedValidation - expected mapped validation.
      * @dataProvider validationRulesDataProvider
      */
-    public function testMerge($validationRule, $expectedValidation)
+    public function testMerge(String $validationRule, String $expectedValidation): void
     {
         $elements = [
             'field' => [
                 'visible' => true,
                 'formElement' => 'input',
                 'label' => __('City'),
-                'value' => null,
+                'value' =>  null,
                 'sortOrder' => 1,
                 'validation' => [
-                    'input_validation' => $validationRule,
+                    'input_validation' => $validationRule
                 ],
             ]
         ];
@@ -86,20 +93,18 @@ class AttributeMergerTest extends \PHPUnit\Framework\TestCase
             $elements,
             'provider',
             'dataScope',
-            [
-                'field' =>
-                    [
-                        'validation' => ['length' => true],
-                    ],
+            ['field' => [
+                'validation' => ['length' => true]
+            ]
             ]
         );
 
         $expectedResult = [
             $expectedValidation => true,
-            'length' => true,
+            'length' => true
         ];
 
-        $this->assertEquals($expectedResult, $actualResult['field']['validation']);
+        self::assertEquals($expectedResult, $actualResult['field']['validation']);
     }
 
     /**
@@ -116,7 +121,7 @@ class AttributeMergerTest extends \PHPUnit\Framework\TestCase
             ['alphanum-with-spaces', 'validate-alphanum-with-spaces'],
             ['url', 'validate-url'],
             ['email', 'email2'],
-            ['length', 'validate-length'],
+            ['length', 'validate-length']
         ];
     }
 }

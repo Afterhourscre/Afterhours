@@ -8,8 +8,6 @@ namespace Magento\Analytics\ReportXml;
 use Magento\Framework\DB\Select;
 
 /**
- * Class Query
- *
  * Query object, contains SQL statement, information about connection, query arguments
  */
 class Query implements \JsonSerializable
@@ -55,6 +53,8 @@ class Query implements \JsonSerializable
     }
 
     /**
+     * Returns query select
+     *
      * @return Select
      */
     public function getSelect()
@@ -63,6 +63,8 @@ class Query implements \JsonSerializable
     }
 
     /**
+     * Returns Connection name
+     *
      * @return string
      */
     public function getConnectionName()
@@ -71,6 +73,8 @@ class Query implements \JsonSerializable
     }
 
     /**
+     * Returns configuration
+     *
      * @return array
      */
     public function getConfig()
@@ -79,12 +83,9 @@ class Query implements \JsonSerializable
     }
 
     /**
-     * Specify data which should be serialized to JSON
-     * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
-     * @return mixed data which can be serialized by <b>json_encode</b>,
-     * which is a value of any type other than a resource.
-     * @since 5.4.0
+     * @inheritDoc
      */
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return [

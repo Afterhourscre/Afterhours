@@ -27,7 +27,7 @@ class Configurable extends Renderer implements IdentityInterface
     /**
      * Get item configurable child product
      *
-     * @return \Magento\Catalog\Model\Product
+     * @return \Magento\Catalog\Model\Product|null
      */
     public function getChildProduct()
     {
@@ -72,7 +72,10 @@ class Configurable extends Renderer implements IdentityInterface
     }
 
     /**
+     * Get price for exact simple product added to cart
+     *
      * @inheritdoc
+     * @since 100.3.1
      */
     public function getProductPriceHtml(\Magento\Catalog\Model\Product $product)
     {

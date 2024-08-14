@@ -8,9 +8,11 @@ namespace Magento\ReleaseNotification\Model\Viewer;
 use Magento\Framework\DataObject;
 
 /**
- * Class Log
- *
  * Release notification viewer log resource
+ *
+ * @deprecated Starting from Magento OS 2.4.7 Magento_ReleaseNotification module is deprecated
+ * in favor of another in-product messaging mechanism
+ * @see Current in-product messaging mechanism
  */
 class Log extends DataObject
 {

@@ -7,22 +7,26 @@
 namespace Magento\Newsletter\Controller\Adminhtml\Subscriber;
 
 use Magento\Backend\App\Action\Context;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\Response\Http\FileFactory;
-use Magento\Framework\Exception\NotFoundException;
 use Magento\Newsletter\Controller\Adminhtml\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
 
-class MassDelete extends Subscriber
+/**
+ * Subscriber mass delete controller.
+ */
+class MassDelete extends Subscriber implements HttpPostActionInterface
 {
     /**
      * @var SubscriberFactory
      */
     private $subscriberFactory;
-    
+
     /**
      * @param Context $context
      * @param FileFactory $fileFactory
+     * @param SubscriberFactory|null $subscriberFactory
      */
     public function __construct(
         Context $context,
@@ -32,19 +36,14 @@ class MassDelete extends Subscriber
         $this->subscriberFactory = $subscriberFactory ?: ObjectManager::getInstance()->get(SubscriberFactory::class);
         parent::__construct($context, $fileFactory);
     }
-    
+
     /**
      * Delete one or more subscribers action
      *
      * @return void
-     * @throws NotFoundException
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new NotFoundException(__('Page not found.'));
-        }
-
         $subscribersIds = $this->getRequest()->getParam('subscriber');
         if (!is_array($subscribersIds)) {
             $this->messageManager->addErrorMessage(__('Please select one or more subscribers.'));
@@ -56,9 +55,7 @@ class MassDelete extends Subscriber
                     );
                     $subscriber->delete();
                 }
-                $this->messageManager->addSuccessMessage(
-                    __('Total of %1 record(s) were deleted.', count($subscribersIds))
-                );
+                $this->messageManager->addSuccess(__('Total of %1 record(s) were deleted.', count($subscribersIds)));
             } catch (\Exception $e) {
                 $this->messageManager->addErrorMessage($e->getMessage());
             }

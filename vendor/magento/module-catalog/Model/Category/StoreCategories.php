@@ -42,18 +42,23 @@ class StoreCategories
      * Get all category ids for store.
      *
      * @param int|null $storeGroupId
-     * @return array
+     * @return int[]
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function getCategoryIds($storeGroupId = null): array
+    public function getCategoryIds(?int $storeGroupId = null): array
     {
         $rootCategoryId = $storeGroupId
             ? $this->groupRepository->get($storeGroupId)->getRootCategoryId()
             : Category::TREE_ROOT_ID;
         /** @var Category $rootCategory */
         $rootCategory = $this->categoryRepository->get($rootCategoryId);
-        $categoriesIds = $rootCategory->getAllChildren(true);
+        $categoriesIds = array_map(
+            function ($value) {
+                return (int) $value;
+            },
+            (array) $rootCategory->getAllChildren(true)
+        );
 
-        return (array) $categoriesIds;
+        return $categoriesIds;
     }
 }

@@ -179,6 +179,7 @@ class PhpReadinessCheck
 
     /**
      * Checks php memory limit
+     *
      * @return array
      */
     public function checkMemoryLimit()
@@ -235,8 +236,8 @@ class PhpReadinessCheck
 
     /**
      * Checks if xdebug.max_nesting_level is set 200 or more
+     *
      * @return array
-     * @SuppressWarnings(PHPMD.LongVariable)
      */
     private function checkXDebugNestedLevel()
     {
@@ -298,10 +299,10 @@ class PhpReadinessCheck
 
         $message = sprintf(
             'Your PHP Version is %s, but always_populate_raw_post_data = %d.
-            $HTTP_RAW_POST_DATA is deprecated from PHP 5.6 onwards and will be removed in PHP 7.0.
-            This will stop the installer from running.
-            Please open your php.ini file and set always_populate_raw_post_data to -1.
-            If you need more help please call your hosting provider.',
+ 	        $HTTP_RAW_POST_DATA is deprecated from PHP 5.6 onwards and will be removed in PHP 7.0.
+ 	        This will stop the installer from running.
+	        Please open your php.ini file and set always_populate_raw_post_data to -1.
+ 	        If you need more help please call your hosting provider.',
             PHP_VERSION,
             (int)ini_get('always_populate_raw_post_data')
         );

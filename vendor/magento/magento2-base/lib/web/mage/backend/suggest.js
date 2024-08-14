@@ -3,22 +3,14 @@
  * See COPYING.txt for license details.
  */
 
-(function (root, factory) {
-    'use strict';
-
-    if (typeof define === 'function' && define.amd) {
-        define([
-            'jquery',
-            'mage/template',
-            'mage/mage',
-            'jquery/ui',
-            'mage/backend/menu',
-            'mage/translate'
-        ], factory);
-    } else {
-        factory(root.jQuery, root.mageTemplate);
-    }
-}(this, function ($, mageTemplate) {
+define([
+    'jquery',
+    'mage/template',
+    'mage/mage',
+    'jquery/ui',
+    'mage/backend/menu',
+    'mage/translate'
+], function ($, mageTemplate) {
     'use strict';
 
     /**
@@ -156,7 +148,7 @@
          * @private
          */
         _value: function () {
-            return $.trim(this.element[this.element.is(':input') ? 'val' : 'text']());
+            return this.element[this.element.is(':input') ? 'val' : 'text']().trim();
         },
 
         /**
@@ -473,7 +465,7 @@
          * @private
          */
         _onSelectItem: function (e, item) {
-            if (item && $.type(item) === 'object' && $(e.target).is(this.element)) {
+            if (item && typeof item === 'object' && $(e.target).is(this.element)) {
                 this._focusItem(e, {
                     item: item
                 });
@@ -576,7 +568,7 @@
             if ((this._term !== term || term.length === 0) && !this.preventBlur) {
                 this._term = term;
 
-                if ($.type(term) === 'string' && term.length >= this.options.minLength) {
+                if (typeof term === 'string' && term.length >= this.options.minLength) {
                     if (this._trigger('search', e) === false) { //eslint-disable-line max-depth
                         return;
                     }
@@ -611,7 +603,7 @@
             this.element.addClass(this.options.loadingClass);
 
             if (this.options.delay) {
-                if ($.type(this.options.data) !== 'undefined') {
+                if (typeof this.options.data !== 'undefined') {
                     response(this.filter(this.options.data, term));
                 }
                 clearTimeout(this._searchTimeout);
@@ -713,9 +705,9 @@
             var o = this.options,
                 ajaxData;
 
-            if ($.isArray(o.source)) {
+            if (Array.isArray(o.source)) {
                 response(this.filter(o.source, term));
-            } else if ($.type(o.source) === 'string') {
+            } else if (typeof o.source === 'string') {
                 ajaxData = {};
                 ajaxData[this.options.termAjaxArgument] = term;
 
@@ -729,7 +721,7 @@
                         response.apply(response, arguments);
                     }, this)
                 }, o.ajaxOptions || {}));
-            } else if ($.type(o.source) === 'function') {
+            } else if (typeof o.source === 'function') {
                 o.source.apply(o.source, arguments);
             }
         },
@@ -751,7 +743,7 @@
          */
         filter: function (items, term) {
             var matcher = new RegExp(term.replace(/[\-\/\\\^$*+?.()|\[\]{}]/g, '\\$&'), 'i'),
-                itemsArray = $.isArray(items) ? items : $.map(items, function (element) {
+                itemsArray = Array.isArray(items) ? items : $.map(items, function (element) {
                     return element;
                 }),
                 property = this.options.filterProperty;
@@ -789,7 +781,7 @@
                  * @type {Array} - list of recently searched items
                  * @private
                  */
-                this._recentItems = $.isArray(recentItems) ? recentItems : [];
+                this._recentItems = Array.isArray(recentItems) ? recentItems : [];
             }
             this._super();
         },
@@ -1054,7 +1046,7 @@
          */
         _createValueField: function () {
             if (this.options.multiselect) {
-                return $('<select/>', {
+                return $('<select></select>', {
                     type: 'hidden',
                     multiple: 'multiple'
                 });
@@ -1196,4 +1188,4 @@
     });
 
     return $.mage.suggest;
-}));
+});

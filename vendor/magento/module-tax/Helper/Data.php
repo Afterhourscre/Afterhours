@@ -6,7 +6,6 @@
 namespace Magento\Tax\Helper;
 
 use Magento\Framework\Pricing\PriceCurrencyInterface;
-use Magento\Sales\Model\Order;
 use Magento\Store\Model\Store;
 use Magento\Customer\Model\Address;
 use Magento\Tax\Model\Config;
@@ -575,7 +574,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *  )
      * )
      *
-     * @param  Order|Invoice|Creditmemo $source
+     * @param  \Magento\Sales\Model\Order|\Magento\Sales\Model\Order\Invoice
+     * |\Magento\Sales\Model\Order\Creditmemo $source
      * @return array
      */
     public function getCalculatedTaxes($source)
@@ -648,7 +648,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Returns the array of tax rates for the order
      *
-     * @param  Order $order
+     * @param  \Magento\Sales\Model\Order $order
      * @return array
      */
     protected function _getTaxRateSubtotals($order)
@@ -690,7 +690,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function isCrossBorderTradeEnabled($store = null)
     {
-        return (bool)$this->_config->crossBorderTradeEnabled($store);
+        return (bool) $this->_config->crossBorderTradeEnabled($store);
     }
 
     /**

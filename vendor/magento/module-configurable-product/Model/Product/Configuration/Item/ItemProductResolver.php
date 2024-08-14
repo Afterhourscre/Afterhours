@@ -23,7 +23,7 @@ class ItemProductResolver implements ItemResolverInterface
     /**
      * Path in config to the setting which defines if parent or child product should be used to generate a thumbnail.
      */
-    const CONFIG_THUMBNAIL_SOURCE = 'checkout/cart/configurable_product_image';
+    public const CONFIG_THUMBNAIL_SOURCE = 'checkout/cart/configurable_product_image';
 
     /**
      * @var ScopeConfigInterface
@@ -52,11 +52,9 @@ class ItemProductResolver implements ItemResolverInterface
          */
         $finalProduct = $item->getProduct();
         $childProduct = $this->getChildProduct($item);
-
         if ($childProduct !== null && $this->isUseChildProduct($childProduct)) {
             $finalProduct = $childProduct;
         }
-
         return $finalProduct;
     }
 
@@ -64,12 +62,12 @@ class ItemProductResolver implements ItemResolverInterface
      * Get item configurable child product.
      *
      * @param ItemInterface $item
-     * @return Product|null
+     * @return Product | null
      */
-    private function getChildProduct(ItemInterface $item)
+    private function getChildProduct(ItemInterface $item): ?Product
     {
+        /** @var \Magento\Quote\Model\Quote\Item\Option $option */
         $option = $item->getOptionByCode('simple_product');
-
         return $option ? $option->getProduct() : null;
     }
 

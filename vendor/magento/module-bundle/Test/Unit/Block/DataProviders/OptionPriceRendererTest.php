@@ -34,7 +34,7 @@ class OptionPriceRendererTest extends TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $objectManager = new ObjectManager($this);
 
@@ -50,15 +50,20 @@ class OptionPriceRendererTest extends TestCase
 
     /**
      * Test to render Tier price html
+     *
+     * @return void
      */
-    public function testRenderTierPrice()
+    public function testRenderTierPrice(): void
     {
         $expectedHtml = 'tier price html';
         $expectedArguments = ['zone' => Render::ZONE_ITEM_OPTION];
 
         $productMock = $this->createMock(Product::class);
 
-        $priceRenderer = $this->createPartialMock(BlockInterface::class, ['toHtml', 'render']);
+        $priceRenderer = $this->getMockBuilder(BlockInterface::class)
+            ->addMethods(['render'])
+            ->onlyMethods(['toHtml'])
+            ->getMockForAbstractClass();
         $priceRenderer->expects($this->once())
             ->method('render')
             ->with('tier_price', $productMock, $expectedArguments)
@@ -77,8 +82,10 @@ class OptionPriceRendererTest extends TestCase
 
     /**
      * Test to render Tier price html when render block is not exists
+     *
+     * @return void
      */
-    public function testRenderTierPriceNotExist()
+    public function testRenderTierPriceNotExist(): void
     {
         $productMock = $this->createMock(Product::class);
 

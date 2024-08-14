@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of PHP CS Fixer.
  *
@@ -25,13 +27,13 @@ final class FileRemoval
     /**
      * List of observed files to be removed.
      *
-     * @var array
+     * @var array<string, true>
      */
-    private $files = array();
+    private array $files = [];
 
     public function __construct()
     {
-        register_shutdown_function(array($this, 'clean'));
+        register_shutdown_function([$this, 'clean']);
     }
 
     public function __destruct()
@@ -40,40 +42,58 @@ final class FileRemoval
     }
 
     /**
-     * Adds a file to be removed.
-     *
-     * @param string $path
+     * This class is not intended to be serialized,
+     * and cannot be deserialized (see __wakeup method).
      */
-    public function observe($path)
+    public function __sleep(): array
+    {
+        throw new \BadMethodCallException('Cannot serialize '.self::class);
+    }
+
+    /**
+     * Disable the deserialization of the class to prevent attacker executing
+     * code by leveraging the __destruct method.
+     *
+     * @see https://owasp.org/www-community/vulnerabilities/PHP_Object_Injection
+     */
+    public function __wakeup(): void
+    {
+        throw new \BadMethodCallException('Cannot unserialize '.self::class);
+    }
+
+    /**
+     * Adds a file to be removed.
+     */
+    public function observe(string $path): void
     {
         $this->files[$path] = true;
     }
 
     /**
      * Removes a file from shutdown removal.
-     *
-     * @param string $path
      */
-    public function delete($path)
+    public function delete(string $path): void
     {
         if (isset($this->files[$path])) {
             unset($this->files[$path]);
         }
+
         $this->unlink($path);
     }
 
     /**
      * Removes attached files.
      */
-    public function clean()
+    public function clean(): void
     {
         foreach ($this->files as $file => $value) {
             $this->unlink($file);
         }
-        $this->files = array();
+
+        $this->files = [];
     }
 
-    private function unlink($path)
+    private function unlink(string $path): void
     {
         @unlink($path);
     }

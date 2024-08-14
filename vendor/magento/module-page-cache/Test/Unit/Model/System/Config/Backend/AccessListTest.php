@@ -4,12 +4,14 @@
  * See COPYING.txt for license details.
  */
 
+declare(strict_types=1);
+
 namespace Magento\PageCache\Test\Unit\Model\System\Config\Backend;
 
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\PageCache\Model\System\Config\Backend\AccessList;
 use PHPUnit\Framework\TestCase;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\Framework\App\Config\ScopeConfigInterface;
 
 class AccessListTest extends TestCase
 {
@@ -21,7 +23,7 @@ class AccessListTest extends TestCase
     /**
      * @inheritDoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $objectManager = new ObjectManager($this);
         $configMock = $this->getMockForAbstractClass(
@@ -79,11 +81,11 @@ class AccessListTest extends TestCase
 
     /**
      * @param mixed $value
-     * @expectedException \Magento\Framework\Exception\LocalizedException
      * @dataProvider getInvalidValues
      */
     public function testBeforeSaveInvalid($value)
     {
+        $this->expectException('Magento\Framework\Exception\LocalizedException');
         $this->accessList->setValue($value);
         $this->accessList->beforeSave();
     }

@@ -4,7 +4,9 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ *
+ * @deprecated 3.9.0
  */
 
 namespace PHP_CodeSniffer\Standards\MySource\Sniffs\Channels;
@@ -19,11 +21,11 @@ class UnusedSystemSniff implements Sniff
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(T_DOUBLE_COLON);
+        return [T_DOUBLE_COLON];
 
     }//end register()
 
@@ -116,7 +118,7 @@ class UnusedSystemSniff implements Sniff
                 }
                 break;
             case T_IMPLEMENTS:
-                $endImplements = $phpcsFile->findNext(array(T_EXTENDS, T_OPEN_CURLY_BRACKET), ($i + 1));
+                $endImplements = $phpcsFile->findNext([T_EXTENDS, T_OPEN_CURLY_BRACKET], ($i + 1));
                 for ($x = ($i + 1); $x < $endImplements; $x++) {
                     if ($tokens[$x]['code'] === T_STRING) {
                         $className = strtolower($tokens[$x]['content']);
@@ -132,7 +134,7 @@ class UnusedSystemSniff implements Sniff
 
         // If we get to here, the system was not use.
         $error = 'Included system "%s" is never used';
-        $data  = array($systemName);
+        $data  = [$systemName];
         $phpcsFile->addError($error, $stackPtr, 'Found', $data);
 
     }//end process()

@@ -82,6 +82,7 @@ class Source implements \IteratorAggregate, \Countable, SourceProviderInterface
     /**
      * @inheritdoc
      */
+    #[\ReturnTypeWillChange]
     public function count()
     {
         return $this->customerCollection->getSize();
@@ -92,11 +93,12 @@ class Source implements \IteratorAggregate, \Countable, SourceProviderInterface
      *
      * @return Traversable
      */
+    #[\ReturnTypeWillChange]
     public function getIterator()
     {
         $this->customerCollection->setPageSize($this->batchSize);
         $lastPage = $this->customerCollection->getLastPageNumber();
-        $pageNumber = 0;
+        $pageNumber = 1;
         do {
             $this->customerCollection->clear();
             $this->customerCollection->setCurPage($pageNumber);
@@ -113,15 +115,21 @@ class Source implements \IteratorAggregate, \Countable, SourceProviderInterface
      * @param string $alias alias for the joined attribute
      * @param string|\Magento\Eav\Model\Entity\Attribute\AbstractAttribute $attribute
      * @param string $bind attribute of the main entity to link with joined $filter
-     * @param string $filter primary key for the joined entity (entity_id default)
+     * @param string|null $filter primary key for the joined entity (entity_id default)
      * @param string $joinType inner|left
      * @param int|null $storeId
      * @return void
      * @throws \Magento\Framework\Exception\LocalizedException
      * @see Collection::joinAttribute()
      */
-    public function joinAttribute($alias, $attribute, $bind, $filter = null, $joinType = 'inner', $storeId = null)
-    {
+    public function joinAttribute(
+        string $alias,
+        $attribute,
+        string $bind,
+        ?string $filter = null,
+        string $joinType = 'inner',
+        ?int $storeId = null
+    ): void {
         $this->customerCollection->joinAttribute($alias, $attribute, $bind, $filter, $joinType, $storeId);
     }
 }

@@ -8,7 +8,6 @@ namespace Magento\Downloadable\Controller\Adminhtml\Product\Initialization\Helpe
 use Magento\Downloadable\Api\Data\LinkInterfaceFactory;
 use Magento\Downloadable\Api\Data\SampleInterfaceFactory;
 use Magento\Downloadable\Helper\Download;
-use Magento\Downloadable\Model\Link;
 use Magento\Downloadable\Model\Link\Builder as LinkBuilder;
 use Magento\Downloadable\Model\Product\Type;
 use Magento\Downloadable\Model\ResourceModel\Sample\Collection;
@@ -84,10 +83,8 @@ class Downloadable
             $product->setTypeId(Type::TYPE_DOWNLOADABLE);
             $product->setDownloadableData($downloadable);
             $extension = $product->getExtensionAttributes();
-            /** @var \Magento\Downloadable\Model\Product\Type $type */
-            $type = $product->getTypeInstance();
-            $productLinks = $type->getLinks($product);
-            $productSamples = $type->getSamples($product);
+            $productLinks = $product->getTypeInstance()->getLinks($product);
+            $productSamples = $product->getTypeInstance()->getSamples($product);
             if (isset($downloadable['link']) && is_array($downloadable['link'])) {
                 $links = [];
                 foreach ($downloadable['link'] as $linkData) {
@@ -138,7 +135,7 @@ class Downloadable
      * Check Links type and status.
      *
      * @param array $linkData
-     * @param Link[] $productLinks
+     * @param array $productLinks
      * @return array
      */
     private function processLink(array $linkData, array $productLinks): array
@@ -186,7 +183,7 @@ class Downloadable
      * @param string|null $file
      * @return array
      */
-    private function processFileStatus(array $data, $file): array
+    private function processFileStatus(array $data, ?string $file): array
     {
         if (isset($data['type']) && $data['type'] === Download::LINK_TYPE_FILE && isset($data['file']['0']['file'])) {
             if ($data['file'][0]['file'] !== $file) {

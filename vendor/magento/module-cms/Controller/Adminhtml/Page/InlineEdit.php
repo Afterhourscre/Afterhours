@@ -7,6 +7,7 @@ namespace Magento\Cms\Controller\Adminhtml\Page;
 
 use Magento\Backend\App\Action\Context;
 use Magento\Cms\Api\PageRepositoryInterface as PageRepository;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Cms\Api\Data\PageInterface;
 
@@ -15,7 +16,7 @@ use Magento\Cms\Api\Data\PageInterface;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class InlineEdit extends \Magento\Backend\App\Action
+class InlineEdit extends \Magento\Backend\App\Action implements HttpPostActionInterface
 {
     /**
      * Authorization level of a basic admin session
@@ -82,9 +83,9 @@ class InlineEdit extends \Magento\Backend\App\Action
             /** @var \Magento\Cms\Model\Page $page */
             $page = $this->pageRepository->getById($pageId);
             try {
-                $pageData = $this->filterPost($postItems[$pageId]);
-                $this->validatePost($pageData, $page, $error, $messages);
                 $extendedPageData = $page->getData();
+                $pageData = $this->filterPostWithDateConverting($postItems[$pageId], $extendedPageData);
+                $this->validatePost($pageData, $page, $error, $messages);
                 $this->setCmsPageData($page, $extendedPageData, $pageData);
                 $this->pageRepository->save($page);
             } catch (\Magento\Framework\Exception\LocalizedException $e) {
@@ -124,6 +125,34 @@ class InlineEdit extends \Magento\Backend\App\Action
             ? $pageData['custom_root_template']
             : null;
         return $pageData;
+    }
+
+    /**
+     * Filtering posted data with converting custom theme dates to proper format
+     *
+     * @param array $postData
+     * @param array $pageData
+     * @return array
+     */
+    private function filterPostWithDateConverting($postData = [], $pageData = [])
+    {
+        $newPageData = $this->filterPost($postData);
+        if (
+            !empty($newPageData['custom_theme_from'])
+            && date("Y-m-d", strtotime($postData['custom_theme_from']))
+                === date("Y-m-d", strtotime($pageData['custom_theme_from']))
+        ) {
+            $newPageData['custom_theme_from'] = date("Y-m-d", strtotime($postData['custom_theme_from']));
+        }
+        if (
+            !empty($newPageData['custom_theme_to'])
+            && date("Y-m-d", strtotime($postData['custom_theme_to']))
+                === date("Y-m-d", strtotime($pageData['custom_theme_to']))
+        ) {
+            $newPageData['custom_theme_to'] = date("Y-m-d", strtotime($postData['custom_theme_to']));
+        }
+
+        return $newPageData;
     }
 
     /**

@@ -3,15 +3,15 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
 namespace Magento\Eav\Model\Entity\Attribute;
 
 use Magento\Eav\Api\Data\AttributeGroupExtensionInterface;
-use Magento\Eav\Api\Data\AttributeGroupInterface;
 use Magento\Framework\Api\AttributeValueFactory;
-use Magento\Framework\Model\AbstractExtensibleModel;
+use Magento\Framework\Exception\LocalizedException;
 
 /**
- * Entity attribute group model.
+ * Entity attribute group model
  *
  * @api
  * @method int getSortOrder()
@@ -24,7 +24,8 @@ use Magento\Framework\Model\AbstractExtensibleModel;
  * @method \Magento\Eav\Model\Entity\Attribute\Group setTabGroupCode(string $value)
  * @since 100.0.2
  */
-class Group extends AbstractExtensibleModel implements AttributeGroupInterface
+class Group extends \Magento\Framework\Model\AbstractExtensibleModel implements
+    \Magento\Eav\Api\Data\AttributeGroupInterface
 {
     /**
      * @var \Magento\Framework\Filter\Translit
@@ -44,8 +45,8 @@ class Group extends AbstractExtensibleModel implements AttributeGroupInterface
      * @param \Magento\Framework\Filter\Translit $translitFilter
      * @param \Magento\Framework\Model\ResourceModel\AbstractResource $resource
      * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
-     * @param array $data
-     * @param array $reservedSystemNames
+     * @param array $data (optional)
+     * @param array $reservedSystemNames (optional)
      */
     public function __construct(
         \Magento\Framework\Model\Context $context,
@@ -67,12 +68,12 @@ class Group extends AbstractExtensibleModel implements AttributeGroupInterface
             $resourceCollection,
             $data
         );
-        $this->translitFilter = $translitFilter;
         $this->reservedSystemNames = $reservedSystemNames;
+        $this->translitFilter = $translitFilter;
     }
 
     /**
-     * Resource initialization.
+     * Resource initialization
      *
      * @return void
      * @codeCoverageIgnore
@@ -83,9 +84,10 @@ class Group extends AbstractExtensibleModel implements AttributeGroupInterface
     }
 
     /**
-     * Checks if current attribute group exists.
+     * Checks if current attribute group exists
      *
      * @return bool
+     * @throws LocalizedException
      * @codeCoverageIgnore
      */
     public function itemExists()
@@ -94,9 +96,10 @@ class Group extends AbstractExtensibleModel implements AttributeGroupInterface
     }
 
     /**
-     * Delete groups.
+     * Delete groups
      *
      * @return $this
+     * @throws LocalizedException
      * @codeCoverageIgnore
      */
     public function deleteGroups()
@@ -105,7 +108,7 @@ class Group extends AbstractExtensibleModel implements AttributeGroupInterface
     }
 
     /**
-     * Processing object before save data.
+     * Processing object before save data
      *
      * @return $this
      */
@@ -125,17 +128,18 @@ class Group extends AbstractExtensibleModel implements AttributeGroupInterface
                 $isReservedSystemName = in_array(strtolower($attributeGroupCode), $this->reservedSystemNames);
                 if (empty($attributeGroupCode) || $isReservedSystemName) {
                     // in the following code md5 is not used for security purposes
+                    // phpcs:ignore Magento2.Security.InsecureFunction
                     $attributeGroupCode = md5(strtolower($groupName));
                 }
                 $this->setAttributeGroupCode($attributeGroupCode);
             }
         }
-
         return parent::beforeSave();
     }
 
     /**
      * @inheritdoc
+     *
      * @codeCoverageIgnoreStart
      */
     public function getAttributeGroupId()

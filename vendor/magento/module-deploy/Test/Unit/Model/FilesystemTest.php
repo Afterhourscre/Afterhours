@@ -3,26 +3,29 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Deploy\Test\Unit\Model;
 
 use Magento\Deploy\Model\Filesystem as DeployFilesystem;
 use Magento\Framework\Filesystem;
 use Magento\Framework\Filesystem\Directory\WriteInterface;
 use Magento\Framework\ObjectManagerInterface;
+use Magento\Framework\Setup\Lists;
 use Magento\Framework\ShellInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Framework\Validator\Locale;
 use Magento\Store\Model\Config\StoreView;
 use Magento\User\Model\ResourceModel\User\Collection;
 use Magento\User\Model\User;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Output\OutputInterface;
-use Magento\Framework\Validator\Locale;
-use Magento\Framework\Setup\Lists;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class FilesystemTest extends \PHPUnit\Framework\TestCase
+class FilesystemTest extends TestCase
 {
     /**
      * @var StoreView|MockObject
@@ -69,24 +72,41 @@ class FilesystemTest extends \PHPUnit\Framework\TestCase
      */
     private $cmdPrefix;
 
-    protected function setUp()
+    /**
+     * @inheritDoc
+     */
+    protected function setUp(): void
     {
         $objectManager = new ObjectManager($this);
 
-        $this->storeView = $this->createMock(StoreView::class);
-        $this->shell = $this->createMock(ShellInterface::class);
-        $this->output = $this->createMock(OutputInterface::class);
-        $this->objectManager = $this->createMock(ObjectManagerInterface::class);
-        $this->filesystem = $this->createMock(Filesystem::class);
-        $this->directoryWrite = $this->createMock(WriteInterface::class);
+        $this->storeView = $this->getMockBuilder(StoreView::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->shell = $this->getMockBuilder(ShellInterface::class)
+            ->disableOriginalConstructor()
+            ->getMockForAbstractClass();
+        $this->output = $this->getMockBuilder(OutputInterface::class)
+            ->disableOriginalConstructor()
+            ->getMockForAbstractClass();
+        $this->objectManager = $this->getMockBuilder(ObjectManagerInterface::class)
+            ->disableOriginalConstructor()
+            ->getMockForAbstractClass();
+        $this->filesystem = $this->getMockBuilder(Filesystem::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->directoryWrite = $this->getMockBuilder(WriteInterface::class)
+            ->disableOriginalConstructor()
+            ->getMockForAbstractClass();
         $this->filesystem->method('getDirectoryWrite')
             ->willReturn($this->directoryWrite);
 
-        $this->userCollection = $this->createMock(Collection::class);
-
+        $this->userCollection = $this->getMockBuilder(Collection::class)
+            ->disableOriginalConstructor()
+            ->getMock();
         $lists = $this->getMockBuilder(Lists::class)
             ->disableOriginalConstructor()
             ->getMock();
+
         $lists->method('getLocaleList')
             ->willReturn([
                 'fr_FR' => 'France',
@@ -110,48 +130,45 @@ class FilesystemTest extends \PHPUnit\Framework\TestCase
         $this->cmdPrefix = PHP_BINARY . ' -f ' . BP . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'magento ';
     }
 
-    public function testRegenerateStatic()
+    /**
+     * @return void
+     */
+    public function testRegenerateStatic(): void
     {
         $storeLocales = ['fr_FR', 'de_DE', 'nl_NL'];
         $this->storeView->method('retrieveLocales')
             ->willReturn($storeLocales);
 
-        $setupDiCompileCmd = $this->cmdPrefix . 'cache:flush ';
-        $this->shell->expects(self::at(0))
-            ->method('execute')
-            ->with($setupDiCompileCmd);
-
         $setupDiCompileCmd = $this->cmdPrefix . 'setup:di:compile';
-        $this->shell->expects(self::at(1))
-            ->method('execute')
-            ->with($setupDiCompileCmd);
-
-        $setupDiCompileCmd = $this->cmdPrefix . 'cache:flush ';
-        $this->shell->expects(self::at(2))
-            ->method('execute')
-            ->with($setupDiCompileCmd);
-
         $this->initAdminLocaleMock('en_US');
 
         $usedLocales = ['fr_FR', 'de_DE', 'nl_NL', 'en_US'];
+        $cacheFlushCmd = $this->cmdPrefix . 'cache:flush';
         $staticContentDeployCmd = $this->cmdPrefix . 'setup:static-content:deploy -f '
             . implode(' ', $usedLocales);
-        $this->shell->expects(self::at(3))
+        $this->shell
+            ->expects($this->exactly(4))
             ->method('execute')
-            ->with($staticContentDeployCmd);
+            ->willReturnCallback(function ($arg) use ($cacheFlushCmd, $setupDiCompileCmd, $staticContentDeployCmd) {
+                if ($arg == $cacheFlushCmd ||
+                    $arg == $setupDiCompileCmd ||
+                    $arg == $staticContentDeployCmd) {
+                    return "Compilation complete";
+                }
+            });
 
-        $this->output->expects(self::at(0))
+        $this->output
             ->method('writeln')
-            ->with('Starting compilation');
-        $this->output->expects(self::at(2))
-            ->method('writeln')
-            ->with('Compilation complete');
-        $this->output->expects(self::at(3))
-            ->method('writeln')
-            ->with('Starting deployment of static content');
-        $this->output->expects(self::at(5))
-            ->method('writeln')
-            ->with('Deployment of static content complete');
+            ->willReturnCallback(function ($arg) {
+                if ($arg == 'Starting compilation' ||
+                    $arg == 'Compilation complete' ||
+                    $arg == 'Starting deployment of static content' ||
+                    $arg == 'Deployment of static content complete' ||
+                    empty($arg)
+                ) {
+                    return null;
+                }
+            });
 
         $this->deployFilesystem->regenerateStatic($this->output);
     }
@@ -159,14 +176,31 @@ class FilesystemTest extends \PHPUnit\Framework\TestCase
     /**
      * Checks a case when configuration contains incorrect locale code.
      *
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage ;echo argument has invalid value, run info:language:list for list of available locales
+     * @return void
      */
-    public function testGenerateStaticForNotAllowedStoreViewLocale()
+    public function testGenerateStaticForNotAllowedStoreViewLocale(): void
     {
+        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionMessage(
+            ';echo argument has invalid value, run info:language:list for list of available locales'
+        );
+        $setupDiCompileCmd = $this->cmdPrefix . 'setup:di:compile';
         $storeLocales = ['fr_FR', 'de_DE', ';echo'];
         $this->storeView->method('retrieveLocales')
             ->willReturn($storeLocales);
+        $cacheFlushCmd = $this->cmdPrefix . 'cache:flush';
+        $staticContentDeployCmd = $this->cmdPrefix . 'setup:static-content:deploy -f '
+            . implode(' ', $storeLocales);
+        $this->shell
+            ->expects($this->exactly(3))
+            ->method('execute')
+            ->willReturnCallback(function ($arg) use ($cacheFlushCmd, $setupDiCompileCmd, $staticContentDeployCmd) {
+                if ($arg == $cacheFlushCmd ||
+                    $arg == $setupDiCompileCmd ||
+                    $arg == $staticContentDeployCmd) {
+                    return "Compilation complete";
+                }
+            });
 
         $this->initAdminLocaleMock('en_US');
 
@@ -176,14 +210,31 @@ class FilesystemTest extends \PHPUnit\Framework\TestCase
     /**
      * Checks as case when admin locale is incorrect.
      *
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage ;echo argument has invalid value, run info:language:list for list of available locales
+     * @return void
      */
-    public function testGenerateStaticForNotAllowedAdminLocale()
+    public function testGenerateStaticForNotAllowedAdminLocale(): void
     {
+        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionMessage(
+            ';echo argument has invalid value, run info:language:list for list of available locales'
+        );
+        $setupDiCompileCmd = $this->cmdPrefix . 'setup:di:compile';
         $storeLocales = ['fr_FR', 'de_DE', 'en_US'];
+        $cacheFlushCmd = $this->cmdPrefix . 'cache:flush';
+        $staticContentDeployCmd = $this->cmdPrefix . 'setup:static-content:deploy -f '
+            . implode(' ', $storeLocales);
         $this->storeView->method('retrieveLocales')
             ->willReturn($storeLocales);
+        $this->shell
+            ->expects($this->exactly(3))
+            ->method('execute')
+            ->willReturnCallback(function ($arg) use ($cacheFlushCmd, $setupDiCompileCmd, $staticContentDeployCmd) {
+                if ($arg == $cacheFlushCmd ||
+                    $arg == $setupDiCompileCmd ||
+                    $arg == $staticContentDeployCmd) {
+                    return "Compilation complete";
+                }
+            });
 
         $this->initAdminLocaleMock(';echo');
 
@@ -194,11 +245,15 @@ class FilesystemTest extends \PHPUnit\Framework\TestCase
      * Initializes admin user locale.
      *
      * @param string $locale
+     *
+     * @return void
      */
-    private function initAdminLocaleMock($locale)
+    private function initAdminLocaleMock($locale): void
     {
         /** @var User|MockObject $user */
-        $user = $this->createMock(User::class);
+        $user = $this->getMockBuilder(User::class)
+            ->disableOriginalConstructor()
+            ->getMock();
         $user->method('getInterfaceLocale')
             ->willReturn($locale);
         $this->userCollection->method('getIterator')

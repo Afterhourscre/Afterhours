@@ -6,8 +6,8 @@
 define([
     'underscore',
     'jquery',
-    'FormData'
-], function (_, $) {
+    'mage/utils/objects'
+], function (_, $, utils) {
     'use strict';
 
     var defaultAttributes,
@@ -93,9 +93,12 @@ define([
             var result = mageFormat;
 
             _.each(map, function (moment, mage) {
-                result = result.replace(mage, moment);
+                result = result.replace(
+                    new RegExp(mage + '(?=([^\u0027]*\u0027[^\u0027]*\u0027)*[^\u0027]*$)'),
+                    moment
+                );
             });
-
+            result = result.replace(/'(.*?)'/g, '[$1]');
             return result;
         },
 
@@ -120,7 +123,7 @@ define([
          */
         submit: function (options, attrs) {
             var form        = document.createElement('form'),
-                data        = this.serialize(options.data),
+                data        = utils.serialize(options.data),
                 attributes  = _.extend({}, defaultAttributes, attrs || {});
 
             if (!attributes.action) {
@@ -178,13 +181,15 @@ define([
                     }
                 })
                 .fail(function () {
-                    config.response.status(undefined);
-                    config.response.status(false);
-                    config.response.data({
-                        error: true,
-                        messages: 'Something went wrong.',
-                        t: t
-                    });
+                    if (config.response) {
+                        config.response.status(undefined);
+                        config.response.status(false);
+                        config.response.data({
+                            error: true,
+                            messages: 'Something went wrong.',
+                            t: t
+                        });
+                    }
                 })
                 .always(function () {
                     if (!config.ignoreProcessEvents) {
@@ -205,11 +210,11 @@ define([
 
             if (type === 'default') {
                 formData = new FormData();
-                _.each(this.serialize(data), function (val, name) {
+                _.each(utils.serialize(data), function (val, name) {
                     formData.append(name, val);
                 });
             } else if (type === 'simple') {
-                formData = this.serialize(data);
+                formData = utils.serialize(data);
             }
 
             return formData;
@@ -231,7 +236,7 @@ define([
             separator = separator || '-';
 
             _.each(data, function (value, key) {
-                if (_.isObject(value) && !value.length) {
+                if (_.isObject(value) && !Array.isArray(value)) {
                     this.filterFormData(value, suffix, separator);
                 } else if (_.isString(key) && ~key.indexOf(suffix)) {
                     data[key.split(separator)[0]] = value;
@@ -243,6 +248,16 @@ define([
         },
 
         /**
+         * Replaces special characters with their corresponding HTML entities.
+         *
+         * @param {String} string - Text to escape.
+         * @returns {String} Escaped text.
+         */
+        escape: function (string) {
+            return string ? $('<p></p>').text(string).html().replace(/"/g, '&quot;') : string;
+        },
+
+        /**
          * Replaces symbol codes with their unescaped counterparts.
          *
          * @param {String} data
@@ -251,11 +266,11 @@ define([
          */
         unescape: function (data) {
             var unescaped = _.unescape(data),
-                mapCharacter = {
+                mapCharacters = {
                     '&#039;': '\''
                 };
 
-            _.each(mapCharacter, function (value, key) {
+            _.each(mapCharacters, function (value, key) {
                 unescaped = unescaped.replace(key, value);
             });
 

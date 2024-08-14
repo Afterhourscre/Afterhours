@@ -13,5 +13,6 @@
         <element name="billingAddressEdit" type="button" selector=".order-billing-address .actions a"/>
         <element name="shippingAddress" type="text" selector=".order-shipping-address address"/>
         <element name="shippingAddressEdit" type="button" selector=".order-shipping-address .actions a"/>
+        <element name="goToShippingInformation" type="button" selector="//button[@title='Go to Shipping Information']"/>
     </section>
 </sections>

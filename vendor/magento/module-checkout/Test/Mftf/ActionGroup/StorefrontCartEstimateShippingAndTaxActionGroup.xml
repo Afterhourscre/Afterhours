@@ -10,16 +10,21 @@
               xsi:noNamespaceSchemaLocation="urn:magento:mftf:Test/etc/actionGroupSchema.xsd">
     <!-- Fill Estimate Shipping and Tax fields -->
     <actionGroup name="StorefrontCartEstimateShippingAndTaxActionGroup">
+        <annotations>
+            <description>Fills in the provided Address details (Country, State and Zip Code) under the 'Summary' section on the Storefront Shopping Cart page.</description>
+        </annotations>
         <arguments>
             <argument name="estimateAddress" defaultValue="EstimateAddressCalifornia"/>
         </arguments>
-        <conditionalClick selector="{{StorefrontCheckoutCartSummarySection.estimateShippingAndTax}}" dependentSelector="{{StorefrontCheckoutCartSummarySection.country}}" visible="false" stepKey="clickOnEstimateShippingAndTax"/>
-        <waitForElementVisible selector="{{StorefrontCheckoutCartSummarySection.country}}" stepKey="waitForCountrySelectorIsVisible"/>
-        <selectOption selector="{{StorefrontCheckoutCartSummarySection.country}}" userInput="{{estimateAddress.country}}" stepKey="selectCountry"/>
+
+        <conditionalClick selector="{{CheckoutCartSummarySection.estimateShippingAndTax}}" dependentSelector="{{CheckoutCartSummarySection.country}}" visible="false" stepKey="clickOnEstimateShippingAndTax"/>
+        <waitForElementVisible selector="{{CheckoutCartSummarySection.country}}" stepKey="waitForCountrySelectorIsVisible"/>
+        <selectOption selector="{{CheckoutCartSummarySection.country}}" userInput="{{estimateAddress.country}}" stepKey="selectCountry"/>
         <waitForLoadingMaskToDisappear stepKey="waitForCountryLoadingMaskDisappear"/>
-        <selectOption selector="{{StorefrontCheckoutCartSummarySection.region}}" userInput="{{estimateAddress.state}}" stepKey="selectStateProvince"/>
+        <selectOption selector="{{CheckoutCartSummarySection.stateProvince}}" userInput="{{estimateAddress.state}}" stepKey="selectStateProvince"/>
         <waitForLoadingMaskToDisappear stepKey="waitForStateLoadingMaskDisappear"/>
-        <fillField selector="{{StorefrontCheckoutCartSummarySection.postcode}}" userInput="{{estimateAddress.zipCode}}" stepKey="fillZipPostalCodeField"/>
+        <fillField selector="{{CheckoutCartSummarySection.postcode}}" userInput="{{estimateAddress.zipCode}}" stepKey="fillZipPostalCodeField"/>
+        <click selector="{{CheckoutCartSummarySection.cartTotalsBlock}}" stepKey="moveFocusOutOfPostcode" />
         <waitForLoadingMaskToDisappear stepKey="waitForZipLoadingMaskDisappear"/>
     </actionGroup>
 </actionGroups>

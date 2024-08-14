@@ -15,14 +15,14 @@
         <strong class="subtitle"><?= $block->escapeHtml(__('Options Details')) ?></strong>
         <dl>
             <?php foreach ($options as $option) : ?>
-                <dt class="label"><?= $block->escapeHtml($option['label']) ?></dt>
-                <dd class="values">
+            <dt class="label"><?= $block->escapeHtml($option['label']) ?></dt>
+            <dd class="values">
                 <?php if (is_array($option['value'])) : ?>
                     <?= /* @noEscape */ nl2br(implode("\n", $option['value'])) ?>
                 <?php else : ?>
                     <?= /* @noEscape */ $option['value'] ?>
                 <?php endif; ?>
-                </dd>
+            </dd>
             <?php endforeach; ?>
         </dl>
     </div>

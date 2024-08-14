@@ -4,14 +4,14 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
 namespace Magento\Paypal\Controller\Express\AbstractExpress;
 
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Paypal\Model\Api\ProcessableException as ApiProcessableException;
-use Magento\Sales\Api\PaymentFailuresInterface;
 
 /**
- * Class PlaceOrder
+ * Creates order on backend and prepares session to show appropriate next step in flow
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class PlaceOrder extends \Magento\Paypal\Controller\Express\AbstractExpress
@@ -22,7 +22,7 @@ class PlaceOrder extends \Magento\Paypal\Controller\Express\AbstractExpress
     protected $agreementsValidator;
 
     /**
-     * @var PaymentFailuresInterface
+     * @var \Magento\Sales\Api\PaymentFailuresInterface
      */
     private $paymentFailures;
 
@@ -36,7 +36,7 @@ class PlaceOrder extends \Magento\Paypal\Controller\Express\AbstractExpress
      * @param \Magento\Framework\Url\Helper\Data $urlHelper
      * @param \Magento\Customer\Model\Url $customerUrl
      * @param \Magento\Checkout\Api\AgreementsValidatorInterface $agreementValidator
-     * @param PaymentFailuresInterface|null $paymentFailures
+     * @param \Magento\Sales\Api\PaymentFailuresInterface|null $paymentFailures
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
@@ -49,7 +49,7 @@ class PlaceOrder extends \Magento\Paypal\Controller\Express\AbstractExpress
         \Magento\Framework\Url\Helper\Data $urlHelper,
         \Magento\Customer\Model\Url $customerUrl,
         \Magento\Checkout\Api\AgreementsValidatorInterface $agreementValidator,
-        PaymentFailuresInterface $paymentFailures = null
+        \Magento\Sales\Api\PaymentFailuresInterface $paymentFailures = null
     ) {
         parent::__construct(
             $context,
@@ -63,7 +63,9 @@ class PlaceOrder extends \Magento\Paypal\Controller\Express\AbstractExpress
         );
 
         $this->agreementsValidator = $agreementValidator;
-        $this->paymentFailures = $paymentFailures ? : $this->_objectManager->get(PaymentFailuresInterface::class);
+        $this->paymentFailures = $paymentFailures ? : $this->_objectManager->get(
+            \Magento\Sales\Api\PaymentFailuresInterface::class
+        );
     }
 
     /**
@@ -78,7 +80,10 @@ class PlaceOrder extends \Magento\Paypal\Controller\Express\AbstractExpress
             !$this->agreementsValidator->isValid(array_keys($this->getRequest()->getPost('agreement', [])))
         ) {
             $e = new \Magento\Framework\Exception\LocalizedException(
-                __('Please agree to all the terms and conditions before placing the order.')
+                __(
+                    "The order wasn't placed. "
+                    . "First, agree to the terms and conditions, then try placing your order again."
+                )
             );
             $this->messageManager->addExceptionMessage(
                 $e,
@@ -108,6 +113,14 @@ class PlaceOrder extends \Magento\Paypal\Controller\Express\AbstractExpress
             }
 
             $this->_eventManager->dispatch(
+                'checkout_submit_all_after',
+                [
+                    'order' => $order,
+                    'quote' => $this->_getQuote()
+                ]
+            );
+
+            $this->_eventManager->dispatch(
                 'paypal_express_place_order_success',
                 [
                     'order' => $order,
@@ -122,6 +135,7 @@ class PlaceOrder extends \Magento\Paypal\Controller\Express\AbstractExpress
                 return;
             }
             $this->_initToken(false); // no need in token anymore
+            $this->_getSession()->unsQuoteId(); // clean quote from session that was set in OnAuthorization
             $this->_redirect('checkout/onepage/success');
             return;
         } catch (ApiProcessableException $e) {
@@ -141,7 +155,7 @@ class PlaceOrder extends \Magento\Paypal\Controller\Express\AbstractExpress
      *
      * @return void
      */
-    private function processException(\Exception $exception, string $message)
+    private function processException(\Exception $exception, string $message): void
     {
         $this->messageManager->addExceptionMessage($exception, __($message));
         $this->_redirect('*/*/review');
@@ -168,6 +182,7 @@ class PlaceOrder extends \Magento\Paypal\Controller\Express\AbstractExpress
                 $this->_redirectSameToken();
                 break;
             case ApiProcessableException::API_ADDRESS_MATCH_FAIL:
+            case ApiProcessableException::API_TRANSACTION_HAS_BEEN_COMPLETED:
                 $this->redirectToOrderReviewPageAndShowError($exception->getUserMessage());
                 break;
             case ApiProcessableException::API_UNABLE_TRANSACTION_COMPLETE:
@@ -231,6 +246,6 @@ class PlaceOrder extends \Magento\Paypal\Controller\Express\AbstractExpress
     protected function isValidationRequired()
     {
         return is_array($this->getRequest()->getBeforeForwardInfo())
-        && empty($this->getRequest()->getBeforeForwardInfo());
+            && empty($this->getRequest()->getBeforeForwardInfo());
     }
 }

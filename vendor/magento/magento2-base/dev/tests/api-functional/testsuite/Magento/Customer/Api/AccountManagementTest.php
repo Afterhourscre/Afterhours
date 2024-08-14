@@ -3,14 +3,18 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
 namespace Magento\Customer\Api;
 
 use Magento\Customer\Api\Data\CustomerInterface as Customer;
 use Magento\Customer\Model\AccountManagement;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Webapi\Exception as HTTPExceptionCodes;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Security\Model\Config;
+use Magento\Store\Model\ScopeInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\TestFramework\Helper\Customer as CustomerHelper;
 use Magento\TestFramework\TestCase\WebapiAbstract;
@@ -22,15 +26,20 @@ use Magento\TestFramework\TestCase\WebapiAbstract;
  */
 class AccountManagementTest extends WebapiAbstract
 {
-    const SERVICE_VERSION = 'V1';
-    const SERVICE_NAME = 'customerAccountManagementV1';
-    const RESOURCE_PATH = '/V1/customers';
+    public const SERVICE_VERSION = 'V1';
+    public const SERVICE_NAME = 'customerAccountManagementV1';
+    public const RESOURCE_PATH = '/V1/customers';
 
     /**
      * Sample values for testing
      */
-    const ATTRIBUTE_CODE = 'attribute_code';
-    const ATTRIBUTE_VALUE = 'attribute_value';
+    public const ATTRIBUTE_CODE = 'attribute_code';
+    public const ATTRIBUTE_VALUE = 'attribute_value';
+
+    /**
+     * @var ObjectManager
+     */
+    private $objectManager;
 
     /**
      * @var AccountManagementInterface
@@ -83,8 +92,10 @@ class AccountManagementTest extends WebapiAbstract
     /**
      * Execute per test initialization.
      */
-    public function setUp()
+    protected function setUp(): void
     {
+        $this->objectManager = Bootstrap::getObjectManager();
+
         $this->accountManagement = Bootstrap::getObjectManager()->get(
             \Magento\Customer\Api\AccountManagementInterface::class
         );
@@ -124,7 +135,7 @@ class AccountManagementTest extends WebapiAbstract
         }
     }
 
-    public function tearDown()
+    protected function tearDown(): void
     {
         if (!empty($this->currentCustomerId)) {
             foreach ($this->currentCustomerId as $customerId) {
@@ -212,6 +223,34 @@ class AccountManagementTest extends WebapiAbstract
         }
     }
 
+    public function testCreateCustomerWithoutOptionalFields()
+    {
+        $serviceInfo = [
+            'rest' => [
+                'resourcePath' => self::RESOURCE_PATH,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_POST, ],
+            'soap' => [
+                'service' => self::SERVICE_NAME,
+                'serviceVersion' => self::SERVICE_VERSION,
+                'operation' => self::SERVICE_NAME . 'CreateAccount',
+            ],
+        ];
+
+        $customerDataArray = $this->dataObjectProcessor->buildOutputDataArray(
+            $this->customerHelper->createSampleCustomerDataObject(),
+            \Magento\Customer\Api\Data\CustomerInterface::class
+        );
+        unset($customerDataArray['store_id']);
+        unset($customerDataArray['website_id']);
+        $requestData = ['customer' => $customerDataArray, 'password' => CustomerHelper::PASSWORD];
+        try {
+            $customerData = $this->_webApiCall($serviceInfo, $requestData, null, 'all');
+            $this->assertNotNull($customerData['id']);
+        } catch (\Exception $e) {
+            $this->fail('Customer should be created without optional fields.');
+        }
+    }
+
     /**
      * Test customer activation when it is required
      *
@@ -226,6 +265,7 @@ class AccountManagementTest extends WebapiAbstract
             $customerData[Customer::ID],
             [
                 'id' => $customerData[Customer::ID],
+                'addresses' => $customerData[Customer::KEY_ADDRESSES],
                 'confirmation' => CustomerHelper::CONFIRMATION
             ]
         );
@@ -330,7 +370,7 @@ class AccountManagementTest extends WebapiAbstract
             ],
         ];
 
-        $expectedMessage = 'Reset password token mismatch.';
+        $expectedMessage = 'The password token is mismatched. Reset and try again.';
 
         try {
             if (TESTS_WEB_API_ADAPTER == self::ADAPTER_SOAP) {
@@ -343,7 +383,7 @@ class AccountManagementTest extends WebapiAbstract
             }
             $this->fail("Expected exception to be thrown.");
         } catch (\SoapFault $e) {
-            $this->assertContains(
+            $this->assertStringContainsString(
                 $expectedMessage,
                 $e->getMessage(),
                 "Exception message does not match"
@@ -374,13 +414,13 @@ class AccountManagementTest extends WebapiAbstract
                 'message' => 'One or more input exceptions have occurred.',
                 'errors' => [
                     [
-                        'message' => '%fieldName is a required field.',
+                        'message' => '"%fieldName" is required. Enter and try again.',
                         'parameters' => [
                             'fieldName' => 'email',
                         ],
                     ],
                     [
-                        'message' => '%fieldName is a required field.',
+                        'message' => '"%fieldName" is required. Enter and try again.',
                         'parameters' => [
                             'fieldName' => 'template',
                         ]
@@ -583,8 +623,14 @@ class AccountManagementTest extends WebapiAbstract
         $validationResponse = $this->_webApiCall($serviceInfo, $requestData);
         $this->assertFalse($validationResponse['valid']);
 
-        $this->assertEquals('The value of attribute "First Name" must be set', $validationResponse['messages'][0]);
-        $this->assertEquals('The value of attribute "Last Name" must be set', $validationResponse['messages'][1]);
+        $this->assertEquals(
+            'The "First Name" attribute value is empty. Set the attribute and try again.',
+            $validationResponse['messages'][0]
+        );
+        $this->assertEquals(
+            'The "Last Name" attribute value is empty. Set the attribute and try again.',
+            $validationResponse['messages'][1]
+        );
     }
 
     public function testIsReadonly()
@@ -610,6 +656,7 @@ class AccountManagementTest extends WebapiAbstract
 
     public function testEmailAvailable()
     {
+        $config = $this->objectManager->get(ScopeConfigInterface::class);
         $customerData = $this->_createCustomer();
 
         $serviceInfo = [
@@ -627,7 +674,18 @@ class AccountManagementTest extends WebapiAbstract
             'customerEmail' => $customerData[Customer::EMAIL],
             'websiteId' => $customerData[Customer::WEBSITE_ID],
         ];
-        $this->assertFalse($this->_webApiCall($serviceInfo, $requestData));
+
+        $emailSetting = $config->getValue(
+            AccountManagement::GUEST_CHECKOUT_LOGIN_OPTION_SYS_CONFIG,
+            ScopeInterface::SCOPE_WEBSITE,
+            $customerData[Customer::WEBSITE_ID]
+        );
+
+        if (!$emailSetting) {
+            $this->assertTrue($this->_webApiCall($serviceInfo, $requestData));
+        } else {
+            $this->assertFalse($this->_webApiCall($serviceInfo, $requestData));
+        }
     }
 
     public function testEmailAvailableInvalidEmail()

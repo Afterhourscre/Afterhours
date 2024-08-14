@@ -69,6 +69,7 @@ class CssUrls implements ProcessorInterface
         /** @var PackageFile $file */
         foreach (array_keys($package->getMap()) as $fileId) {
             $filePath = str_replace(\Magento\Framework\View\Asset\Repository::FILE_ID_SEPARATOR, '/', $fileId);
+            // phpcs:ignore Magento2.Functions.DiscouragedFunction
             if (strtolower(pathinfo($fileId, PATHINFO_EXTENSION)) == 'css') {
                 $urlMap = $this->parseCss(
                     $urlMap,
@@ -100,6 +101,7 @@ class CssUrls implements ProcessorInterface
     {
         $cssFilePath = $this->minification->addMinifiedSign($cssFilePath);
 
+        // phpcs:ignore Magento2.Functions.DiscouragedFunction
         $cssFileBasePath = pathinfo($cssFilePath, PATHINFO_DIRNAME);
         $urls = $this->getCssUrls($cssContent);
         foreach ($urls as $url) {
@@ -154,7 +156,7 @@ class CssUrls implements ProcessorInterface
             foreach ($targetFiles as $matchedFileData) {
                 $filePath = $matchedFileData['filePath'];
                 $oldCss = $this->staticDir->readFile($filePath);
-                $newCss = str_replace($ref, $matchedFileData['replace'], $oldCss);
+                $newCss = str_replace($ref, $matchedFileData['replace'] ?? '', $oldCss);
                 if ($oldCss !== $newCss) {
                     $this->staticDir->writeFile($filePath, $newCss);
                 }

@@ -4,15 +4,13 @@
  * See COPYING.txt for license details.
  */
 
-/**
- * Reports data helper
- */
 namespace Magento\Reports\Helper;
 
 use Magento\Framework\Data\Collection;
-use Magento\Framework\Stdlib\DateTime;
 
 /**
+ * Reports data helper.
+ *
  * @api
  * @since 100.0.2
  */

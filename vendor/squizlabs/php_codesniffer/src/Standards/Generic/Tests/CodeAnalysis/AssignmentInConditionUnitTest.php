@@ -4,14 +4,19 @@
  *
  * @author    Juliette Reinders Folmer <phpcs_nospam@adviesenzo.nl>
  * @copyright 2017 Juliette Reinders Folmer. All rights reserved.
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Generic\Tests\CodeAnalysis;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class AssignmentInConditionUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the AssignmentInCondition sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Generic\Sniffs\CodeAnalysis\AssignmentInConditionSniff
+ */
+final class AssignmentInConditionUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,7 +30,7 @@ class AssignmentInConditionUnitTest extends AbstractSniffUnitTest
      */
     public function getErrorList()
     {
-        return array();
+        return [];
 
     }//end getErrorList()
 
@@ -36,11 +41,15 @@ class AssignmentInConditionUnitTest extends AbstractSniffUnitTest
      * The key of the array should represent the line number and the value
      * should represent the number of warnings that should occur on that line.
      *
+     * @param string $testFile The name of the file being tested.
+     *
      * @return array<int, int>
      */
-    public function getWarningList()
+    public function getWarningList($testFile='')
     {
-        return array(
+        switch ($testFile) {
+        case 'AssignmentInConditionUnitTest.1.inc':
+            return [
                 46 => 1,
                 47 => 1,
                 48 => 1,
@@ -74,7 +83,12 @@ class AssignmentInConditionUnitTest extends AbstractSniffUnitTest
                 88 => 1,
                 90 => 1,
                 92 => 1,
-               );
+                95 => 1,
+            ];
+
+        default:
+            return [];
+        }//end switch
 
     }//end getWarningList()
 

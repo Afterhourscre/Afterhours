@@ -13,6 +13,8 @@ use Magento\CatalogInventory\Api\StockConfigurationInterface;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\CatalogInventory\Model\StockItemValidator;
 use Magento\Framework\Event\Observer as EventObserver;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 
 /**
  * Saves stock data from a product to the Stock Item
@@ -40,7 +42,7 @@ class SaveInventoryDataObserver implements ObserverInterface
     private $stockItemValidator;
 
     /**
-     * @var array
+     * @var ParentItemProcessorInterface[]
      */
     private $parentItemProcessorPool;
 
@@ -82,7 +84,7 @@ class SaveInventoryDataObserver implements ObserverInterface
      * @param StockConfigurationInterface $stockConfiguration
      * @param StockRegistryInterface $stockRegistry
      * @param StockItemValidator $stockItemValidator
-     * @param array $parentItemProcessorPool
+     * @param ParentItemProcessorInterface[] $parentItemProcessorPool
      */
     public function __construct(
         StockConfigurationInterface $stockConfiguration,
@@ -104,6 +106,8 @@ class SaveInventoryDataObserver implements ObserverInterface
      *
      * @param EventObserver $observer
      * @return void
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
     public function execute(EventObserver $observer)
     {
@@ -162,9 +166,8 @@ class SaveInventoryDataObserver implements ObserverInterface
         }
 
         $originalQty = $product->getData('stock_data/original_inventory_qty');
-        if (strlen($originalQty) > 0) {
-            $stockData['qty_correction'] = (isset($stockData['qty']) ? $stockData['qty'] : 0)
-                - $originalQty;
+        if ($originalQty && (float) $originalQty > 0) {
+            $stockData['qty_correction'] = ($stockData['qty'] ?? 0) - $originalQty;
         }
         return $stockData;
     }

@@ -13,12 +13,9 @@ use Magento\Framework\Event\Observer;
 use Magento\Framework\View\LayoutInterface;
 use Magento\Weee\Model\Tax;
 use Magento\Weee\Observer\SetWeeeRendererInFormObserver;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
-/**
- * Class AddPaymentWeeeItemTest
- */
 class SetWeeeRendererInFormObserverTest extends TestCase
 {
     /**
@@ -41,9 +38,9 @@ class SetWeeeRendererInFormObserverTest extends TestCase
     /**
      * Set Up
      */
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->layoutMock = $this->createMock(LayoutInterface::class);
+        $this->layoutMock = $this->getMockForAbstractClass(LayoutInterface::class);
         $this->taxModelMock = $this->createMock(Tax::class);
         $this->observer = new SetWeeeRendererInFormObserver(
             $this->layoutMock,
@@ -56,11 +53,12 @@ class SetWeeeRendererInFormObserverTest extends TestCase
      *
      * @return void
      */
-    public function testExecute()
+    public function testExecute(): void
     {
         $attributes = new \ArrayIterator(['element_code_1', 'element_code_2']);
         /** @var Event|MockObject $eventMock */
-        $eventMock = $this->getMockBuilder(Event::class)->disableOriginalConstructor()
+        $eventMock = $this->getMockBuilder(Event::class)
+            ->disableOriginalConstructor()
             ->setMethods(['getForm'])
             ->getMock();
 
@@ -69,10 +67,18 @@ class SetWeeeRendererInFormObserverTest extends TestCase
         /** @var Form|MockObject $formMock */
         $formMock = $this->createMock(Form::class);
 
-        $eventMock->method('getForm')->willReturn($formMock);
-        $observerMock->method('getEvent')->willReturn($eventMock);
-        $this->taxModelMock->method('getWeeeAttributeCodes')->willReturn($attributes);
-        $formMock->expects($this->exactly($attributes->count()))->method('getElement')->willReturnSelf();
+        $eventMock->expects($this->once())
+            ->method('getForm')
+            ->willReturn($formMock);
+        $observerMock->expects($this->once())
+            ->method('getEvent')
+            ->willReturn($eventMock);
+        $this->taxModelMock->expects($this->once())
+            ->method('getWeeeAttributeCodes')
+            ->willReturn($attributes);
+        $formMock->expects($this->exactly($attributes->count()))
+            ->method('getElement')
+            ->willReturnSelf();
 
         $this->observer->execute($observerMock);
     }

@@ -3,6 +3,7 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\CatalogInventory\Test\Unit\Model\Quote\Item\QuantityValidator\Initializer;
 
@@ -13,6 +14,7 @@ use Magento\CatalogInventory\Helper\Data;
 use Magento\CatalogInventory\Model\Quote\Item\QuantityValidator;
 use Magento\CatalogInventory\Model\Quote\Item\QuantityValidator\Initializer\Option;
 use Magento\CatalogInventory\Model\Quote\Item\QuantityValidator\Initializer\StockItem;
+use Magento\CatalogInventory\Model\Stock;
 use Magento\CatalogInventory\Model\Stock\Item as StockMock;
 use Magento\CatalogInventory\Model\Stock\Status;
 use Magento\CatalogInventory\Model\StockRegistry;
@@ -26,103 +28,104 @@ use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Item;
 use Magento\Quote\Model\Quote\Item\Option as OptionItem;
 use Magento\Store\Model\Store;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
- * Class QuantityValidatorTest
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.TooManyFields)
  */
-class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
+class QuantityValidatorTest extends TestCase
 {
     /**
-     * @var \Magento\CatalogInventory\Model\Quote\Item\QuantityValidator
+     * @var QuantityValidator
      */
     private $quantityValidator;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $stockRegistryMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $optionInitializer;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $observerMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $eventMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $quoteMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $storeMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $quoteItemMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $parentItemMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $productMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $stockItemMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $parentStockItemMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $typeInstanceMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $resultMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $stockState;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $stockItemInitializer;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject|StockStatusInterface
+     * @var MockObject|StockStatusInterface
      */
     private $stockStatusMock;
 
     /**
-     * @inheritdoc
+     * @inheritDoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $objectManagerHelper = new ObjectManager($this);
 
@@ -143,62 +146,65 @@ class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
             ]
         );
         $this->observerMock = $this->createMock(Observer::class);
-        $this->eventMock = $this->createPartialMock(Event::class, ['getItem']);
-        $this->quoteMock = $this->createPartialMock(
-            Quote::class,
-            [
-                'getHasError',
-                'getItemsCollection',
-                'removeErrorInfosByParams',
-                'addErrorInfo',
-                'getIsSuperMode',
-                'getQuote'
-            ]
-        );
+        $this->eventMock = $this->getMockBuilder(Event::class)
+            ->addMethods(['getItem'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->quoteMock = $this->getMockBuilder(Quote::class)
+            ->addMethods(['getHasError', 'getIsSuperMode', 'getQuote'])
+            ->onlyMethods(['getItemsCollection', 'removeErrorInfosByParams', 'addErrorInfo'])
+            ->disableOriginalConstructor()
+            ->getMock();
         $this->storeMock = $this->createMock(Store::class);
-        $this->quoteItemMock = $this->createPartialMock(
-            Item::class,
-            [
-                'getProductId',
-                'getQuote',
-                'getQty',
-                'getProduct',
-                'getParentItem',
-                'addErrorInfo',
-                'setData',
-                'getQtyOptions',
-                'getItemId',
-                'getHasError'
-            ]
-        );
+        $this->quoteItemMock = $this->getMockBuilder(Item::class)
+            ->addMethods(['getProductId', 'getHasError', 'getStockStateResult'])
+            ->onlyMethods(
+                [
+                    'getQuote',
+                    'getQty',
+                    'getProduct',
+                    'getParentItem',
+                    'addErrorInfo',
+                    'setData',
+                    'getQtyOptions',
+                    'getItemId'
+                ]
+            )
+            ->disableOriginalConstructor()
+            ->getMock();
         $this->parentItemMock = $this->createPartialMock(Item::class, ['getProduct', 'getId', 'getStore']);
         $this->productMock = $this->createMock(Product::class);
         $this->stockItemMock = $this->createMock(StockMock::class);
-        $this->parentStockItemMock = $this->createPartialMock(StockMock::class, ['getStockStatus', 'getIsInStock']);
+        $this->parentStockItemMock = $this->getMockBuilder(StockMock::class)
+            ->addMethods(['getStockStatus'])
+            ->onlyMethods(['getIsInStock'])
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $this->typeInstanceMock = $this->createMock(Type::class);
 
-        $this->resultMock = $this->createPartialMock(
-            DataObject::class,
-            ['checkQtyIncrements', 'getMessage', 'getQuoteMessage', 'getHasError', 'getQuoteMessageIndex']
-        );
+        $this->resultMock = $this->getMockBuilder(DataObject::class)
+            ->addMethods(['checkQtyIncrements', 'getMessage', 'getQuoteMessage', 'getHasError', 'getQuoteMessageIndex'])
+            ->disableOriginalConstructor()
+            ->getMock();
     }
 
     /**
-     * This tests the scenario when item is not in stock
+     * This tests the scenario when item is not in stock.
      *
      * @return void
+     * @throws LocalizedException
      */
-    public function testValidateOutOfStock()
+    public function testValidateOutOfStock(): void
     {
         $this->createInitialStub(0);
-        $this->stockRegistryMock->expects($this->at(0))
+        $this->stockRegistryMock
             ->method('getStockItem')
-            ->willReturn($this->stockItemMock);
+            ->willReturnOnConsecutiveCalls($this->stockItemMock);
 
         $this->stockRegistryMock->expects($this->atLeastOnce())
             ->method('getStockStatus')
-            ->willReturn($this->stockStatusMock);
+            ->willReturnOnConsecutiveCalls($this->stockStatusMock);
 
         $this->stockStatusMock
             ->method('getStockStatus')
@@ -223,36 +229,33 @@ class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * This tests the scenario when item is in stock but parent is not in stock
+     * This tests the scenario when item is in stock but parent is not in stock.
      *
      * @return void
+     * @throws LocalizedException
      */
-    public function testValidateInStock()
+    public function testValidateInStock(): void
     {
         $this->createInitialStub(1);
-        $this->stockRegistryMock->expects($this->at(0))
-            ->method('getStockItem')
-            ->willReturn($this->stockItemMock);
-
-        $this->stockRegistryMock->expects($this->at(1))
-            ->method('getStockStatus')
-            ->willReturn($this->stockStatusMock);
 
         $this->quoteItemMock->expects($this->any())
             ->method('getParentItem')
             ->willReturn($this->parentItemMock);
 
-        $this->stockRegistryMock->expects($this->at(2))
+        $this->stockRegistryMock
+            ->method('getStockItem')
+            ->willReturnOnConsecutiveCalls($this->stockItemMock);
+        $this->stockRegistryMock
             ->method('getStockStatus')
-            ->willReturn($this->parentStockItemMock);
+            ->willReturnOnConsecutiveCalls($this->stockStatusMock, $this->parentStockItemMock);
 
         $this->parentStockItemMock->expects($this->once())
             ->method('getStockStatus')
-            ->willReturn(false);
+            ->willReturn(0);
 
         $this->stockStatusMock->expects($this->atLeastOnce())
             ->method('getStockStatus')
-            ->willReturn(true);
+            ->willReturn(1);
 
         $this->quoteItemMock->expects($this->once())
             ->method('addErrorInfo')
@@ -273,37 +276,39 @@ class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * This tests the scenario when item is in stock and has options
+     * This tests the scenario when item is in stock and has options.
      *
      * @return void
+     * @throws LocalizedException
      */
-    public function testValidateWithOptions()
+    public function testValidateWithOptions(): void
     {
         $optionMock = $this->getMockBuilder(OptionItem::class)
             ->disableOriginalConstructor()
-            ->setMethods(['setHasError', 'getStockStateResult', 'getProduct'])
+            ->onlyMethods(['getProduct'])
+            ->addMethods(['setHasError', 'getStockStateResult'])
             ->getMock();
-        $optionMock->expects($this->once())
+        $optionMock->expects($this->any())
             ->method('getStockStateResult')
             ->willReturn($this->resultMock);
         $optionMock->method('getProduct')
             ->willReturn($this->productMock);
-        $this->stockRegistryMock->expects($this->at(0))
+        $this->stockRegistryMock
             ->method('getStockItem')
-            ->willReturn($this->stockItemMock);
-        $this->stockRegistryMock->expects($this->at(1))
+            ->willReturnOnConsecutiveCalls($this->stockItemMock);
+        $this->stockRegistryMock
             ->method('getStockStatus')
-            ->willReturn($this->stockStatusMock);
+            ->willReturnOnConsecutiveCalls($this->stockStatusMock);
         $options = [$optionMock];
         $this->createInitialStub(1);
         $this->setUpStubForQuantity(1, true);
         $this->setUpStubForRemoveError();
         $this->parentStockItemMock->expects($this->any())
             ->method('getStockStatus')
-            ->willReturn(true);
+            ->willReturn(1);
         $this->stockStatusMock->expects($this->once())
             ->method('getStockStatus')
-            ->willReturn(true);
+            ->willReturn(1);
         $this->quoteItemMock->expects($this->any())
             ->method('getQtyOptions')
             ->willReturn($options);
@@ -316,37 +321,43 @@ class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * This tests the scenario with options but has errors
+     * This tests the scenario with options but has errors.
      *
+     * @param int $quantity
+     * @param int $productStatus
+     * @param int $productStockStatus
      * @return void
+     * @throws LocalizedException
+     * @dataProvider validateWithOptionsDataProvider
      */
-    public function testValidateWithOptionsAndError()
+    public function testValidateWithOptionsAndError(int $quantity, int $productStatus, int $productStockStatus): void
     {
         $optionMock = $this->getMockBuilder(OptionItem::class)
             ->disableOriginalConstructor()
-            ->setMethods(['setHasError', 'getStockStateResult', 'getProduct'])
+            ->onlyMethods(['getProduct'])
+            ->addMethods(['setHasError', 'getStockStateResult'])
             ->getMock();
-        $this->stockRegistryMock->expects($this->at(0))
+        $this->stockRegistryMock
             ->method('getStockItem')
-            ->willReturn($this->stockItemMock);
-        $this->stockRegistryMock->expects($this->at(1))
+            ->willReturnOnConsecutiveCalls($this->stockItemMock);
+        $this->stockRegistryMock
             ->method('getStockStatus')
-            ->willReturn($this->stockStatusMock);
-        $optionMock->expects($this->once())
+            ->willReturnOnConsecutiveCalls($this->stockStatusMock);
+        $optionMock->expects($this->any())
             ->method('getStockStateResult')
             ->willReturn($this->resultMock);
         $optionMock->method('getProduct')
             ->willReturn($this->productMock);
         $options = [$optionMock];
-        $this->createInitialStub(1);
-        $this->setUpStubForQuantity(1, true);
+        $this->createInitialStub($quantity);
+        $this->setUpStubForQuantity($quantity, true);
         $this->setUpStubForRemoveError();
         $this->parentStockItemMock->expects($this->any())
             ->method('getStockStatus')
-            ->willReturn(true);
+            ->willReturn($productStatus);
         $this->stockStatusMock->expects($this->once())
             ->method('getStockStatus')
-            ->willReturn(true);
+            ->willReturn($productStockStatus);
         $this->quoteItemMock->expects($this->any())
             ->method('getQtyOptions')
             ->willReturn($options);
@@ -358,41 +369,59 @@ class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
         $this->quantityValidator->validate($this->observerMock);
     }
 
+    /**
+     * @return array
+     */
+    public function validateWithOptionsDataProvider(): array
+    {
+        return [
+            'when product is enabled and in stock' =>
+                [1, Product\Attribute\Source\Status::STATUS_ENABLED, Stock::STOCK_IN_STOCK],
+            'when product is enabled but out of stock' =>
+                [1, Product\Attribute\Source\Status::STATUS_ENABLED, Stock::STOCK_OUT_OF_STOCK],
+            'when product is disabled and out of stock' =>
+                [1, Product\Attribute\Source\Status::STATUS_DISABLED, Stock::STOCK_OUT_OF_STOCK],
+            'when product is disabled but in stock' =>
+                [1, Product\Attribute\Source\Status::STATUS_DISABLED, Stock::STOCK_IN_STOCK]
+        ];
+    }
     /**
      * This tests the scenario with options but has errors and remove errors from quote.
      *
      * @return void
+     * @throws LocalizedException
      */
-    public function testValidateAndRemoveErrorsFromQuote()
+    public function testValidateAndRemoveErrorsFromQuote(): void
     {
         $optionMock = $this->getMockBuilder(OptionItem::class)
             ->disableOriginalConstructor()
-            ->setMethods(['setHasError', 'getStockStateResult', 'getProduct'])
+            ->onlyMethods(['getProduct'])
+            ->addMethods(['setHasError', 'getStockStateResult'])
             ->getMock();
         $quoteItem = $this->getMockBuilder(Item::class)
             ->disableOriginalConstructor()
-            ->setMethods(['getItemId', 'getErrorInfos'])
+            ->onlyMethods(['getItemId', 'getErrorInfos'])
             ->getMock();
-        $optionMock->expects($this->once())
+        $optionMock->expects($this->any())
             ->method('getStockStateResult')
             ->willReturn($this->resultMock);
         $optionMock->method('getProduct')
             ->willReturn($this->productMock);
-        $this->stockRegistryMock->expects($this->at(0))
+        $this->stockRegistryMock
             ->method('getStockItem')
-            ->willReturn($this->stockItemMock);
-        $this->stockRegistryMock->expects($this->at(1))
+            ->willReturnOnConsecutiveCalls($this->stockItemMock);
+        $this->stockRegistryMock
             ->method('getStockStatus')
-            ->willReturn($this->stockStatusMock);
+            ->willReturnOnConsecutiveCalls($this->stockStatusMock);
         $options = [$optionMock];
         $this->createInitialStub(1);
         $this->setUpStubForQuantity(1, true);
         $this->parentStockItemMock->expects($this->any())
             ->method('getStockStatus')
-            ->willReturn(true);
+            ->willReturn(1);
         $this->stockStatusMock->expects($this->once())
             ->method('getStockStatus')
-            ->willReturn(true);
+            ->willReturn(1);
         $this->quoteItemMock->expects($this->any())
             ->method('getQtyOptions')
             ->willReturn($options);
@@ -401,58 +430,59 @@ class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
             ->willReturn($this->resultMock);
         $optionMock->expects($this->never())
             ->method('setHasError');
-        $this->quoteMock->expects($this->atLeastOnce())->method('getHasError')->willReturn(true);
-        $this->quoteMock->expects($this->atLeastOnce())->method('getItemsCollection')->willReturn([$quoteItem]);
-        $quoteItem->expects($this->atLeastOnce())->method('getItemId')->willReturn(4);
-        $quoteItem->expects($this->atLeastOnce())->method('getErrorInfos')->willReturn([['code' => 2]]);
-        $this->quoteItemMock->expects($this->atLeastOnce())->method('getItemId')->willReturn(3);
-        $this->quoteMock->expects($this->atLeastOnce())->method('removeErrorInfosByParams')
+        $this->quoteMock->expects($this->any())->method('getHasError')->willReturn(true);
+        $this->quoteMock->expects($this->any())->method('getItemsCollection')->willReturn([$quoteItem]);
+        $quoteItem->expects($this->any())->method('getItemId')->willReturn(4);
+        $quoteItem->expects($this->any())->method('getErrorInfos')->willReturn([['code' => 2]]);
+        $this->quoteItemMock->expects($this->any())->method('getItemId')->willReturn(3);
+        $this->quoteMock->expects($this->any())->method('removeErrorInfosByParams')
             ->with(null, ['origin' => 'cataloginventory', 'code' => 1])
             ->willReturnSelf();
         $this->quantityValidator->validate($this->observerMock);
     }
 
     /**
-     * This tests the scenario when all the items are both parent and item are in stock and any errors are cleared
+     * This tests the scenario when all the items are both parent and item are in stock and any errors are cleared.
      *
      * @return void
+     * @throws LocalizedException
      */
-    public function testRemoveError()
+    public function testRemoveError(): void
     {
         $this->createInitialStub(1);
         $this->setUpStubForRemoveError();
         $this->quoteItemMock->expects($this->any())
             ->method('getQtyOptions')
             ->willReturn(null);
-        $this->stockRegistryMock->expects($this->at(0))
+        $this->stockRegistryMock
             ->method('getStockItem')
-            ->willReturn($this->stockItemMock);
-        $this->stockRegistryMock->expects($this->at(1))
+            ->willReturnOnConsecutiveCalls($this->stockItemMock);
+        $this->stockRegistryMock
             ->method('getStockStatus')
-            ->willReturn($this->stockStatusMock);
+            ->willReturnOnConsecutiveCalls($this->stockStatusMock);
         $this->quoteItemMock->expects($this->any())
             ->method('getParentItem')
             ->willReturn($this->parentItemMock);
-        $this->stockStatusMock->expects($this->once())
+        $this->stockStatusMock->expects($this->any())
             ->method('getStockStatus')
-            ->willReturn(true);
-        $this->quoteItemMock->expects($this->never())
+            ->willReturn(1);
+        $this->quoteItemMock->expects($this->any())
             ->method('addErrorInfo');
-        $this->quoteMock->expects($this->never())
+        $this->quoteMock->expects($this->any())
             ->method('addErrorInfo');
         $this->quantityValidator->validate($this->observerMock);
     }
 
     /**
-     * This test the scenario when stock Item is not of correct type and throws appropriate exception
+     * This test the scenario when stock Item is not of correct type and throws appropriate exception.
      *
-     * @throws \Magento\Framework\Exception\LocalizedException
      * @return void
+     * @throws LocalizedException
      */
-    public function testException()
+    public function testException(): void
     {
         $this->createInitialStub(1);
-        $this->stockRegistryMock->expects($this->at(0))
+        $this->stockRegistryMock
             ->method('getStockItem')
             ->willReturn(null);
         $this->expectException(LocalizedException::class);
@@ -460,10 +490,57 @@ class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
+     * This tests the scenario when the error is in the quote item already.
+     *
+     * @return void
+     * @throws LocalizedException
+     */
+    public function testValidateOutStockWithAlreadyErrorInQuoteItem(): void
+    {
+        $this->createInitialStub(1);
+        $resultMock = $this->getMockBuilder(DataObject::class)
+            ->addMethods(['checkQtyIncrements', 'getMessage', 'getQuoteMessage', 'getHasError'])
+            ->getMock();
+        $resultMock->method('getHasError')
+            ->willReturn(true);
+        $this->stockRegistryMock->method('getStockItem')
+            ->willReturn($this->stockItemMock);
+        $this->quoteItemMock->method('getParentItem')
+            ->willReturn($this->parentItemMock);
+        $this->quoteItemMock->method('getStockStateResult')
+            ->willReturn($resultMock);
+        $this->stockRegistryMock
+            ->method('getStockStatus')
+            ->willReturnOnConsecutiveCalls($this->stockStatusMock, $this->parentStockItemMock);
+        $this->parentStockItemMock->method('getStockStatus')
+            ->willReturn(0);
+        $this->stockStatusMock->expects($this->atLeastOnce())
+            ->method('getStockStatus')
+            ->willReturn(1);
+        $this->quoteItemMock->expects($this->once())
+            ->method('addErrorInfo')
+            ->with(
+                null,
+                Data::ERROR_QTY,
+            );
+        $this->quoteMock->expects($this->once())
+            ->method('addErrorInfo')
+            ->with(
+                'stock',
+                'cataloginventory',
+                Data::ERROR_QTY,
+                __('Some of the products are out of stock.')
+            );
+        $this->quantityValidator->validate($this->observerMock);
+    }
+
+    /**
      * @param $qty
      * @param $hasError
+     *
+     * @return void
      */
-    private function setUpStubForQuantity($qty, $hasError)
+    private function setUpStubForQuantity($qty, $hasError): void
     {
         $this->productMock->expects($this->any())
             ->method('getTypeInstance')
@@ -496,7 +573,7 @@ class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
     /**
      * @param $qty
      */
-    private function createInitialStub($qty)
+    private function createInitialStub($qty): void
     {
         $this->storeMock->expects($this->any())
             ->method('getWebsiteId')
@@ -516,7 +593,7 @@ class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
         $this->quoteItemMock->expects($this->any())
             ->method('getQuote')
             ->willReturn($this->quoteMock);
-        $this->quoteItemMock->expects($this->once())
+        $this->quoteItemMock->expects($this->any())
             ->method('getQty')
             ->willReturn($qty);
         $this->quoteItemMock->expects($this->any())
@@ -556,7 +633,7 @@ class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
     /**
      * @return void
      */
-    private function setUpStubForRemoveError()
+    private function setUpStubForRemoveError(): void
     {
         $quoteItems = [$this->quoteItemMock];
         $this->quoteItemMock->expects($this->any())

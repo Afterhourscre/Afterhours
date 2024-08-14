@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of PHP CS Fixer.
  *
@@ -15,6 +17,7 @@ namespace PhpCsFixer\Fixer\Casing;
 use PhpCsFixer\AbstractFixer;
 use PhpCsFixer\FixerDefinition\CodeSample;
 use PhpCsFixer\FixerDefinition\FixerDefinition;
+use PhpCsFixer\FixerDefinition\FixerDefinitionInterface;
 use PhpCsFixer\Tokenizer\Token;
 use PhpCsFixer\Tokenizer\Tokens;
 
@@ -25,18 +28,18 @@ use PhpCsFixer\Tokenizer\Tokens;
  */
 final class LowercaseKeywordsFixer extends AbstractFixer
 {
-    private static $excludedTokens = array(T_HALT_COMPILER);
-
     /**
-     * {@inheritdoc}
+     * @var list<int>
      */
-    public function getDefinition()
+    private static array $excludedTokens = [T_HALT_COMPILER];
+
+    public function getDefinition(): FixerDefinitionInterface
     {
         return new FixerDefinition(
             'PHP keywords MUST be in lower case.',
-            array(
+            [
                 new CodeSample(
-'<?php
+                    '<?php
     FOREACH($a AS $B) {
         TRY {
             NEW $C($a, ISSET($B));
@@ -49,26 +52,20 @@ final class LowercaseKeywordsFixer extends AbstractFixer
     }
 '
                 ),
-            )
+            ]
         );
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function isCandidate(Tokens $tokens)
+    public function isCandidate(Tokens $tokens): bool
     {
         return $tokens->isAnyTokenKindsFound(Token::getKeywords());
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function applyFix(\SplFileInfo $file, Tokens $tokens)
+    protected function applyFix(\SplFileInfo $file, Tokens $tokens): void
     {
         foreach ($tokens as $index => $token) {
             if ($token->isKeyword() && !$token->isGivenKind(self::$excludedTokens)) {
-                $tokens[$index] = new Token(array($token->getId(), strtolower($token->getContent())));
+                $tokens[$index] = new Token([$token->getId(), strtolower($token->getContent())]);
             }
         }
     }

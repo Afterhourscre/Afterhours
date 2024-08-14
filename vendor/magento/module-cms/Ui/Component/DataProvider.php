@@ -101,11 +101,11 @@ class DataProvider extends \Magento\Framework\View\Element\UiComponent\DataProvi
                                 'editorConfig' => [
                                     'enabled' => false
                                 ],
-                                'componentType' => \Magento\Ui\Component\Container::NAME,
-                            ],
-                        ],
-                    ],
-                ],
+                                'componentType' => \Magento\Ui\Component\Container::NAME
+                            ]
+                        ]
+                    ]
+                ]
             ];
         }
 

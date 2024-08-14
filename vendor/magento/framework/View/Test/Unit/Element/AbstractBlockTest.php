@@ -3,27 +3,35 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-
-// @codingStandardsIgnoreFile
+declare(strict_types=1);
 
 namespace Magento\Framework\View\Test\Unit\Element;
 
+use Magento\Framework\App\Cache\StateInterface as CacheStateInterface;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\DeploymentConfig;
+use Magento\Framework\Cache\LockGuardedCacheLoader;
+use Magento\Framework\Config\ConfigOptionsListConstants;
+use Magento\Framework\Config\View;
 use Magento\Framework\Escaper;
+use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
+use Magento\Framework\Exception\RuntimeException;
+use Magento\Framework\ObjectManagerInterface;
+use Magento\Framework\Session\SessionManagerInterface;
+use Magento\Framework\Session\SidResolverInterface;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Framework\View\ConfigInterface;
 use Magento\Framework\View\Element\AbstractBlock;
 use Magento\Framework\View\Element\Context;
-use Magento\Framework\Config\View;
-use Magento\Framework\View\ConfigInterface;
-use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\App\Cache\StateInterface as CacheStateInterface;
-use Magento\Framework\App\CacheInterface;
-use Magento\Framework\Session\SidResolverInterface;
-use Magento\Framework\Session\SessionManagerInterface;
+use Magento\Store\Model\ScopeInterface;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Rule\InvokedCount;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class AbstractBlockTest extends \PHPUnit\Framework\TestCase
+class AbstractBlockTest extends TestCase
 {
     /**
      * @var AbstractBlock
@@ -31,49 +39,67 @@ class AbstractBlockTest extends \PHPUnit\Framework\TestCase
     private $block;
 
     /**
-     * @var EventManagerInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var EventManagerInterface|MockObject
      */
     private $eventManagerMock;
 
     /**
-     * @var ScopeConfigInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var ScopeConfigInterface|MockObject
      */
     private $scopeConfigMock;
 
     /**
-     * @var CacheStateInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var CacheStateInterface|MockObject
      */
     private $cacheStateMock;
 
     /**
-     * @var CacheInterface|\PHPUnit_Framework_MockObject_MockObject
-     */
-    private $cacheMock;
-
-    /**
-     * @var SidResolverInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var SidResolverInterface|MockObject
      */
     private $sidResolverMock;
 
     /**
-     * @var SessionManagerInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var SessionManagerInterface|MockObject
      */
     private $sessionMock;
 
     /**
-     * @var Escaper|\PHPUnit_Framework_MockObject_MockObject
+     * @var Escaper|MockObject
      */
     private $escaperMock;
 
     /**
+     * @var LockGuardedCacheLoader|MockObject
+     */
+    private $lockQuery;
+
+    /**
+     * @var DeploymentConfig|MockObject
+     */
+    private $deploymentConfig;
+
+    /**
+     * @var ObjectManagerInterface|MockObject
+     */
+    private $objectManagerMock;
+
+    /**
      * @return void
      */
-    protected function setUp()
+    protected function setUp(): void
     {
+        $this->objectManagerMock = $this->getMockBuilder(ObjectManagerInterface::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['create'])
+            ->getMockForAbstractClass();
+        \Magento\Framework\App\ObjectManager::setInstance($this->objectManagerMock);
         $this->eventManagerMock = $this->getMockForAbstractClass(EventManagerInterface::class);
         $this->scopeConfigMock = $this->getMockForAbstractClass(ScopeConfigInterface::class);
         $this->cacheStateMock = $this->getMockForAbstractClass(CacheStateInterface::class);
-        $this->cacheMock = $this->getMockForAbstractClass(CacheInterface::class);
+        $this->lockQuery = $this->getMockBuilder(LockGuardedCacheLoader::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['lockedLoadData'])
+            ->getMockForAbstractClass();
         $this->sidResolverMock = $this->getMockForAbstractClass(SidResolverInterface::class);
         $this->sessionMock = $this->getMockForAbstractClass(SessionManagerInterface::class);
         $this->escaperMock = $this->getMockBuilder(Escaper::class)
@@ -90,9 +116,6 @@ class AbstractBlockTest extends \PHPUnit\Framework\TestCase
             ->method('getCacheState')
             ->willReturn($this->cacheStateMock);
         $contextMock->expects($this->once())
-            ->method('getCache')
-            ->willReturn($this->cacheMock);
-        $contextMock->expects($this->once())
             ->method('getSidResolver')
             ->willReturn($this->sidResolverMock);
         $contextMock->expects($this->once())
@@ -101,9 +124,20 @@ class AbstractBlockTest extends \PHPUnit\Framework\TestCase
         $contextMock->expects($this->once())
             ->method('getEscaper')
             ->willReturn($this->escaperMock);
+        $contextMock->expects($this->once())
+            ->method('getLockGuardedCacheLoader')
+            ->willReturn($this->lockQuery);
+
         $this->block = $this->getMockForAbstractClass(
             AbstractBlock::class,
-            ['context' => $contextMock]
+            [
+                'context' => $contextMock,
+                'data' => []
+            ]
+        );
+        $this->deploymentConfig = $this->createPartialMock(
+            DeploymentConfig::class,
+            ['get']
         );
     }
 
@@ -175,12 +209,12 @@ class AbstractBlockTest extends \PHPUnit\Framework\TestCase
                 ]
             );
 
-        $configManager = $this->createMock(ConfigInterface::class);
+        $configManager = $this->getMockForAbstractClass(ConfigInterface::class);
         $configManager->expects($this->exactly(2))->method('getViewConfig')->willReturn($config);
 
-        /** @var $block AbstractBlock|\PHPUnit_Framework_MockObject_MockObject */
+        /** @var AbstractBlock|MockObject $block */
         $params = ['viewConfig' => $configManager];
-        $helper = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
+        $helper = new ObjectManager($this);
         $block = $this->getMockForAbstractClass(
             AbstractBlock::class,
             $helper->getConstructArguments(AbstractBlock::class, $params)
@@ -206,7 +240,21 @@ class AbstractBlockTest extends \PHPUnit\Framework\TestCase
     {
         $cacheKey = 'testKey';
         $this->block->setData('cache_key', $cacheKey);
-        $this->assertEquals(AbstractBlock::CACHE_KEY_PREFIX . $cacheKey, $this->block->getCacheKey());
+        $this->assertEquals(AbstractBlock::CUSTOM_CACHE_KEY_PREFIX . $cacheKey, $this->block->getCacheKey());
+    }
+
+    /**
+     * Test for invalid cacheKey name
+     * @return void
+     * @throws RuntimeException
+     */
+    public function testGetCacheKeyFail(): void
+    {
+        $cacheKey = "test&''Key";
+        $this->block->setData('cache_key', $cacheKey);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage((string)__('Please enter cache key with only alphanumeric or hash string.'));
+        $this->block->getCacheKey();
     }
 
     /**
@@ -214,9 +262,20 @@ class AbstractBlockTest extends \PHPUnit\Framework\TestCase
      */
     public function testGetCacheKeyByName()
     {
+        $this->objectManagerMock->expects($this->any())
+            ->method('get')
+            ->with(DeploymentConfig::class)
+            ->willReturn($this->deploymentConfig);
+
+        $this->deploymentConfig->expects($this->any())
+            ->method('get')
+            ->with(ConfigOptionsListConstants::CONFIG_PATH_CRYPT_KEY)
+            ->willReturn('448198e08af35844a42d3c93c1ef4e03');
+
         $nameInLayout = 'testBlock';
         $this->block->setNameInLayout($nameInLayout);
-        $cacheKey = sha1($nameInLayout);
+        $encryptionKey = $this->deploymentConfig->get(ConfigOptionsListConstants::CONFIG_PATH_CRYPT_KEY);
+        $cacheKey = hash('sha256', $nameInLayout . '|' . $encryptionKey);
         $this->assertEquals(AbstractBlock::CACHE_KEY_PREFIX . $cacheKey, $this->block->getCacheKey());
     }
 
@@ -233,7 +292,7 @@ class AbstractBlockTest extends \PHPUnit\Framework\TestCase
             ->with('view_block_abstract_to_html_before', ['block' => $this->block]);
         $this->scopeConfigMock->expects($this->once())
             ->method('getValue')
-            ->with('advanced/modules_disable_output/' . $moduleName, \Magento\Store\Model\ScopeInterface::SCOPE_STORE)
+            ->with('advanced/modules_disable_output/' . $moduleName, ScopeInterface::SCOPE_STORE)
             ->willReturn(true);
 
         $this->assertSame('', $this->block->toHtml());
@@ -242,10 +301,7 @@ class AbstractBlockTest extends \PHPUnit\Framework\TestCase
     /**
      * @param string|bool $cacheLifetime
      * @param string|bool $dataFromCache
-     * @param string $dataForSaveCache
-     * @param \PHPUnit_Framework_MockObject_Matcher_InvokedCount $expectsDispatchEvent
-     * @param \PHPUnit_Framework_MockObject_Matcher_InvokedCount $expectsCacheLoad
-     * @param \PHPUnit_Framework_MockObject_Matcher_InvokedCount $expectsCacheSave
+     * @param InvokedCount $expectsDispatchEvent
      * @param string $expectedResult
      * @return void
      * @dataProvider getCacheLifetimeDataProvider
@@ -253,10 +309,7 @@ class AbstractBlockTest extends \PHPUnit\Framework\TestCase
     public function testGetCacheLifetimeViaToHtml(
         $cacheLifetime,
         $dataFromCache,
-        $dataForSaveCache,
         $expectsDispatchEvent,
-        $expectsCacheLoad,
-        $expectsCacheSave,
         $expectedResult
     ) {
         $moduleName = 'Test';
@@ -269,19 +322,15 @@ class AbstractBlockTest extends \PHPUnit\Framework\TestCase
             ->method('dispatch');
         $this->scopeConfigMock->expects($this->once())
             ->method('getValue')
-            ->with('advanced/modules_disable_output/' . $moduleName, \Magento\Store\Model\ScopeInterface::SCOPE_STORE)
+            ->with('advanced/modules_disable_output/' . $moduleName, ScopeInterface::SCOPE_STORE)
             ->willReturn(false);
         $this->cacheStateMock->expects($this->any())
             ->method('isEnabled')
             ->with(AbstractBlock::CACHE_GROUP)
             ->willReturn(true);
-        $this->cacheMock->expects($expectsCacheLoad)
-            ->method('load')
-            ->with(AbstractBlock::CACHE_KEY_PREFIX . $cacheKey)
+        $this->lockQuery->expects($this->any())
+            ->method('lockedLoadData')
             ->willReturn($dataFromCache);
-        $this->cacheMock->expects($expectsCacheSave)
-            ->method('save')
-            ->with($dataForSaveCache, AbstractBlock::CACHE_KEY_PREFIX . $cacheKey);
         $this->sidResolverMock->expects($this->any())
             ->method('getSessionIdQueryParam')
             ->with($this->sessionMock)
@@ -302,39 +351,59 @@ class AbstractBlockTest extends \PHPUnit\Framework\TestCase
             [
                 'cacheLifetime' => null,
                 'dataFromCache' => 'dataFromCache',
-                'dataForSaveCache' => '',
                 'expectsDispatchEvent' => $this->exactly(2),
-                'expectsCacheLoad' => $this->never(),
-                'expectsCacheSave' => $this->never(),
+                'expectedResult' => '',
+            ],
+            [
+                'cacheLifetime' => false,
+                'dataFromCache' => 'dataFromCache',
+                'expectsDispatchEvent' => $this->exactly(2),
                 'expectedResult' => '',
             ],
             [
                 'cacheLifetime' => 120,
                 'dataFromCache' => 'dataFromCache',
-                'dataForSaveCache' => '',
                 'expectsDispatchEvent' => $this->exactly(2),
-                'expectsCacheLoad' => $this->once(),
-                'expectsCacheSave' => $this->never(),
                 'expectedResult' => 'dataFromCache',
             ],
             [
                 'cacheLifetime' => '120string',
                 'dataFromCache' => 'dataFromCache',
-                'dataForSaveCache' => '',
                 'expectsDispatchEvent' => $this->exactly(2),
-                'expectsCacheLoad' => $this->once(),
-                'expectsCacheSave' => $this->never(),
                 'expectedResult' => 'dataFromCache',
             ],
             [
                 'cacheLifetime' => 120,
                 'dataFromCache' => false,
-                'dataForSaveCache' => '',
                 'expectsDispatchEvent' => $this->exactly(2),
-                'expectsCacheLoad' => $this->once(),
-                'expectsCacheSave' => $this->once(),
                 'expectedResult' => '',
             ],
+        ];
+    }
+
+    /**
+     * @return void
+     */
+    public function testExtractModuleName()
+    {
+        $blockClassNames = $this->getPossibleBlockClassNames();
+
+        foreach ($blockClassNames as $expectedModuleName => $className) {
+            $extractedModuleName = $this->block->extractModuleName($className);
+            $this->assertSame($expectedModuleName, $extractedModuleName);
+        }
+    }
+
+    /**
+     * @return array
+     */
+    private function getPossibleBlockClassNames()
+    {
+        return [
+            'Vendor_Module' => 'Vendor\Module\Block\Class',
+            'Vendor_ModuleBlock' => 'Vendor\ModuleBlock\Block\Class',
+            'Vendor_BlockModule' => 'Vendor\BlockModule\Block\Class',
+            'Vendor_CustomBlockModule' => 'Vendor\CustomBlockModule\Block\Class',
         ];
     }
 }

@@ -3,24 +3,27 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Catalog\ViewModel\Product;
 
 use Magento\Catalog\Helper\Data;
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\App\ObjectManager;
 use Magento\Framework\DataObject;
-use Magento\Framework\Escaper;
-use Magento\Framework\Serialize\Serializer\Json;
+use Magento\Framework\Serialize\Serializer\JsonHexTag;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
+use Magento\Framework\Escaper;
+use Magento\Store\Model\ScopeInterface;
 
 /**
  * Product breadcrumbs view model.
  */
 class Breadcrumbs extends DataObject implements ArgumentInterface
 {
+    private const XML_PATH_CATEGORY_URL_SUFFIX = 'catalog/seo/category_url_suffix';
+    private const XML_PATH_PRODUCT_USE_CATEGORIES = 'catalog/seo/product_use_categories';
+
     /**
-     * Catalog data.
-     *
      * @var Data
      */
     private $catalogData;
@@ -31,32 +34,33 @@ class Breadcrumbs extends DataObject implements ArgumentInterface
     private $scopeConfig;
 
     /**
-     * @var Json
-     */
-    private $json;
-    /**
      * @var Escaper
      */
     private $escaper;
 
     /**
+     * @var JsonHexTag
+     */
+    private $jsonSerializer;
+
+    /**
      * @param Data $catalogData
      * @param ScopeConfigInterface $scopeConfig
-     * @param Json $json
      * @param Escaper $escaper
+     * @param JsonHexTag $jsonSerializer
      */
     public function __construct(
         Data $catalogData,
         ScopeConfigInterface $scopeConfig,
-        Json $json = null,
-        Escaper $escaper = null
+        Escaper $escaper,
+        JsonHexTag $jsonSerializer
     ) {
         parent::__construct();
 
         $this->catalogData = $catalogData;
         $this->scopeConfig = $scopeConfig;
-        $this->json = $json ?: ObjectManager::getInstance()->get(Json::class);
-        $this->escaper = $escaper ?: ObjectManager::getInstance()->get(Escaper::class);
+        $this->escaper = $escaper;
+        $this->jsonSerializer = $jsonSerializer;
     }
 
     /**
@@ -67,8 +71,8 @@ class Breadcrumbs extends DataObject implements ArgumentInterface
     public function getCategoryUrlSuffix()
     {
         return $this->scopeConfig->getValue(
-            'catalog/seo/category_url_suffix',
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            self::XML_PATH_CATEGORY_URL_SUFFIX,
+            ScopeInterface::SCOPE_STORE
         );
     }
 
@@ -77,11 +81,11 @@ class Breadcrumbs extends DataObject implements ArgumentInterface
      *
      * @return bool
      */
-    public function isCategoryUsedInProductUrl()
+    public function isCategoryUsedInProductUrl(): bool
     {
         return $this->scopeConfig->isSetFlag(
-            'catalog/seo/product_use_categories',
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            self::XML_PATH_PRODUCT_USE_CATEGORIES,
+            ScopeInterface::SCOPE_STORE
         );
     }
 
@@ -90,7 +94,7 @@ class Breadcrumbs extends DataObject implements ArgumentInterface
      *
      * @return string
      */
-    public function getProductName()
+    public function getProductName(): string
     {
         return $this->catalogData->getProduct() !== null
             ? $this->catalogData->getProduct()->getName()
@@ -98,18 +102,20 @@ class Breadcrumbs extends DataObject implements ArgumentInterface
     }
 
     /**
-     * Returns breadcrumb json.
+     * Returns breadcrumb json with html escaped names
      *
      * @return string
      */
-    public function getJsonConfiguration()
+    public function getJsonConfigurationHtmlEscaped(): string
     {
-        return $this->escaper->escapeHtml($this->json->serialize([
-            'breadcrumbs' => [
-                'categoryUrlSuffix' => $this->escaper->escapeHtml($this->getCategoryUrlSuffix()),
-                'useCategoryPathInUrl' => (int)$this->isCategoryUsedInProductUrl(),
-                'product' => $this->getProductName()
+        return $this->jsonSerializer->serialize(
+            [
+                'breadcrumbs' => [
+                    'categoryUrlSuffix' => $this->escaper->escapeHtml($this->getCategoryUrlSuffix()),
+                    'useCategoryPathInUrl' => (int)$this->isCategoryUsedInProductUrl(),
+                    'product' => $this->escaper->escapeHtml($this->getProductName())
+                ]
             ]
-        ]));
+        );
     }
 }

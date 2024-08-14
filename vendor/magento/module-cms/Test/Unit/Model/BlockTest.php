@@ -13,11 +13,13 @@ use Magento\Framework\Event\ManagerInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\Context;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \Magento\Cms\Model\Block
  */
-class BlockTest extends \PHPUnit\Framework\TestCase
+class BlockTest extends TestCase
 {
     /**
      * Testable Object
@@ -34,17 +36,17 @@ class BlockTest extends \PHPUnit\Framework\TestCase
     private $objectManager;
 
     /**
-     * @var ManagerInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var ManagerInterface|MockObject
      */
     private $eventManagerMock;
 
     /**
-     * @var Context|\PHPUnit_Framework_MockObject_MockObject
+     * @var Context|MockObject
      */
     private $contextMock;
 
     /**
-     * @var BlockResource|\PHPUnit_Framework_MockObject_MockObject
+     * @var BlockResource|MockObject
      */
     private $resourceMock;
 
@@ -53,10 +55,10 @@ class BlockTest extends \PHPUnit\Framework\TestCase
      *
      * @return void
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->resourceMock = $this->createMock(BlockResource::class);
-        $this->eventManagerMock = $this->createMock(ManagerInterface::class);
+        $this->eventManagerMock = $this->getMockForAbstractClass(ManagerInterface::class);
         $this->contextMock = $this->createMock(Context::class);
         $this->contextMock->expects($this->any())->method('getEventDispatcher')->willReturn($this->eventManagerMock);
         $this->objectManager = new ObjectManager($this);
@@ -83,7 +85,6 @@ class BlockTest extends \PHPUnit\Framework\TestCase
         $this->blockModel->setData(Block::CONTENT, 'test');
         $this->objectManager->setBackwardCompatibleProperty($this->blockModel, '_hasDataChanges', true);
         $this->eventManagerMock->expects($this->atLeastOnce())->method('dispatch');
-
         $expected = $this->blockModel;
         $actual = $this->blockModel->beforeSave();
         self::assertEquals($expected, $actual);
@@ -115,7 +116,7 @@ class BlockTest extends \PHPUnit\Framework\TestCase
     public function testGetIdentities()
     {
         $result = $this->blockModel->getIdentities();
-        self::assertInternalType('array', $result);
+        $this->assertIsArray($result);
     }
 
     /**
@@ -141,7 +142,6 @@ class BlockTest extends \PHPUnit\Framework\TestCase
     {
         $identifier = 'test01';
         $this->blockModel->setData(Block::IDENTIFIER, $identifier);
-
         $expected = $identifier;
         $actual = $this->blockModel->getIdentifier();
         self::assertEquals($expected, $actual);
@@ -334,6 +334,6 @@ class BlockTest extends \PHPUnit\Framework\TestCase
     public function testGetAvailableStatuses()
     {
         $result = $this->blockModel->getAvailableStatuses();
-        self::assertInternalType('array', $result);
+        $this->assertIsArray($result);
     }
 }

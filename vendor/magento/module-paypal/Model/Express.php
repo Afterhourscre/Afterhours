@@ -276,6 +276,7 @@ class Express extends \Magento\Payment\Model\Method\AbstractMethod
                 ApiProcessableException::API_MAXIMUM_AMOUNT_FILTER_DECLINE,
                 ApiProcessableException::API_OTHER_FILTER_DECLINE,
                 ApiProcessableException::API_ADDRESS_MATCH_FAIL,
+                ApiProcessableException::API_TRANSACTION_HAS_BEEN_COMPLETED,
                 self::$authorizationExpiredCode
             ]
         );
@@ -283,6 +284,7 @@ class Express extends \Magento\Payment\Model\Method\AbstractMethod
 
     /**
      * Store setter
+     *
      * Also updates store ID in config object
      *
      * @param \Magento\Store\Model\Store|int $store
@@ -342,6 +344,7 @@ class Express extends \Magento\Payment\Model\Method\AbstractMethod
 
     /**
      * Check whether payment method can be used
+     *
      * @param \Magento\Quote\Api\Data\CartInterface|Quote|null $quote
      * @return bool
      */
@@ -563,6 +566,7 @@ class Express extends \Magento\Payment\Model\Method\AbstractMethod
 
     /**
      * Whether payment can be reviewed
+     *
      * @return bool
      */
     public function canReviewPayment()
@@ -619,6 +623,8 @@ class Express extends \Magento\Payment\Model\Method\AbstractMethod
     }
 
     /**
+     * Returns api instance
+     *
      * @return Api\Nvp
      */
     public function getApi()
@@ -735,6 +741,7 @@ class Express extends \Magento\Payment\Model\Method\AbstractMethod
 
     /**
      * Check void availability
+     *
      * @return bool
      * @throws \Magento\Framework\Exception\LocalizedException
      * @internal param \Magento\Framework\DataObject $payment
@@ -836,7 +843,7 @@ class Express extends \Magento\Payment\Model\Method\AbstractMethod
         $transactionClosingDate->setTime(11, 49, 00);
         $transactionClosingDate->modify('+' . $period . ' days');
 
-        $currentTime = new \DateTime(null, new \DateTimeZone('US/Pacific'));
+        $currentTime = new \DateTime('now', new \DateTimeZone('US/Pacific'));
 
         if ($currentTime > $transactionClosingDate) {
             return true;

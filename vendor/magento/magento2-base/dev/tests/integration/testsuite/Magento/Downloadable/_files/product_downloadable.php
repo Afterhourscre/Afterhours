@@ -6,9 +6,6 @@
 
 use Magento\Downloadable\Api\DomainManagerInterface;
 
-/**
- * @var \Magento\Catalog\Model\Product $product
- */
 $objectManager = \Magento\TestFramework\Helper\Bootstrap::getObjectManager();
 
 /** @var DomainManagerInterface $domainManager */
@@ -22,6 +19,7 @@ $domainManager->addDomains(
     ]
 );
 
+/** @var \Magento\Catalog\Model\Product $product */
 $product = $objectManager->create(\Magento\Catalog\Model\Product::class);
 $product
     ->setTypeId(\Magento\Downloadable\Model\Product\Type::TYPE_DOWNLOADABLE)
@@ -38,6 +36,7 @@ $product
         [
             'qty' => 100,
             'is_in_stock' => 1,
+            'manage_stock' => 1,
         ]
     );
 

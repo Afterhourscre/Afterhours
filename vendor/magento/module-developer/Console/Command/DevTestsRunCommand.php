@@ -32,7 +32,7 @@ class DevTestsRunCommand extends Command
     /**
      * command name
      */
-    const COMMAND_NAME                      = 'dev:tests:run';
+    const COMMAND_NAME = 'dev:tests:run';
 
     /**
      * Maps types (from user input) to phpunit test names
@@ -70,7 +70,6 @@ class DevTestsRunCommand extends Command
             'Additional arguments for PHPUnit. Example: "-c\'--filter=MyTest\'" (no spaces)',
             ''
         );
-
         parent::configure();
     }
 
@@ -106,6 +105,8 @@ class DevTestsRunCommand extends Command
             }
             $message = $dirName . '> ' . $command;
             $output->writeln(['', str_pad("---- {$message} ", 70, '-'), '']);
+            // passthru() call have to be here.
+            // phpcs:ignore Magento2.Security.InsecureFunction
             passthru($command, $returnVal);
             if ($returnVal) {
                 $failures[] = $message;

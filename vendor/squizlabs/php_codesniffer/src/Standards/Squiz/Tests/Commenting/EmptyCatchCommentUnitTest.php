@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Tests\Commenting;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class EmptyCatchCommentUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the EmptyCatchComment sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\EmptyCatchCommentSniff
+ */
+final class EmptyCatchCommentUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,14 +30,14 @@ class EmptyCatchCommentUnitTest extends AbstractSniffUnitTest
      */
     public function getErrorList()
     {
-        return array(
-                13 => 1,
-                33 => 1,
-                49 => 1,
-                50 => 1,
-                51 => 1,
-                52 => 1,
-               );
+        return [
+            13 => 1,
+            33 => 1,
+            49 => 1,
+            50 => 1,
+            51 => 1,
+            52 => 1,
+        ];
 
     }//end getErrorList()
 
@@ -47,7 +52,7 @@ class EmptyCatchCommentUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

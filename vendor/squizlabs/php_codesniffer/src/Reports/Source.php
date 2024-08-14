@@ -4,7 +4,7 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Reports;
@@ -23,10 +23,10 @@ class Source implements Report
      * and FALSE if it ignored the file. Returning TRUE indicates that the file and
      * its data should be counted in the grand totals.
      *
-     * @param array                 $report      Prepared report data.
-     * @param \PHP_CodeSniffer\File $phpcsFile   The file being reported on.
-     * @param bool                  $showSources Show sources?
-     * @param int                   $width       Maximum allowed line width.
+     * @param array                       $report      Prepared report data.
+     * @param \PHP_CodeSniffer\Files\File $phpcsFile   The file being reported on.
+     * @param bool                        $showSources Show sources?
+     * @param int                         $width       Maximum allowed line width.
      *
      * @return bool
      */
@@ -37,17 +37,17 @@ class Source implements Report
             return false;
         }
 
-        $sources = array();
+        $sources = [];
 
         foreach ($report['messages'] as $line => $lineErrors) {
             foreach ($lineErrors as $column => $colErrors) {
                 foreach ($colErrors as $error) {
                     $src = $error['source'];
                     if (isset($sources[$src]) === false) {
-                        $sources[$src] = array(
-                                          'fixable' => (int) $error['fixable'],
-                                          'count'   => 1,
-                                         );
+                        $sources[$src] = [
+                            'fixable' => (int) $error['fixable'],
+                            'count'   => 1,
+                        ];
                     } else {
                         $sources[$src]['count']++;
                     }
@@ -98,7 +98,7 @@ class Source implements Report
             return;
         }
 
-        $sources   = array();
+        $sources   = [];
         $maxLength = 0;
 
         foreach ($lines as $line) {
@@ -133,21 +133,14 @@ class Source implements Report
 
                 $maxLength = max($maxLength, strlen($sniff));
 
-                $sources[$source] = array(
-                                     'count'   => $count,
-                                     'fixable' => $fixable,
-                                     'parts'   => $parts,
-                                    );
+                $sources[$source] = [
+                    'count'   => $count,
+                    'fixable' => $fixable,
+                    'parts'   => $parts,
+                ];
             } else {
                 $sources[$source]['count'] += $count;
             }//end if
-
-            $fileLen = strlen($parts[0]);
-            $reportFiles[$parts[0]] = array(
-                                       'errors'   => $parts[1],
-                                       'warnings' => $parts[2],
-                                       'strlen'   => $fileLen,
-                                      );
         }//end foreach
 
         if ($showSources === true) {
@@ -158,8 +151,14 @@ class Source implements Report
 
         $width = max($width, 70);
 
-        asort($sources);
-        $sources = array_reverse($sources);
+        // Sort the data based on counts and source code.
+        $sourceCodes = array_keys($sources);
+        $counts      = [];
+        foreach ($sources as $source => $data) {
+            $counts[$source] = $data['count'];
+        }
+
+        array_multisort($counts, SORT_DESC, $sourceCodes, SORT_ASC, SORT_NATURAL, $sources);
 
         echo PHP_EOL."\033[1mPHP CODE SNIFFER VIOLATION SOURCE SUMMARY\033[0m".PHP_EOL;
         echo str_repeat('-', $width).PHP_EOL."\033[1m";

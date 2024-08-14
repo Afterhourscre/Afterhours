@@ -9,10 +9,18 @@
  * file that was distributed with this source code.
  */
 
-// @see https://github.com/sebastianbergmann/phpcpd/issues/18
-ini_set('mbstring.func_overload', 0);
-if (ini_get('mbstring.internal_encoding')) {
-    ini_set('mbstring.internal_encoding', NULL);
+if (version_compare('7.3.0', PHP_VERSION, '>')) {
+    fwrite(
+        STDERR,
+        sprintf(
+            'This version of PHPCPD requires PHP 7.3 (or later).' . PHP_EOL .
+            'You are using PHP %s%s.' . PHP_EOL,
+            PHP_VERSION,
+            defined('PHP_BINARY') ? ' (' . PHP_BINARY . ')' : ''
+        )
+    );
+
+    die(1);
 }
 
 $loaded = false;
@@ -33,5 +41,4 @@ if (!$loaded) {
     );
 }
 
-$application = new SebastianBergmann\PHPCPD\CLI\Application;
-$application->run();
+exit((new \SebastianBergmann\PHPCPD\Application)->run($_SERVER['argv']));

@@ -6,11 +6,15 @@
 
 namespace Magento\Catalog\Helper\Product;
 
+use Magento\Catalog\Model\Product\Attribute\LayoutUpdateManager;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\View\Result\Page as ResultPage;
 
 /**
  * Catalog category helper
+ *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.CookieAndSessionMisuse)
  */
 class View extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -22,29 +26,21 @@ class View extends \Magento\Framework\App\Helper\AbstractHelper
     protected $messageGroups;
 
     /**
-     * Core registry
-     *
      * @var \Magento\Framework\Registry
      */
     protected $_coreRegistry = null;
 
     /**
-     * Catalog product
-     *
      * @var \Magento\Catalog\Helper\Product
      */
     protected $_catalogProduct = null;
 
     /**
-     * Catalog design
-     *
      * @var \Magento\Catalog\Model\Design
      */
     protected $_catalogDesign;
 
     /**
-     * Catalog session
-     *
      * @var \Magento\Catalog\Model\Session
      */
     protected $_catalogSession;
@@ -65,6 +61,11 @@ class View extends \Magento\Framework\App\Helper\AbstractHelper
     private $string;
 
     /**
+     * @var LayoutUpdateManager
+     */
+    private $layoutUpdateManager;
+
+    /**
      * Constructor
      *
      * @param \Magento\Framework\App\Helper\Context $context
@@ -76,6 +77,8 @@ class View extends \Magento\Framework\App\Helper\AbstractHelper
      * @param \Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator $categoryUrlPathGenerator
      * @param array $messageGroups
      * @param \Magento\Framework\Stdlib\StringUtils|null $string
+     * @param LayoutUpdateManager|null $layoutUpdateManager
+     * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
@@ -86,7 +89,8 @@ class View extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Framework\Message\ManagerInterface $messageManager,
         \Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator $categoryUrlPathGenerator,
         array $messageGroups = [],
-        \Magento\Framework\Stdlib\StringUtils $string = null
+        \Magento\Framework\Stdlib\StringUtils $string = null,
+        ?LayoutUpdateManager $layoutUpdateManager = null
     ) {
         $this->_catalogSession = $catalogSession;
         $this->_catalogDesign = $catalogDesign;
@@ -95,8 +99,9 @@ class View extends \Magento\Framework\App\Helper\AbstractHelper
         $this->messageGroups = $messageGroups;
         $this->messageManager = $messageManager;
         $this->categoryUrlPathGenerator = $categoryUrlPathGenerator;
-        $this->string = $string ?: \Magento\Framework\App\ObjectManager::getInstance()
-            ->get(\Magento\Framework\Stdlib\StringUtils::class);
+        $this->string = $string ?: ObjectManager::getInstance()->get(\Magento\Framework\Stdlib\StringUtils::class);
+        $this->layoutUpdateManager = $layoutUpdateManager
+            ?? ObjectManager::getInstance()->get(LayoutUpdateManager::class);
         parent::__construct($context);
     }
 
@@ -105,14 +110,16 @@ class View extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @param \Magento\Framework\View\Result\Page $resultPage
      * @param \Magento\Catalog\Model\Product $product
-     * @return \Magento\Framework\View\Result\Page
+     * @return $this
      */
     private function preparePageMetadata(ResultPage $resultPage, $product)
     {
+        $pageLayout = $resultPage->getLayout();
         $pageConfig = $resultPage->getConfig();
 
         $metaTitle = $product->getMetaTitle();
-        $pageConfig->setMetaTitle($metaTitle);
+        $productMetaTitle = $metaTitle ? $this->addConfigValues($metaTitle) : null;
+        $pageConfig->setMetaTitle($productMetaTitle);
         $pageConfig->getTitle()->set($metaTitle ?: $product->getName());
 
         $keyword = $product->getMetaKeyword();
@@ -123,12 +130,7 @@ class View extends \Magento\Framework\App\Helper\AbstractHelper
             $pageConfig->setKeywords($product->getName());
         }
 
-        $description = $product->getMetaDescription();
-        if ($description) {
-            $pageConfig->setDescription($description);
-        } else {
-            $pageConfig->setDescription($this->string->substr(strip_tags($product->getDescription()), 0, 255));
-        }
+        $pageConfig->setDescription($product->getMetaDescription());
 
         if ($this->_catalogProduct->canUseCanonicalTag()) {
             $pageConfig->addRemotePageAsset(
@@ -138,7 +140,7 @@ class View extends \Magento\Framework\App\Helper\AbstractHelper
             );
         }
 
-        $pageMainTitle = $resultPage->getLayout()->getBlock('page.main.title');
+        $pageMainTitle = $pageLayout->getBlock('page.main.title');
         if ($pageMainTitle) {
             $pageMainTitle->setPageTitle($product->getName());
         }
@@ -179,7 +181,7 @@ class View extends \Magento\Framework\App\Helper\AbstractHelper
                 $resultPage->addPageLayoutHandles(['id' => $product->getId(), 'sku' => $urlSafeSku], $handle);
             }
         }
-    
+
         $resultPage->addPageLayoutHandles(['type' => $product->getTypeId()], null, false);
         $resultPage->addPageLayoutHandles(['id' => $product->getId(), 'sku' => $urlSafeSku]);
 
@@ -199,6 +201,9 @@ class View extends \Magento\Framework\App\Helper\AbstractHelper
                     $update->addUpdate($layoutUpdate);
                 }
             }
+        }
+        if ($settings->getPageLayoutHandles()) {
+            $resultPage->addPageLayoutHandles($settings->getPageLayoutHandles());
         }
 
         $currentCategory = $this->_coreRegistry->registry('current_category');
@@ -282,5 +287,23 @@ class View extends \Magento\Framework\App\Helper\AbstractHelper
         $this->initProductLayout($resultPage, $product, $params);
         $this->preparePageMetadata($resultPage, $product);
         return $this;
+    }
+
+    /**
+     * Add Prefix and Suffix as per the configuration.
+     *
+     * @param string $title
+     * @return string
+     */
+    private function addConfigValues(string $title): string
+    {
+        $preparedTitle = $this->scopeConfig->getValue(
+            'design/head/title_prefix',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        ) . ' ' . $title . ' ' . $this->scopeConfig->getValue(
+            'design/head/title_suffix',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
+        return trim($preparedTitle);
     }
 }

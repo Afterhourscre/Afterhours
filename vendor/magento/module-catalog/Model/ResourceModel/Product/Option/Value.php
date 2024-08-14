@@ -78,7 +78,8 @@ class Value extends AbstractDb
         $this->_currencyFactory = $currencyFactory;
         $this->_storeManager = $storeManager;
         $this->_config = $config;
-        $this->dataHelper = $dataHelper ?: ObjectManager::getInstance()->get(Data::class);
+        $this->dataHelper = $dataHelper ?: ObjectManager::getInstance()
+            ->get(Data::class);
         parent::__construct($context, $connectionName);
     }
 
@@ -94,6 +95,7 @@ class Value extends AbstractDb
 
     /**
      * Proceed operations after object is saved
+     *
      * Save options store data
      *
      * @param AbstractModel $object

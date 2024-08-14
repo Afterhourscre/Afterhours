@@ -56,7 +56,6 @@ class Samples extends \Magento\Catalog\Block\Product\AbstractProduct
         if ($this->getProduct()->getSamplesTitle()) {
             return $this->getProduct()->getSamplesTitle();
         }
-
         return $this->_scopeConfig->getValue(
             \Magento\Downloadable\Model\Sample::XML_PATH_SAMPLES_TITLE,
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE

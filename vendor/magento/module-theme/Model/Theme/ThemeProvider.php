@@ -6,14 +6,16 @@
 namespace Magento\Theme\Model\Theme;
 
 use Magento\Framework\App\ObjectManager;
+use Magento\Framework\ObjectManager\ResetAfterRequestInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\View\Design\Theme\ListInterface;
 use Magento\Framework\App\DeploymentConfig;
+use Magento\Framework\View\Design\Theme\ThemeProviderInterface;
 
 /**
  * Provide data for theme grid and for theme edit page
  */
-class ThemeProvider implements \Magento\Framework\View\Design\Theme\ThemeProviderInterface
+class ThemeProvider implements ThemeProviderInterface, ResetAfterRequestInterface
 {
     /**
      * @var \Magento\Theme\Model\ResourceModel\Theme\CollectionFactory
@@ -31,24 +33,28 @@ class ThemeProvider implements \Magento\Framework\View\Design\Theme\ThemeProvide
     protected $cache;
 
     /**
-     * @var \Magento\Framework\View\Design\ThemeInterface[]
+     * @var \Magento\Framework\View\Design\ThemeInterface[]|null
      */
     private $themes;
 
     /**
-     * @var ListInterface
+     * @var ListInterface|null
      */
     private $themeList;
 
     /**
      * @var DeploymentConfig
+     *
+     * phpcs:disable Magento2.Commenting.ClassPropertyPHPDocFormatting
      */
-    private $deploymentConfig;
+    private readonly DeploymentConfig $deploymentConfig;
 
     /**
      * @var Json
+     *
+     * phpcs:disable Magento2.Commenting.ClassPropertyPHPDocFormatting
      */
-    private $serializer;
+    private readonly Json $serializer;
 
     /**
      * ThemeProvider constructor.
@@ -57,17 +63,20 @@ class ThemeProvider implements \Magento\Framework\View\Design\Theme\ThemeProvide
      * @param \Magento\Theme\Model\ThemeFactory $themeFactory
      * @param \Magento\Framework\App\CacheInterface $cache
      * @param Json $serializer
+     * @param DeploymentConfig|null $deploymentConfig
      */
     public function __construct(
         \Magento\Theme\Model\ResourceModel\Theme\CollectionFactory $collectionFactory,
         \Magento\Theme\Model\ThemeFactory $themeFactory,
         \Magento\Framework\App\CacheInterface $cache,
-        Json $serializer = null
+        Json $serializer = null,
+        DeploymentConfig $deploymentConfig = null
     ) {
         $this->collectionFactory = $collectionFactory;
         $this->themeFactory = $themeFactory;
         $this->cache = $cache;
         $this->serializer = $serializer ?: ObjectManager::getInstance()->get(Json::class);
+        $this->deploymentConfig = $deploymentConfig ?? ObjectManager::getInstance()->get(DeploymentConfig::class);
     }
 
     /**
@@ -79,7 +88,7 @@ class ThemeProvider implements \Magento\Framework\View\Design\Theme\ThemeProvide
             return $this->themes[$fullPath];
         }
 
-        if (! $this->getDeploymentConfig()->isDbAvailable()) {
+        if (! $this->deploymentConfig->isDbAvailable()) {
             return $this->getThemeList()->getThemeByFullPath($fullPath);
         }
 
@@ -93,8 +102,8 @@ class ThemeProvider implements \Magento\Framework\View\Design\Theme\ThemeProvide
         if ($theme->getId()) {
             $this->saveThemeToCache($theme, 'theme' . $fullPath);
             $this->saveThemeToCache($theme, 'theme-by-id-' . $theme->getId());
-            $this->themes[$fullPath] = $theme;
         }
+        $this->themes[$fullPath] = $theme;
 
         return $theme;
     }
@@ -167,7 +176,10 @@ class ThemeProvider implements \Magento\Framework\View\Design\Theme\ThemeProvide
     }
 
     /**
+     * Get theme list
+     *
      * @deprecated 100.1.3
+     * @see Nothing
      * @return ListInterface
      */
     private function getThemeList()
@@ -179,14 +191,11 @@ class ThemeProvider implements \Magento\Framework\View\Design\Theme\ThemeProvide
     }
 
     /**
-     * @deprecated 100.1.3
-     * @return DeploymentConfig
+     * @inheritDoc
      */
-    private function getDeploymentConfig()
+    public function _resetState(): void
     {
-        if ($this->deploymentConfig === null) {
-            $this->deploymentConfig = ObjectManager::getInstance()->get(DeploymentConfig::class);
-        }
-        return $this->deploymentConfig;
+        $this->themeList = null;
+        $this->themes = null;
     }
 }

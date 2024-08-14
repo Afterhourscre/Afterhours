@@ -9,17 +9,21 @@
     <test name="RewriteStoreLevelUrlKeyOfChildCategoryTest">
         <annotations>
             <title value="Rewriting Store-level URL key of child category"/>
-            <stories value="MAGETWO-89619: #13513: Magento ignore store-level url_key of child category in URL rewrite process for global scope"/>
+            <stories value="MAGETWO-91649: #13513: Magento ignore store-level url_key of child category in URL rewrite process for global scope"/>
             <description value="Rewriting Store-level URL key of child category"/>
             <features value="CatalogUrlRewrite"/>
-            <severity value="MAJOR"/>
-            <testCaseId value="MAGETWO-96558"/>
-            <group value="catalog_url_rewrite"/>
+            <severity value="BLOCKER"/>
+            <testCaseId value="MAGETWO-94934"/>
+            <group value="CatalogUrlRewrite"/>
+            <group value="cloud"/>
         </annotations>
 
         <before>
-            <actionGroup ref="LoginAsAdmin" stepKey="loginAsAdmin"/>
+            <actionGroup ref="AdminLoginActionGroup" stepKey="loginAsAdmin"/>
             <actionGroup ref="AdminCreateStoreViewActionGroup" stepKey="createStoreView" />
+            <actionGroup ref="CliIndexerReindexActionGroup" stepKey="reindex">
+                <argument name="indices" value=""/>
+            </actionGroup>
 
             <createData entity="_defaultCategory" stepKey="defaultCategory"/>
             <createData entity="SubCategoryWithParent" stepKey="subCategory">
@@ -27,40 +31,43 @@
             </createData>
         </before>
 
-        <after>
-            <actionGroup ref="AdminDeleteStoreViewActionGroup" stepKey="deleteStoreView"/>
-            <actionGroup ref="logout" stepKey="logout"/>
-
-            <deleteData createDataKey="subCategory" stepKey="deleteSubCategory"/>
-            <deleteData createDataKey="defaultCategory" stepKey="deleteCategory"/>
-        </after>
-
-        <actionGroup ref="AdminNavigateToCategoryInTree" stepKey="navigateToCreatedSubCategory">
-            <argument name="category" value="$$subCategory$$"/>
+        <actionGroup ref="NavigateToCreatedCategoryActionGroup" stepKey="navigateToCreatedSubCategory">
+            <argument name="Category" value="$$subCategory$$"/>
         </actionGroup>
 
-        <actionGroup ref="AdminSwitchStoreViewActionGroup" stepKey="switchToCustomStoreView"/>
+        <actionGroup ref="AdminSwitchStoreViewActionGroup" stepKey="AdminSwitchStoreViewForSubCategory"/>
 
-        <actionGroup ref="ChangeSeoUrlKeyForSubCategory" stepKey="changeSeoUrlKeyForSubCategory">
-            <argument name="value" value="{{BagsCategory.url_key}}"/>
+        <actionGroup ref="ChangeSeoUrlKeyForSubCategoryActionGroup" stepKey="changeSeoUrlKeyForSubCategory">
+            <argument name="value" value="bags-second"/>
         </actionGroup>
 
-        <actionGroup ref="AdminNavigateToCategoryInTree" stepKey="navigateToCreatedDefaultCategory">
-            <argument name="category" value="$$defaultCategory$$"/>
+        <actionGroup ref="NavigateToCreatedCategoryActionGroup" stepKey="navigateToCreatedDefaultCategory">
+            <argument name="Category" value="$$defaultCategory$$"/>
         </actionGroup>
 
-        <actionGroup ref="ChangeSeoUrlKey" stepKey="changeSeoUrlKeyForDefaultCategory">
-            <argument name="value" value="{{GearCategory.url_key}}"/>
+        <actionGroup ref="ChangeSeoUrlKeyActionGroup" stepKey="changeSeoUrlKeyForDefaultCategory">
+            <argument name="value" value="gear-global"/>
         </actionGroup>
 
-        <amOnPage url="{{StorefrontHomePage.url}}" stepKey="goToStorefrontPage"/>
+        <actionGroup ref="StorefrontOpenHomePageActionGroup" stepKey="goToStorefrontPage"/>
 
         <actionGroup ref="StorefrontSwitchStoreViewActionGroup" stepKey="storefrontSwitchStoreView"/>
 
-        <actionGroup ref="StorefrontGoToSubCategoryPage" stepKey="goToSubCategoryPage">
+        <actionGroup ref="GoToSubCategoryPageActionGroup" stepKey="goToSubCategoryPage">
             <argument name="parentCategory" value="$$defaultCategory$$"/>
             <argument name="subCategory" value="$$subCategory$$"/>
-            <argument name="urlPath" value="{{GearCategory.url_key}}/{{BagsCategory.url_key}}"/>
+            <argument name="urlPath" value="gear-global/bags-second"/>
         </actionGroup>
+
+        <after>
+            <actionGroup ref="AdminDeleteStoreViewActionGroup" stepKey="deleteStoreView"/>
+            <actionGroup ref="CliIndexerReindexActionGroup" stepKey="reindex">
+                <argument name="indices" value=""/>
+            </actionGroup>
+            <actionGroup ref="AdminLogoutActionGroup" stepKey="logout"/>
+
+            <deleteData createDataKey="subCategory" stepKey="deleteSubCategory"/>
+            <deleteData createDataKey="defaultCategory" stepKey="deleteNewRootCategory"/>
+        </after>
     </test>
 </tests>

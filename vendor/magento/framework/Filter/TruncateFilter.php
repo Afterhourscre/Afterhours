@@ -7,9 +7,9 @@ declare(strict_types=1);
 
 namespace Magento\Framework\Filter;
 
+use Laminas\Filter\FilterInterface;
 use Magento\Framework\Filter\TruncateFilter\Result;
 use Magento\Framework\Filter\TruncateFilter\ResultFactory;
-use Magento\Framework\Stdlib\StringUtils;
 
 /**
  * Truncate filter
@@ -17,7 +17,7 @@ use Magento\Framework\Stdlib\StringUtils;
  * Truncate a string to a certain length if necessary, appending the $etc string.
  * $remainder will contain the string that has been replaced with $etc.
  */
-class TruncateFilter implements \Zend_Filter_Interface
+class TruncateFilter implements FilterInterface
 {
     /**
      * @var int
@@ -35,7 +35,7 @@ class TruncateFilter implements \Zend_Filter_Interface
     private $breakWords;
 
     /**
-     * @var StringUtils
+     * @var \Magento\Framework\Stdlib\StringUtils
      */
     private $stringUtils;
 
@@ -45,18 +45,18 @@ class TruncateFilter implements \Zend_Filter_Interface
     private $resultFactory;
 
     /**
-     * @param StringUtils $stringUtils
+     * @param \Magento\Framework\Stdlib\StringUtils $stringUtils
      * @param ResultFactory $resultFactory
      * @param int $length
      * @param string $etc
      * @param bool $breakWords
      */
     public function __construct(
-        StringUtils $stringUtils,
+        \Magento\Framework\Stdlib\StringUtils $stringUtils,
         ResultFactory $resultFactory,
-        int $length = 80,
-        string $etc = '...',
-        bool $breakWords = true
+        $length = 80,
+        $etc = '...',
+        $breakWords = true
     ) {
         $this->stringUtils = $stringUtils;
         $this->resultFactory = $resultFactory;
@@ -68,7 +68,7 @@ class TruncateFilter implements \Zend_Filter_Interface
     /**
      * Filter value
      *
-     * @param mixed $string
+     * @param string $string
      * @return Result
      */
     public function filter($string) : Result
@@ -78,7 +78,6 @@ class TruncateFilter implements \Zend_Filter_Interface
         $length = $this->length;
         if (0 == $length) {
             $result->setValue('');
-
             return $result;
         }
 
@@ -87,7 +86,6 @@ class TruncateFilter implements \Zend_Filter_Interface
             $length -= $this->stringUtils->strlen($this->etc);
             if ($length <= 0) {
                 $result->setValue('');
-
                 return $result;
             }
             $preparedString = $string;
@@ -102,7 +100,6 @@ class TruncateFilter implements \Zend_Filter_Interface
             }
             $result->setRemainder($this->stringUtils->substr($string, $preparedLength, $originalLength));
             $result->setValue($this->stringUtils->substr($preparedString, 0, $length) . $this->etc);
-
             return $result;
         }
 

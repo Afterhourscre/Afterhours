@@ -193,7 +193,7 @@ define([
                 title = this.defaultGroupTitle;
             }
 
-            return title + ':';
+            return title;
         },
 
         /**
@@ -203,7 +203,7 @@ define([
          */
         isPaymentMethodsAvailable: function () {
             return _.some(this.paymentGroupsList(), function (group) {
-                return this.getRegion(group.displayArea)().length;
+                return this.regionHasElements(group.displayArea);
             }, this);
         },
 

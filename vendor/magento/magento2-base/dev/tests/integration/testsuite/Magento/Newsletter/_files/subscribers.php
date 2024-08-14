@@ -3,9 +3,10 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+use Magento\TestFramework\Workaround\Override\Fixture\Resolver;
 
-require __DIR__ . '/../../../Magento/Store/_files/core_fixturestore.php';
-require __DIR__ . '/../../../Magento/Customer/_files/customer.php';
+Resolver::getInstance()->requireDataFixture('Magento/Store/_files/core_fixturestore.php');
+Resolver::getInstance()->requireDataFixture('Magento/Customer/_files/customer.php');
 
 $currentStore = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->get(
     \Magento\Store\Model\StoreManagerInterface::class
@@ -22,7 +23,6 @@ $subscriber = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()
 $subscriber->setStoreId($currentStore)
     ->setCustomerId(1)
     ->setSubscriberEmail('customer@example.com')
-    ->setSubscriberConfirmCode('zxayquyajua23iq29gxwu2eax2qb6gvy')
     ->setSubscriberStatus(\Magento\Newsletter\Model\Subscriber::STATUS_SUBSCRIBED)
     ->save();
 $firstSubscriberId = $subscriber->getId();

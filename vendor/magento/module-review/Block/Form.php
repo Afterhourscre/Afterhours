@@ -5,6 +5,7 @@
  */
 namespace Magento\Review\Block;
 
+use Magento\Catalog\Model\Product;
 use Magento\Customer\Model\Context;
 use Magento\Customer\Model\Url;
 use Magento\Review\Model\ResourceModel\Rating\Collection as RatingCollection;
@@ -13,15 +14,12 @@ use Magento\Review\Model\ResourceModel\Rating\Collection as RatingCollection;
  * Review form block
  *
  * @api
- * @author      Magento Core Team <core@magentocommerce.com>
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @since 100.0.2
  */
 class Form extends \Magento\Framework\View\Element\Template
 {
     /**
-     * Review data
-     *
      * @var \Magento\Review\Helper\Data
      */
     protected $_reviewData = null;
@@ -73,8 +71,6 @@ class Form extends \Magento\Framework\View\Element\Template
     private $serializer;
 
     /**
-     * Form constructor.
-     *
      * @param \Magento\Framework\View\Element\Template\Context $context
      * @param \Magento\Framework\Url\EncoderInterface $urlEncoder
      * @param \Magento\Review\Helper\Data $reviewData
@@ -138,10 +134,12 @@ class Form extends \Magento\Framework\View\Element\Template
             );
         }
 
-        $this->setTemplate('form.phtml');
+        $this->setTemplate('Magento_Review::form.phtml');
     }
 
     /**
+     * Return JavaScript layout object
+     *
      * @return string
      */
     public function getJsLayout()

@@ -55,14 +55,15 @@ interface AggregateAnalyzer extends Analyzer
      * This method must return an <b>array</b> of class names for required
      * analyzers.
      *
-     * @return array(string)
+     * @return array<string>
      */
     public function getRequiredAnalyzers();
     
     /**
      * Adds a required sub analyzer.
      *
-     * @param  \PDepend\Metrics\Analyzer $analyzer The sub analyzer instance.
+     * @param Analyzer $analyzer The sub analyzer instance.
+     *
      * @return void
      */
     public function addAnalyzer(Analyzer $analyzer);

@@ -3,6 +3,7 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\Catalog\Test\Unit\ViewModel\Product;
 
@@ -10,27 +11,25 @@ use Magento\Catalog\Helper\Data as CatalogHelper;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\ViewModel\Product\Breadcrumbs;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Escaper;
+use Magento\Framework\Serialize\Serializer\JsonHexTag;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Store\Model\ScopeInterface;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Unit test for Magento\Catalog\ViewModel\Product\Breadcrumbs.
  */
-class BreadcrumbsTest extends \PHPUnit\Framework\TestCase
+class BreadcrumbsTest extends TestCase
 {
+    private const XML_PATH_CATEGORY_URL_SUFFIX = 'catalog/seo/category_url_suffix';
+    private const XML_PATH_PRODUCT_USE_CATEGORIES = 'catalog/seo/product_use_categories';
+
     /**
      * @var Breadcrumbs
      */
     private $viewModel;
-
-    /**
-     * @var CatalogHelper|\PHPUnit_Framework_MockObject_MockObject
-     */
-    private $catalogHelper;
-
-    /**
-     * @var ScopeConfigInterface|\PHPUnit_Framework_MockObject_MockObject
-     */
-    private $scopeConfig;
 
     /**
      * @var ObjectManager
@@ -38,25 +37,46 @@ class BreadcrumbsTest extends \PHPUnit\Framework\TestCase
     private $objectManager;
 
     /**
+     * @var CatalogHelper|MockObject
+     */
+    private $catalogHelperMock;
+
+    /**
+     * @var ScopeConfigInterface|MockObject
+     */
+    private $scopeConfigMock;
+
+    /**
+     * @var JsonHexTag|MockObject
+     */
+    private $serializerMock;
+
+    /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->catalogHelper = $this->getMockBuilder(CatalogHelper::class)
+        $this->catalogHelperMock = $this->getMockBuilder(CatalogHelper::class)
             ->setMethods(['getProduct'])
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->scopeConfig = $this->getMockBuilder(ScopeConfigInterface::class)
+        $this->scopeConfigMock = $this->getMockBuilder(ScopeConfigInterface::class)
             ->setMethods(['getValue', 'isSetFlag'])
             ->disableOriginalConstructor()
             ->getMockForAbstractClass();
 
+        $escaper = $this->getObjectManager()->getObject(Escaper::class);
+
+        $this->serializerMock = $this->createMock(JsonHexTag::class);
+
         $this->viewModel = $this->getObjectManager()->getObject(
             Breadcrumbs::class,
             [
-                'catalogData' => $this->catalogHelper,
-                'scopeConfig' => $this->scopeConfig,
+                'catalogData' => $this->catalogHelperMock,
+                'scopeConfig' => $this->scopeConfigMock,
+                'escaper' => $escaper,
+                'jsonSerializer' => $this->serializerMock
             ]
         );
     }
@@ -64,11 +84,11 @@ class BreadcrumbsTest extends \PHPUnit\Framework\TestCase
     /**
      * @return void
      */
-    public function testGetCategoryUrlSuffix()
+    public function testGetCategoryUrlSuffix() : void
     {
-        $this->scopeConfig->expects($this->once())
+        $this->scopeConfigMock->expects($this->once())
             ->method('getValue')
-            ->with('catalog/seo/category_url_suffix', \Magento\Store\Model\ScopeInterface::SCOPE_STORE)
+            ->with(static::XML_PATH_CATEGORY_URL_SUFFIX, ScopeInterface::SCOPE_STORE)
             ->willReturn('.html');
 
         $this->assertEquals('.html', $this->viewModel->getCategoryUrlSuffix());
@@ -77,11 +97,11 @@ class BreadcrumbsTest extends \PHPUnit\Framework\TestCase
     /**
      * @return void
      */
-    public function testIsCategoryUsedInProductUrl()
+    public function testIsCategoryUsedInProductUrl() : void
     {
-        $this->scopeConfig->expects($this->once())
+        $this->scopeConfigMock->expects($this->once())
             ->method('isSetFlag')
-            ->with('catalog/seo/product_use_categories', \Magento\Store\Model\ScopeInterface::SCOPE_STORE)
+            ->with(static::XML_PATH_PRODUCT_USE_CATEGORIES, ScopeInterface::SCOPE_STORE)
             ->willReturn(false);
 
         $this->assertFalse($this->viewModel->isCategoryUsedInProductUrl());
@@ -92,11 +112,12 @@ class BreadcrumbsTest extends \PHPUnit\Framework\TestCase
      *
      * @param Product|null $product
      * @param string $expectedName
+     *
      * @return void
      */
-    public function testGetProductName($product, $expectedName)
+    public function testGetProductName($product, string $expectedName) : void
     {
-        $this->catalogHelper->expects($this->atLeastOnce())
+        $this->catalogHelperMock->expects($this->atLeastOnce())
             ->method('getProduct')
             ->willReturn($product);
 
@@ -106,7 +127,7 @@ class BreadcrumbsTest extends \PHPUnit\Framework\TestCase
     /**
      * @return array
      */
-    public function productDataProvider()
+    public function productDataProvider() : array
     {
         return [
             [$this->getObjectManager()->getObject(Product::class, ['data' => ['name' => 'Test']]), 'Test'],
@@ -115,9 +136,63 @@ class BreadcrumbsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
+     * @dataProvider productJsonEncodeDataProvider
+     *
+     * @param Product|null $product
+     * @param string $expectedJson
+     *
+     * @return void
+     */
+    public function testGetJsonConfigurationHtmlEscaped($product, string $expectedJson) : void
+    {
+        $this->catalogHelperMock->expects($this->atLeastOnce())
+            ->method('getProduct')
+            ->willReturn($product);
+
+        $this->scopeConfigMock->method('isSetFlag')
+            ->with(static::XML_PATH_PRODUCT_USE_CATEGORIES, ScopeInterface::SCOPE_STORE)
+            ->willReturn(false);
+
+        $this->scopeConfigMock->method('getValue')
+            ->with(static::XML_PATH_CATEGORY_URL_SUFFIX, ScopeInterface::SCOPE_STORE)
+            ->willReturn('."html');
+
+        $this->serializerMock->expects($this->once())->method('serialize')->willReturn($expectedJson);
+
+        $this->assertEquals($expectedJson, $this->viewModel->getJsonConfigurationHtmlEscaped());
+    }
+
+    /**
+     * @return array
+     */
+    public function productJsonEncodeDataProvider() : array
+    {
+        return [
+            [
+                $this->getObjectManager()->getObject(Product::class, ['data' => ['name' => 'Test ™']]),
+                '{"breadcrumbs":{"categoryUrlSuffix":".&quot;html","useCategoryPathInUrl":0,"product":"Test \u2122"}}',
+            ],
+            [
+                $this->getObjectManager()->getObject(Product::class, ['data' => ['name' => 'Test "']]),
+                '{"breadcrumbs":{"categoryUrlSuffix":".&quot;html","useCategoryPathInUrl":0,"product":"Test &quot;"}}',
+            ],
+            [
+                $this->getObjectManager()->getObject(Product::class, ['data' => ['name' => 'Test <b>x</b>']]),
+                '{"breadcrumbs":{"categoryUrlSuffix":".&quot;html","useCategoryPathInUrl":0,"product":'
+                . '"Test &lt;b&gt;x&lt;\/b&gt;"}}',
+            ],
+            [
+                $this->getObjectManager()->getObject(Product::class, ['data' => ['name' => 'Test \'abc\'']]),
+                '{"breadcrumbs":'
+                . '{"categoryUrlSuffix":".&quot;html","useCategoryPathInUrl":0,"product":"Test &#039;abc&#039;"}}'
+            ],
+        ];
+    }
+
+    /**
      * @return ObjectManager
      */
-    private function getObjectManager()
+    private function getObjectManager() : ObjectManager
     {
         if (null === $this->objectManager) {
             $this->objectManager = new ObjectManager($this);

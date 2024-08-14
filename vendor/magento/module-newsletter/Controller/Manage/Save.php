@@ -1,20 +1,23 @@
 <?php
 /**
- *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\Newsletter\Controller\Manage;
 
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
-use Magento\Customer\Model\Data\Customer;
+use Magento\Customer\Api\Data\CustomerInterface;
+use Magento\Framework\App\Action\HttpGetActionInterface;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Newsletter\Model\Subscriber;
+use Magento\Newsletter\Model\SubscriptionManagerInterface;
 
 /**
- * Controller for customer newsletter subscription save.
+ * Customers newsletter subscription save controller
  */
-class Save extends \Magento\Newsletter\Controller\Manage
+class Save extends \Magento\Newsletter\Controller\Manage implements HttpPostActionInterface, HttpGetActionInterface
 {
     /**
      * @var \Magento\Framework\Data\Form\FormKey\Validator
@@ -32,9 +35,9 @@ class Save extends \Magento\Newsletter\Controller\Manage
     protected $customerRepository;
 
     /**
-     * @var \Magento\Newsletter\Model\SubscriberFactory
+     * @var SubscriptionManagerInterface
      */
-    protected $subscriberFactory;
+    private $subscriptionManager;
 
     /**
      * Initialize dependencies.
@@ -44,7 +47,7 @@ class Save extends \Magento\Newsletter\Controller\Manage
      * @param \Magento\Framework\Data\Form\FormKey\Validator $formKeyValidator
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param CustomerRepository $customerRepository
-     * @param \Magento\Newsletter\Model\SubscriberFactory $subscriberFactory
+     * @param SubscriptionManagerInterface $subscriptionManager
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -52,19 +55,19 @@ class Save extends \Magento\Newsletter\Controller\Manage
         \Magento\Framework\Data\Form\FormKey\Validator $formKeyValidator,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         CustomerRepository $customerRepository,
-        \Magento\Newsletter\Model\SubscriberFactory $subscriberFactory
+        SubscriptionManagerInterface $subscriptionManager
     ) {
         $this->storeManager = $storeManager;
         $this->formKeyValidator = $formKeyValidator;
         $this->customerRepository = $customerRepository;
-        $this->subscriberFactory = $subscriberFactory;
         parent::__construct($context, $customerSession);
+        $this->subscriptionManager = $subscriptionManager;
     }
 
     /**
-     * Save newsletter subscription preference action.
+     * Save newsletter subscription preference action
      *
-     * @return void|null
+     * @return \Magento\Framework\App\ResponseInterface
      */
     public function execute()
     {
@@ -74,51 +77,47 @@ class Save extends \Magento\Newsletter\Controller\Manage
 
         $customerId = $this->_customerSession->getCustomerId();
         if ($customerId === null) {
-            $this->messageManager->addError(__('Something went wrong while saving your subscription.'));
+            $this->messageManager->addErrorMessage(__('Something went wrong while saving your subscription.'));
         } else {
             try {
                 $customer = $this->customerRepository->getById($customerId);
-                $storeId = $this->storeManager->getStore()->getId();
+                $storeId = (int)$this->storeManager->getStore()->getId();
                 $customer->setStoreId($storeId);
-                $isSubscribedState = $customer->getExtensionAttributes()
-                    ->getIsSubscribed();
-                $isSubscribedParam = (boolean)$this->getRequest()
-                    ->getParam('is_subscribed', false);
+                $isSubscribedState = $customer->getExtensionAttributes()->getIsSubscribed();
+                $isSubscribedParam = (boolean)$this->getRequest()->getParam('is_subscribed', false);
                 if ($isSubscribedParam !== $isSubscribedState) {
                     // No need to validate customer and customer address while saving subscription preferences
                     $this->setIgnoreValidationFlag($customer);
                     $this->customerRepository->save($customer);
                     if ($isSubscribedParam) {
-                        $subscribeModel = $this->subscriberFactory->create()
-                            ->subscribeCustomerById($customerId);
-                        $subscribeStatus = $subscribeModel->getStatus();
-                        if ($subscribeStatus == Subscriber::STATUS_SUBSCRIBED) {
+                        $subscribeModel = $this->subscriptionManager->subscribeCustomer((int)$customerId, $storeId);
+                        $subscribeStatus = (int)$subscribeModel->getStatus();
+                        if ($subscribeStatus === Subscriber::STATUS_SUBSCRIBED) {
                             $this->messageManager->addSuccess(__('We have saved your subscription.'));
                         } else {
                             $this->messageManager->addSuccess(__('A confirmation request has been sent.'));
                         }
                     } else {
-                        $this->subscriberFactory->create()
-                            ->unsubscribeCustomerById($customerId);
+                        $this->subscriptionManager->unsubscribeCustomer((int)$customerId, $storeId);
                         $this->messageManager->addSuccess(__('We have removed your newsletter subscription.'));
                     }
                 } else {
                     $this->messageManager->addSuccess(__('We have updated your subscription.'));
                 }
             } catch (\Exception $e) {
-                $this->messageManager->addError(__('Something went wrong while saving your subscription.'));
+                $this->messageManager->addErrorMessage(__('Something went wrong while saving your subscription.'));
             }
         }
-        $this->_redirect('customer/account/');
+        return $this->_redirect('customer/account/');
     }
 
     /**
-     * Set ignore_validation_flag to skip unnecessary address and customer validation.
+     * Set ignore_validation_flag to skip unnecessary address and customer validation
      *
-     * @param Customer $customer
+     * @param CustomerInterface $customer
      * @return void
      */
-    private function setIgnoreValidationFlag(Customer $customer)
+    private function setIgnoreValidationFlag(CustomerInterface $customer): void
     {
         $customer->setData('ignore_validation_flag', true);
     }

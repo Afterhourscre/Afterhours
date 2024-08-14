@@ -5,21 +5,29 @@
  */
 declare(strict_types=1);
 
-require __DIR__ . '/../../../Magento/Customer/_files/two_customers.php';
-require __DIR__ . '/../../../Magento/Catalog/_files/product_simple.php';
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\TestFramework\Workaround\Override\Fixture\Resolver;
 
-$objectManager = \Magento\TestFramework\Helper\Bootstrap::getObjectManager();
+Resolver::getInstance()->requireDataFixture('Magento/Customer/_files/two_customers.php');
+Resolver::getInstance()->requireDataFixture('Magento/Catalog/_files/product_simple.php');
 
-$customerRepository = $objectManager->create(\Magento\Customer\Api\CustomerRepositoryInterface::class);
-$firstCustomer = $customerRepository->get('customer@example.com');
-
-$wishlistForFirstCustomer = $objectManager->create(\Magento\Wishlist\Model\Wishlist::class);
-$wishlistForFirstCustomer->loadByCustomerId($firstCustomer->getId(), true);
+$objectManager = Bootstrap::getObjectManager();
+/** @var ProductRepositoryInterface $productRepository */
+$productRepository = $objectManager->create(ProductRepositoryInterface::class);
+$product = $productRepository->get('simple');
+$firstCustomerIdFromFixture = 1;
+$wishlistForFirstCustomer = $objectManager->create(
+    \Magento\Wishlist\Model\Wishlist::class
+);
+$wishlistForFirstCustomer->loadByCustomerId($firstCustomerIdFromFixture, true);
 $item = $wishlistForFirstCustomer->addNewItem($product, new \Magento\Framework\DataObject([]));
 $wishlistForFirstCustomer->save();
 
-$secondCustomer = $customerRepository->get('customer_two@example.com');
-$wishlistForSecondCustomer = $objectManager->create(\Magento\Wishlist\Model\Wishlist::class);
-$wishlistForSecondCustomer->loadByCustomerId($secondCustomer->getId(), true);
+$secondCustomerIdFromFixture = 2;
+$wishlistForSecondCustomer = $objectManager->create(
+    \Magento\Wishlist\Model\Wishlist::class
+);
+$wishlistForSecondCustomer->loadByCustomerId($secondCustomerIdFromFixture, true);
 $item = $wishlistForSecondCustomer->addNewItem($product, new \Magento\Framework\DataObject([]));
 $wishlistForSecondCustomer->save();

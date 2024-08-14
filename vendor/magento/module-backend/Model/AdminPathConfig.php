@@ -71,7 +71,6 @@ class AdminPathConfig implements PathConfigInterface
             } else {
                 $adminBaseUrl = (string)$this->coreConfig->getValue(Store::XML_PATH_SECURE_BASE_URL, 'default');
             }
-
             return parse_url($adminBaseUrl, PHP_URL_SCHEME) === 'https';
         }
 

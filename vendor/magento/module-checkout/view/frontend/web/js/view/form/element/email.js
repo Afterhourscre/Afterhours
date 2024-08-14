@@ -53,6 +53,20 @@ define([
         isCustomerLoggedIn: customer.isLoggedIn,
         forgotPasswordUrl: window.checkoutConfig.forgotPasswordUrl,
         emailCheckTimeout: 0,
+        emailInputId: '#customer-email',
+
+        /**
+         * Initializes regular properties of instance.
+         *
+         * @returns {Object} Chainable.
+         */
+        initConfig: function () {
+            this._super();
+
+            this.isPasswordVisible = this.resolveInitialPasswordVisibility();
+
+            return this;
+        },
 
         /**
          * Initializes observable properties of instance
@@ -62,15 +76,6 @@ define([
         initObservable: function () {
             this._super()
                 .observe(['email', 'emailFocused', 'isLoading', 'isPasswordVisible']);
-
-            return this;
-        },
-
-        /** @inheritdoc */
-        initConfig: function () {
-            this._super();
-
-            this.isPasswordVisible = this.resolveInitialPasswordVisibility();
 
             return this;
         },
@@ -104,11 +109,14 @@ define([
         checkEmailAvailability: function () {
             this.validateRequest();
             this.isEmailCheckComplete = $.Deferred();
+            // Clean up errors on email
+            $(this.emailInputId).removeClass('mage-error').parent().find('.mage-error').remove();
             this.isLoading(true);
             this.checkRequest = checkEmailAvailability(this.isEmailCheckComplete, this.email());
 
             $.when(this.isEmailCheckComplete).done(function () {
                 this.isPasswordVisible(false);
+                checkoutData.setCheckedEmailValue('');
             }.bind(this)).fail(function () {
                 this.isPasswordVisible(true);
                 checkoutData.setCheckedEmailValue(this.email());
@@ -141,17 +149,28 @@ define([
             var loginFormSelector = 'form[data-role=email-with-possible-login]',
                 usernameSelector = loginFormSelector + ' input[name=username]',
                 loginForm = $(loginFormSelector),
-                validator;
+                validator,
+                valid;
 
             loginForm.validation();
 
             if (focused === false && !!this.email()) {
-                return !!$(usernameSelector).valid();
+                valid = !!$(usernameSelector).valid();
+
+                if (valid) {
+                    $(usernameSelector).removeAttr('aria-invalid aria-describedby');
+                }
+
+                return valid;
             }
 
-            validator = loginForm.validate();
+            if (loginForm.is(':visible')) {
+                validator = loginForm.validate();
 
-            return validator.check(usernameSelector);
+                return validator.check(usernameSelector);
+            }
+
+            return true;
         },
 
         /**
@@ -176,11 +195,15 @@ define([
         },
 
         /**
-         * Resolves an initial sate of a login form.
+         * Resolves an initial state of a login form.
          *
          * @returns {Boolean} - initial visibility state.
          */
         resolveInitialPasswordVisibility: function () {
+            if (checkoutData.getInputFieldEmailValue() !== '' && checkoutData.getCheckedEmailValue() !== '') {
+                return true;
+            }
+
             if (checkoutData.getInputFieldEmailValue() !== '') {
                 return checkoutData.getInputFieldEmailValue() === checkoutData.getCheckedEmailValue();
             }

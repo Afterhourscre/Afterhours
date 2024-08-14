@@ -3,46 +3,77 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Checkout\Test\Unit\Controller\Sidebar;
 
 use Magento\Checkout\Controller\Sidebar\UpdateItemQty;
+use Magento\Checkout\Model\Cart\RequestQuantityProcessor;
 use Magento\Checkout\Model\Sidebar;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Json\Helper\Data;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-class UpdateItemQtyTest extends \PHPUnit\Framework\TestCase
+/**
+ * Class used to execute test cases for update item quantity
+ */
+class UpdateItemQtyTest extends TestCase
 {
-    /** @var UpdateItemQty */
-    private $updateItemQty;
+    /**
+     * @var UpdateItemQty
+     */
+    protected $updateItemQty;
 
-    /** @var ObjectManagerHelper */
-    private $objectManagerHelper;
+    /**
+     * @var ObjectManagerHelper
+     */
+    protected $objectManagerHelper;
 
-    /** @var Sidebar|\PHPUnit_Framework_MockObject_MockObject */
-    private $sidebarMock;
+    /**
+     * @var Sidebar|MockObject
+     */
+    protected $sidebarMock;
 
-    /** @var LoggerInterface|\PHPUnit_Framework_MockObject_MockObject */
-    private $loggerMock;
+    /**
+     * @var LoggerInterface|MockObject
+     */
+    protected $loggerMock;
 
-    /** @var Data|\PHPUnit_Framework_MockObject_MockObject */
-    private $jsonHelperMock;
+    /**
+     * @var Data|MockObject
+     */
+    protected $jsonHelperMock;
 
-    /** @var RequestInterface|\PHPUnit_Framework_MockObject_MockObject */
-    private $requestMock;
+    /**
+     * @var RequestInterface|MockObject
+     */
+    protected $requestMock;
 
-    /** @var ResponseInterface|\PHPUnit_Framework_MockObject_MockObject */
-    private $responseMock;
+    /**
+     * @var ResponseInterface|MockObject
+     */
+    protected $responseMock;
 
-    protected function setUp()
+    /**
+     * @var RequestQuantityProcessor|MockObject
+     */
+    private $quantityProcessor;
+
+    /**
+     * @inheritDoc
+     */
+    protected function setUp(): void
     {
         $this->sidebarMock = $this->createMock(Sidebar::class);
-        $this->loggerMock = $this->createMock(LoggerInterface::class);
+        $this->loggerMock = $this->getMockForAbstractClass(LoggerInterface::class);
         $this->jsonHelperMock = $this->createMock(Data::class);
-        $this->requestMock = $this->createMock(RequestInterface::class);
+        $this->quantityProcessor = $this->createMock(RequestQuantityProcessor::class);
+        $this->requestMock = $this->getMockForAbstractClass(RequestInterface::class);
         $this->responseMock = $this->getMockForAbstractClass(
             ResponseInterface::class,
             [],
@@ -60,25 +91,27 @@ class UpdateItemQtyTest extends \PHPUnit\Framework\TestCase
                 'sidebar' => $this->sidebarMock,
                 'logger' => $this->loggerMock,
                 'jsonHelper' => $this->jsonHelperMock,
+                'quantityProcessor' => $this->quantityProcessor,
                 'request' => $this->requestMock,
-                'response' => $this->responseMock,
+                'response' => $this->responseMock
             ]
         );
     }
 
     /**
-     * Tests execute action.
+     * @return void
      */
-    public function testExecute()
+    public function testExecute(): void
     {
-        $this->requestMock->expects($this->at(0))
+        $this->requestMock
             ->method('getParam')
-            ->with('item_id', null)
-            ->willReturn('1');
-        $this->requestMock->expects($this->at(1))
-            ->method('getParam')
-            ->with('item_qty', null)
-            ->willReturn('2');
+            ->willReturnCallback(function ($arg1, $arg2) {
+                if ($arg1 == 'item_id' && $arg2 === null) {
+                    return '1';
+                } elseif ($arg1 == 'item_qty' && $arg2 === null) {
+                    return '2';
+                }
+            });
 
         $this->sidebarMock->expects($this->once())
             ->method('checkQuoteItem')
@@ -96,8 +129,8 @@ class UpdateItemQtyTest extends \PHPUnit\Framework\TestCase
                     'data' => [
                         'summary_qty' => 2,
                         'summary_text' => __(' items'),
-                        'subtotal' => 12.34,
-                    ],
+                        'subtotal' => 12.34
+                    ]
                 ]
             );
 
@@ -108,11 +141,16 @@ class UpdateItemQtyTest extends \PHPUnit\Framework\TestCase
                     'data' => [
                         'summary_qty' => 2,
                         'summary_text' => __(' items'),
-                        'subtotal' => 12.34,
-                    ],
+                        'subtotal' => 12.34
+                    ]
                 ]
             )
             ->willReturn('json encoded');
+
+        $this->quantityProcessor->expects($this->once())
+            ->method('prepareQuantity')
+            ->with(2)
+            ->willReturn(2);
 
         $this->responseMock->expects($this->once())
             ->method('representJson')
@@ -123,18 +161,19 @@ class UpdateItemQtyTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * Tests with localized exception.
+     * @return void
      */
-    public function testExecuteWithLocalizedException()
+    public function testExecuteWithLocalizedException(): void
     {
-        $this->requestMock->expects($this->at(0))
+        $this->requestMock
             ->method('getParam')
-            ->with('item_id', null)
-            ->willReturn('1');
-        $this->requestMock->expects($this->at(1))
-            ->method('getParam')
-            ->with('item_qty', null)
-            ->willReturn('2');
+            ->willReturnCallback(function ($arg1, $arg2) {
+                if ($arg1 == 'item_id' && $arg2 === null) {
+                    return '1';
+                } elseif ($arg1 == 'item_qty' && $arg2 === null) {
+                    return '2';
+                }
+            });
 
         $this->sidebarMock->expects($this->once())
             ->method('checkQuoteItem')
@@ -147,7 +186,7 @@ class UpdateItemQtyTest extends \PHPUnit\Framework\TestCase
             ->willReturn(
                 [
                     'success' => false,
-                    'error_message' => 'Error!',
+                    'error_message' => 'Error!'
                 ]
             );
 
@@ -156,7 +195,7 @@ class UpdateItemQtyTest extends \PHPUnit\Framework\TestCase
             ->with(
                 [
                     'success' => false,
-                    'error_message' => 'Error!',
+                    'error_message' => 'Error!'
                 ]
             )
             ->willReturn('json encoded');
@@ -170,18 +209,19 @@ class UpdateItemQtyTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * Tests with exception.
+     * @return void
      */
-    public function testExecuteWithException()
+    public function testExecuteWithException(): void
     {
-        $this->requestMock->expects($this->at(0))
+        $this->requestMock
             ->method('getParam')
-            ->with('item_id', null)
-            ->willReturn('1');
-        $this->requestMock->expects($this->at(1))
-            ->method('getParam')
-            ->with('item_qty', null)
-            ->willReturn('2');
+            ->willReturnCallback(function ($arg1, $arg2) {
+                if ($arg1 == 'item_id' && $arg2 === null) {
+                    return '1';
+                } elseif ($arg1 == 'item_qty' && $arg2 === null) {
+                    return '2';
+                }
+            });
 
         $exception = new \Exception('Error!');
 
@@ -192,8 +232,7 @@ class UpdateItemQtyTest extends \PHPUnit\Framework\TestCase
 
         $this->loggerMock->expects($this->once())
             ->method('critical')
-            ->with($exception)
-            ->willReturn(null);
+            ->with($exception);
 
         $this->sidebarMock->expects($this->once())
             ->method('getResponseData')
@@ -201,7 +240,7 @@ class UpdateItemQtyTest extends \PHPUnit\Framework\TestCase
             ->willReturn(
                 [
                     'success' => false,
-                    'error_message' => 'Error!',
+                    'error_message' => 'Error!'
                 ]
             );
 
@@ -210,7 +249,7 @@ class UpdateItemQtyTest extends \PHPUnit\Framework\TestCase
             ->with(
                 [
                     'success' => false,
-                    'error_message' => 'Error!',
+                    'error_message' => 'Error!'
                 ]
             )
             ->willReturn('json encoded');
@@ -224,29 +263,39 @@ class UpdateItemQtyTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * Tests execute with float item quantity.
+     * @return void
      */
-    public function testExecuteWithFloatItemQty()
+    public function testExecuteWithInvalidItemQty(): void
     {
-        $itemId = '1';
-        $floatItemQty = '2.2';
-
-        $this->requestMock->expects($this->at(0))
+        $error = [
+            'success' => false,
+            'error_message' => 'Invalid Item Quantity Requested.'
+        ];
+        $jsonResult = json_encode($error);
+        $this->requestMock
             ->method('getParam')
-            ->with('item_id', null)
-            ->willReturn($itemId);
-        $this->requestMock->expects($this->at(1))
-            ->method('getParam')
-            ->with('item_qty', null)
-            ->willReturn($floatItemQty);
+            ->willReturnCallback(function ($arg1, $arg2) {
+                if ($arg1 == 'item_id' && $arg2 === null) {
+                    return '1';
+                } elseif ($arg1 == 'item_qty' && $arg2 === null) {
+                    return '{{7+2}}';
+                }
+            });
 
         $this->sidebarMock->expects($this->once())
-            ->method('checkQuoteItem')
-            ->with($itemId);
-        $this->sidebarMock->expects($this->once())
-            ->method('updateQuoteItem')
-            ->with($itemId, $floatItemQty);
+            ->method('getResponseData')
+            ->with('Invalid Item Quantity Requested.')
+            ->willReturn($error);
 
-        $this->updateItemQty->execute();
+        $this->jsonHelperMock->expects($this->once())
+            ->method('jsonEncode')
+            ->with($error)
+            ->willReturn($jsonResult);
+
+        $this->responseMock->expects($this->once())
+            ->method('representJson')
+            ->willReturn($jsonResult);
+
+        $this->assertEquals($jsonResult, $this->updateItemQty->execute());
     }
 }

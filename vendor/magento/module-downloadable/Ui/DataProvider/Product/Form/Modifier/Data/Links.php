@@ -16,7 +16,7 @@ use Magento\Downloadable\Api\Data\LinkInterface;
 use Magento\Framework\Exception\ValidatorException;
 
 /**
- * Class Links
+ * Grid class to add links
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Links
@@ -98,7 +98,7 @@ class Links
      */
     public function isProductLinksCanBePurchasedSeparately()
     {
-        return (bool)$this->locator->getProduct()->getData('links_purchased_separately');
+        return (bool) $this->locator->getProduct()->getData('links_purchased_separately');
     }
 
     /**
@@ -120,7 +120,7 @@ class Links
             $linkData = [];
             $linkData['link_id'] = $link->getId();
             $linkData['title'] = $this->escaper->escapeHtml($link->getTitle());
-            $linkData['price'] = $this->getPriceValue($link->getPrice());
+            $linkData['price'] = $this->getPriceValue((float) $link->getPrice());
             $linkData['number_of_downloads'] = $link->getNumberOfDownloads();
             $linkData['is_shareable'] = $link->getIsShareable();
             $linkData['link_url'] = $link->getLinkUrl();
@@ -162,7 +162,7 @@ class Links
                     'name' => $this->downloadableFile->getFileFromPathFile($sampleFile),
                     'size' => $this->downloadableFile->getFileSize($file),
                     'status' => 'old',
-                    'url' => $this->urlBuilder->addSessionParam()->getUrl(
+                    'url' => $this->urlBuilder->getUrl(
                         'adminhtml/downloadable_product_edit/link',
                         ['id' => $link->getId(), 'type' => 'sample', '_secure' => true]
                     ),
@@ -191,7 +191,7 @@ class Links
                     'name' => $this->downloadableFile->getFileFromPathFile($linkFile),
                     'size' => $this->downloadableFile->getFileSize($file),
                     'status' => 'old',
-                    'url' => $this->urlBuilder->addSessionParam()->getUrl(
+                    'url' => $this->urlBuilder->getUrl(
                         'adminhtml/downloadable_product_edit/link',
                         ['id' => $link->getId(), 'type' => 'link', '_secure' => true]
                     ),

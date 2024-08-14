@@ -70,7 +70,7 @@ class Roles extends \Magento\Backend\Block\Widget\Grid\Extended
     }
 
     /**
-     * Add column filter to collection
+     * Adds column filter to collection
      *
      * @param Column $column
      * @return $this
@@ -145,7 +145,7 @@ class Roles extends \Magento\Backend\Block\Widget\Grid\Extended
     }
 
     /**
-     * Get selected roles
+     * Gets selected roles
      *
      * @param bool $json
      * @return array|string

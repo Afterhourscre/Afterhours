@@ -3,12 +3,13 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
 namespace Magento\Store\Model;
 
+use Magento\Framework\App\Config;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Store\Model\ResourceModel\Website\CollectionFactory;
-use Magento\Framework\App\Config;
 
 /**
  * Information Expert in store websites handling
@@ -63,7 +64,7 @@ class WebsiteRepository implements \Magento\Store\Api\WebsiteRepositoryInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function get($code)
     {
@@ -92,7 +93,7 @@ class WebsiteRepository implements \Magento\Store\Api\WebsiteRepositoryInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getById($id)
     {
@@ -121,7 +122,7 @@ class WebsiteRepository implements \Magento\Store\Api\WebsiteRepositoryInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getList()
     {
@@ -140,7 +141,7 @@ class WebsiteRepository implements \Magento\Store\Api\WebsiteRepositoryInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getDefault()
     {
@@ -155,7 +156,7 @@ class WebsiteRepository implements \Magento\Store\Api\WebsiteRepositoryInterface
                 $this->initDefaultWebsite();
             }
             if (!$this->default) {
-                throw new \DomainException(__('Default website is not defined'));
+                throw new \DomainException(__("The default website isn't defined. Set the website and try again."));
             }
         }
 
@@ -163,7 +164,7 @@ class WebsiteRepository implements \Magento\Store\Api\WebsiteRepositoryInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function clean()
     {
@@ -189,6 +190,7 @@ class WebsiteRepository implements \Magento\Store\Api\WebsiteRepositoryInterface
 
     /**
      * Initialize default website.
+     *
      * @return void
      */
     private function initDefaultWebsite()
@@ -197,7 +199,12 @@ class WebsiteRepository implements \Magento\Store\Api\WebsiteRepositoryInterface
         foreach ($websites as $data) {
             if (isset($data['is_default']) && $data['is_default'] == 1) {
                 if ($this->default) {
-                    throw new \DomainException(__('More than one default website is defined'));
+                    throw new \DomainException(
+                        __(
+                            'The default website is invalid. '
+                            . 'Make sure no more than one default is defined and try again.'
+                        )
+                    );
                 }
                 $website = $this->factory->create([
                     'data' => $data

@@ -45,7 +45,7 @@ class MergeService
      *
      * @var array
      */
-    private $supportedMergeType = [
+    private const SUPPORTED_MERGE_TYPE = [
         'css',
         'js',
         'eot',
@@ -87,7 +87,7 @@ class MergeService
     {
         $isCss = $contentType == 'css';
         $isJs = $contentType == 'js';
-        if (!\in_array($contentType, $this->supportedMergeType, true)) {
+        if (!in_array($contentType, self::SUPPORTED_MERGE_TYPE, true)) {
             throw new \InvalidArgumentException("Merge for content type '{$contentType}' is not supported.");
         }
 

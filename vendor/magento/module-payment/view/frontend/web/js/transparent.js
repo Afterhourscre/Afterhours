@@ -8,7 +8,7 @@ define([
     'jquery',
     'mage/template',
     'Magento_Ui/js/modal/alert',
-    'jquery/ui',
+    'jquery-ui-modules/widget',
     'Magento_Payment/js/model/credit-card-validation/validator',
     'Magento_Checkout/js/model/full-screen-loader'
 ], function ($, mageTemplate, alert, ui, validator, fullScreenLoader) {
@@ -180,7 +180,7 @@ define([
                     inputs: data
                 }
             });
-            $(tmpl).appendTo($(iframeSelector)).submit();
+            $(tmpl).appendTo($(iframeSelector)).trigger('submit');
         },
 
         /**

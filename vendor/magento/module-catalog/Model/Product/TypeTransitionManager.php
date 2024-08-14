@@ -1,5 +1,7 @@
 <?php
 /**
+ * Product type transition manager
+ *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
@@ -9,9 +11,6 @@ namespace Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Type;
 
-/**
- * Product type transition manager
- */
 class TypeTransitionManager
 {
     /**

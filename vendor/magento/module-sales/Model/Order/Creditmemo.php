@@ -7,22 +7,22 @@
 namespace Magento\Sales\Model\Order;
 
 use Magento\Framework\Api\AttributeValueFactory;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Pricing\PriceCurrencyInterface;
 use Magento\Sales\Api\Data\CreditmemoInterface;
+use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\AbstractModel;
 use Magento\Sales\Model\EntityInterface;
-use Magento\Sales\Model\Order\InvoiceFactory;
-use Magento\Framework\App\Config\ScopeConfigInterface;
 
 /**
  * Order creditmemo model
  *
  * @api
- * @method \Magento\Sales\Model\Order\Invoice setSendEmail(bool $value)
- * @method \Magento\Sales\Model\Order\Invoice setCustomerNote(string $value)
+ * @method \Magento\Sales\Model\Order\Creditmemo setSendEmail(bool $value)
+ * @method \Magento\Sales\Model\Order\Creditmemo setCustomerNote(string $value)
  * @method string getCustomerNote()
- * @method \Magento\Sales\Model\Order\Invoice setCustomerNoteNotify(bool $value)
+ * @method \Magento\Sales\Model\Order\Creditmemo setCustomerNoteNotify(bool $value)
  * @method bool getCustomerNoteNotify()
  * @SuppressWarnings(PHPMD.ExcessivePublicCount)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
@@ -32,20 +32,15 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
  */
 class Creditmemo extends AbstractModel implements EntityInterface, CreditmemoInterface
 {
-    const STATE_OPEN = 1;
+    public const STATE_OPEN = 1;
 
-    const STATE_REFUNDED = 2;
+    public const STATE_REFUNDED = 2;
 
-    const STATE_CANCELED = 3;
+    public const STATE_CANCELED = 3;
 
-    const REPORT_DATE_TYPE_ORDER_CREATED = 'order_created';
+    public const REPORT_DATE_TYPE_ORDER_CREATED = 'order_created';
 
-    const REPORT_DATE_TYPE_REFUND_CREATED = 'refund_created';
-
-    /**
-     * Allow Zero Grandtotal for Creditmemo path
-     */
-    const XML_PATH_ALLOW_ZERO_GRANDTOTAL = 'sales/zerograndtotal_creditmemo/allow_zero_grandtotal';
+    public const REPORT_DATE_TYPE_REFUND_CREATED = 'refund_created';
 
     /**
      * Identifier for order history item
@@ -132,6 +127,11 @@ class Creditmemo extends AbstractModel implements EntityInterface, CreditmemoInt
     private $scopeConfig;
 
     /**
+     * @var OrderRepositoryInterface
+     */
+    private $orderRepository;
+
+    /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\Registry $registry
      * @param \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory
@@ -149,6 +149,7 @@ class Creditmemo extends AbstractModel implements EntityInterface, CreditmemoInt
      * @param array $data
      * @param InvoiceFactory $invoiceFactory
      * @param ScopeConfigInterface $scopeConfig
+     * @param OrderRepositoryInterface $orderRepository
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
@@ -168,7 +169,8 @@ class Creditmemo extends AbstractModel implements EntityInterface, CreditmemoInt
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = [],
         InvoiceFactory $invoiceFactory = null,
-        ScopeConfigInterface $scopeConfig = null
+        ScopeConfigInterface $scopeConfig = null,
+        OrderRepositoryInterface $orderRepository = null
     ) {
         $this->_creditmemoConfig = $creditmemoConfig;
         $this->_orderFactory = $orderFactory;
@@ -180,6 +182,7 @@ class Creditmemo extends AbstractModel implements EntityInterface, CreditmemoInt
         $this->priceCurrency = $priceCurrency;
         $this->invoiceFactory = $invoiceFactory ?: ObjectManager::getInstance()->get(InvoiceFactory::class);
         $this->scopeConfig = $scopeConfig ?: ObjectManager::getInstance()->get(ScopeConfigInterface::class);
+        $this->orderRepository = $orderRepository ?? ObjectManager::getInstance()->get(OrderRepositoryInterface::class);
         parent::__construct(
             $context,
             $registry,
@@ -242,8 +245,11 @@ class Creditmemo extends AbstractModel implements EntityInterface, CreditmemoInt
     public function getOrder()
     {
         if (!$this->_order instanceof \Magento\Sales\Model\Order) {
-            $this->_order = $this->_orderFactory->create()->load($this->getOrderId());
+            $this->_order = $this->getOrderId() ?
+                $this->orderRepository->get($this->getOrderId()) :
+                $this->_orderFactory->create();
         }
+
         return $this->_order->setHistoryEntityName($this->entityType);
     }
 
@@ -454,6 +460,7 @@ class Creditmemo extends AbstractModel implements EntityInterface, CreditmemoInt
      * Retrieve Creditmemo states array
      *
      * @return array
+     * phpcs:disable Magento2.Functions.StaticFunction
      */
     public static function getStates()
     {
@@ -466,11 +473,12 @@ class Creditmemo extends AbstractModel implements EntityInterface, CreditmemoInt
         }
         return static::$_states;
     }
+    // phpcs:enable
 
     /**
      * Retrieve Creditmemo state name by state identifier
      *
-     * @param   int $stateId
+     * @param  int $stateId
      * @return \Magento\Framework\Phrase
      */
     public function getStateName($stateId = null)
@@ -507,18 +515,8 @@ class Creditmemo extends AbstractModel implements EntityInterface, CreditmemoInt
      */
     public function setAdjustmentPositive($amount)
     {
-        $amount = trim($amount);
-        if (substr($amount, -1) == '%') {
-            $amount = (double)substr($amount, 0, -1);
-            $amount = $this->getOrder()->getGrandTotal() * $amount / 100;
-        }
-
-        $amount = $this->priceCurrency->round($amount);
-        $this->setData('base_adjustment_positive', $amount);
-
-        $amount = $this->priceCurrency->round($amount * $this->getOrder()->getBaseToOrderRate());
-        $this->setData('adjustment_positive', $amount);
-        return $this;
+        $amount = trim((string) $amount);
+        return $this->setAdjustmentAmount($amount, 'base_adjustment_positive', 'adjustment_positive');
     }
 
     /**
@@ -529,17 +527,30 @@ class Creditmemo extends AbstractModel implements EntityInterface, CreditmemoInt
      */
     public function setAdjustmentNegative($amount)
     {
-        $amount = trim($amount);
+        $amount = trim((string) $amount);
+        return $this->setAdjustmentAmount($amount, 'base_adjustment_negative', 'adjustment_negative');
+    }
+
+    /**
+     * Set adjustment amount.
+     *
+     * @param string $amount
+     * @param string $baseAdjustmentField
+     * @param string $adjustmentField
+     * @return $this
+     */
+    private function setAdjustmentAmount(string $amount, string $baseAdjustmentField, string $adjustmentField): self
+    {
         if (substr($amount, -1) == '%') {
-            $amount = (double)substr($amount, 0, -1);
+            $amount = (double) substr($amount, 0, -1);
             $amount = $this->getOrder()->getGrandTotal() * $amount / 100;
         }
 
         $amount = $this->priceCurrency->round($amount);
-        $this->setData('base_adjustment_negative', $amount);
+        $this->setData($baseAdjustmentField, $amount);
 
         $amount = $this->priceCurrency->round($amount * $this->getOrder()->getBaseToOrderRate());
-        $this->setData('adjustment_negative', $amount);
+        $this->setData($adjustmentField, $amount);
         return $this;
     }
 
@@ -552,6 +563,10 @@ class Creditmemo extends AbstractModel implements EntityInterface, CreditmemoInt
     {
         $items = $this->getAllItems();
         foreach ($items as $item) {
+            if ($item->getOrderItem()->isDummy()) {
+                continue;
+            }
+
             if (!$item->isLast()) {
                 return false;
             }
@@ -655,13 +670,12 @@ class Creditmemo extends AbstractModel implements EntityInterface, CreditmemoInt
      *
      * @return bool
      */
-    private function isAllowZeroGrandTotal(): bool
+    private function isAllowZeroGrandTotal()
     {
         $isAllowed = $this->scopeConfig->getValue(
-            self::XML_PATH_ALLOW_ZERO_GRANDTOTAL,
+            'sales/zerograndtotal_creditmemo/allow_zero_grandtotal',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
-
         return $isAllowed;
     }
 

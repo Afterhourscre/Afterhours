@@ -115,11 +115,12 @@ class Db
     }
 
     /**
-     * Return triggers for table(s)
+     * Return triggers for table(s).
      *
      * @param string|null $tableName
      * @param bool $addDropIfExists
      * @return string
+     * @since 100.2.3
      */
     public function getTableTriggersSql($tableName = null, $addDropIfExists = true)
     {
@@ -135,6 +136,7 @@ class Db
         } else {
             $triggerScript = $this->getTableTriggersSql($tableName, $addDropIfExists);
         }
+
         return $triggerScript;
     }
 
@@ -299,7 +301,7 @@ class Db
      */
     public function runCommand($command)
     {
-        $this->connection->query($command);
+        $this->connection->multiQuery($command);
         return $this;
     }
 }

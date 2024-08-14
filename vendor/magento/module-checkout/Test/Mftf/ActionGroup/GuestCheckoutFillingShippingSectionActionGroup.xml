@@ -8,15 +8,19 @@
 
 <actionGroups xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:noNamespaceSchemaLocation="urn:magento:mftf:Test/etc/actionGroupSchema.xsd">
-    <!-- Guest checkout filling shipping section -->
     <actionGroup name="GuestCheckoutFillingShippingSectionActionGroup">
+        <annotations>
+            <description>Fills in the provided Customer/Address (Including Region) details on the Storefront Checkout page under the 'Shipping Address' section. Selects the provided Shipping Method. Clicks on Next. Validates that the URL is present and correct.</description>
+        </annotations>
         <arguments>
             <argument name="customerVar" defaultValue="CustomerEntityOne"/>
             <argument name="customerAddressVar" defaultValue="CustomerAddressSimple"/>
             <!--First available shipping method will be selected if value is not passed for shippingMethod-->
             <argument name="shippingMethod" defaultValue="" type="string"/>
         </arguments>
-        <fillField selector="{{CheckoutShippingSection.email}}" userInput="{{customerVar.email}}" stepKey="enterEmail"/>
+
+        <waitForElementVisible selector="{{CheckoutShippingSection.emailAddress}}" stepKey="waitForEmailField"/>
+        <fillField selector="{{CheckoutShippingSection.emailAddress}}" userInput="{{customerVar.email}}" stepKey="enterEmail"/>
         <fillField selector="{{CheckoutShippingSection.firstName}}" userInput="{{customerVar.firstname}}" stepKey="enterFirstName"/>
         <fillField selector="{{CheckoutShippingSection.lastName}}" userInput="{{customerVar.lastname}}" stepKey="enterLastName"/>
         <fillField selector="{{CheckoutShippingSection.street}}" userInput="{{customerAddressVar.street[0]}}" stepKey="enterStreet"/>
@@ -25,20 +29,13 @@
         <fillField selector="{{CheckoutShippingSection.postcode}}" userInput="{{customerAddressVar.postcode}}" stepKey="enterPostcode"/>
         <fillField selector="{{CheckoutShippingSection.telephone}}" userInput="{{customerAddressVar.telephone}}" stepKey="enterTelephone"/>
         <waitForLoadingMaskToDisappear stepKey="waitForLoadingMask"/>
+        <waitForElementClickable selector="{{CheckoutShippingMethodsSection.checkShippingMethodByName('shippingMethod')}}" stepKey="waitForShippingMethod"/>
         <click selector="{{CheckoutShippingMethodsSection.checkShippingMethodByName('shippingMethod')}}" stepKey="selectShippingMethod"/>
-        <waitForElement selector="{{CheckoutShippingSection.next}}" time="30" stepKey="waitForNextButton"/>
+        <waitForPageLoad stepKey="waitForShippingLoading"/>
+        <waitForElementVisible selector="{{CheckoutShippingSection.next}}" time="30" stepKey="waitForNextButton"/>
         <click selector="{{CheckoutShippingSection.next}}" stepKey="clickNext"/>
-        <waitForElement selector="{{CheckoutPaymentSection.paymentSectionTitle}}" time="30" stepKey="waitForPaymentSectionLoaded"/>
-        <seeInCurrentUrl url="{{CheckoutPage.url}}/#payment" stepKey="assertCheckoutPaymentUrl"/>
-        <waitForLoadingMaskToDisappear stepKey="waitForLoadingMask1"/>
-    </actionGroup>
-
-    <actionGroup name="GuestCheckoutFillingShippingSectionWithoutPaymentsActionGroup" extends="GuestCheckoutFillingShippingSectionActionGroup">
-        <waitForElement selector="{{CheckoutPaymentSection.isPaymentSection}}" time="30" stepKey="waitForPaymentSectionLoaded"/>
-    </actionGroup>
-
-    <actionGroup name="GuestCheckoutFillingShippingSectionWithoutRegionActionGroup" extends="GuestCheckoutFillingShippingSectionActionGroup">
-        <selectOption selector="{{CheckoutShippingSection.country}}" userInput="{{customerAddressVar.country}}" after="enterPostcode" stepKey="selectCountry"/>
-        <remove keyForRemoval="selectRegion"/>
+        <waitForPageLoad stepKey="waitForPaymentLoading"/>
+        <waitForElementVisible selector="{{CheckoutPaymentSection.paymentSectionTitle}}" time="30" stepKey="waitForPaymentSectionLoaded"/>
+        <seeCurrentUrlMatches regex="~/checkout/?#payment~" stepKey="assertCheckoutPaymentUrl"/>
     </actionGroup>
 </actionGroups>

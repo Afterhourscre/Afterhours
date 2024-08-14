@@ -10,11 +10,13 @@ use Magento\Customer\CustomerData\SectionSourceInterface;
 
 /**
  * Cart source
+ *
+ * @SuppressWarnings(PHPMD.CookieAndSessionMisuse)
  */
 class Cart extends \Magento\Framework\DataObject implements SectionSourceInterface
 {
     /**
-     * @var \Magento\Customer\Model\Session
+     * @var \Magento\Checkout\Model\Session
      */
     protected $checkoutSession;
 
@@ -99,7 +101,7 @@ class Cart extends \Magento\Framework\DataObject implements SectionSourceInterfa
             'extra_actions' => $this->layout->createBlock(\Magento\Catalog\Block\ShortcutButtons::class)->toHtml(),
             'isGuestCheckoutAllowed' => $this->isGuestCheckoutAllowed(),
             'website_id' => $this->getQuote()->getStore()->getWebsiteId(),
-            'storeId' => $this->getQuote()->getStore()->getStoreId(),
+            'storeId' => $this->getQuote()->getStore()->getStoreId()
         ];
     }
 

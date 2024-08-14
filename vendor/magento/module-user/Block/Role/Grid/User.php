@@ -16,7 +16,7 @@ use Magento\Backend\Block\Widget\Grid\Column;
 class User extends \Magento\Backend\Block\Widget\Grid\Extended
 {
     /**
-     * Core registry
+     * Framework class for Core Registry
      *
      * @var \Magento\Framework\Registry
      */
@@ -125,7 +125,7 @@ class User extends \Magento\Backend\Block\Widget\Grid\Extended
     }
 
     /**
-     * Prepare columns
+     * Prepares columns
      *
      * @return $this
      */
@@ -183,14 +183,13 @@ class User extends \Magento\Backend\Block\Widget\Grid\Extended
     }
 
     /**
-     * Get grid url
+     * Gets grid url
      *
      * @return string
-     * @SuppressWarnings(PHPMD.RequestAwareBlockMethod)
      */
     public function getGridUrl()
     {
-        $roleId = $this->escapeHtml($this->getRequest()->getParam('rid'));
+        $roleId = $this->getRequest()->getParam('rid');
         return $this->getUrl('*/*/editrolegrid', ['rid' => $roleId]);
     }
 
@@ -207,14 +206,23 @@ class User extends \Magento\Backend\Block\Widget\Grid\Extended
             if ($json) {
                 return $this->getJSONString($inRoleUser);
             }
-            return $this->escapeJs($this->escapeHtml($inRoleUser));
+            $escapedInRoleUser = $this->escapeHtml($inRoleUser);
+            if (is_array($escapedInRoleUser)) {
+                return array_map(
+                    function ($value) {
+                        return $this->escapeJs($value);
+                    },
+                    $escapedInRoleUser
+                );
+            }
+            return $this->escapeJs($escapedInRoleUser);
         }
         $roleId = $this->getRoleId();
         $users = $this->getUsersFormData();
         if (false === $users) {
             $users = $this->_roleFactory->create()->setId($roleId)->getRoleUsers();
         }
-        if (sizeof($users) > 0) {
+        if (!empty($users)) {
             if ($json) {
                 $jsonUsers = [];
                 foreach ($users as $userid) {
@@ -257,6 +265,7 @@ class User extends \Magento\Backend\Block\Widget\Grid\Extended
             \Magento\User\Controller\Adminhtml\User\Role\SaveRole::IN_ROLE_USER_FORM_DATA_SESSION_KEY
         );
         if (null !== $sessionData) {
+            // phpcs:ignore Magento2.Functions.DiscouragedFunction
             parse_str($sessionData, $sessionData);
             return array_keys($sessionData);
         }

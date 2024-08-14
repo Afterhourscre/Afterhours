@@ -11,6 +11,7 @@ define([
     'underscore',
     'mage/template',
     'priceUtils',
+    'jquery/jquery.parsequery',
     'priceBox'
 ], function ($, _, mageTemplate, utils) {
     'use strict';
@@ -22,13 +23,14 @@ define([
         priceBoxSelector: '.price-box',
         optionHandlers: {},
         optionTemplate: '<%- data.label %>' +
-        '<% if (data.finalPrice.value) { %>' +
-        ' +<%- data.finalPrice.formatted %>' +
-        '<% } %>',
+            '<% if (data.finalPrice.value) { %>' +
+            ' +<%- data.finalPrice.formatted %>' +
+            '<% } %>',
         controlContainer: 'dd', // should be eliminated
         priceFormat: {},
         isFixedPrice: false,
-        optionTierPricesBlocksSelector: '#option-tier-prices-{1} [data-role="selection-tier-prices"]'
+        optionTierPricesBlocksSelector: '#option-tier-prices-{1} [data-role="selection-tier-prices"]',
+        isOptionsInitialized: false
     };
 
     $.widget('mage.priceBundle', {
@@ -39,9 +41,14 @@ define([
          */
         _init: function initPriceBundle() {
             var form = this.element,
-                options = $(this.options.productBundleSelector, form);
+                options = $(this.options.productBundleSelector, form),
+                qty = $(this.options.qtyFieldSelector, form);
+
+            // Override defaults with URL query parameters and/or inputs values
+            this._overrideDefaults();
 
             options.trigger('change');
+            qty.trigger('change');
         },
 
         /**
@@ -53,20 +60,102 @@ define([
                 priceBox = $(this.options.priceBoxSelector, form),
                 qty = $(this.options.qtyFieldSelector, form);
 
-            if (priceBox.data('magePriceBox') &&
-                priceBox.priceBox('option') &&
-                priceBox.priceBox('option').priceConfig
-            ) {
-                if (priceBox.priceBox('option').priceConfig.optionTemplate) {
-                    this._setOption('optionTemplate', priceBox.priceBox('option').priceConfig.optionTemplate);
-                }
-                this._setOption('priceFormat', priceBox.priceBox('option').priceConfig.priceFormat);
-                priceBox.priceBox('setDefault', this.options.optionConfig.prices);
-            }
-            this._applyOptionNodeFix(options);
-
+            this._updatePriceBox();
+            priceBox.on('price-box-initialized', this._updatePriceBox.bind(this));
             options.on('change', this._onBundleOptionChanged.bind(this));
             qty.on('change', this._onQtyFieldChanged.bind(this));
+        },
+
+        /**
+         * Override default options values settings with either URL query parameters or
+         * initialized inputs values.
+         * @private
+         */
+        _overrideDefaults: function () {
+            var hashIndex = window.location.href.indexOf('#');
+
+            if (hashIndex !== -1) {
+                this._parseQueryParams(window.location.href.substr(hashIndex + 1));
+            }
+        },
+
+        /**
+         * Parse query parameters from a query string and set options values based on the
+         * key value pairs of the parameters.
+         * @param {*} queryString - URL query string containing query parameters.
+         * @private
+         */
+        _parseQueryParams: function (queryString) {
+            var queryParams = $.parseQuery({
+                    query: queryString
+                }),
+                selectedValues = [],
+                form = this.element,
+                options = $(this.options.productBundleSelector, form),
+                qtys = $(this.options.qtyFieldSelector, form);
+
+            $.each(queryParams, $.proxy(function (key, value) {
+                qtys.each(function (index, qty) {
+                    if (qty.name === key) {
+                        $(qty).val(value);
+                    }
+                });
+                options.each(function (index, option) {
+                    let optionType = $(option).prop('type');
+
+                    if (option.name === key ||
+                        optionType === 'select-multiple'
+                        && key.indexOf(option.name.substr(0, option.name.length - 2)) !== false
+                    ) {
+
+                        switch (optionType) {
+                            case 'radio':
+                                $(option).val() === value ? $(option).prop('checked', true) : '';
+                                break;
+                            case 'checkbox':
+                                $(option).prop('checked', true);
+                                break;
+                            case 'hidden':
+                            case 'select-one':
+                                $(option).val(value);
+                                break;
+                            case 'select-multiple':
+                                selectedValues.push(value);
+                                break;
+                        }
+                        if (optionType === 'select-multiple' && selectedValues.length) {
+                            $(option).val(selectedValues);
+                        }
+                    }
+                });
+            }, this));
+        },
+
+        /**
+         * Update price box config with bundle option prices
+         * @private
+         */
+        _updatePriceBox: function () {
+            var form = this.element,
+                options = $(this.options.productBundleSelector, form),
+                priceBox = $(this.options.priceBoxSelector, form);
+
+            if (!this.options.isOptionsInitialized) {
+                if (priceBox.data('magePriceBox') &&
+                    priceBox.priceBox('option') &&
+                    priceBox.priceBox('option').priceConfig
+                ) {
+                    if (priceBox.priceBox('option').priceConfig.optionTemplate) { //eslint-disable-line max-depth
+                        this._setOption('optionTemplate', priceBox.priceBox('option').priceConfig.optionTemplate);
+                    }
+                    this._setOption('priceFormat', priceBox.priceBox('option').priceConfig.priceFormat);
+                    priceBox.priceBox('setDefault', this.options.optionConfig.prices);
+                    this.options.isOptionsInitialized = true;
+                }
+                this._applyOptionNodeFix(options);
+            }
+
+            return this;
         },
 
         /**
@@ -89,12 +178,15 @@ define([
                 changes = defaultGetOptionValue(bundleOption, this.options.optionConfig);//eslint-disable-line
             }
 
-            if (changes) {
-                priceBox.trigger('updatePrice', changes);
-            }
+            // eslint-disable-next-line no-use-before-define
+            if (isValidQty(bundleOption)) {
+                if (changes) {
+                    priceBox.trigger('updatePrice', changes);
+                }
 
-            this._displayTierPriceBlock(bundleOption);
-            this.updateProductSummary();
+                this._displayTierPriceBlock(bundleOption);
+                this.updateProductSummary();
+            }
         },
 
         /**
@@ -114,7 +206,10 @@ define([
                     .selections[field.data('optionValueId')];
                 optionConfig.qty = field.val();
 
-                optionInstance.trigger('change');
+                // eslint-disable-next-line no-use-before-define
+                if (isValidQty(optionInstance)) {
+                    optionInstance.trigger('change');
+                }
             }
         },
 
@@ -187,7 +282,7 @@ define([
                         }, 0);
                         toTemplate.data[type] = {
                             value: value,
-                            formatted: utils.formatPrice(value, format)
+                            formatted: utils.formatPriceLocale(value, format)
                         };
                     });
 
@@ -353,6 +448,23 @@ define([
         }
 
         return changes;
+    }
+
+    /**
+     * Check the quantity field if negative value occurs.
+     *
+     * @param {Object} bundleOption
+     */
+    function isValidQty(bundleOption) {
+        var isValid = true,
+            qtyElem = bundleOption.data('qtyField'),
+            bundleOptionType = bundleOption.prop('type');
+
+        if (['radio', 'select-one'].includes(bundleOptionType) && qtyElem.val() < 0) {
+            isValid = false;
+        }
+
+        return isValid;
     }
 
     /**

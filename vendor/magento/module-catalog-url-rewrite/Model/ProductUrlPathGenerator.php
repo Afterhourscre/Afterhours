@@ -3,17 +3,20 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\CatalogUrlRewrite\Model;
 
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Category;
 use Magento\Catalog\Model\Product;
-use Magento\CatalogUrlRewrite\Model\CategoryUrlPathGenerator;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 
+/**
+ * Model product url path generator
+ */
 class ProductUrlPathGenerator
 {
     const XML_PATH_PRODUCT_URL_SUFFIX = 'catalog/seo/product_url_suffix';
@@ -146,7 +149,7 @@ class ProductUrlPathGenerator
         $urlKey = (string)$product->getUrlKey();
         $urlKey = trim(strtolower($urlKey));
 
-        return $urlKey ?: $product->formatUrlKey($product->getName());
+        return $product->formatUrlKey($urlKey ?: $product->getName());
     }
 
     /**

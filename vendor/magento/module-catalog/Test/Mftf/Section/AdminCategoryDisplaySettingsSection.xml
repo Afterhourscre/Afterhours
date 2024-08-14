@@ -9,7 +9,7 @@
 <sections xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:noNamespaceSchemaLocation="urn:magento:mftf:Page/etc/SectionObject.xsd">
     <section name="AdminCategoryDisplaySettingsSection">
-        <element name="settingsHeader" type="button" selector="[data-index='display_settings'] strong.admin__collapsible-title" timeout="30"/>
-        <element name="displayMode" type="button" selector="[name='display_mode']"/>
+        <element name="settingsHeader" type="button" selector="//*[contains(text(),'Display Settings')]" timeout="30"/>
+        <element name="displayMode" type="button" selector="//*[@name='display_mode']"/>
     </section>
 </sections>

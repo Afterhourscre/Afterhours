@@ -20,26 +20,13 @@
         .admin__grid-control-value {
             display: none;
         }
-    }  
+    }
 }
 
 .product-composite-configure-inner {
     .admin__control-text {
         &.qty {
             &:extend(.abs-control-qty all);
-        }
-    }
-
-    .admin__field {
-        &.required,
-        &._required {
-            & > .admin__field-label > span {
-                width: 100%;
-
-                & span:after {
-                    display: none;
-                }
-            }
         }
     }
 }
@@ -111,6 +98,25 @@
 
         .admin__field + .admin__field {
             margin-left: @indent__s;
+            margin-top: 0;
+            .admin__field-control {
+                .admin__control-addon {
+                    .admin__control-text {
+                        min-width: 6rem;
+                    }
+                }
+            }
+        }
+    }
+}
+
+//
+//  Catalog Product Edit Action Attribute
+//  ---------------------------------------------
+
+.admin__field-control {
+    .attribute-change-checkbox {
+        input[type='checkbox'].checkbox {
             margin-top: 0;
         }
     }

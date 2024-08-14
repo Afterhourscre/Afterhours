@@ -7,12 +7,14 @@
 namespace Magento\Catalog\Controller\Product\Compare;
 
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
+use Magento\Catalog\Model\ResourceModel\Product\Compare\Item\Collection;
+use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 
 /**
  * Remove item from compare list action.
  */
-class Remove extends \Magento\Catalog\Controller\Product\Compare
+class Remove extends \Magento\Catalog\Controller\Product\Compare implements HttpPostActionInterface
 {
     /**
      * Remove item from compare list.
@@ -23,7 +25,7 @@ class Remove extends \Magento\Catalog\Controller\Product\Compare
     public function execute()
     {
         $productId = (int)$this->getRequest()->getParam('product');
-        if ($this->isActionAllowed() && $productId) {
+        if ($this->_formKeyValidator->validate($this->getRequest()) && $productId) {
             $storeId = $this->_storeManager->getStore()->getId();
             try {
                 /** @var \Magento\Catalog\Model\Product $product */
@@ -67,13 +69,5 @@ class Remove extends \Magento\Catalog\Controller\Product\Compare
 
             return $resultRedirect->setRefererOrBaseUrl();
         }
-    }
-
-    /**
-     * @return bool
-     */
-    private function isActionAllowed(): bool
-    {
-        return $this->getRequest()->isPost() && $this->_formKeyValidator->validate($this->getRequest());
     }
 }

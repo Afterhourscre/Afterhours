@@ -6,18 +6,17 @@
 
 namespace Magento\SalesRule\Model\Observer;
 
-use Magento\Sales\Model\Order;
+use Magento\Customer\Model\Data\Customer;
 use Magento\Customer\Model\GroupManagement;
+use Magento\Sales\Model\Order;
+use Magento\Sales\Model\Service\OrderService;
 use Magento\SalesRule\Api\CouponRepositoryInterface;
 use Magento\SalesRule\Model\Coupon;
 use Magento\SalesRule\Model\Rule;
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\Customer\Model\Data\Customer;
 use Magento\TestFramework\Helper\Bootstrap;
 
 /**
- * Class AssignCouponDataAfterOrderCustomerAssignTest
- *
  * @magentoAppIsolation enabled
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
@@ -80,9 +79,14 @@ class AssignCouponDataAfterOrderCustomerAssignTest extends \PHPUnit\Framework\Te
     private $customer;
 
     /**
+     * @var OrderService
+     */
+    private $orderService;
+
+    /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->objectManager = Bootstrap::getObjectManager();
         $this->eventManager = $this->createMock(\Magento\Framework\Event\ManagerInterface::class);
@@ -93,6 +97,7 @@ class AssignCouponDataAfterOrderCustomerAssignTest extends \PHPUnit\Framework\Te
         $this->assignCouponToCustomerObserver = $this->objectManager->get(
             \Magento\SalesRule\Observer\AssignCouponDataAfterOrderCustomerAssignObserver::class
         );
+        $this->orderService = $this->objectManager->get(OrderService::class);
 
         $this->salesRule = $this->prepareSalesRule();
         $this->coupon = $this->attachSalesruleCoupon($this->salesRule);
@@ -105,7 +110,7 @@ class AssignCouponDataAfterOrderCustomerAssignTest extends \PHPUnit\Framework\Te
     /**
      * @inheritdoc
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
         $this->salesRule = null;
         $this->customer = null;
@@ -141,7 +146,7 @@ class AssignCouponDataAfterOrderCustomerAssignTest extends \PHPUnit\Framework\Te
         $this->processOrder($this->order);
 
         // Should not throw exception as bux is fixed now
-        $this->order->cancel();
+        $this->orderService->cancel($this->order->getId());
         $ruleCustomer = $this->getSalesruleCustomerUsage($this->customer, $this->salesRule);
 
         // Assert, that rule customer model has been created for specific customer

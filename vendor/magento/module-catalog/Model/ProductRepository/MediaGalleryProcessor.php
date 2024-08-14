@@ -1,20 +1,25 @@
 <?php
 /**
- *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\Catalog\Model\ProductRepository;
 
 use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Model\Product\Gallery\DeleteValidator;
 use Magento\Catalog\Model\Product\Gallery\Processor;
+use Magento\Catalog\Model\Product\Media\Config;
+use Magento\Catalog\Model\ResourceModel\Product\Gallery;
 use Magento\Framework\Api\Data\ImageContentInterface;
 use Magento\Framework\Api\Data\ImageContentInterfaceFactory;
 use Magento\Framework\Api\ImageProcessorInterface;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\StateException;
+use Magento\Store\Model\Store;
 
 /**
  * Process Media gallery data for ProductRepository before save product.
@@ -22,11 +27,15 @@ use Magento\Framework\Exception\StateException;
 class MediaGalleryProcessor
 {
     /**
+     * Catalog gallery processor.
+     *
      * @var Processor
      */
     private $processor;
 
     /**
+     * Image content data object factory.
+     *
      * @var ImageContentInterfaceFactory
      */
     private $contentFactory;
@@ -37,20 +46,26 @@ class MediaGalleryProcessor
     private $imageProcessor;
 
     /**
-     * MediaGalleryProcessor constructor.
-     *
+     * @var DeleteValidator
+     */
+    private $deleteValidator;
+
+    /**
      * @param Processor $processor
      * @param ImageContentInterfaceFactory $contentFactory
      * @param ImageProcessorInterface $imageProcessor
+     * @param DeleteValidator|null $deleteValidator
      */
     public function __construct(
         Processor $processor,
         ImageContentInterfaceFactory $contentFactory,
-        ImageProcessorInterface $imageProcessor
+        ImageProcessorInterface $imageProcessor,
+        ?DeleteValidator $deleteValidator = null
     ) {
         $this->processor = $processor;
         $this->contentFactory = $contentFactory;
         $this->imageProcessor = $imageProcessor;
+        $this->deleteValidator = $deleteValidator ?? ObjectManager::getInstance()->get(DeleteValidator::class);
     }
 
     /**
@@ -61,23 +76,23 @@ class MediaGalleryProcessor
      * * If Existing entry 'value_id' absent in Media Gallery set 'removed' flag
      * * Merge Existing and new media gallery
      *
-     * @param ProductInterface $product contains only existing media gallery items.
-     * @param array $mediaGalleryEntries array which contains all media gallery items.
+     * @param ProductInterface $product contains only existing media gallery items
+     * @param array $mediaGalleryEntries array which contains all media gallery items
      * @return void
      * @throws InputException
      * @throws StateException
      * @throws LocalizedException
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    public function processMediaGallery(ProductInterface $product, array $mediaGalleryEntries)
+    public function processMediaGallery(ProductInterface $product, array $mediaGalleryEntries) :void
     {
         $existingMediaGallery = $product->getMediaGallery('images');
         $newEntries = [];
         $entriesById = [];
         if (!empty($existingMediaGallery)) {
             foreach ($mediaGalleryEntries as $entry) {
-                if (isset($entry['id'])) {
-                    $entriesById[$entry['id']] = $entry;
+                if (isset($entry['value_id'])) {
+                    $entriesById[$entry['value_id']] = $entry;
                 } else {
                     $newEntries[] = $entry;
                 }
@@ -85,46 +100,100 @@ class MediaGalleryProcessor
             foreach ($existingMediaGallery as $key => &$existingEntry) {
                 if (isset($entriesById[$existingEntry['value_id']])) {
                     $updatedEntry = $entriesById[$existingEntry['value_id']];
-                    if (array_key_exists('file', $updatedEntry) && $updatedEntry['file'] === null) {
+                    if ($updatedEntry['file'] === null) {
                         unset($updatedEntry['file']);
                     }
-                    $existingMediaGallery[$key] = array_merge($existingEntry, $updatedEntry);
-                } else {
-                    //set the removed flag.
+                    if (isset($updatedEntry['content'])) {
+                        //need to recreate image and reset object
+                        $existingEntry['recreate'] = true;
+                        // phpcs:ignore Magento2.Performance.ForeachArrayMerge
+                        $newEntry = array_merge($existingEntry, $updatedEntry);
+                        $newEntries[] = $newEntry;
+                        unset($existingMediaGallery[$key]);
+                    } else {
+                        // phpcs:ignore Magento2.Performance.ForeachArrayMerge
+                        $existingMediaGallery[$key] = array_merge($existingEntry, $updatedEntry);
+                    }
+                } elseif (!empty($newEntries) && isset($existingEntry['value_id'])) {
+                    //avoid deleting an exiting image while adding a new one
+                    unset($existingMediaGallery[$key]);
+                } elseif ($this->canRemoveImage($product, $existingEntry)) {
+                    //set the removed flag
                     $existingEntry['removed'] = true;
                 }
             }
-            unset($existingEntry);
             $product->setData('media_gallery', ["images" => $existingMediaGallery]);
         } else {
             $newEntries = $mediaGalleryEntries;
         }
 
-        $images = $product->getMediaGallery('images');
-
-        if ($images) {
-            $images = $this->determineImageRoles($product, $images);
-        }
+        $images = (array)$product->getMediaGallery('images');
+        $images = $this->determineImageRoles($product, $images);
 
         $this->processor->clearMediaAttribute($product, array_keys($product->getMediaAttributes()));
-        if ($images) {
-            foreach ($images as $image) {
-                if (!isset($image['removed']) && !empty($image['types'])) {
-                    $this->processor->setMediaAttribute($product, $image['types'], $image['file']);
-                }
-            }
-        }
+
+        $this->processMediaAttributes($product, $images);
         $this->processEntries($product, $newEntries, $entriesById);
     }
 
     /**
-     * Ascertain image roles, if they are not set against the gallery entries
+     * Process new gallery media entry.
+     *
+     * @param ProductInterface $product
+     * @param array $newEntry
+     * @return void
+     * @throws InputException
+     * @throws StateException
+     * @throws LocalizedException
+     */
+    public function processNewMediaGalleryEntry(
+        ProductInterface $product,
+        array  $newEntry
+    ) :void {
+        /** @var ImageContentInterface $contentDataObject */
+        $contentDataObject = $newEntry['content'];
+
+        /** @var Config $mediaConfig */
+        $mediaConfig = $product->getMediaConfig();
+        $mediaTmpPath = $mediaConfig->getBaseTmpMediaPath();
+
+        $relativeFilePath = $this->imageProcessor->processImageContent($mediaTmpPath, $contentDataObject);
+        $tmpFilePath = $mediaConfig->getTmpMediaShortUrl($relativeFilePath);
+
+        if (!$product->hasGalleryAttribute()) {
+            throw new StateException(
+                __("The product that was requested doesn't exist. Verify the product and try again.")
+            );
+        }
+
+        $imageFileUri = $this->processor->addImage(
+            $product,
+            $tmpFilePath,
+            isset($newEntry['types']) ? $newEntry['types'] : [],
+            true,
+            isset($newEntry['disabled']) ? $newEntry['disabled'] : true
+        );
+        // Update additional fields that are still empty after addImage call
+        $this->processor->updateImage(
+            $product,
+            $imageFileUri,
+            [
+                'label' => $newEntry['label'],
+                'position' => $newEntry['position'],
+                'disabled' => $newEntry['disabled'],
+                'media_type' => $newEntry['media_type'],
+            ]
+        );
+    }
+
+    /**
+     * Ascertain image roles, if they are not set against the gallery entries.
      *
      * @param ProductInterface $product
      * @param array $images
      * @return array
      */
-    private function determineImageRoles(ProductInterface $product, array $images)
+    private function determineImageRoles(ProductInterface $product, array $images) : array
     {
         $imagesWithRoles = [];
         foreach ($images as $image) {
@@ -140,6 +209,7 @@ class MediaGalleryProcessor
             }
             $imagesWithRoles[] = $image;
         }
+
         return $imagesWithRoles;
     }
 
@@ -152,27 +222,31 @@ class MediaGalleryProcessor
      * @throws InputException
      * @throws LocalizedException
      * @throws StateException
-     * @return void
      */
-    private function processEntries(ProductInterface $product, array $newEntries, array $entriesById)
+    private function processEntries(ProductInterface $product, array $newEntries, array $entriesById): void
     {
         foreach ($newEntries as $newEntry) {
             if (!isset($newEntry['content'])) {
-                throw new InputException(__('The image content is not valid.'));
+                throw new InputException(__('The image content is invalid. Verify the content and try again.'));
             }
             /** @var ImageContentInterface $contentDataObject */
             $contentDataObject = $this->contentFactory->create()
-                ->setName($newEntry['content'][ImageContentInterface::NAME])
-                ->setBase64EncodedData($newEntry['content'][ImageContentInterface::BASE64_ENCODED_DATA])
-                ->setType($newEntry['content'][ImageContentInterface::TYPE]);
+                ->setName($newEntry['content']['data'][ImageContentInterface::NAME])
+                ->setBase64EncodedData($newEntry['content']['data'][ImageContentInterface::BASE64_ENCODED_DATA])
+                ->setType($newEntry['content']['data'][ImageContentInterface::TYPE]);
             $newEntry['content'] = $contentDataObject;
             $this->processNewMediaGalleryEntry($product, $newEntry);
 
             $finalGallery = $product->getData('media_gallery');
-            $newEntryId = key(array_diff_key($product->getData('media_gallery')['images'], $entriesById));
-            if (isset($newEntry['extension_attributes'])) {
-                $this->processExtensionAttributes($newEntry, $newEntry['extension_attributes']);
-            }
+
+            $entryIds = array_keys(
+                array_diff_key(
+                    $product->getData('media_gallery')['images'],
+                    $entriesById
+                )
+            );
+            $newEntryId = array_pop($entryIds);
+
             $newEntry = array_replace_recursive($newEntry, $finalGallery['images'][$newEntryId]);
             $entriesById[$newEntryId] = $newEntry;
             $finalGallery['images'][$newEntryId] = $newEntry;
@@ -181,69 +255,30 @@ class MediaGalleryProcessor
     }
 
     /**
-     * Save gallery entry as image.
+     * Set media attribute values.
      *
      * @param ProductInterface $product
-     * @param array $newEntry
-     * @return void
-     * @throws InputException
-     * @throws StateException
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @param array $images
      */
-    private function processNewMediaGalleryEntry(
-        ProductInterface $product,
-        array $newEntry
-    ) {
-        /** @var ImageContentInterface $contentDataObject */
-        $contentDataObject = $newEntry['content'];
-
-        /** @var \Magento\Catalog\Model\Product\Media\Config $mediaConfig */
-        $mediaConfig = $product->getMediaConfig();
-        $mediaTmpPath = $mediaConfig->getBaseTmpMediaPath();
-
-        $relativeFilePath = $this->imageProcessor->processImageContent($mediaTmpPath, $contentDataObject);
-        $tmpFilePath = $mediaConfig->getTmpMediaShortUrl($relativeFilePath);
-
-        if (!$product->hasGalleryAttribute()) {
-            throw new StateException(__('Requested product does not support images.'));
+    private function processMediaAttributes(ProductInterface $product, array $images): void
+    {
+        foreach ($images as $image) {
+            if (empty($image['removed']) && !empty($image['types'])) {
+                $this->processor->setMediaAttribute($product, $image['types'], $image['file']);
+            }
         }
-
-        $imageFileUri = $this->processor->addImage(
-            $product,
-            $tmpFilePath,
-            isset($newEntry['types']) ? $newEntry['types'] : [],
-            true,
-            isset($newEntry['disabled']) ? $newEntry['disabled'] : true
-        );
-        // Update additional fields that are still empty after addImage call.
-        $this->processor->updateImage(
-            $product,
-            $imageFileUri,
-            [
-                'label' => $newEntry['label'],
-                'position' => $newEntry['position'],
-                'disabled' => $newEntry['disabled'],
-                'media_type' => $newEntry['media_type'],
-            ]
-        );
     }
 
     /**
-     * Convert extension attribute for product media gallery.
+     * Check whether the image can be removed
      *
-     * @param array $newEntry
-     * @param array $extensionAttributes
-     * @return void
+     * @param ProductInterface $product
+     * @param array $image
+     * @return bool
      */
-    private function processExtensionAttributes(array &$newEntry, array $extensionAttributes)
+    private function canRemoveImage(ProductInterface $product, array $image): bool
     {
-        foreach ($extensionAttributes as $code => $value) {
-            if (is_array($value)) {
-                $this->processExtensionAttributes($newEntry, $value);
-            } else {
-                $newEntry[$code] = $value;
-            }
-        }
-        unset($newEntry['extension_attributes']);
+        return !isset($image['file'])
+            || !$this->deleteValidator->validate($product, $image['file']);
     }
 }

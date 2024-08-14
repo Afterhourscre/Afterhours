@@ -9,7 +9,7 @@ define([
     'mage/template',
     'priceUtils',
     'priceBox',
-    'jquery/ui'
+    'jquery-ui-modules/widget'
 ], function ($, _, mageTemplate, utils) {
     'use strict';
 
@@ -182,7 +182,7 @@ define([
                             }, 0);
                             toTemplate.data[type] = {
                                 value: value,
-                                formatted: utils.formatPrice(value, format)
+                                formatted: utils.formatPriceLocale(value, format)
                             };
                         });
 

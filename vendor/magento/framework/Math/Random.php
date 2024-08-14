@@ -5,6 +5,7 @@
  */
 namespace Magento\Framework\Math;
 
+use \Exception;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Phrase;
 
@@ -12,17 +13,18 @@ use Magento\Framework\Phrase;
  * Random data generator
  *
  * @api
+ * @since 100.0.2
  */
 class Random
 {
     /**#@+
      * Frequently used character classes
      */
-    const CHARS_LOWERS = 'abcdefghijklmnopqrstuvwxyz';
+    public const CHARS_LOWERS = 'abcdefghijklmnopqrstuvwxyz';
 
-    const CHARS_UPPERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    public const CHARS_UPPERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-    const CHARS_DIGITS = '0123456789';
+    public const CHARS_DIGITS = '0123456789';
 
     /**#@-*/
 
@@ -53,9 +55,9 @@ class Random
     /**
      * Return a random number in the specified range
      *
-     * @param $min [optional]
-     * @param $max [optional]
-     * @return int A random integer value between min (or 0) and max
+     * @param int $min
+     * @param int $max
+     * @return int  A random integer value between min (or 0) and max
      * @throws LocalizedException
      */
     public static function getRandomNumber($min = 0, $max = null)
@@ -63,6 +65,7 @@ class Random
         if (null === $max) {
             $max = mt_getrandmax();
         }
+
         if ($max < $min) {
             throw new LocalizedException(new Phrase('Invalid range given.'));
         }
@@ -75,9 +78,22 @@ class Random
      *
      * @param string $prefix
      * @return string
+     * @throws LocalizedException
      */
     public function getUniqueHash($prefix = '')
     {
         return $prefix . $this->getRandomString(32);
+    }
+
+    /**
+     * Generate a base64 encoded binary string.
+     *
+     * @param int $length
+     * @return string
+     * @throws Exception
+     */
+    public function getRandomBytes(int $length) : string
+    {
+        return base64_encode(random_bytes($length));
     }
 }

@@ -5,12 +5,17 @@
  */
 namespace Magento\Framework\Backup;
 
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Phrase;
+
 /**
  * Class to work with archives
  *
+ * phpcs:disable Magento2.Classes.AbstractApi
  * @api
+ * @since 100.0.2
  */
-abstract class AbstractBackup implements BackupInterface
+abstract class AbstractBackup implements BackupInterface, SourceFileInterface
 {
     /**
      * Backup name
@@ -34,8 +39,6 @@ abstract class AbstractBackup implements BackupInterface
     protected $_backupExtension;
 
     /**
-     * Resource model
-     *
      * @var object
      */
     protected $_resourceModel;
@@ -67,6 +70,13 @@ abstract class AbstractBackup implements BackupInterface
      * @var string
      */
     protected $_lastErrorMessage;
+
+    /**
+     * Keep Source files in Backup
+     *
+     * @var boolean
+     */
+    private $keepSourceFile;
 
     /**
      * Set Backup Extension
@@ -138,23 +148,24 @@ abstract class AbstractBackup implements BackupInterface
      * Set root directory of Magento installation
      *
      * @param string $rootDir
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws LocalizedException
      * @return $this
      */
     public function setRootDir($rootDir)
     {
         if (!is_dir($rootDir)) {
-            throw new \Magento\Framework\Exception\LocalizedException(
-                new \Magento\Framework\Phrase('Bad root directory')
+            throw new LocalizedException(
+                new Phrase('Bad root directory')
             );
         }
 
-        $this->_rootDir = $rootDir;
+        $this->_rootDir = rtrim($rootDir, '/');
         return $this;
     }
 
     /**
      * Get Magento's root directory
+     *
      * @return string
      */
     public function getRootDir()
@@ -170,7 +181,7 @@ abstract class AbstractBackup implements BackupInterface
      */
     public function setBackupsDir($backupsDir)
     {
-        $this->_backupsDir = $backupsDir;
+        $this->_backupsDir = $backupsDir !== null ? rtrim($backupsDir, '/') : '';
         return $this;
     }
 
@@ -279,7 +290,7 @@ abstract class AbstractBackup implements BackupInterface
      */
     public function getDisplayName()
     {
-        return str_replace('_', ' ', $this->_name);
+        return $this->_name !== null ? str_replace('_', ' ', $this->_name) : '';
     }
 
     /**
@@ -290,10 +301,33 @@ abstract class AbstractBackup implements BackupInterface
      */
     protected function _filterName($name)
     {
-        $name = trim(preg_replace('/[^\da-zA-Z ]/', '', $name));
+        $name = $name !== null ? trim(preg_replace('/[^\da-zA-Z ]/', '', $name)) : '';
         $name = preg_replace('/\s{2,}/', ' ', $name);
-        $name = str_replace(' ', '_', $name);
 
-        return $name;
+        return str_replace(' ', '_', $name);
+    }
+
+    /**
+     * Check if keep files of backup
+     *
+     * @return bool
+     * @since 102.0.0
+     */
+    public function keepSourceFile()
+    {
+        return $this->keepSourceFile;
+    }
+
+    /**
+     * Set if keep files of backup
+     *
+     * @param bool $keepSourceFile
+     * @return $this
+     * @since 102.0.0
+     */
+    public function setKeepSourceFile(bool $keepSourceFile)
+    {
+        $this->keepSourceFile = $keepSourceFile;
+        return $this;
     }
 }

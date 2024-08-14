@@ -5,6 +5,8 @@
  */
 namespace Magento\Framework\View\Model\Layout;
 
+use Magento\Framework\View\Layout\LayoutCacheKeyInterface;
+
 class MergeTest extends \PHPUnit\Framework\TestCase
 {
     /**
@@ -18,7 +20,12 @@ class MergeTest extends \PHPUnit\Framework\TestCase
      */
     protected $model;
 
-    protected function setUp()
+    /**
+     * @var LayoutCacheKeyInterface|\PHPUnit\Framework\MockObject\MockObject
+     */
+    protected $layoutCacheKeyMock;
+
+    protected function setUp(): void
     {
         $objectManager = \Magento\TestFramework\Helper\Bootstrap::getObjectManager();
 
@@ -62,9 +69,17 @@ class MergeTest extends \PHPUnit\Framework\TestCase
         $link2->setLayoutUpdateId($layoutUpdate2->getId());
         $link2->save();
 
+        $this->layoutCacheKeyMock = $this->getMockForAbstractClass(LayoutCacheKeyInterface::class);
+        $this->layoutCacheKeyMock->expects($this->any())
+            ->method('getCacheKeys')
+            ->willReturn([]);
+
         $this->model = $objectManager->create(
             \Magento\Framework\View\Model\Layout\Merge::class,
-            ['theme' => $theme]
+            [
+                'theme' => $theme,
+                'layoutCacheKey' => $this->layoutCacheKeyMock,
+            ]
         );
     }
 

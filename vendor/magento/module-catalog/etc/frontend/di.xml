@@ -13,11 +13,6 @@
             </argument>
         </arguments>
     </virtualType>
-    <type name="Magento\Catalog\Model\ResourceModel\Category\Collection">
-        <arguments>
-            <argument name="fetchStrategy" xsi:type="object">Magento\Catalog\Model\ResourceModel\Category\Collection\FetchStrategy</argument>
-        </arguments>
-    </type>
     <type name="Magento\Catalog\Model\Indexer\AbstractFlatState">
         <arguments>
             <argument name="isAvailable" xsi:type="boolean">true</argument>
@@ -91,12 +86,42 @@
             </argument>
         </arguments>
     </type>
+    <type name="Magento\Catalog\Block\Product\View\Gallery">
+        <arguments>
+            <argument name="galleryImagesConfig" xsi:type="array">
+                <item name="small_image" xsi:type="array">
+                    <item name="image_id" xsi:type="string">product_page_image_small</item>
+                    <item name="data_object_key" xsi:type="string">small_image_url</item>
+                    <item name="json_object_key" xsi:type="string">thumb</item>
+                </item>
+                <item name="medium_image" xsi:type="array">
+                    <item name="image_id" xsi:type="string">product_page_image_medium</item>
+                    <item name="data_object_key" xsi:type="string">medium_image_url</item>
+                    <item name="json_object_key" xsi:type="string">img</item>
+                </item>
+                <item name="large_image" xsi:type="array">
+                    <item name="image_id" xsi:type="string">product_page_image_large</item>
+                    <item name="data_object_key" xsi:type="string">large_image_url</item>
+                    <item name="json_object_key" xsi:type="string">full</item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
     <type name="Magento\Framework\App\ResourceConnection">
         <plugin name="get_catalog_category_product_index_table_name" type="Magento\Catalog\Model\Indexer\Category\Product\Plugin\TableResolver"/>
         <plugin name="get_catalog_product_price_index_table_name" type="Magento\Catalog\Model\Indexer\Product\Price\Plugin\TableResolver"/>
     </type>
     <type name="Magento\Framework\App\Action\AbstractAction">
-        <plugin name="catalog_app_action_dispatch_controller_context_plugin" type="Magento\Catalog\Plugin\Framework\App\Action\ContextPlugin" />
+        <plugin name="catalog_app_action_dispatch_controller_context_plugin"
+                type="Magento\Catalog\Plugin\Framework\App\Action\ContextPlugin" />
     </type>
-    <preference for="Magento\Catalog\Model\Product\Type\Price" type="Magento\Catalog\Model\Product\Type\FrontSpecialPrice" />
+    <type name="\Magento\PageCache\Model\PageCacheTagsPreprocessorComposite">
+        <arguments>
+            <argument name="preprocessors" xsi:type="array">
+                <item name="catalog_product_view" xsi:type="array">
+                    <item name="product_not_found" xsi:type="object">Magento\Catalog\Model\ProductNotFoundPageCacheTags</item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
 </config>

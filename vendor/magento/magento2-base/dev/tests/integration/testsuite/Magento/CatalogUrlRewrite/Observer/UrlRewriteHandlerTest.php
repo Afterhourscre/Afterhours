@@ -40,7 +40,7 @@ class UrlRewriteHandlerTest extends TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->objectManager = Bootstrap::getObjectManager();
         $this->productRepository = $this->objectManager->get(ProductRepositoryInterface::class);
@@ -53,6 +53,7 @@ class UrlRewriteHandlerTest extends TestCase
      *
      * @magentoDataFixture Magento/CatalogUrlRewrite/Fixtures/product_custom_url_key.php
      * @magentoConfigFixture admin_store catalog/seo/product_use_categories 1
+     * @magentoConfigFixture default/catalog/seo/generate_category_product_rewrites 1
      */
     public function testGenerateProductUrlRewrites()
     {
@@ -65,23 +66,29 @@ class UrlRewriteHandlerTest extends TestCase
             ->setAnchorsAbove(false);
 
         $generatedUrls = $this->handler->generateProductUrlRewrites($category);
-        $actual = array_values(array_map(function (UrlRewrite $urlRewrite) {
-            return $urlRewrite->getRequestPath();
-        }, $generatedUrls));
+        $actual = array_values(
+            array_map(
+                function (UrlRewrite $urlRewrite) {
+                    return $urlRewrite->getRequestPath();
+                },
+                $generatedUrls
+            )
+        );
 
         $expected = [
             'store-1-key.html', // the Default store
-            'cat-1/store-1-key.html', // the Default store with Category URL key
-            '/store-1-key.html', // an anchor URL the Default store
+            'cat-1/store-1-key.html', // the Default store with Category URL key, first store view
+            'cat-1/store-1-key.html', // the Default store with Category URL key, second store view
             'p002.html', // the Secondary store
-            'cat-1-2/p002.html', // the Secondary store with Category URL key
-            '/p002.html', // an anchor URL the Secondary store
+            'cat-1-2/p002.html', // the Secondary store with Category URL key, first store view
+            'cat-1-2/p002.html', // the Secondary store with Category URL key, second store view
         ];
         self::assertEquals($expected, $actual, 'Generated URLs rewrites do not match.');
     }
 
     /**
      * @magentoDataFixture Magento/CatalogUrlRewrite/_files/category_with_products.php
+     * @magentoConfigFixture default/catalog/seo/generate_category_product_rewrites 1
      */
     public function testGenerateProductUrlRewrites2()
     {
@@ -93,14 +100,18 @@ class UrlRewriteHandlerTest extends TestCase
         $category->setAffectedProductIds([$product1->getId(), $product2->getId()]);
         $category->setAnchorsAbove(false);
         $generatedUrls = $this->handler->generateProductUrlRewrites($category);
-        $actual = array_values(array_map(function (UrlRewrite $urlRewrite) {
-            return $urlRewrite->getRequestPath();
-        }, $generatedUrls));
+        $actual = array_values(
+            array_map(
+                function (UrlRewrite $urlRewrite) {
+                    return $urlRewrite->getRequestPath();
+                },
+                $generatedUrls
+            )
+        );
 
         $expected = [
             'simple-product.html',
-            'category-1/simple-product.html',
-            '/simple-product.html',
+            'category-1/simple-product.html'
         ];
         $this->assertEquals($expected, $actual, 'Generated URLs rewrites do not match.');
     }

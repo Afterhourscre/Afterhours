@@ -6,22 +6,17 @@
  */
 namespace Magento\Newsletter\Controller\Adminhtml\Template;
 
-use Magento\Framework\Exception\NotFoundException;
+use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
 
-class Drop extends \Magento\Newsletter\Controller\Adminhtml\Template
+class Drop extends \Magento\Newsletter\Controller\Adminhtml\Template implements HttpPostActionInterface
 {
     /**
      * Drop Newsletter Template
      *
      * @return void
-     * @throws NotFoundException
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new NotFoundException(__('Page not found'));
-        }
-
         $this->_view->loadLayout('newsletter_template_preview_popup');
         $this->_view->renderLayout();
     }

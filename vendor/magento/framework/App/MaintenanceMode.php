@@ -48,7 +48,7 @@ class MaintenanceMode
      * @param \Magento\Framework\Filesystem $filesystem
      * @param Manager|null $eventManager
      */
-    public function __construct(Filesystem $filesystem, Manager $eventManager = null)
+    public function __construct(Filesystem $filesystem, ?Manager $eventManager = null)
     {
         $this->flagDir = $filesystem->getDirectoryWrite(self::FLAG_DIR);
         $this->eventManager = $eventManager ?: ObjectManager::getInstance()->get(Manager::class);
@@ -110,7 +110,7 @@ class MaintenanceMode
             throw new \InvalidArgumentException("One or more IP-addresses is expected (comma-separated)\n");
         }
         $result = $this->flagDir->writeFile(self::IP_FILENAME, $addresses);
-        return false !== $result ? true : false;
+        return false !== $result;
     }
 
     /**

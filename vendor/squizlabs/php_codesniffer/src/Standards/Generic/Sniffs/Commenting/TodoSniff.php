@@ -4,13 +4,13 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Util\Tokens;
 
 class TodoSniff implements Sniff
@@ -21,20 +21,20 @@ class TodoSniff implements Sniff
      *
      * @var array
      */
-    public $supportedTokenizers = array(
-                                   'PHP',
-                                   'JS',
-                                  );
+    public $supportedTokenizers = [
+        'PHP',
+        'JS',
+    ];
 
 
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
-        return Tokens::$commentTokens;
+        return array_diff(Tokens::$commentTokens, Tokens::$phpcsCommentTokens);
 
     }//end register()
 
@@ -53,7 +53,7 @@ class TodoSniff implements Sniff
         $tokens = $phpcsFile->getTokens();
 
         $content = $tokens[$stackPtr]['content'];
-        $matches = array();
+        $matches = [];
         preg_match('/(?:\A|[^\p{L}]+)todo([^\p{L}]+(.*)|\Z)/ui', $content, $matches);
         if (empty($matches) === false) {
             // Clear whitespace and some common characters not required at
@@ -62,7 +62,7 @@ class TodoSniff implements Sniff
             $todoMessage = trim($matches[1]);
             $todoMessage = trim($todoMessage, '-:[](). ');
             $error       = 'Comment refers to a TODO task';
-            $data        = array($todoMessage);
+            $data        = [$todoMessage];
             if ($todoMessage !== '') {
                 $type   = 'TaskFound';
                 $error .= ' "%s"';

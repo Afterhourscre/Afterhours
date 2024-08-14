@@ -8,24 +8,37 @@
  * Environment initialization
  */
 error_reporting(E_ALL);
-stream_wrapper_unregister('phar');
+if (in_array('phar', \stream_get_wrappers())) {
+    stream_wrapper_unregister('phar');
+}
 #ini_set('display_errors', 1);
 
 /* PHP version validation */
-if (!defined('PHP_VERSION_ID') || !(PHP_VERSION_ID === 70002 || PHP_VERSION_ID === 70004 || PHP_VERSION_ID >= 70006)) {
+if (!defined('PHP_VERSION_ID') || PHP_VERSION_ID < 80100) {
     if (PHP_SAPI == 'cli') {
-        echo 'Magento supports 7.0.2, 7.0.4, and 7.0.6 or later. ' .
-            'Please read http://devdocs.magento.com/guides/v2.2/install-gde/system-requirements.html';
+        echo 'Magento supports PHP 8.1.0 or later. ' .
+            'Please read https://experienceleague.adobe.com/docs/commerce-operations/installation-guide/system-requirements.html';
     } else {
         echo <<<HTML
 <div style="font:12px/1.35em arial, helvetica, sans-serif;">
-    <p>Magento supports PHP 7.0.2, 7.0.4, and 7.0.6 or later. Please read
-    <a target="_blank" href="http://devdocs.magento.com/guides/v2.2/install-gde/system-requirements.html">
+    <p>Magento supports PHP 8.1.0 or later. Please read
+    <a target="_blank" href="https://experienceleague.adobe.com/docs/commerce-operations/installation-guide/system-requirements.html">
     Magento System Requirements</a>.
 </div>
 HTML;
     }
+    http_response_code(503);
     exit(1);
+}
+
+// PHP 8 compatibility. Define constants that are not present in PHP < 8.0
+if (!defined('PHP_VERSION_ID') || PHP_VERSION_ID < 80000) {
+    if (!defined('T_NAME_QUALIFIED')) {
+        define('T_NAME_QUALIFIED', 24001);
+    }
+    if (!defined('T_NAME_FULLY_QUALIFIED')) {
+        define('T_NAME_FULLY_QUALIFIED', 24002);
+    }
 }
 
 require_once __DIR__ . '/autoload.php';

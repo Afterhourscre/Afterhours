@@ -6,7 +6,7 @@
  */
 -->
 <entities xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:noNamespaceSchemaLocation="../../../../../../../dev/tests/acceptance/vendor/magento/magento2-functional-testing-framework/src/Magento/FunctionalTestingFramework/DataGenerator/etc/dataProfileSchema.xsd">
+          xsi:noNamespaceSchemaLocation="urn:magento:mftf:DataGenerator/etc/dataProfileSchema.xsd">
     <entity name="EnabledMinimumOrderAmount500" type="sales_minimum_order">
         <requiredEntity type="active">EnableMinimumOrderCheck</requiredEntity>
         <requiredEntity type="amount">MinimumOrderAmount500</requiredEntity>
@@ -24,23 +24,20 @@
     <entity name="DisableMinimumOrderCheck" type="active">
         <data key="value">0</data>
     </entity>
-
-    <entity name="CheckoutShippingTotalsSortOrder" type="checkout_totals_sort_order">
-        <requiredEntity type="shipping">ShippingTotalsSortOrder</requiredEntity>
+    <entity name="EnableMinimumOrderAmountConfigData">
+        <data key="path">sales/minimum_order/active</data>
+        <data key="value">1</data>
     </entity>
-    <entity name="ShippingTotalsSortOrder" type="shipping">
-        <data key="value">27</data>
+    <entity name="DisableMinimumOrderAmountConfigData">
+        <data key="path">sales/minimum_order/active</data>
+        <data key="value">0</data>
     </entity>
-
-    <entity name="DefaultTotalsSortOrder" type="checkout_totals_sort_order">
-        <requiredEntity type="shipping">DefaultShippingTotalSortOrder</requiredEntity>
+    <entity name="SetMinimumOrderAmount100ConfigData">
+        <data key="path">sales/minimum_order/amount</data>
+        <data key="value">100</data>
     </entity>
-
-    <entity name="DefaultShippingTotalSortOrder" type="shipping">
-        <requiredEntity type="shipping_inherit_value">DefaultTotalFlagDisabled</requiredEntity>
-    </entity>
-
-    <entity name="DefaultTotalFlagDisabled" type="shipping_inherit_value">
+    <entity name="SetDefaultMinimumOrderAmountConfigData">
+        <data key="path">sales/minimum_order/amount</data>
         <data key="value">0</data>
     </entity>
 </entities>

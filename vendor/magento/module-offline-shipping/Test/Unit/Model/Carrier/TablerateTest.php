@@ -3,94 +3,108 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\OfflineShipping\Test\Unit\Model\Carrier;
 
+use Magento\Catalog\Model\Product;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\OfflineShipping\Model\Carrier\Tablerate;
 use Magento\OfflineShipping\Model\ResourceModel\Carrier\TablerateFactory;
+use Magento\Quote\Model\Quote\Address\RateRequest;
+use Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory;
 use Magento\Quote\Model\Quote\Address\RateResult\Method;
+use Magento\Quote\Model\Quote\Address\RateResult\MethodFactory;
+use Magento\Sales\Model\Order\Item;
 use Magento\Shipping\Model\Rate\Result;
+use Magento\Shipping\Model\Rate\ResultFactory;
+use PHPUnit\Framework\Constraint\Callback;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class TablerateTest extends \PHPUnit\Framework\TestCase
+class TablerateTest extends TestCase
 {
     /**
-     * @var \Magento\OfflineShipping\Model\Carrier\Tablerate
+     * @var Tablerate
      */
     private $model;
 
     /**
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var ScopeConfigInterface|MockObject
      */
     private $scopeConfigMock;
 
     /**
-     * @var \Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory|\PHPUnit_Framework_MockObject_MockObject
+     * @var ErrorFactory|MockObject
      */
     private $errorFactoryMock;
 
     /**
-     * @var \Psr\Log\LoggerInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var LoggerInterface|MockObject
      */
     private $loggerMock;
 
     /**
-     * @var \Magento\Shipping\Model\Rate\ResultFactory|\PHPUnit_Framework_MockObject_MockObject
+     * @var ResultFactory|MockObject
      */
     private $resultFactoryMock;
 
     /**
-     * @var \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory|\PHPUnit_Framework_MockObject_MockObject
+     * @var MethodFactory|MockObject
      */
     private $methodFactoryMock;
 
     /**
-     * @var TablerateFactory|\PHPUnit_Framework_MockObject_MockObject
+     * @var TablerateFactory|MockObject
      */
     private $tablerateFactoryMock;
 
     /**
-     * @var \Magento\Framework\TestFramework\Unit\Helper\ObjectManager
+     * @var ObjectManager
      */
     private $helper;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-
-        $this->scopeConfigMock = $this->getMockBuilder(\Magento\Framework\App\Config\ScopeConfigInterface::class)
+        $this->scopeConfigMock = $this->getMockBuilder(ScopeConfigInterface::class)
             ->disableOriginalConstructor()
             ->setMethods(['create', 'isSetFlag', 'getValue'])
-            ->getMock();
+            ->getMockForAbstractClass();
 
         $this->errorFactoryMock = $this
-            ->getMockBuilder(\Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory::class)
+            ->getMockBuilder(ErrorFactory::class)
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->loggerMock = $this->getMockBuilder(\Psr\Log\LoggerInterface::class)
+        $this->loggerMock = $this->getMockBuilder(LoggerInterface::class)
             ->disableOriginalConstructor()
-            ->getMock();
+            ->getMockForAbstractClass();
 
-        $this->resultFactoryMock = $this->getMockBuilder(\Magento\Shipping\Model\Rate\ResultFactory::class)
+        $this->resultFactoryMock = $this->getMockBuilder(ResultFactory::class)
             ->disableOriginalConstructor()
             ->setMethods(['create'])
             ->getMock();
 
         $this->methodFactoryMock = $this
-            ->getMockBuilder(\Magento\Quote\Model\Quote\Address\RateResult\MethodFactory::class)
+            ->getMockBuilder(MethodFactory::class)
             ->disableOriginalConstructor()
             ->setMethods(['create'])
             ->getMock();
 
         $this->tablerateFactoryMock = $this
-            ->getMockBuilder(\Magento\OfflineShipping\Model\ResourceModel\Carrier\TablerateFactory::class)
+            ->getMockBuilder(TablerateFactory::class)
             ->disableOriginalConstructor()
             ->setMethods(['create', 'getRate'])
             ->getMock();
 
-        $this->helper = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
+        $this->helper = new ObjectManager($this);
         $this->model = $this->helper->getObject(
-            \Magento\OfflineShipping\Model\Carrier\Tablerate::class,
+            Tablerate::class,
             [
                 'scopeConfig' => $this->scopeConfigMock,
                 'rateErrorFactory' => $this->errorFactoryMock,
@@ -104,22 +118,23 @@ class TablerateTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @param bool $freeshipping
+     * @param bool $isShipSeparately
      * @dataProvider collectRatesWithGlobalFreeShippingDataProvider
      * @return void
      */
-    public function testCollectRatesWithGlobalFreeShipping($freeshipping)
+    public function testCollectRatesWithGlobalFreeShipping($freeshipping, $isShipSeparately)
     {
         $rate = [
             'price' => 15,
             'cost' => 2
         ];
 
-        $request = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address\RateRequest::class)
+        $request = $this->getMockBuilder(RateRequest::class)
             ->disableOriginalConstructor()
             ->setMethods(['getAllItems', 'getPackageQty', 'getFreeShipping'])
             ->getMock();
 
-        $item = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)
+        $item = $this->getMockBuilder(Item::class)
             ->disableOriginalConstructor()
             ->setMethods(
                 [
@@ -135,12 +150,12 @@ class TablerateTest extends \PHPUnit\Framework\TestCase
             )
             ->getMock();
 
-        $product = $this->getMockBuilder(\Magento\Catalog\Model\Product::class)
+        $product = $this->getMockBuilder(Product::class)
             ->disableOriginalConstructor()
             ->setMethods(['isVirtual'])
             ->getMock();
 
-        $tablerate = $this->getMockBuilder(\Magento\OfflineShipping\Model\Carrier\Tablerate::class)
+        $tablerate = $this->getMockBuilder(Tablerate::class)
             ->disableOriginalConstructor()
             ->setMethods(['getRate'])
             ->getMock();
@@ -163,11 +178,17 @@ class TablerateTest extends \PHPUnit\Framework\TestCase
         $this->resultFactoryMock->expects($this->once())->method('create')->willReturn($result);
 
         $product->expects($this->any())->method('isVirtual')->willReturn(false);
-
         $item->expects($this->any())->method('getProduct')->willReturn($product);
-        $item->expects($this->any())->method('getFreeShipping')->willReturn(1);
         $item->expects($this->any())->method('getQty')->willReturn(1);
-
+        if ($isShipSeparately) {
+            $freeShippingReturnValue = true;
+            $item->expects($this->any())->method('getHasChildren')->willReturn(1);
+            $item->expects($this->any())->method('isShipSeparately')->willReturn(1);
+            $item->expects($this->any())->method('getChildren')->willReturn([$item]);
+        } else {
+            $freeShippingReturnValue = "1";
+        }
+        $item->expects($this->any())->method('getFreeShipping')->willReturn($freeShippingReturnValue);
         $request->expects($this->any())->method('getAllItems')->willReturn([$item]);
         $request->expects($this->any())->method('getPackageQty')->willReturn(1);
 
@@ -194,7 +215,7 @@ class TablerateTest extends \PHPUnit\Framework\TestCase
      * Captures the argument and saves it in the given variable
      *
      * @param $captureVar
-     * @return \PHPUnit\Framework\Constraint\Callback
+     * @return Callback
      */
     private function captureArg(&$captureVar)
     {
@@ -211,8 +232,9 @@ class TablerateTest extends \PHPUnit\Framework\TestCase
     public function collectRatesWithGlobalFreeShippingDataProvider()
     {
         return [
-            ['freeshipping' => true],
-            ['freeshipping' => false]
+            ['freeshipping' => true, 'isShipSeparately' => false],
+            ['freeshipping' => false, 'isShipSeparately' => false],
+            ['freeshipping' => true, 'isShipSeparately' => true]
         ];
     }
 }

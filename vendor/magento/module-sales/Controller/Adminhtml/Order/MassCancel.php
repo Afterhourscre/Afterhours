@@ -5,15 +5,14 @@
  */
 namespace Magento\Sales\Controller\Adminhtml\Order;
 
-use Magento\Framework\Exception\NotFoundException;
+use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 use Magento\Backend\App\Action\Context;
 use Magento\Ui\Component\MassAction\Filter;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
-use Magento\Framework\App\Request\Http as HttpRequest;
 use Magento\Sales\Api\OrderManagementInterface;
 
-class MassCancel extends \Magento\Sales\Controller\Adminhtml\Order\AbstractMassAction
+class MassCancel extends \Magento\Sales\Controller\Adminhtml\Order\AbstractMassAction implements HttpPostActionInterface
 {
     /**
      * Authorization level of a basic admin session
@@ -45,20 +44,6 @@ class MassCancel extends \Magento\Sales\Controller\Adminhtml\Order\AbstractMassA
     }
 
     /**
-     * @inheritDoc
-     */
-    public function execute()
-    {
-        /** @var HttpRequest $request */
-        $request = $this->getRequest();
-        if (!$request->isPost()) {
-            throw new NotFoundException(__('Page not found.'));
-        }
-
-        return parent::execute();
-    }
-
-    /**
      * Cancel selected orders
      *
      * @param AbstractCollection $collection
@@ -77,13 +62,13 @@ class MassCancel extends \Magento\Sales\Controller\Adminhtml\Order\AbstractMassA
         $countNonCancelOrder = $collection->count() - $countCancelOrder;
 
         if ($countNonCancelOrder && $countCancelOrder) {
-            $this->messageManager->addError(__('%1 order(s) cannot be canceled.', $countNonCancelOrder));
+            $this->messageManager->addErrorMessage(__('%1 order(s) cannot be canceled.', $countNonCancelOrder));
         } elseif ($countNonCancelOrder) {
-            $this->messageManager->addError(__('You cannot cancel the order(s).'));
+            $this->messageManager->addErrorMessage(__('You cannot cancel the order(s).'));
         }
 
         if ($countCancelOrder) {
-            $this->messageManager->addSuccess(__('We canceled %1 order(s).', $countCancelOrder));
+            $this->messageManager->addSuccessMessage(__('We canceled %1 order(s).', $countCancelOrder));
         }
         $resultRedirect = $this->resultRedirectFactory->create();
         $resultRedirect->setPath($this->getComponentRefererUrl());

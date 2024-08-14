@@ -11,7 +11,7 @@
         <arguments>
             <argument name="attributeSetName" type="string" defaultValue="Default"/>
         </arguments>
-        <click selector="{{AdminProductAttributeSetGridSection.attributeSetName(attributeSetName)}}" stepKey="chooseAttributeSet"/>
+        <click selector="{{AdminProductAttributeSetGridSection.AttributeSetName(attributeSetName)}}" stepKey="chooseAttributeSet"/>
         <waitForPageLoad stepKey="waitForAttributeSetPageLoad"/>
     </actionGroup>
 </actionGroups>

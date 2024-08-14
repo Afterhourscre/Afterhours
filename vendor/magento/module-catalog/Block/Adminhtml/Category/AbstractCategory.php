@@ -7,11 +7,6 @@ namespace Magento\Catalog\Block\Adminhtml\Category;
 
 use Magento\Framework\Data\Tree\Node;
 use Magento\Store\Model\Store;
-use Magento\Framework\Registry;
-use Magento\Catalog\Model\ResourceModel\Category\Tree;
-use Magento\Catalog\Model\CategoryFactory;
-use Magento\Backend\Block\Template\Context;
-use Magento\Catalog\Model\Category;
 
 /**
  * Class AbstractCategory
@@ -21,17 +16,17 @@ class AbstractCategory extends \Magento\Backend\Block\Template
     /**
      * Core registry
      *
-     * @var Registry
+     * @var \Magento\Framework\Registry
      */
     protected $_coreRegistry = null;
 
     /**
-     * @var Tree
+     * @var \Magento\Catalog\Model\ResourceModel\Category\Tree
      */
     protected $_categoryTree;
 
     /**
-     * @var CategoryFactory
+     * @var \Magento\Catalog\Model\CategoryFactory
      */
     protected $_categoryFactory;
 
@@ -41,17 +36,17 @@ class AbstractCategory extends \Magento\Backend\Block\Template
     protected $_withProductCount;
 
     /**
-     * @param Context $context
-     * @param Tree $categoryTree
-     * @param Registry $registry
-     * @param CategoryFactory $categoryFactory
+     * @param \Magento\Backend\Block\Template\Context $context
+     * @param \Magento\Catalog\Model\ResourceModel\Category\Tree $categoryTree
+     * @param \Magento\Framework\Registry $registry
+     * @param \Magento\Catalog\Model\CategoryFactory $categoryFactory
      * @param array $data
      */
     public function __construct(
-        Context $context,
-        Tree $categoryTree,
-        Registry $registry,
-        CategoryFactory $categoryFactory,
+        \Magento\Backend\Block\Template\Context $context,
+        \Magento\Catalog\Model\ResourceModel\Category\Tree $categoryTree,
+        \Magento\Framework\Registry $registry,
+        \Magento\Catalog\Model\CategoryFactory $categoryFactory,
         array $data = []
     ) {
         $this->_categoryTree = $categoryTree;
@@ -79,10 +74,9 @@ class AbstractCategory extends \Magento\Backend\Block\Template
     public function getCategoryId()
     {
         if ($this->getCategory()) {
-            return $this->getCategory()
-                ->getId();
+            return $this->getCategory()->getId();
         }
-        return Category::TREE_ROOT_ID;
+        return \Magento\Catalog\Model\Category::TREE_ROOT_ID;
     }
 
     /**
@@ -92,8 +86,7 @@ class AbstractCategory extends \Magento\Backend\Block\Template
      */
     public function getCategoryName()
     {
-        return $this->getCategory()
-            ->getName();
+        return $this->getCategory()->getName();
     }
 
     /**
@@ -104,10 +97,9 @@ class AbstractCategory extends \Magento\Backend\Block\Template
     public function getCategoryPath()
     {
         if ($this->getCategory()) {
-            return $this->getCategory()
-                ->getPath();
+            return $this->getCategory()->getPath();
         }
-        return Category::TREE_ROOT_ID;
+        return \Magento\Catalog\Model\Category::TREE_ROOT_ID;
     }
 
     /**
@@ -131,8 +123,7 @@ class AbstractCategory extends \Magento\Backend\Block\Template
      */
     public function getStore()
     {
-        $storeId = (int)$this->getRequest()
-            ->getParam('store');
+        $storeId = (int)$this->getRequest()->getParam('store');
         return $this->_storeManager->getStore($storeId);
     }
 
@@ -151,14 +142,13 @@ class AbstractCategory extends \Magento\Backend\Block\Template
         }
         $root = $this->_coreRegistry->registry('root');
         if ($root === null) {
-            $storeId = (int)$this->getRequest()
-                ->getParam('store');
+            $storeId = (int)$this->getRequest()->getParam('store');
 
             if ($storeId) {
                 $store = $this->_storeManager->getStore($storeId);
                 $rootId = $store->getRootCategoryId();
             } else {
-                $rootId = Category::TREE_ROOT_ID;
+                $rootId = \Magento\Catalog\Model\Category::TREE_ROOT_ID;
             }
 
             $tree = $this->_categoryTree->load(null, $recursionLevel);
@@ -173,7 +163,7 @@ class AbstractCategory extends \Magento\Backend\Block\Template
 
             if ($root) {
                 $root->setIsVisible(true);
-                if ($root->getId() == Category::TREE_ROOT_ID) {
+                if ($root->getId() == \Magento\Catalog\Model\Category::TREE_ROOT_ID) {
                     $root->setName(__('Root'));
                 }
             }
@@ -191,7 +181,7 @@ class AbstractCategory extends \Magento\Backend\Block\Template
      */
     protected function _getDefaultStoreId()
     {
-        return Store::DEFAULT_STORE_ID;
+        return \Magento\Store\Model\Store::DEFAULT_STORE_ID;
     }
 
     /**
@@ -201,12 +191,10 @@ class AbstractCategory extends \Magento\Backend\Block\Template
      */
     public function getCategoryCollection()
     {
-        $storeId = $this->getRequest()
-            ->getParam('store', $this->_getDefaultStoreId());
+        $storeId = $this->getRequest()->getParam('store', $this->_getDefaultStoreId());
         $collection = $this->getData('category_collection');
         if ($collection === null) {
-            $collection = $this->_categoryFactory->create()
-                ->getCollection();
+            $collection = $this->_categoryFactory->create()->getCollection();
 
             $collection->addAttributeToSelect(
                 'name'
@@ -241,11 +229,11 @@ class AbstractCategory extends \Magento\Backend\Block\Template
         if (null === $root) {
             $ids = $this->_categoryTree->getExistingCategoryIdsBySpecifiedIds($ids);
             $tree = $this->_categoryTree->loadByIds($ids);
-            $rootId = Category::TREE_ROOT_ID;
+            $rootId = \Magento\Catalog\Model\Category::TREE_ROOT_ID;
             $root = $tree->getNodeById($rootId);
-            if ($root && $rootId != Category::TREE_ROOT_ID) {
+            if ($root && $rootId != \Magento\Catalog\Model\Category::TREE_ROOT_ID) {
                 $root->setIsVisible(true);
-            } elseif ($root && $root->getId() == Category::TREE_ROOT_ID) {
+            } elseif ($root && $root->getId() == \Magento\Catalog\Model\Category::TREE_ROOT_ID) {
                 $root->setName(__('Root'));
             }
 
@@ -268,9 +256,9 @@ class AbstractCategory extends \Magento\Backend\Block\Template
         $node = $this->_categoryTree->loadNode($nodeId);
         $node->loadChildren($recursionLevel);
 
-        if ($node && $nodeId != Category::TREE_ROOT_ID) {
+        if ($node && $nodeId != \Magento\Catalog\Model\Category::TREE_ROOT_ID) {
             $node->setIsVisible(true);
-        } elseif ($node && $node->getId() == Category::TREE_ROOT_ID) {
+        } elseif ($node && $node->getId() == \Magento\Catalog\Model\Category::TREE_ROOT_ID) {
             $node->setName(__('Root'));
         }
 
@@ -287,12 +275,7 @@ class AbstractCategory extends \Magento\Backend\Block\Template
      */
     public function getSaveUrl(array $args = [])
     {
-        $params = [
-            '_current' => false,
-            '_query' => false,
-            'store' => $this->getStore()
-                ->getId()
-        ];
+        $params = ['_current' => false, '_query' => false, 'store' => $this->getStore()->getId()];
         $params = array_merge($params, $args);
         return $this->getUrl('catalog/*/save', $params);
     }
@@ -319,7 +302,7 @@ class AbstractCategory extends \Magento\Backend\Block\Template
     {
         $ids = $this->getData('root_ids');
         if ($ids === null) {
-            $ids = [Category::TREE_ROOT_ID];
+            $ids = [\Magento\Catalog\Model\Category::TREE_ROOT_ID];
             foreach ($this->_storeManager->getGroups() as $store) {
                 $ids[] = $store->getRootCategoryId();
             }

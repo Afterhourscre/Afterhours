@@ -10,26 +10,28 @@ namespace Magento\Eav\Model\Validator\Attribute;
 use Magento\Catalog\Ui\DataProvider\Product\Form\Modifier\AbstractModifier;
 use Magento\Eav\Model\Entity\Attribute;
 use Magento\Framework\Validator\AbstractValidator;
-use Zend_Validate;
-use Zend_Validate_Exception;
+use Magento\Framework\Validator\StringLength;
+use Magento\Framework\Validator\ValidateException;
+use Magento\Framework\Validator\ValidatorChain;
 
+/**
+ * Class Code
+ *
+ * Validation EAV attribute code
+ */
 class Code extends AbstractValidator
 {
     /**
      * Validation pattern for attribute code
      */
-    const VALIDATION_RULE_PATTERN = '/^[a-zA-Z]+[a-zA-Z0-9_]*$/u';
+    public const VALIDATION_RULE_PATTERN = '/^[a-zA-Z]+[a-zA-Z0-9_]*$/u';
 
     /**
-     * Returns true if and only if $value meets the validation requirements
-     *
-     * If $value fails validation, then this method returns false, and
-     * getMessages() will return an array of messages that explain why the
-     * validation failed.
+     * Validates the correctness of the attribute code
      *
      * @param string $attributeCode
-     * @return boolean
-     * @throws Zend_Validate_Exception If validation of $attributeCode is impossible
+     * @return bool
+     * @throws ValidateException
      */
     public function isValid($attributeCode): bool
     {
@@ -37,6 +39,7 @@ class Code extends AbstractValidator
         /**
          * Check attribute_code for allowed characters
          */
+        $attributeCode = $attributeCode === null ? '' : $attributeCode;
         if (trim($attributeCode)
             && !preg_match(self::VALIDATION_RULE_PATTERN, trim($attributeCode))
         ) {
@@ -52,9 +55,9 @@ class Code extends AbstractValidator
          */
         $minLength = Attribute::ATTRIBUTE_CODE_MIN_LENGTH;
         $maxLength = Attribute::ATTRIBUTE_CODE_MAX_LENGTH;
-        $isAllowedLength = Zend_Validate::is(
+        $isAllowedLength = ValidatorChain::is(
             trim($attributeCode),
-            'StringLength',
+            StringLength::class,
             ['min' => $minLength, 'max' => $maxLength]
         );
         if (!$isAllowedLength) {

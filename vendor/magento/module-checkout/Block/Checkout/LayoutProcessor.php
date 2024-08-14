@@ -3,19 +3,22 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Checkout\Block\Checkout;
 
 use Magento\Checkout\Helper\Data;
 use Magento\Customer\Model\AttributeMetadataDataProvider;
 use Magento\Customer\Model\Options;
-use Magento\Framework\App\ObjectManager;
-use Magento\Store\Api\StoreResolverInterface;
+use Magento\Eav\Api\Data\AttributeInterface;
+use Magento\Shipping\Model\Config;
+use Magento\Store\Model\StoreManagerInterface;
 use Magento\Ui\Component\Form\AttributeMapper;
 
 /**
- * Class LayoutProcessor
+ * Checkout Layout Processor
  */
-class LayoutProcessor implements \Magento\Checkout\Block\Checkout\LayoutProcessorInterface
+class LayoutProcessor implements LayoutProcessorInterface
 {
     /**
      * @var AttributeMetadataDataProvider
@@ -43,12 +46,12 @@ class LayoutProcessor implements \Magento\Checkout\Block\Checkout\LayoutProcesso
     private $checkoutDataHelper;
 
     /**
-     * @var StoreResolverInterface
+     * @var StoreManagerInterface
      */
-    private $storeResolver;
+    private $storeManager;
 
     /**
-     * @var \Magento\Shipping\Model\Config
+     * @var Config
      */
     private $shippingConfig;
 
@@ -56,26 +59,37 @@ class LayoutProcessor implements \Magento\Checkout\Block\Checkout\LayoutProcesso
      * @param AttributeMetadataDataProvider $attributeMetadataDataProvider
      * @param AttributeMapper $attributeMapper
      * @param AttributeMerger $merger
-     * @param Options|null $options
+     * @param Options $options
+     * @param Data $checkoutDataHelper
+     * @param Config $shippingConfig
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         AttributeMetadataDataProvider $attributeMetadataDataProvider,
         AttributeMapper $attributeMapper,
         AttributeMerger $merger,
-        Options $options = null
+        Options $options,
+        Data $checkoutDataHelper,
+        Config $shippingConfig,
+        StoreManagerInterface $storeManager
     ) {
         $this->attributeMetadataDataProvider = $attributeMetadataDataProvider;
         $this->attributeMapper = $attributeMapper;
         $this->merger = $merger;
-        $this->options = $options ?? ObjectManager::getInstance()->get(Options::class);
+        $this->options = $options;
+        $this->checkoutDataHelper = $checkoutDataHelper;
+        $this->shippingConfig = $shippingConfig;
+        $this->storeManager = $storeManager;
     }
 
     /**
+     * Get address attributes.
+     *
      * @return array
      */
     private function getAddressAttributes()
     {
-        /** @var \Magento\Eav\Api\Data\AttributeInterface[] $attributes */
+        /** @var AttributeInterface[] $attributes */
         $attributes = $this->attributeMetadataDataProvider->loadAttributesCollection(
             'customer_address',
             'customer_register_address'
@@ -110,6 +124,7 @@ class LayoutProcessor implements \Magento\Checkout\Block\Checkout\LayoutProcesso
             if (!in_array($code, $codes)) {
                 continue;
             }
+            // phpcs:ignore Magento2.Functions.DiscouragedFunction
             $options = call_user_func($attributesToConvert[$code]);
             if (!is_array($options)) {
                 continue;
@@ -117,9 +132,9 @@ class LayoutProcessor implements \Magento\Checkout\Block\Checkout\LayoutProcesso
             $elements[$code]['dataType'] = 'select';
             $elements[$code]['formElement'] = 'select';
 
-            foreach ($options as $key => $value) {
+            foreach ($options as $value) {
                 $elements[$code]['options'][] = [
-                    'value' => $key,
+                    'value' => $value,
                     'label' => $value,
                 ];
             }
@@ -144,8 +159,10 @@ class LayoutProcessor implements \Magento\Checkout\Block\Checkout\LayoutProcesso
         $elements = $this->getAddressAttributes();
         $elements = $this->convertElementsToSelect($elements, $attributesToConvert);
         // The following code is a workaround for custom address attributes
-        if (isset($jsLayout['components']['checkout']['children']['steps']['children']['billing-step']['children']
-            ['payment']['children'])) {
+        if (isset(
+            $jsLayout['components']['checkout']['children']['steps']['children']['billing-step']['children']['payment']
+            ['children']
+        )) {
             $jsLayout['components']['checkout']['children']['steps']['children']['billing-step']['children']
             ['payment']['children'] = $this->processPaymentChildrenComponents(
                 $jsLayout['components']['checkout']['children']['steps']['children']['billing-step']['children']
@@ -153,8 +170,11 @@ class LayoutProcessor implements \Magento\Checkout\Block\Checkout\LayoutProcesso
                 $elements
             );
         }
-        if (isset($jsLayout['components']['checkout']['children']['steps']['children']['shipping-step']['children']
-            ['step-config']['children']['shipping-rates-validation']['children'])) {
+
+        if (isset(
+            $jsLayout['components']['checkout']['children']['steps']['children']['shipping-step']['children']
+            ['step-config']['children']['shipping-rates-validation']['children']
+        )) {
             $jsLayout['components']['checkout']['children']['steps']['children']['shipping-step']['children']
             ['step-config']['children']['shipping-rates-validation']['children'] =
                 $this->processShippingChildrenComponents(
@@ -163,8 +183,10 @@ class LayoutProcessor implements \Magento\Checkout\Block\Checkout\LayoutProcesso
                 );
         }
 
-        if (isset($jsLayout['components']['checkout']['children']['steps']['children']['shipping-step']
-            ['children']['shippingAddress']['children']['shipping-address-fieldset']['children'])) {
+        if (isset(
+            $jsLayout['components']['checkout']['children']['steps']['children']['shipping-step']['children']
+            ['shippingAddress']['children']['shipping-address-fieldset']['children']
+        )) {
             $fields = $jsLayout['components']['checkout']['children']['steps']['children']['shipping-step']
             ['children']['shippingAddress']['children']['shipping-address-fieldset']['children'];
             $jsLayout['components']['checkout']['children']['steps']['children']['shipping-step']
@@ -175,6 +197,7 @@ class LayoutProcessor implements \Magento\Checkout\Block\Checkout\LayoutProcesso
                 $fields
             );
         }
+
         return $jsLayout;
     }
 
@@ -186,8 +209,8 @@ class LayoutProcessor implements \Magento\Checkout\Block\Checkout\LayoutProcesso
      */
     private function processShippingChildrenComponents($shippingRatesLayout)
     {
-        $activeCarriers = $this->getShippingConfig()->getActiveCarriers(
-            $this->getStoreResolver()->getCurrentStoreId()
+        $activeCarriers = $this->shippingConfig->getActiveCarriers(
+            $this->storeManager->getStore()->getId()
         );
         foreach (array_keys($shippingRatesLayout) as $carrierName) {
             $carrierKey = str_replace('-rates-validation', '', $carrierName);
@@ -200,6 +223,7 @@ class LayoutProcessor implements \Magento\Checkout\Block\Checkout\LayoutProcesso
 
     /**
      * Appends billing address form component to payment layout
+     *
      * @param array $paymentLayout
      * @param array $elements
      * @return array
@@ -215,7 +239,7 @@ class LayoutProcessor implements \Magento\Checkout\Block\Checkout\LayoutProcesso
         }
 
         // The if billing address should be displayed on Payment method or page
-        if ($this->getCheckoutDataHelper()->isDisplayBillingOnPaymentMethodAvailable()) {
+        if ($this->checkoutDataHelper->isDisplayBillingOnPaymentMethodAvailable()) {
             $paymentLayout['payments-list']['children'] =
                 array_merge_recursive(
                     $paymentLayout['payments-list']['children'],
@@ -274,8 +298,15 @@ class LayoutProcessor implements \Magento\Checkout\Block\Checkout\LayoutProcesso
             'provider' => 'checkoutProvider',
             'deps' => 'checkoutProvider',
             'dataScopePrefix' => 'billingAddress' . $paymentCode,
+            'billingAddressListProvider' => '${$.name}.billingAddressList',
+            '__disableTmpl' => ['billingAddressListProvider' => false],
             'sortOrder' => 1,
             'children' => [
+                'billingAddressList' => [
+                    'component' => 'Magento_Checkout/js/view/billing-address/list',
+                    'displayArea' => 'billing-address-list',
+                    'template' => 'Magento_Checkout/billing-address/list'
+                ],
                 'form-fields' => [
                     'component' => 'uiComponent',
                     'displayArea' => 'additional-fieldsets',
@@ -284,9 +315,6 @@ class LayoutProcessor implements \Magento\Checkout\Block\Checkout\LayoutProcesso
                         'checkoutProvider',
                         'billingAddress' . $paymentCode,
                         [
-                            'country_id' => [
-                                'sortOrder' => 115,
-                            ],
                             'region' => [
                                 'visible' => false,
                             ],
@@ -302,6 +330,7 @@ class LayoutProcessor implements \Magento\Checkout\Block\Checkout\LayoutProcesso
                                 ],
                                 'filterBy' => [
                                     'target' => '${ $.provider }:${ $.parentScope }.country_id',
+                                    '__disableTmpl' => ['target' => false],
                                     'field' => 'country_id',
                                 ],
                             ],
@@ -333,50 +362,5 @@ class LayoutProcessor implements \Magento\Checkout\Block\Checkout\LayoutProcesso
                 ],
             ],
         ];
-    }
-
-    /**
-     * Get checkout data helper instance
-     *
-     * @return Data
-     * @deprecated 100.1.4
-     */
-    private function getCheckoutDataHelper()
-    {
-        if (!$this->checkoutDataHelper) {
-            $this->checkoutDataHelper = ObjectManager::getInstance()->get(Data::class);
-        }
-
-        return $this->checkoutDataHelper;
-    }
-
-    /**
-     * Retrieve Shipping Configuration.
-     *
-     * @return \Magento\Shipping\Model\Config
-     * @deprecated 100.2.0
-     */
-    private function getShippingConfig()
-    {
-        if (!$this->shippingConfig) {
-            $this->shippingConfig = ObjectManager::getInstance()->get(\Magento\Shipping\Model\Config::class);
-        }
-
-        return $this->shippingConfig;
-    }
-
-    /**
-     * Get store resolver.
-     *
-     * @return StoreResolverInterface
-     * @deprecated 100.2.0
-     */
-    private function getStoreResolver()
-    {
-        if (!$this->storeResolver) {
-            $this->storeResolver = ObjectManager::getInstance()->get(StoreResolverInterface::class);
-        }
-
-        return $this->storeResolver;
     }
 }

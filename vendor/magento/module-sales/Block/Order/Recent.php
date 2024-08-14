@@ -6,9 +6,9 @@
 namespace Magento\Sales\Block\Order;
 
 use Magento\Framework\View\Element\Template\Context;
-use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
 use Magento\Customer\Model\Session;
 use Magento\Sales\Model\Order\Config;
+use Magento\Sales\Model\ResourceModel\Order\CollectionFactoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\App\ObjectManager;
 
@@ -26,7 +26,7 @@ class Recent extends \Magento\Framework\View\Element\Template
     const ORDER_LIMIT = 5;
 
     /**
-     * @var \Magento\Sales\Model\ResourceModel\Order\CollectionFactory
+     * @var CollectionFactoryInterface
      */
     protected $_orderCollectionFactory;
 
@@ -47,7 +47,7 @@ class Recent extends \Magento\Framework\View\Element\Template
 
     /**
      * @param \Magento\Framework\View\Element\Template\Context $context
-     * @param \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory
+     * @param CollectionFactoryInterface $orderCollectionFactory
      * @param \Magento\Customer\Model\Session $customerSession
      * @param \Magento\Sales\Model\Order\Config $orderConfig
      * @param array $data
@@ -55,7 +55,7 @@ class Recent extends \Magento\Framework\View\Element\Template
      */
     public function __construct(
         Context $context,
-        CollectionFactory $orderCollectionFactory,
+        CollectionFactoryInterface $orderCollectionFactory,
         Session $customerSession,
         Config $orderConfig,
         array $data = [],
@@ -71,7 +71,7 @@ class Recent extends \Magento\Framework\View\Element\Template
     }
 
     /**
-     * @return void
+     * @inheritDoc
      */
     protected function _construct()
     {
@@ -82,13 +82,14 @@ class Recent extends \Magento\Framework\View\Element\Template
     /**
      * Get recently placed orders. By default they will be limited by 5.
      */
-    protected function getRecentOrders()
+    private function getRecentOrders()
     {
-        $orders = $this->_orderCollectionFactory->create()->addAttributeToSelect(
+        $customerId = $this->_customerSession->getCustomerId();
+        $orders = $this->_orderCollectionFactory->create($customerId)->addAttributeToSelect(
             '*'
         )->addAttributeToFilter(
             'customer_id',
-            $this->_customerSession->getCustomerId()
+            $customerId
         )->addAttributeToFilter(
             'store_id',
             $this->storeManager->getStore()->getId()
@@ -105,6 +106,8 @@ class Recent extends \Magento\Framework\View\Element\Template
     }
 
     /**
+     * Get order view URL
+     *
      * @param object $order
      * @return string
      */
@@ -114,16 +117,22 @@ class Recent extends \Magento\Framework\View\Element\Template
     }
 
     /**
+     * Get order track URL
+     *
      * @param object $order
      * @return string
+     * @deprecated 102.0.3 Action does not exist
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function getTrackUrl($order)
     {
-        return $this->getUrl('sales/order/track', ['order_id' => $order->getId()]);
+        //phpcs:ignore Magento2.Functions.DiscouragedFunction
+        trigger_error('Method is deprecated', E_USER_DEPRECATED);
+        return '';
     }
 
     /**
-     * @return string
+     * @inheritDoc
      */
     protected function _toHtml()
     {
@@ -134,6 +143,8 @@ class Recent extends \Magento\Framework\View\Element\Template
     }
 
     /**
+     * Get reorder URL
+     *
      * @param object $order
      * @return string
      */

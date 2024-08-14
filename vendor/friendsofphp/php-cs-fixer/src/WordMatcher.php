@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of PHP CS Fixer.
  *
@@ -14,34 +16,28 @@ namespace PhpCsFixer;
 
 /**
  * @author Dariusz Rumiński <dariusz.ruminski@gmail.com>
- * @author SpacePossum
  *
  * @internal
  */
 final class WordMatcher
 {
     /**
-     * @var string[]
+     * @var list<string>
      */
-    private $candidates;
+    private array $candidates;
 
     /**
-     * @param string[] $candidates
+     * @param list<string> $candidates
      */
     public function __construct(array $candidates)
     {
         $this->candidates = $candidates;
     }
 
-    /**
-     * @param string $needle
-     *
-     * @return null|string
-     */
-    public function match($needle)
+    public function match(string $needle): ?string
     {
         $word = null;
-        $distance = ceil(strlen($needle) * 0.35);
+        $distance = ceil(\strlen($needle) * 0.35);
 
         foreach ($this->candidates as $candidate) {
             $candidateDistance = levenshtein($needle, $candidate);

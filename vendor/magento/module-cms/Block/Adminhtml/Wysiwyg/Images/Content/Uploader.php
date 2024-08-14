@@ -3,8 +3,6 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Cms\Block\Adminhtml\Wysiwyg\Images\Content;
 
 /**
@@ -37,6 +35,8 @@ class Uploader extends \Magento\Backend\Block\Media\Uploader
     }
 
     /**
+     * Constructor
+     *
      * @return void
      */
     protected function _construct()
@@ -51,7 +51,7 @@ class Uploader extends \Magento\Backend\Block\Media\Uploader
             $files[] = '*.' . $ext;
         }
         $this->getConfig()->setUrl(
-            $this->_urlBuilder->addSessionParam()->getUrl('cms/*/upload', ['type' => $type])
+            $this->_urlBuilder->getUrl('cms/*/upload', ['type' => $type])
         )->setFileField(
             'image'
         )->setFilters(

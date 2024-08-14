@@ -26,8 +26,6 @@ class Webapi extends \Magento\Backend\Block\Widget\Form\Generic implements
     protected $rootResource;
 
     /**
-     * Acl resource provider
-     *
      * @var \Magento\Framework\Acl\AclResource\ProviderInterface
      */
     protected $aclResourceProvider;
@@ -182,7 +180,7 @@ class Webapi extends \Magento\Backend\Block\Widget\Form\Generic implements
      */
     public function getTree()
     {
-        return $this->integrationData->mapResources($this->getAclResources());
+        return $this->integrationData->mapResources($this->getAclResources(), $this->getSelectedResources());
     }
 
     /**
@@ -196,7 +194,8 @@ class Webapi extends \Magento\Backend\Block\Widget\Form\Generic implements
         $configResource = array_filter(
             $resources,
             function ($node) {
-                return $node['id'] == 'Magento_Backend::admin';
+                return isset($node['id'])
+                    && $node['id'] == 'Magento_Backend::admin';
             }
         );
         $configResource = reset($configResource);

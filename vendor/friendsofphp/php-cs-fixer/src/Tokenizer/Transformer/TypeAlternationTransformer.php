@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of PHP CS Fixer.
  *
@@ -12,59 +14,44 @@
 
 namespace PhpCsFixer\Tokenizer\Transformer;
 
-use PhpCsFixer\Tokenizer\AbstractTransformer;
+use PhpCsFixer\Tokenizer\AbstractTypeTransformer;
 use PhpCsFixer\Tokenizer\CT;
 use PhpCsFixer\Tokenizer\Token;
 use PhpCsFixer\Tokenizer\Tokens;
 
 /**
- * Transform `|` operator into CT::T_TYPE_ALTERNATION in `} catch (ExceptionType1 | ExceptionType2 $e) {`.
+ * Transform `|` operator into CT::T_TYPE_ALTERNATION in `function foo(Type1 | Type2 $x) {`
+ * or `} catch (ExceptionType1 | ExceptionType2 $e) {`.
  *
  * @author Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * @internal
  */
-final class TypeAlternationTransformer extends AbstractTransformer
+final class TypeAlternationTransformer extends AbstractTypeTransformer
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function getCustomTokens()
+    public function getPriority(): int
     {
-        return array(CT::T_TYPE_ALTERNATION);
+        // needs to run after ArrayTypehintTransformer, TypeColonTransformer and AttributeTransformer
+        return -15;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getRequiredPhpVersionId()
+    public function getRequiredPhpVersionId(): int
     {
-        return 70100;
+        return 7_01_00;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function process(Tokens $tokens, Token $token, $index)
+    public function process(Tokens $tokens, Token $token, int $index): void
     {
-        if (!$token->equals('|')) {
-            return;
-        }
+        $this->doProcess($tokens, $index, '|');
+    }
 
-        $prevIndex = $tokens->getPrevMeaningfulToken($index);
-        $prevToken = $tokens[$prevIndex];
+    public function getCustomTokens(): array
+    {
+        return [CT::T_TYPE_ALTERNATION];
+    }
 
-        if (!$prevToken->isGivenKind(T_STRING)) {
-            return;
-        }
-
-        $prevIndex = $tokens->getPrevMeaningfulToken($prevIndex);
-        $prevToken = $tokens[$prevIndex];
-
-        if (!$prevToken->equalsAny(array('(', array(CT::T_TYPE_ALTERNATION)))) {
-            return;
-        }
-
-        $tokens[$index] = new Token(array(CT::T_TYPE_ALTERNATION, '|'));
+    protected function replaceToken(Tokens $tokens, int $index): void
+    {
+        $tokens[$index] = new Token([CT::T_TYPE_ALTERNATION, '|']);
     }
 }

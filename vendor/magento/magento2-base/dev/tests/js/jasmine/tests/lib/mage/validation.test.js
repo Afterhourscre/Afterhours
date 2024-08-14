@@ -184,77 +184,6 @@ define([
         });
     });
 
-    describe('Testing 3 bytes characters only policy (UTF-8)', function () {
-        it('rejects data, if any of the characters cannot be stored using UTF-8 collation', function () {
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, '😅😂', null
-            )).toEqual(false);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, '😅 test 😂', null
-            )).toEqual(false);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, '💩 👻 💀', null
-            )).toEqual(false);
-        });
-
-        it('approves data, if all the characters can be stored using UTF-8 collation', function () {
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, '', null
-            )).toEqual(true);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, '!$-_%ç&#?!', null
-            )).toEqual(true);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, '1234567890', null
-            )).toEqual(true);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, '   ', null
-            )).toEqual(true);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, 'test', null
-            )).toEqual(true);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, 'испытание', null
-            )).toEqual(true);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, 'тест', null
-            )).toEqual(true);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, 'փորձարկում', null
-            )).toEqual(true);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, 'परीक्षण', null
-            )).toEqual(true);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, 'テスト', null
-            )).toEqual(true);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, '테스트', null
-            )).toEqual(true);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, '测试', null
-            )).toEqual(true);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, '測試', null
-            )).toEqual(true);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, 'ทดสอบ', null
-            )).toEqual(true);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, 'δοκιμή', null
-            )).toEqual(true);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, 'اختبار', null
-            )).toEqual(true);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, 'تست', null
-            )).toEqual(true);
-            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
-                $.validator.prototype, 'מִבְחָן', null
-            )).toEqual(true);
-        });
-    });
-
     describe('Testing validate-no-html-tags', function () {
         it('validate-no-html-tags', function () {
             expect($.validator.methods['validate-no-html-tags']
@@ -442,25 +371,11 @@ define([
     describe('Testing validate-emailSender', function () {
         it('validate-emailSender', function () {
             expect($.validator.methods['validate-emailSender']
-                .call($.validator.prototype, '')).toEqual(true);
+                .call($.validator.prototype, 'Sender Name')).toEqual(true);
             expect($.validator.methods['validate-emailSender']
-                .call($.validator.prototype, null)).toEqual(true);
+                .call($.validator.prototype, 'Sender & Name')).toEqual(true);
             expect($.validator.methods['validate-emailSender']
-                .call($.validator.prototype, undefined)).toEqual(true);
-            expect($.validator.methods['validate-emailSender']
-                .call($.validator.prototype, '   ')).toEqual(true);
-            expect($.validator.methods['validate-emailSender']
-                .call($.validator.prototype, '123@123.com')).toEqual(true);
-            expect($.validator.methods['validate-emailSender']
-                .call($.validator.prototype, 'abc@124.en')).toEqual(true);
-            expect($.validator.methods['validate-emailSender']
-                .call($.validator.prototype, 'abc@abc.commmmm')).toEqual(true);
-            expect($.validator.methods['validate-emailSender']
-                .call($.validator.prototype, 'abc.abc.abc@abc.commmmm')).toEqual(true);
-            expect($.validator.methods['validate-emailSender']
-                .call($.validator.prototype, 'abc.abc-abc@abc.commmmm')).toEqual(true);
-            expect($.validator.methods['validate-emailSender']
-                .call($.validator.prototype, 'abc.abc_abc@abc.commmmm')).toEqual(true);
+                .call($.validator.prototype, 'Sender: Name')).toEqual(false);
         });
     });
 
@@ -1140,6 +1055,77 @@ define([
                 .call($.validator.prototype, '1', el1, null)).toEqual(false);
             expect($.validator.methods['validate-digits-range']
                 .call($.validator.prototype, '30', el1, null)).toEqual(false);
+        });
+    });
+
+    describe('Testing 3 bytes characters only policy (UTF-8)', function () {
+        it('rejects data, if any of the characters cannot be stored using UTF-8 collation', function () {
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, '😅😂', null
+            )).toEqual(false);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, '😅 test 😂', null
+            )).toEqual(false);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, '💩 👻 💀', null
+            )).toEqual(false);
+        });
+
+        it('approves data, if all the characters can be stored using UTF-8 collation', function () {
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, '', null
+            )).toEqual(true);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, '!$-_%ç&#?!', null
+            )).toEqual(true);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, '1234567890', null
+            )).toEqual(true);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, '   ', null
+            )).toEqual(true);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, 'test', null
+            )).toEqual(true);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, 'испытание', null
+            )).toEqual(true);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, 'тест', null
+            )).toEqual(true);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, 'փորձարկում', null
+            )).toEqual(true);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, 'परीक्षण', null
+            )).toEqual(true);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, 'テスト', null
+            )).toEqual(true);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, '테스트', null
+            )).toEqual(true);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, '测试', null
+            )).toEqual(true);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, '測試', null
+            )).toEqual(true);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, 'ทดสอบ', null
+            )).toEqual(true);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, 'δοκιμή', null
+            )).toEqual(true);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, 'اختبار', null
+            )).toEqual(true);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, 'تست', null
+            )).toEqual(true);
+            expect($.validator.methods['validate-no-utf8mb4-characters'].call(
+                $.validator.prototype, 'מִבְחָן', null
+            )).toEqual(true);
         });
     });
 

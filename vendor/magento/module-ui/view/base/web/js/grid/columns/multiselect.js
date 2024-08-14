@@ -47,11 +47,13 @@ define([
 
             imports: {
                 totalRecords: '${ $.provider }:data.totalRecords',
+                showTotalRecords: '${ $.provider }:data.showTotalRecords',
                 rows: '${ $.provider }:data.items'
             },
 
             listens: {
                 '${ $.provider }:params.filters': 'onFilter',
+                '${ $.provider }:params.search': 'onSearch',
                 selected: 'onSelectedChange',
                 rows: 'onRowsChange'
             },
@@ -77,6 +79,7 @@ define([
                     'allSelected',
                     'indetermine',
                     'totalRecords',
+                    'showTotalRecords',
                     'rows'
                 ]);
 
@@ -235,7 +238,7 @@ define([
         * @returns {Multiselect} Chainable.
         */
         togglePage: function () {
-            return this.isPageSelected() ? this.deselectPage() : this.selectPage();
+            return this.isPageSelected() && !this.excluded().length ? this.deselectPage() : this.selectPage();
         },
 
         /**
@@ -268,7 +271,7 @@ define([
          * Returns identifier of a record.
          *
          * @param {*} id - Id of a record or its' index in a rows array.
-         * @param {Boolean} [isIndex=false] - Flag that specifies whith what
+         * @param {Boolean} [isIndex=false] - Flag that specifies with what
          *      kind of identifier we are dealing with.
          * @returns {*}
          */
@@ -344,6 +347,7 @@ define([
                 excluded: this.excluded(),
                 selected: this.selected(),
                 total: this.totalSelected(),
+                showTotalRecords: this.showTotalRecords(),
                 excludeMode: this.excludeMode(),
                 params: this.getFiltering()
             };
@@ -496,6 +500,13 @@ define([
             if (!this.preserveSelectionsOnFilter) {
                 this.deselectAll();
             }
+        },
+
+        /**
+         * Is invoked when search is applied or removed
+         */
+        onSearch: function () {
+            this.onFilter();
         }
     });
 });

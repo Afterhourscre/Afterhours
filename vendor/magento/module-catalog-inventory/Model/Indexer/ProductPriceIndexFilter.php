@@ -84,7 +84,7 @@ class ProductPriceIndexFilter implements PriceModifierInterface
      * @throws \Magento\Framework\Exception\LocalizedException
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function modifyPrice(IndexTableStructure $priceTable, array $entityIds = [])
+    public function modifyPrice(IndexTableStructure $priceTable, array $entityIds = []) : void
     {
         if ($this->stockConfiguration->isShowOutOfStock()) {
             return;
@@ -104,6 +104,10 @@ class ProductPriceIndexFilter implements PriceModifierInterface
             $select->where('stock_item.use_config_manage_stock = 0 AND stock_item.manage_stock = 1');
         }
 
+        if (!empty($entityIds)) {
+            $select->where('stock_item.product_id IN (?)', $entityIds, \Zend_Db::INT_TYPE);
+        }
+
         $select->group('stock_item.product_id');
         $select->having('max_is_in_stock = 0');
 
@@ -117,7 +121,7 @@ class ProductPriceIndexFilter implements PriceModifierInterface
         foreach ($batchSelectIterator as $select) {
             $productIds = null;
             foreach ($connection->query($select)->fetchAll() as $row) {
-                $productIds[] = $row['product_id'];
+                $productIds[] = (int) $row['product_id'];
             }
             if ($productIds !== null) {
                 $where = [$priceTable->getEntityField() .' IN (?)' => $productIds];

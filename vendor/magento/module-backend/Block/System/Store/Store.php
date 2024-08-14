@@ -10,9 +10,7 @@ namespace Magento\Backend\Block\System\Store;
  *
  * @api
  * @author      Magento Core Team <core@magentocommerce.com>
- * @api
  * @since 100.0.2
- * @deprecated since Store Grid is refactored with UI Components
  */
 class Store extends \Magento\Backend\Block\Widget\Grid\Container
 {
@@ -22,6 +20,8 @@ class Store extends \Magento\Backend\Block\Widget\Grid\Container
     protected $_blockGroup = 'Magento_Backend';
 
     /**
+     * Class constructor
+     *
      * @return void
      */
     protected function _construct()

@@ -11,33 +11,33 @@ namespace Magento\Persistent\Observer;
 use Magento\Framework\Event\ObserverInterface;
 
 /**
- * Observer for a work with persistent data.
+ * Class SetCheckoutSessionPersistentDataObserver
  */
 class SetCheckoutSessionPersistentDataObserver implements ObserverInterface
 {
     /**
-     * Persistent session.
+     * Persistent session
      *
      * @var \Magento\Persistent\Helper\Session
      */
     private $persistentSession = null;
 
     /**
-     * Customer session.
+     * Customer session
      *
      * @var \Magento\Customer\Model\Session
      */
     private $customerSession;
 
     /**
-     * Persistent data.
+     * Persistent data
      *
      * @var \Magento\Persistent\Helper\Data
      */
     private $persistentData = null;
 
     /**
-     * Customer Repository.
+     * Customer Repository
      *
      * @var \Magento\Customer\Api\CustomerRepositoryInterface
      */
@@ -62,10 +62,12 @@ class SetCheckoutSessionPersistentDataObserver implements ObserverInterface
     }
 
     /**
-     * Pass customer data from persistent session to checkout session and set quote to be loaded even if not active.
+     * Pass customer data from persistent session to checkout session and set quote to be loaded even if not active
      *
      * @param \Magento\Framework\Event\Observer $observer
      * @return void
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function execute(\Magento\Framework\Event\Observer $observer)
     {

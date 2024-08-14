@@ -8,7 +8,7 @@
 //  _____________________________________________
 
 @account-title-border-color: @color-gray-middle2;
-@account-table-border-bottom-color: @color-gray-middle1;
+@account-table-border-bottom-color: @color-gray_light;
 @account-table-action-delete: @color-red12;
 
 @_password-default: @color-gray-light01;
@@ -70,7 +70,7 @@
     }
 
     .form-address-edit {
-        #region_id {
+        .region_id {
             display: none;
         }
 
@@ -82,6 +82,11 @@
     .form-edit-account {
         .fieldset.password {
             display: none;
+        }
+        fieldset {
+            &.additional_info {
+                clear: both;
+            }
         }
     }
 
@@ -126,6 +131,7 @@
     .box-information,
     .box-newsletter {
         .box-content {
+            .lib-wrap-words();
             &:extend(.abs-account-block-line-height all);
         }
     }
@@ -161,6 +167,7 @@
         .table-wrapper {
             .lib-css(margin-bottom, @indent__base);
             border-bottom: 1px solid @account-table-border-bottom-color;
+            overflow-x: auto;
 
             &:last-child {
                 margin-bottom: 0;
@@ -334,12 +341,22 @@
         }
     }
 
-    .order-products-toolbar {
+    .order-products-toolbar,
+    .customer-addresses-toolbar {
         position: relative;
 
         .toolbar-amount {
             position: relative;
             text-align: center;
+        }
+        .pages {
+            position: relative;
+        }
+    }
+
+    .additional-addresses {
+        table > thead > tr > th {
+            white-space: nowrap;
         }
     }
 }
@@ -403,6 +420,7 @@
     .form.send.confirmation,
     .form.password.forget,
     .form.create.account,
+    .form.search.advanced,
     .form.form-orders-search {
         min-width: 600px;
         width: 50%;
@@ -601,6 +619,17 @@
     .customer-account-index {
         .page-title-wrapper {
             position: relative;
+        }
+    }
+
+    .form.search.advanced {
+        .field.price {
+            .with-addon {
+                .input-text {
+                    flex-basis: auto;
+                    width: 100%;
+                }
+            }
         }
     }
 }

@@ -3,22 +3,26 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Sales\Test\Unit\Setup;
 
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\Serialize\Serializer\Serialize;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Sales\Setup\SerializedDataConverter;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class SerializedDataConverterTest extends \PHPUnit\Framework\TestCase
+class SerializedDataConverterTest extends TestCase
 {
     /**
-     * @var Serialize|\PHPUnit_Framework_MockObject_MockObject
+     * @var Serialize|MockObject
      */
     private $serializeMock;
 
     /**
-     * @var Json|\PHPUnit_Framework_MockObject_MockObject
+     * @var Json|MockObject
      */
     private $jsonMock;
 
@@ -27,7 +31,10 @@ class SerializedDataConverterTest extends \PHPUnit\Framework\TestCase
      */
     private $serializedDataConverter;
 
-    protected function setUp()
+    /**
+     * @inheritDoc
+     */
+    protected function setUp(): void
     {
         $objectManager = new ObjectManager($this);
         $this->serializeMock = $this->createMock(Serialize::class);
@@ -41,7 +48,10 @@ class SerializedDataConverterTest extends \PHPUnit\Framework\TestCase
         );
     }
 
-    public function testConvert()
+    /**
+     * @return void
+     */
+    public function testConvert(): void
     {
         $serializedData = 'serialized data';
         $jsonEncodedData = 'json encoded data';
@@ -65,7 +75,10 @@ class SerializedDataConverterTest extends \PHPUnit\Framework\TestCase
         );
     }
 
-    public function testConvertBundleAttributes()
+    /**
+     * @return void
+     */
+    public function testConvertBundleAttributes(): void
     {
         $serializedData = 'serialized data';
         $serializedBundleAttributes = 'serialized bundle attributes';
@@ -86,29 +99,28 @@ class SerializedDataConverterTest extends \PHPUnit\Framework\TestCase
             ],
             'bundle_selection_attributes' => $jsonEncodedBundleAttributes
         ];
-        $this->serializeMock->expects($this->at(0))
+        $this->serializeMock
             ->method('unserialize')
-            ->with($serializedData)
-            ->willReturn($data);
-        $this->serializeMock->expects($this->at(1))
-            ->method('unserialize')
-            ->with($serializedBundleAttributes)
-            ->willReturn($bundleAttributes);
-        $this->jsonMock->expects($this->at(0))
+            ->willReturnCallback(fn($param) => match ([$param]) {
+                [$serializedData] => $data,
+                [$serializedBundleAttributes] => $bundleAttributes
+            });
+        $this->jsonMock
             ->method('serialize')
-            ->with($bundleAttributes)
-            ->willReturn($jsonEncodedBundleAttributes);
-        $this->jsonMock->expects($this->at(1))
-            ->method('serialize')
-            ->with($dataWithJsonEncodedBundleAttributes)
-            ->willReturn($jsonEncodedData);
+            ->willReturnCallback(fn($param) => match ([$param]) {
+                [$bundleAttributes] => $jsonEncodedBundleAttributes,
+                [$dataWithJsonEncodedBundleAttributes] =>$jsonEncodedData
+            });
         $this->assertEquals(
             $jsonEncodedData,
             $this->serializedDataConverter->convert($serializedData)
         );
     }
 
-    public function testConvertCustomOptionsTypeFile()
+    /**
+     * @return void
+     */
+    public function testConvertCustomOptionsTypeFile(): void
     {
         $serializedData = 'serialized data';
         $serializedOptionValue = 'serialized option value';
@@ -147,22 +159,18 @@ class SerializedDataConverterTest extends \PHPUnit\Framework\TestCase
                 ]
             ]
         ];
-        $this->serializeMock->expects($this->at(0))
+        $this->serializeMock
             ->method('unserialize')
-            ->with($serializedData)
-            ->willReturn($data);
-        $this->serializeMock->expects($this->at(1))
-            ->method('unserialize')
-            ->with($serializedOptionValue)
-            ->willReturn($optionValue);
-        $this->jsonMock->expects($this->at(0))
+            ->willReturnCallback(fn($param) => match ([$param]) {
+                [$serializedData] => $data,
+                [$serializedOptionValue] =>$optionValue
+            });
+        $this->jsonMock
             ->method('serialize')
-            ->with($optionValue)
-            ->willReturn($jsonEncodedOptionValue);
-        $this->jsonMock->expects($this->at(1))
-            ->method('serialize')
-            ->with($dataWithJsonEncodedOptionValue)
-            ->willReturn($jsonEncodedData);
+            ->willReturnCallback(fn($param) => match ([$param]) {
+                [$optionValue] => $jsonEncodedOptionValue,
+                [$dataWithJsonEncodedOptionValue] =>$jsonEncodedData
+            });
         $this->assertEquals(
             $jsonEncodedData,
             $this->serializedDataConverter->convert($serializedData)
@@ -170,10 +178,11 @@ class SerializedDataConverterTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @expectedException \Magento\Framework\DB\DataConverter\DataConversionException
+     * @return void
      */
-    public function testConvertCorruptedData()
+    public function testConvertCorruptedData(): void
     {
+        $this->expectException('Magento\Framework\DB\DataConverter\DataConversionException');
         $this->serializeMock->expects($this->once())
             ->method('unserialize')
             ->willReturnCallback(
@@ -184,7 +193,10 @@ class SerializedDataConverterTest extends \PHPUnit\Framework\TestCase
         $this->serializedDataConverter->convert('serialized data');
     }
 
-    public function testConvertSkipConversion()
+    /**
+     * @return void
+     */
+    public function testConvertSkipConversion(): void
     {
         $serialized = '[]';
         $this->serializeMock->expects($this->never())

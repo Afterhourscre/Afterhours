@@ -22,18 +22,19 @@
     </entity>
 
     <entity name="PersistentLogoutClearEnabled" type="persistent_config_state">
-        <requiredEntity type="persistent_options_logout_clear">LogoutClearActive</requiredEntity>
+        <requiredEntity type="persistent_options_logout_clear">PersistentEnabledLogoutClear</requiredEntity>
     </entity>
-    <entity name="LogoutClearActive" type="logout_clear">
+    <entity name="PersistentEnabledLogoutClear" type="logout_clear">
         <data key="value">1</data>
     </entity>
 
-    <entity name="PersistentLogoutClearDisabled" type="persistent_config_state">
-        <requiredEntity type="persistent_options_logout_clear">LogoutClearInactive</requiredEntity>
+    <entity name="PersistentLogoutClearDisable" type="persistent_config_state">
+        <requiredEntity type="persistent_options_logout_clear">PersistentDisableLogoutClear</requiredEntity>
     </entity>
-    <entity name="LogoutClearInactive" type="logout_clear">
+    <entity name="PersistentDisableLogoutClear" type="logout_clear">
         <data key="value">0</data>
     </entity>
+
 
     <!-- Persistent Configurations settings -->
     <entity name="PersistentConfigSettings" type="persistent_config_state">
@@ -41,7 +42,7 @@
         <requiredEntity type="persistent_options_lifetime">SecondsOfPersistentLifetime</requiredEntity>
         <requiredEntity type="persistent_options_remember_enabled">EnablePersistentRememberMe</requiredEntity>
         <requiredEntity type="persistent_options_remember_default">EnablePersistentRememberMeDefaultValue</requiredEntity>
-        <requiredEntity type="persistent_options_logout_clear">LogoutClearInactive</requiredEntity>
+        <requiredEntity type="persistent_options_logout_clear">PersistentDisableLogoutClear</requiredEntity>
         <requiredEntity type="persistent_options_shopping_cart">EnablePersistentShoppingCart</requiredEntity>
     </entity>
 

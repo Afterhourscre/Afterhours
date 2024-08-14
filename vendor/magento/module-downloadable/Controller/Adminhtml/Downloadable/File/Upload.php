@@ -1,83 +1,67 @@
 <?php
 /**
- *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Downloadable\Controller\Adminhtml\Downloadable\File;
 
-use Magento\Framework\App\ObjectManager;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\Controller\ResultFactory;
-use Magento\Downloadable\Controller\Adminhtml\Downloadable\File;
-use Magento\Backend\App\Action\Context;
-use Magento\Downloadable\Model\Link;
-use Magento\Downloadable\Model\Sample;
-use Magento\Downloadable\Helper\File as FileHelper;
-use Magento\MediaStorage\Model\File\UploaderFactory;
-use Magento\MediaStorage\Helper\File\Storage\Database;
-use Magento\Framework\App\RequestInterface;
-use Magento\Framework\App\State;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Exception\LocalizedException;
 
 /**
- * Upload controller
+ * Class Upload
  *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @package Magento\Downloadable\Controller\Adminhtml\Downloadable\File
  */
-class Upload extends File
+class Upload extends \Magento\Downloadable\Controller\Adminhtml\Downloadable\File implements HttpPostActionInterface
 {
     /**
-     * @var Link
+     * @var \Magento\Downloadable\Model\Link
      */
-    protected $_link; // phpcs:ignore
+    protected $_link;
 
     /**
-     * @var Sample
+     * @var \Magento\Downloadable\Model\Sample
      */
-    protected $_sample; // phpcs:ignore
+    protected $_sample;
 
     /**
      * Downloadable file helper.
      *
-     * @var FileHelper
+     * @var \Magento\Downloadable\Helper\File
      */
-    protected $_fileHelper; // phpcs:ignore
+    protected $_fileHelper;
 
     /**
-     * @var UploaderFactory
+     * @var \Magento\MediaStorage\Model\File\UploaderFactory
      */
     private $uploaderFactory;
 
     /**
-     * @var Database
+     * @var \Magento\MediaStorage\Helper\File\Storage\Database
      */
     private $storageDatabase;
 
     /**
-     * @var State
-     */
-    private $state;
-
-    /**
-     * Construct Upload controller
      *
-     * @param Context $context
-     * @param Link $link
-     * @param Sample $sample
-     * @param FileHelper $fileHelper
-     * @param UploaderFactory $uploaderFactory
-     * @param Database $storageDatabase
-     * @param State $state
+     * Copyright © Magento, Inc. All rights reserved.
+     * See COPYING.txt for license details.
+     * @param \Magento\Backend\App\Action\Context $context
+     * @param \Magento\Downloadable\Model\Link $link
+     * @param \Magento\Downloadable\Model\Sample $sample
+     * @param \Magento\Downloadable\Helper\File $fileHelper
+     * @param \Magento\MediaStorage\Model\File\UploaderFactory $uploaderFactory
+     * @param \Magento\MediaStorage\Helper\File\Storage\Database $storageDatabase
      */
     public function __construct(
-        Context $context,
-        Link $link,
-        Sample $sample,
-        FileHelper $fileHelper,
-        UploaderFactory $uploaderFactory,
-        Database $storageDatabase,
-        State $state = null
+        \Magento\Backend\App\Action\Context $context,
+        \Magento\Downloadable\Model\Link $link,
+        \Magento\Downloadable\Model\Sample $sample,
+        \Magento\Downloadable\Helper\File $fileHelper,
+        \Magento\MediaStorage\Model\File\UploaderFactory $uploaderFactory,
+        \Magento\MediaStorage\Helper\File\Storage\Database $storageDatabase
     ) {
         parent::__construct($context);
         $this->_link = $link;
@@ -85,23 +69,6 @@ class Upload extends File
         $this->_fileHelper = $fileHelper;
         $this->uploaderFactory = $uploaderFactory;
         $this->storageDatabase = $storageDatabase;
-        $this->state = $state ? $state : ObjectManager::getInstance()->get(State::class);
-    }
-
-    /**
-     * Dispatch request
-     *
-     * @param RequestInterface $request
-     * @return \Magento\Framework\App\ResponseInterface
-     * @throws \Magento\Framework\Exception\LocalizedException
-     */
-    public function dispatch(RequestInterface $request)
-    {
-        if ($this->state->getAreaCode() !== 'adminhtml') {
-            return $this->_redirect($this->_redirect->getRefererUrl());
-        }
-
-        return parent::dispatch($request);
     }
 
     /**
@@ -140,7 +107,7 @@ class Upload extends File
                 $relativePath = rtrim($tmpPath, '/') . '/' . ltrim($result['file'], '/');
                 $this->storageDatabase->saveFile($relativePath);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $result = ['error' => $e->getMessage(), 'errorcode' => $e->getCode()];
         }
 

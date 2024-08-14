@@ -3,6 +3,8 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Catalog\Model\Category\Product;
 
 /**
@@ -10,17 +12,6 @@ namespace Magento\Catalog\Model\Category\Product;
  */
 class PositionResolver extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
 {
-    /**
-     * @param \Magento\Framework\Model\ResourceModel\Db\Context $context
-     * @param string $connectionName
-     */
-    public function __construct(
-        \Magento\Framework\Model\ResourceModel\Db\Context $context,
-        $connectionName = null
-    ) {
-        parent::__construct($context, $connectionName);
-    }
-
     /**
      * Initialize resource model
      *
@@ -37,7 +28,7 @@ class PositionResolver extends \Magento\Framework\Model\ResourceModel\Db\Abstrac
      * @param int $categoryId
      * @return array
      */
-    public function getPositions(int $categoryId)
+    public function getPositions(int $categoryId): array
     {
         $connection = $this->getConnection();
 
@@ -57,5 +48,31 @@ class PositionResolver extends \Magento\Framework\Model\ResourceModel\Db\Abstrac
         );
 
         return array_flip($connection->fetchCol($select));
+    }
+
+    /**
+     * Get category product minimum position
+     *
+     * @param int $categoryId
+     * @return int
+     */
+    public function getMinPosition(int $categoryId): int
+    {
+        $connection = $this->getConnection();
+
+        $select = $connection->select()->from(
+            ['cpe' => $this->getTable('catalog_product_entity')],
+            ['position' => new \Zend_Db_Expr('MIN(position)')]
+        )->joinLeft(
+            ['ccp' => $this->getTable('catalog_category_product')],
+            'ccp.product_id=cpe.entity_id'
+        )->where(
+            'ccp.category_id = ?',
+            $categoryId
+        )->order(
+            'ccp.product_id ' . \Magento\Framework\DB\Select::SQL_DESC
+        );
+
+        return (int)$connection->fetchOne($select);
     }
 }

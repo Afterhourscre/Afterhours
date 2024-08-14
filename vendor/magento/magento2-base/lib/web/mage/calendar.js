@@ -4,19 +4,12 @@
  */
 
 /*eslint max-depth: 0*/
-(function (factory) {
-    'use strict';
-
-    if (typeof define === 'function' && define.amd) {
-        define([
-            'jquery',
-            'jquery/ui',
-            'jquery/jquery-ui-timepicker-addon'
-        ], factory);
-    } else {
-        factory(window.jQuery);
-    }
-}(function ($) {
+define([
+    'jquery',
+    'jquery-ui-modules/widget',
+    'jquery-ui-modules/datepicker',
+    'jquery-ui-modules/timepicker'
+], function ($) {
     'use strict';
 
     var calendarBasePrototype,
@@ -329,7 +322,8 @@
                                     (printDate.getTime() === today.getTime() ? ' ' : '') +
                                     (printDate.getTime() === currentDate.getTime() ? ' ui-state-active' : '') +
                                     (otherMonth ? ' ui-priority-secondary' : '') +
-                                    '" href="#">' + printDate.getDate() + '</a>') + '</td>';
+                                    '" data-date="' + printDate.getDate() + '" href="#">' +
+                                        printDate.getDate() + '</a>') + '</td>';
                                 printDate.setDate(printDate.getDate() + 1);
                                 printDate = this._daylightSavingAdjust(printDate);
                             }
@@ -558,11 +552,11 @@
         //Set date/time according to timezone offset
         $(el).datepicker('setTimezoneDate')
             // To ensure that user can re-select date field without clicking outside it first.
-            .blur().trigger('change');
+            .trigger('blur').trigger('change');
     };
 
     return {
         dateRange:  $.mage.dateRange,
         calendar:   $.mage.calendar
     };
-}));
+});

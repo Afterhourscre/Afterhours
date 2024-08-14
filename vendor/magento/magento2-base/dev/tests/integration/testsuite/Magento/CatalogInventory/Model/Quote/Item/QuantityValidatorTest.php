@@ -3,6 +3,8 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\CatalogInventory\Model\Quote\Item;
 
 use Magento\Catalog\Model\Product;
@@ -14,8 +16,10 @@ use Magento\CatalogInventory\Observer\QuantityValidatorObserver;
 use Magento\Eav\Model\Config;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\ObjectManagerInterface;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Quote\Model\Quote;
+use Magento\Quote\Model\Quote\Item;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\CatalogInventory\Model\Quote\Item\QuantityValidator\Initializer\Option;
 use Magento\Framework\Event\Observer;
@@ -23,13 +27,13 @@ use Magento\Framework\Event;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\DataObject;
 use Magento\Checkout\Model\Session;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
- * Class QuantityValidatorTest
- *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
+class QuantityValidatorTest extends TestCase
 {
     /**
      * @var QuantityValidator
@@ -37,41 +41,41 @@ class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
     private $quantityValidator;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $observerMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $eventMock;
 
     /**
-     * @var \Magento\Framework\ObjectManagerInterface
+     * @var ObjectManagerInterface
      */
     private $objectManager;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $optionInitializer;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $stockState;
 
     /**
-     * @var \Magento\CatalogInventory\Observer\QuantityValidatorObserver
+     * @var QuantityValidatorObserver
      */
     private $observer;
 
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
-        /** @var \Magento\Framework\ObjectManagerInterface objectManager */
+        /** @var ObjectManagerInterface objectManager */
         $this->objectManager = Bootstrap::getObjectManager();
         $this->observerMock = $this->createMock(Observer::class);
         $this->optionInitializer = $this->createMock(Option::class);
@@ -89,29 +93,36 @@ class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
                 'quantityValidator' => $this->quantityValidator
             ]
         );
-        $this->eventMock = $this->createPartialMock(Event::class, ['getItem']);
+
+        $this->eventMock = $this->getMockBuilder(Event::class)
+            ->disableOriginalConstructor()
+            ->disableOriginalClone()
+            ->disableArgumentCloning()
+            ->disallowMockingUnknownTypes()
+            ->addMethods(['getItem'])
+            ->getMock();
     }
 
     /**
-     * @return void
-     *
      * @magentoDataFixture Magento/Checkout/_files/quote_with_bundle_product.php
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
+     *
+     * @return void
      */
-    public function testQuoteWithOptions()
+    public function testQuoteWithOptions(): void
     {
-        /** @var $session \Magento\Checkout\Model\Session  */
+        /** @var $session Session */
         $session = $this->objectManager->create(Session::class);
 
-        /** @var \Magento\Catalog\Api\ProductRepositoryInterface $productRepository */
+        /** @var ProductRepositoryInterface $productRepository */
         $productRepository = $this->objectManager->create(ProductRepositoryInterface::class);
         /** @var $product Product */
         $product = $productRepository->get('bundle-product');
         $resultMock = $this->createMock(DataObject::class);
         $this->stockState->expects($this->any())->method('checkQtyIncrements')->willReturn($resultMock);
-        /* @var $quoteItem \Magento\Quote\Model\Quote\Item */
-        $quoteItem = $this->_getQuoteItemIdByProductId($session->getQuote(), $product->getId());
+        /* @var $quoteItem Item */
+        $quoteItem = $this->getQuoteItemIdByProductId($session->getQuote(), $product->getId());
         $this->observerMock->expects($this->once())->method('getEvent')->willReturn($this->eventMock);
         $this->optionInitializer->expects($this->any())->method('initialize')->willReturn($resultMock);
         $this->eventMock->expects($this->once())->method('getItem')->willReturn($quoteItem);
@@ -120,26 +131,29 @@ class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @return void
-     *
      * @magentoDataFixture Magento/Checkout/_files/quote_with_bundle_product.php
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
+     *
+     * @return void
      */
-    public function testQuoteWithOptionsWithErrors()
+    public function testQuoteWithOptionsWithErrors(): void
     {
-        /** @var $session \Magento\Checkout\Model\Session  */
+        /** @var $session Session */
         $session = $this->objectManager->create(Session::class);
-        /** @var \Magento\Catalog\Api\ProductRepositoryInterface $productRepository */
+        /** @var ProductRepositoryInterface $productRepository */
         $productRepository = $this->objectManager->create(ProductRepositoryInterface::class);
         /** @var $product Product */
         $product = $productRepository->get('bundle-product');
-        /* @var $quoteItem \Magento\Quote\Model\Quote\Item */
-        $quoteItem = $this->_getQuoteItemIdByProductId($session->getQuote(), $product->getId());
-        $resultMock = $this->createPartialMock(
-            DataObject::class,
-            ['checkQtyIncrements', 'getMessage', 'getQuoteMessage', 'getHasError']
-        );
+        /* @var $quoteItem Item */
+        $quoteItem = $this->getQuoteItemIdByProductId($session->getQuote(), $product->getId());
+        $resultMock = $this->getMockBuilder(DataObject::class)
+            ->disableOriginalConstructor()
+            ->disableOriginalClone()
+            ->disableArgumentCloning()
+            ->disallowMockingUnknownTypes()
+            ->addMethods(['checkQtyIncrements', 'getMessage', 'getQuoteMessage', 'getHasError'])
+            ->getMock();
         $this->observerMock->expects($this->once())->method('getEvent')->willReturn($this->eventMock);
         $this->eventMock->expects($this->once())->method('getItem')->willReturn($quoteItem);
         $this->stockState->expects($this->any())->method('checkQtyIncrements')->willReturn($resultMock);
@@ -154,10 +168,12 @@ class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
      * Set mock of Stock State Result to Quote Item Options.
      *
      *
-     * @param \Magento\Quote\Model\Quote\Item $quoteItem
-     * @param \PHPUnit_Framework_MockObject_MockObject $resultMock
+     * @param Item $quoteItem
+     * @param MockObject $resultMock
+     *
+     * @return void
      */
-    private function setMockStockStateResultToQuoteItemOptions($quoteItem, $resultMock)
+    private function setMockStockStateResultToQuoteItemOptions($quoteItem, $resultMock): void
     {
         if ($options = $quoteItem->getQtyOptions()) {
             foreach ($options as $option) {
@@ -174,7 +190,7 @@ class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
      * Tests quantity verifications for configurable product.
      *
      * @param int $quantity - quantity of configurable option.
-     * @param string $errorMessage - expected error message.
+     * @param string $errorMessageRegexp - expected error message regexp.
      * @return void
      * @throws CouldNotSaveException
      * @throws LocalizedException
@@ -183,7 +199,7 @@ class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
      * @magentoDbIsolation enabled
      * @magentoAppIsolation enabled
      */
-    public function testConfigurableWithOptions(int $quantity, string $errorMessage)
+    public function testConfigurableWithOptions(int $quantity, string $errorMessageRegexp): void
     {
         /** @var ProductRepositoryInterface $productRepository */
         $productRepository = $this->objectManager->create(ProductRepositoryInterface::class);
@@ -221,59 +237,64 @@ class QuantityValidatorTest extends \PHPUnit\Framework\TestCase
             ]
         );
 
-        if (!empty($errorMessage)) {
-            $this->expectException(LocalizedException::class);
-            $this->expectExceptionMessage($errorMessage);
-        }
+        try {
+            /** @var Quote $cart */
+            $cart = $this->objectManager->create(CartInterface::class);
+            $result = $cart->addProduct($product, $request);
 
-        /** @var Quote $cart */
-        $cart = $this->objectManager->create(CartInterface::class);
-        $result = $cart->addProduct($product, $request);
-
-        if (empty($errorMessage)) {
-            self::assertEquals('Configurable Product', $result->getName());
+            if (empty($errorMessageRegexp)) {
+                self::assertEquals('Configurable Product', $result->getName());
+            }
+        } catch (LocalizedException $e) {
+            self::assertEquals(1, preg_match($errorMessageRegexp, $e->getMessage()));
         }
     }
 
     /**
-     * Provides request quantity for configurable option and corresponding error message.
+     * Provides request quantity for configurable option
+     * and corresponding error message.
      *
      * @return array
      */
     public function quantityDataProvider(): array
     {
+        $qtyRegexp = '/You can buy (this product|Configurable OptionOption 1) only in quantities of 500 at a time/';
+
         return [
             [
                 'quantity' => 1,
-                'error' => 'The fewest you may purchase is 500.'
+                'error_regexp' => '/The fewest you may purchase is 500/'
             ],
             [
                 'quantity' => 501,
-                'error' => 'You can buy Configurable OptionOption 1 only in quantities of 500 at a time'
+                'error_regexp' => $qtyRegexp
             ],
             [
                 'quantity' => 1000,
-                'error' => ''
-            ],
+                'error_regexp' => ''
+            ]
         ];
     }
 
     /**
-     * Gets \Magento\Quote\Model\Quote\Item from \Magento\Quote\Model\Quote by product id
+     * Gets \Magento\Quote\Model\Quote\Item from \Magento\Quote\Model\Quote by product id.
      *
      * @param Quote $quote
-     * @param $productId
-     * @return \Magento\Quote\Model\Quote\Item
+     * @param int $productId
+     *
+     * @return Item
      */
-    private function _getQuoteItemIdByProductId($quote, $productId)
+    private function getQuoteItemIdByProductId($quote, $productId): Item
     {
-        /** @var $quoteItems \Magento\Quote\Model\Quote\Item[] */
+        /** @var $quoteItems Item[] */
         $quoteItems = $quote->getAllItems();
+
         foreach ($quoteItems as $quoteItem) {
             if ($productId == $quoteItem->getProductId()) {
                 return $quoteItem;
             }
         }
-        $this->fail('Test failed since no quoteItem found by productId '.$productId);
+
+        $this->fail('Test failed since no quoteItem found by productId ' . $productId);
     }
 }

@@ -8,16 +8,17 @@ namespace Magento\Framework\Locale;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\DeploymentConfig;
 use Magento\Framework\App\ObjectManager;
+use Magento\Framework\ObjectManager\ResetAfterRequestInterface;
 
 /**
  * Manages locale config information.
  */
-class Resolver implements ResolverInterface
+class Resolver implements ResolverInterface, ResetAfterRequestInterface
 {
     /**
-     * Default locale
+     * Resolver default locale
      */
-    const DEFAULT_LOCALE = 'en_US';
+    public const DEFAULT_LOCALE = 'en_US';
 
     /**
      * Default locale code
@@ -27,8 +28,6 @@ class Resolver implements ResolverInterface
     protected $defaultLocale;
 
     /**
-     * Scope type
-     *
      * @var string
      */
     protected $scopeType;
@@ -53,6 +52,11 @@ class Resolver implements ResolverInterface
     protected $emulatedLocales = [];
 
     /**
+     * @var string
+     */
+    private $defaultLocalePath;
+
+    /**
      * @var DeploymentConfig
      */
     private $deploymentConfig;
@@ -74,7 +78,7 @@ class Resolver implements ResolverInterface
         $this->scopeConfig = $scopeConfig;
         $this->defaultLocalePath = $defaultLocalePath;
         $this->scopeType = $scopeType;
-        $this->deploymentConfig = $deploymentConfig ?: ObjectManager::getInstance()->create(DeploymentConfig::class);
+        $this->deploymentConfig = $deploymentConfig ?: ObjectManager::getInstance()->get(DeploymentConfig::class);
         $this->setLocale($locale);
     }
 
@@ -169,5 +173,15 @@ class Resolver implements ResolverInterface
             $result = $this->locale;
         }
         return $result;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function _resetState(): void
+    {
+        while (!empty($this->emulatedLocales)) {
+            $this->revert();
+        }
     }
 }

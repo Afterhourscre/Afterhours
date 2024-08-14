@@ -8,12 +8,11 @@ namespace Magento\Quote\Model\Quote\Item;
 use Magento\Catalog\Model\ProductFactory;
 use Magento\Framework\Locale\FormatInterface;
 use Magento\Framework\DataObject\Factory as ObjectFactory;
-use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Item;
-use Zend\Code\Exception\InvalidArgumentException;
+use Laminas\Code\Exception\InvalidArgumentException;
 
 /**
- * Class Updater
+ * Quote item updater
  */
 class Updater
 {
@@ -60,6 +59,7 @@ class Updater
 
     /**
      * Update quote item qty.
+     *
      * Custom price is updated in case 'custom_price' value exists
      *
      * @param Item $item

@@ -24,7 +24,7 @@
     <?php endif; ?>
         <div class="admin__fieldset tree-store-scope">
             <?php if ($_element->getComment()) : ?>
-                <p class="comment"><?= $block->escapeHtml($_element->getComment()) ?></p>
+            <p class="comment"><?= $block->escapeHtml($_element->getComment()) ?></p>
             <?php endif; ?>
             <?php if ($_element->hasHtmlContent()) : ?>
                 <?= $_element->getHtmlContent() ?>

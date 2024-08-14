@@ -5,20 +5,14 @@
  */
 namespace Magento\Catalog\Model\Indexer\Category\Product\Plugin;
 
-use Magento\Framework\Indexer\IndexerRegistry;
-use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
-use Magento\Framework\Model\AbstractModel;
 use Magento\Catalog\Model\Indexer\Category\Product;
-use Magento\Framework\App\ObjectManager;
 use Magento\Catalog\Model\Indexer\Category\Product\TableMaintainer;
+use Magento\Framework\Indexer\IndexerRegistry;
+use Magento\Framework\Model\AbstractModel;
+use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 
 class StoreGroup
 {
-    /**
-     * @var bool
-     */
-    private $needInvalidating;
-
     /**
      * @var IndexerRegistry
      */
@@ -42,35 +36,22 @@ class StoreGroup
     }
 
     /**
-     * Check if need invalidate flat category indexer
-     *
-     * @param AbstractDb $subject
-     * @param AbstractModel $group
-     *
-     * @return void
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     */
-    public function beforeSave(AbstractDb $subject, AbstractModel $group)
-    {
-        $this->needInvalidating = $this->validate($group);
-    }
-
-    /**
      * Invalidate flat product
      *
      * @param AbstractDb $subject
-     * @param AbstractDb $objectResource
+     * @param AbstractDb $result
+     * @param AbstractModel $group
      *
      * @return AbstractDb
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function afterSave(AbstractDb $subject, AbstractDb $objectResource)
+    public function afterSave(AbstractDb $subject, AbstractDb $result, AbstractModel $group)
     {
-        if ($this->needInvalidating) {
+        if ($this->validate($group)) {
             $this->indexerRegistry->get(Product::INDEXER_ID)->invalidate();
         }
 
-        return $objectResource;
+        return $result;
     }
 
     /**
@@ -98,7 +79,7 @@ class StoreGroup
     public function afterDelete(AbstractDb $subject, AbstractDb $objectResource, AbstractModel $storeGroup)
     {
         foreach ($storeGroup->getStores() as $store) {
-            $this->tableMaintainer->dropTablesForStore($store->getId());
+            $this->tableMaintainer->dropTablesForStore((int)$store->getId());
         }
         return $objectResource;
     }

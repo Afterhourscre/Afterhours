@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 namespace Magento\Catalog\Model\Indexer\Product\Eav;
 
+use Magento\Catalog\Model\ResourceModel\Product\Indexer\Eav\AbstractEav;
+
 /**
  * Abstract action reindex class
  */
@@ -15,7 +17,7 @@ abstract class AbstractAction
     /**
      * Config path for enable EAV indexer
      */
-    const ENABLE_EAV_INDEXER = 'catalog/search/enable_eav_indexer';
+    public const ENABLE_EAV_INDEXER = 'catalog/search/enable_eav_indexer';
 
     /**
      * EAV Indexers by type
@@ -68,7 +70,7 @@ abstract class AbstractAction
     /**
      * Retrieve array of EAV type indexers
      *
-     * @return \Magento\Catalog\Model\ResourceModel\Product\Indexer\Eav\AbstractEav[]
+     * @return AbstractEav[]
      */
     public function getIndexers()
     {
@@ -86,7 +88,7 @@ abstract class AbstractAction
      * Retrieve indexer instance by type
      *
      * @param string $type
-     * @return \Magento\Catalog\Model\ResourceModel\Product\Indexer\Eav\AbstractEav
+     * @return AbstractEav
      * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getIndexer($type)
@@ -128,7 +130,7 @@ abstract class AbstractAction
     /**
      * Synchronize data between index storage and original storage
      *
-     * @param \Magento\Catalog\Model\ResourceModel\Product\Indexer\Eav\AbstractEav $indexer
+     * @param AbstractEav $indexer
      * @param string $destinationTable
      * @param array $ids
      * @throws \Exception
@@ -140,7 +142,7 @@ abstract class AbstractAction
         $connection->beginTransaction();
         try {
             // remove old index
-            $where = $connection->quoteInto('entity_id IN(?)', $ids);
+            $where = $connection->quoteInto('entity_id IN (?)', $ids, 'INT');
             $connection->delete($destinationTable, $where);
             // insert new index
             $indexer->insertFromTable($indexer->getIdxTable(), $destinationTable);
@@ -154,17 +156,17 @@ abstract class AbstractAction
     /**
      * Retrieve product relations by children and parent
      *
-     * @param \Magento\Catalog\Model\ResourceModel\Product\Indexer\Eav\AbstractEav $indexer
+     * @param AbstractEav $indexer
      * @param array $ids
-     *
      * @param bool $onlyParents
      * @return array $ids
      */
-    protected function processRelations($indexer, $ids, $onlyParents = false)
+    protected function processRelations(AbstractEav $indexer, array $ids, bool $onlyParents = false)
     {
         $parentIds = $indexer->getRelationsByChild($ids);
         $parentIds = array_unique(array_merge($parentIds, $ids));
         $childIds = $onlyParents ? [] : $indexer->getRelationsByParent($parentIds);
+
         return array_unique(array_merge($ids, $childIds, $parentIds));
     }
 

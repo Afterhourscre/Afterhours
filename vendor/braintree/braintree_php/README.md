@@ -2,12 +2,10 @@
 
 The Braintree PHP library provides integration access to the Braintree Gateway.
 
-## Please Note
-> **The Payment Card Industry (PCI) Council has [mandated](https://blog.pcisecuritystandards.org/migrating-from-ssl-and-early-tls) that early versions of TLS be retired from service.  All organizations that handle credit card information are required to comply with this standard. As part of this obligation, Braintree is updating its services to require TLS 1.2 for all HTTPS connections. Braintree will also require HTTP/1.1 for all connections. Please see our [technical documentation](https://github.com/paypal/tls-update) for more information.**
+## TLS 1.2 required
+> **The Payment Card Industry (PCI) Council has [mandated](https://blog.pcisecuritystandards.org/migrating-from-ssl-and-early-tls) that early versions of TLS be retired from service.  All organizations that handle credit card information are required to comply with this standard. As part of this obligation, Braintree has updated its services to require TLS 1.2 for all HTTPS connections. Braintrees require HTTP/1.1 for all connections. Please see our [technical documentation](https://github.com/paypal/tls-update) for more information.**
 
 ## Dependencies
-
-PHP version >= 5.4.0 is required.
 
 The following PHP extensions are required:
 
@@ -17,6 +15,27 @@ The following PHP extensions are required:
 * openssl
 * xmlwriter
 
+PHP version >= 7.3 is required. The Braintree PHP SDK is tested against PHP versions 7.3 and 7.4, and 8.0.
+
+_The PHP core development community has released [End-of-Life branches](https://www.php.net/eol.php) for PHP versions 5.4 - 7.2, and are no longer receiving security updates. As a result, Braintree does not support these versions of PHP._
+
+## Versions
+
+Braintree employs a deprecation policy for our SDKs. For more information on the statuses of an SDK check our [developer docs](https://developer.paypal.com/braintree/docs/reference/general/server-sdk-deprecation-policy).
+
+| Major version number | Status | Released | Deprecated | Unsupported |
+| -------------------- | ------ | -------- | ---------- | ----------- |
+| 6.x.x | Active | March 2021 | TBA | TBA |
+| 5.x.x | Inactive | March 2020 | March 2023 | March 2024 |
+| 4.x.x | Deprecated | May 2019 | March 2022 | March 2023 |
+| 3.x.x | Deprecated | May 2015 | March 2022 | March 2023 |
+
+## Documentation
+
+ * [Official documentation](https://developer.paypal.com/braintree/docs/start/hello-server/php)
+
+Updating from an Inactive, Deprecated, or Unsupported version of this SDK? Check our [Migration Guide](https://developer.paypal.com/braintree/docs/reference/general/server-sdk-migration-guide/php) for tips.
+
 ## Quick Start Example
 
 ```php
@@ -24,15 +43,29 @@ The following PHP extensions are required:
 
 require_once 'PATH_TO_BRAINTREE/lib/Braintree.php';
 
-Braintree_Configuration::environment('sandbox');
-Braintree_Configuration::merchantId('your_merchant_id');
-Braintree_Configuration::publicKey('your_public_key');
-Braintree_Configuration::privateKey('your_private_key');
+// Instantiate a Braintree Gateway either like this:
+$gateway = new Braintree\Gateway([
+    'environment' => 'sandbox',
+    'merchantId' => 'your_merchant_id',
+    'publicKey' => 'your_public_key',
+    'privateKey' => 'your_private_key'
+]);
 
-$result = Braintree_Transaction::sale([
-    'amount' => '1000.00',
-    'paymentMethodNonce' => 'nonceFromTheClient',
-    'options' => [ 'submitForSettlement' => true ]
+// or like this:
+$config = new Braintree\Configuration([
+    'environment' => 'sandbox',
+    'merchantId' => 'your_merchant_id',
+    'publicKey' => 'your_public_key',
+    'privateKey' => 'your_private_key'
+]);
+$gateway = new Braintree\Gateway($config)
+
+// Then, create a transaction:
+$result = $gateway->transaction()->sale([
+    'amount' => '10.00',
+    'paymentMethodNonce' => $nonceFromTheClient,
+    'deviceData' => $deviceDataFromTheClient,
+    'options' => [ 'submitForSettlement' => True ]
 ]);
 
 if ($result->success) {
@@ -42,24 +75,34 @@ if ($result->success) {
     print_r("\n  code: " . $result->transaction->processorResponseCode);
     print_r("\n  text: " . $result->transaction->processorResponseText);
 } else {
-    print_r("Validation errors: \n");
-    print_r($result->errors->deepAll());
+    foreach($result->errors->deepAll() AS $error) {
+      print_r($error->code . ": " . $error->message . "\n");
+    }
 }
 ```
 
-Both PSR-0 and PSR-4 namespacing are supported. If you are using composer with `--classmap-authoritative` or
-`--optimize-autoloader` enabled, you'll have to reference classes using PSR-4 namespacing:
+## Namespacing
+
+As of major version 5.x.x, only PSR-4 namespacing is supported. This means you'll have to reference classes using PSR-4 namespacing:
 
 ```php
-Braintree\Configuration::environment('sandbox');
-Braintree\Configuration::merchantId('your_merchant_id');
-Braintree\Configuration::publicKey('your_public_key');
-Braintree\Configuration::privateKey('your_private_key');
+$gateway = new Braintree\Gateway([
+    'environment' => 'sandbox',
+    'merchantId' => 'your_merchant_id',
+    'publicKey' => 'your_public_key',
+    'privateKey' => 'your_private_key'
+]);
+
+// or
+
+$config = new Braintree\Configuration([
+    'environment' => 'sandbox',
+    'merchantId' => 'your_merchant_id',
+    'publicKey' => 'your_public_key',
+    'privateKey' => 'your_private_key'
+]);
+$gateway = new Braintree\Gateway($config)
 ```
-
-## HHVM Support
-
-The Braintree PHP library will run on HHVM >= 3.4.2.
 
 ## Google App Engine Support
 
@@ -72,16 +115,12 @@ extension = "curl.so"
 and turn off accepting gzip responses:
 
 ```php
-Braintree\Configuration::acceptGzipEncoding(false);
+$gateway = new Braintree\Gateway([
+    'environment' => 'sandbox',
+    // ...
+    'acceptGzipEncoding' => false,
+]);
 ```
-
-## Legacy PHP Support
-
-Version [2.40.0](https://github.com/braintree/braintree_php/releases/tag/2.40.0) is compatible with PHP 5.2 and 5.3. You can find it on our releases page.
-
-## Documentation
-
- * [Official documentation](https://developers.braintreepayments.com/php/sdk/server/overview)
 
 ## Developing (Docker)
 
@@ -91,14 +130,20 @@ The `Makefile` and `Dockerfile` will build an image containing the dependencies 
 make
 ```
 
+## Linting
+
+The Rakefile includes commands to run [PHP Code Sniffer](https://github.com/squizlabs/PHP_CodeSniffer) and [PHP Code Beautifier & Fixer](https://github.com/squizlabs/PHP_CodeSniffer/wiki/Fixing-Errors-Automatically). To run the linter commands use rake:
+
+```sh
+rake lint:fix # runs the auto-fixer first, then sniffs for any remaining code smells
+rake lint:sniff[y] # gives a detailed report of code smells
+```
+
 ## Testing
 
 The unit specs can be run by anyone on any system, but the integration specs are meant to be run against a local development server of our gateway code. These integration specs are not meant for public consumption and will likely fail if run on your system. To run unit tests use rake: `rake test:unit`.
 
-The benefit of the `rake` tasks is that testing covers default `hhvm` and `php` interpreters. However, if you want to run tests manually simply use the following command:
-```
-phpunit tests/unit/
-```
+To lint and run all tests, use rake: `rake test`.
 
 ## License
 

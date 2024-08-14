@@ -24,7 +24,7 @@ class GridTest extends \PHPUnit\Framework\TestCase
     /**
      * @inheritDoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->block = Bootstrap::getObjectManager()->get(
             \Magento\Reports\Block\Adminhtml\Grid::class
@@ -77,7 +77,7 @@ class GridTest extends \PHPUnit\Framework\TestCase
      *
      * @return array
      */
-    public function getSalesRepresentativeIdDataProvider(): array
+    public function getSalesRepresentativeIdDataProvider()
     {
         return [
             'Data for US locale' =>             ['08/15/2018', '08/20/2018', 'day', 'en_US', 6],

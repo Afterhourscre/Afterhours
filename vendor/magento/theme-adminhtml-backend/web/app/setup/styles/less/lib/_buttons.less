@@ -27,7 +27,7 @@
 @btn-secondary__disabled__background-color: lighten(@btn-secondary__background-color, 0%);
 @btn-secondary__active__background-color: lighten(@btn-secondary__background-color, 2%);
 
-@triangle__base__size: @btn__height__base / 2;
+@triangle__base__size: (@btn__height__base / 2);
 
 //  Expand button
 @color-btn-expand: @base__color;
@@ -73,12 +73,6 @@
         cursor: default;
         opacity: @disabled__opacity;
         pointer-events: none;
-
-        .ie9 & {
-            background-color: @btn__base__disabled__background-color;
-            opacity: 1;
-            text-shadow: none;
-        }
     }
 }
 
@@ -135,22 +129,6 @@
         );
         color: @btn-prime__color;
     }
-
-    //  Disabled state for IE9
-    &[disabled],
-    &.disabled {
-        .ie9 & {
-            background-color: @btn-prime__disabled__background-color;
-        }
-
-        &:hover,
-        &:active {
-            .ie9 & {
-                background-color: @btn-prime__disabled__background-color;
-                filter: none;
-            }
-        }
-    }
 }
 
 .btn-secondary {
@@ -166,21 +144,6 @@
     &:focus {
         background-color: @btn-secondary__active__background-color;
         color: @btn-secondary__color;
-    }
-
-    //  Disabled state for IE9
-    &[disabled],
-    &.disabled {
-        .ie9 & {
-            background-color: @btn-secondary__disabled__background-color;
-        }
-
-        &:active {
-            .ie9 & {
-                background-color: @btn-secondary__disabled__background-color;
-                filter: none;
-            }
-        }
     }
 }
 
@@ -211,7 +174,7 @@
     position: relative;
 
     .btn {
-        text-indent: @triangle__base__size / 2;
+        text-indent: (@triangle__base__size / 2);
 
         &:after {
             border-color: transparent transparent transparent @btn__base__background-color;
@@ -237,26 +200,6 @@
         &:not(.disabled) {
             &:active {
                 left: 1px;
-            }
-        }
-
-        //  Disabled state for IE9
-        &[disabled],
-        &.disabled {
-            &:after {
-                .ie9 & {
-                    border-color: transparent transparent transparent @btn__base__disabled__background-color;
-                }
-            }
-
-            &:focus,
-            &:hover,
-            &:active {
-                &:after {
-                    .ie9 & {
-                        border-left-color: @btn__base__disabled__background-color;
-                    }
-                }
             }
         }
     }
@@ -285,25 +228,6 @@
                 left: 1px;
             }
         }
-
-        //  Disabled state for IE9
-        &[disabled],
-        &.disabled {
-            &:after {
-                .ie9 & {
-                    border-color: transparent transparent transparent @btn-prime__disabled__background-color;
-                }
-            }
-
-            &:hover,
-            &:active {
-                &:after {
-                    .ie9 & {
-                        border-left-color: @btn-prime__disabled__background-color;
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -314,7 +238,7 @@
     padding-left: @triangle__base__size - .1;
 
     .btn {
-        text-indent: -@triangle__base__size / 2;
+        text-indent: (-@triangle__base__size / 2);
 
         &:after {
             border-color: transparent @btn__base__background-color transparent transparent;
@@ -340,25 +264,6 @@
         &:not(.disabled) {
             &:active {
                 right: 1px;
-            }
-        }
-
-        //  Disabled state for IE9
-        &[disabled],
-        &.disabled {
-            &:after {
-                .ie9 & {
-                    border-color: transparent @btn__base__disabled__background-color transparent transparent;
-                }
-            }
-
-            &:hover,
-            &:active {
-                &:after {
-                    .ie9 & {
-                        border-right-color: @btn__base__disabled__background-color;
-                    }
-                }
             }
         }
     }
@@ -387,25 +292,6 @@
                 right: 1px;
             }
         }
-
-        //  Disabled state for IE9
-        &[disabled],
-        &.disabled {
-            &:after {
-                .ie9 & {
-                    border-color: transparent @btn-prime__disabled__background-color transparent transparent;
-                }
-            }
-
-            &:hover,
-            &:active {
-                &:after {
-                    .ie9 & {
-                        border-right-color: @btn-prime__disabled__background-color;
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -426,7 +312,7 @@
     &.expanded {
         &:after {
             border-color: transparent transparent @color-btn-expand transparent;
-            border-width: 0 @width-triangle-btn-expand / 2 @height-triangle-btn-expand @width-triangle-btn-expand / 2;
+            border-width: 0 (@width-triangle-btn-expand / 2) @height-triangle-btn-expand (@width-triangle-btn-expand / 2);
         }
 
         &:hover {
@@ -449,7 +335,7 @@
     &:after {
         border-color: @color-btn-expand transparent transparent transparent;
         border-style: solid;
-        border-width: @height-triangle-btn-expand @width-triangle-btn-expand / 2 0 @width-triangle-btn-expand / 2;
+        border-width: @height-triangle-btn-expand (@width-triangle-btn-expand / 2) 0 (@width-triangle-btn-expand / 2);
         content: '';
         height: 0;
         left: 100%;

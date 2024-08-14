@@ -6,25 +6,21 @@
  */
 namespace Magento\User\Controller\Adminhtml\User\Role;
 
+use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\Controller\ResultFactory;
-use Magento\Framework\Exception\NotFoundException;
 
 /**
  * User roles delete action.
  */
-class Delete extends \Magento\User\Controller\Adminhtml\User\Role
+class Delete extends \Magento\User\Controller\Adminhtml\User\Role implements HttpPostActionInterface
 {
     /**
      * Remove role action.
      *
      * @return \Magento\Backend\Model\View\Result\Redirect
-     * @throws NotFoundException
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new NotFoundException(__('Page not found'));
-        }
         /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
         $rid = (int)$this->getRequest()->getParam('rid', false);

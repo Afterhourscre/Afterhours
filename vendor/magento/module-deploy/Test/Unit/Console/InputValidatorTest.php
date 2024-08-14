@@ -4,25 +4,25 @@
  * See COPYING.txt for license details.
  */
 
+declare(strict_types=1);
+
 namespace Magento\Deploy\Test\Unit\Console;
 
+use InvalidArgumentException;
+use Magento\Deploy\Console\DeployStaticOptions as Options;
+use Magento\Deploy\Console\InputValidator;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
+use Magento\Framework\Validator\Locale;
 use Magento\Framework\Validator\Regex;
 use Magento\Framework\Validator\RegexFactory;
 use PHPUnit\Framework\TestCase;
-use Magento\Deploy\Console\InputValidator;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
-use Magento\Deploy\Console\DeployStaticOptions as Options;
-use Magento\Framework\Validator\Locale;
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\ArrayInput;
-use InvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputDefinition;
+use Symfony\Component\Console\Input\InputOption;
 
 /**
- * Class InputValidatorTest
- * @package Magento\Deploy\Test\Unit\Console
- *  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class InputValidatorTest extends TestCase
 {
@@ -42,9 +42,9 @@ class InputValidatorTest extends TestCase
     protected $localeValidator;
 
     /**
-     * @throws \Zend_Validate_Exception
+     * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->objectManagerHelper = new ObjectManagerHelper($this);
 
@@ -58,13 +58,14 @@ class InputValidatorTest extends TestCase
         $regexFactoryMock->expects($this->any())->method('create')
             ->willReturn($regexObject);
 
-        $localeObjectMock = $this->getMockBuilder(Locale::class)->setMethods(['isValid'])
+        $localeObjectMock = $this->getMockBuilder(Locale::class)
+            ->setMethods(['isValid'])
             ->disableOriginalConstructor()
             ->getMock();
 
         $localeObjectMock->expects($this->any())->method('isValid')
             ->with('en_US')
-            ->will($this->returnValue(true));
+            ->willReturn(true);
 
         $this->inputValidator = $this->objectManagerHelper->getObject(
             InputValidator::class,
@@ -75,9 +76,6 @@ class InputValidatorTest extends TestCase
         );
     }
 
-    /**
-     * @throws \Zend_Validate_Exception
-     */
     public function testValidate()
     {
         $input = $this->getMockBuilder(ArrayInput::class)
@@ -109,8 +107,8 @@ class InputValidatorTest extends TestCase
     public function testCheckAreasInputException()
     {
         $options = [
-            new InputOption(Options::AREA, null, 4, null, ['test']),
-            new InputOption(Options::EXCLUDE_AREA, null, 4, null, ['test'])
+            new InputOption(Options::AREA, null, 4, '', ['test']),
+            new InputOption(Options::EXCLUDE_AREA, null, 4, '', ['test'])
         ];
 
         $inputDefinition = new InputDefinition($options);
@@ -120,7 +118,10 @@ class InputValidatorTest extends TestCase
                 new ArrayInput([], $inputDefinition)
             );
         } catch (\Exception $e) {
-            $this->assertContains('--area (-a) and --exclude-area cannot be used at the same time', $e->getMessage());
+            $this->assertStringContainsString(
+                '--area (-a) and --exclude-area cannot be used at the same time',
+                $e->getMessage()
+            );
             $this->assertInstanceOf(InvalidArgumentException::class, $e);
         }
     }
@@ -131,8 +132,8 @@ class InputValidatorTest extends TestCase
     public function testCheckThemesInputException()
     {
         $options = [
-            new InputOption(Options::AREA, null, 4, null, ['all']),
-            new InputOption(Options::EXCLUDE_AREA, null, 4, null, ['none']),
+            new InputOption(Options::AREA, null, 4, '', ['all']),
+            new InputOption(Options::EXCLUDE_AREA, null, 4, '', ['none']),
             new InputOption(Options::THEME, null, 4, '', ['blank']),
             new InputOption(Options::EXCLUDE_THEME, null, 4, '', ['luma'])
         ];
@@ -144,7 +145,10 @@ class InputValidatorTest extends TestCase
                 new ArrayInput([], $inputDefinition)
             );
         } catch (\Exception $e) {
-            $this->assertContains('--theme (-t) and --exclude-theme cannot be used at the same time', $e->getMessage());
+            $this->assertStringContainsString(
+                '--theme (-t) and --exclude-theme cannot be used at the same time',
+                $e->getMessage()
+            );
             $this->assertInstanceOf(InvalidArgumentException::class, $e);
         }
     }
@@ -152,11 +156,11 @@ class InputValidatorTest extends TestCase
     public function testCheckLanguagesInputException()
     {
         $options = [
-            new InputOption(Options::AREA, null, 4, null, ['all']),
-            new InputOption(Options::EXCLUDE_AREA, null, 4, null, ['none']),
+            new InputOption(Options::AREA, null, 4, '', ['all']),
+            new InputOption(Options::EXCLUDE_AREA, '', 4, '', ['none']),
             new InputOption(Options::THEME, null, 4, '', ['all']),
             new InputOption(Options::EXCLUDE_THEME, null, 4, '', ['none']),
-            new InputArgument(Options::LANGUAGES_ARGUMENT, null, 4, ['en_US']),
+            new InputArgument(Options::LANGUAGES_ARGUMENT, 2, '', ['en_US']),
             new InputOption(Options::EXCLUDE_LANGUAGE, null, 4, '', ['all'])
         ];
 
@@ -167,7 +171,7 @@ class InputValidatorTest extends TestCase
                 new ArrayInput([], $inputDefinition)
             );
         } catch (\Exception $e) {
-            $this->assertContains(
+            $this->assertStringContainsString(
                 '--language (-l) and --exclude-language cannot be used at the same time',
                 $e->getMessage()
             );
@@ -179,11 +183,11 @@ class InputValidatorTest extends TestCase
     public function testCheckVersionInputException()
     {
         $options = [
-            new InputOption(Options::AREA, null, 4, null, ['all']),
-            new InputOption(Options::EXCLUDE_AREA, null, 4, null, ['none']),
+            new InputOption(Options::AREA, null, 4, '', ['all']),
+            new InputOption(Options::EXCLUDE_AREA, null, 4, '', ['none']),
             new InputOption(Options::THEME, null, 4, '', ['all']),
             new InputOption(Options::EXCLUDE_THEME, null, 4, '', ['none']),
-            new InputArgument(Options::LANGUAGES_ARGUMENT, null, 4, ['en_US']),
+            new InputArgument(Options::LANGUAGES_ARGUMENT, 2, '', ['en_US']),
             new InputOption(Options::EXCLUDE_LANGUAGE, null, 4, '', ['none']),
             new InputOption(Options::CONTENT_VERSION, null, 4, '', '/*!#')
         ];
@@ -195,7 +199,7 @@ class InputValidatorTest extends TestCase
                 new ArrayInput([], $inputDefinition)
             );
         } catch (\Exception $e) {
-            $this->assertContains(
+            $this->assertStringContainsString(
                 'Argument "' .
                 Options::CONTENT_VERSION
                 . '" has invalid value, content version should contain only characters, digits and dots',

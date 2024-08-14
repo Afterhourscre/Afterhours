@@ -9,7 +9,7 @@ use Magento\Framework\Data\Form\Element\Renderer\RendererInterface;
 use Magento\Framework\View\Element\AbstractBlock;
 
 /**
- * Renderer for Editable sales rules.
+ * Renderer for Editable sales rules
  *
  * @api
  * @since 100.0.2

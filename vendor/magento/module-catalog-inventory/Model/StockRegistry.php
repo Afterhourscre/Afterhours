@@ -3,6 +3,7 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
 namespace Magento\CatalogInventory\Model;
 
 use Magento\Catalog\Model\ProductFactory;
@@ -171,16 +172,6 @@ class StockRegistry implements StockRegistryInterface
         $productId = $this->resolveProductId($productSku);
         $websiteId = $stockItem->getWebsiteId() ?: null;
         $origStockItem = $this->getStockItem($productId, $websiteId);
-
-        if ($stockItem->getManageStock()
-            && !$stockItem->getIsInStock()
-            && $stockItem->getQty() > 0
-            && $stockItem->getOrigData(\Magento\CatalogInventory\Api\Data\StockItemInterface::QTY) <= 0
-            && $stockItem->getOrigData(\Magento\CatalogInventory\Api\Data\StockItemInterface::QTY) !== null
-        ) {
-            $stockItem->setIsInStock(true)->setStockStatusChangedAutomaticallyFlag(true);
-        }
-
         $data = $stockItem->getData();
         if ($origStockItem->getItemId()) {
             unset($data['item_id']);
@@ -202,7 +193,7 @@ class StockRegistry implements StockRegistryInterface
         if (!$productId) {
             throw new \Magento\Framework\Exception\NoSuchEntityException(
                 __(
-                    'Product with SKU "%1" does not exist',
+                    'The Product with the "%1" SKU doesn\'t exist.',
                     $productSku
                 )
             );

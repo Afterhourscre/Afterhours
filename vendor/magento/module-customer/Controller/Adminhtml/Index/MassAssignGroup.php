@@ -5,7 +5,8 @@
  */
 namespace Magento\Customer\Controller\Adminhtml\Index;
 
-use Magento\Customer\Api\Data\CustomerInterface;
+use Magento\Customer\Model\Customer;
+use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
 use Magento\Backend\App\Action\Context;
 use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory;
 use Magento\Eav\Model\Entity\Collection\AbstractCollection;
@@ -14,9 +15,9 @@ use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Controller\ResultFactory;
 
 /**
- * Class to execute MassAssignGroup action.
+ * Class MassAssignGroup
  */
-class MassAssignGroup extends AbstractMassAction
+class MassAssignGroup extends AbstractMassAction implements HttpPostActionInterface
 {
     /**
      * @var CustomerRepositoryInterface
@@ -40,7 +41,7 @@ class MassAssignGroup extends AbstractMassAction
     }
 
     /**
-     * Customer mass assign group action.
+     * Customer mass assign group action
      *
      * @param AbstractCollection $collection
      * @return \Magento\Backend\Model\View\Result\Redirect
@@ -59,7 +60,7 @@ class MassAssignGroup extends AbstractMassAction
         }
 
         if ($customersUpdated) {
-            $this->messageManager->addSuccess(__('A total of %1 record(s) were updated.', $customersUpdated));
+            $this->messageManager->addSuccessMessage(__('A total of %1 record(s) were updated.', $customersUpdated));
         }
         /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
@@ -69,12 +70,12 @@ class MassAssignGroup extends AbstractMassAction
     }
 
     /**
-     * Set ignore_validation_flag to skip unnecessary address and customer validation.
+     * Set ignore_validation_flag to skip unnecessary address and customer validation
      *
-     * @param CustomerInterface $customer
+     * @param Customer $customer
      * @return void
      */
-    private function setIgnoreValidationFlag(CustomerInterface $customer)
+    private function setIgnoreValidationFlag($customer)
     {
         $customer->setData('ignore_validation_flag', true);
     }

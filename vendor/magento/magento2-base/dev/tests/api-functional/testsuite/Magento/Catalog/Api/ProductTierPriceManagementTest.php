@@ -9,11 +9,14 @@ namespace Magento\Catalog\Api;
 
 use Magento\TestFramework\TestCase\WebapiAbstract;
 
+/**
+ * ProductTierPriceManagementTest API operations test
+ */
 class ProductTierPriceManagementTest extends WebapiAbstract
 {
-    const SERVICE_NAME = 'catalogProductTierPriceManagementV1';
-    const SERVICE_VERSION = 'V1';
-    const RESOURCE_PATH = '/V1/products/';
+    private const SERVICE_NAME = 'catalogProductTierPriceManagementV1';
+    private const SERVICE_VERSION = 'V1';
+    private const RESOURCE_PATH = '/V1/products/';
 
     /**
      * @magentoApiDataFixture Magento/Catalog/_files/product_simple.php
@@ -34,15 +37,15 @@ class ProductTierPriceManagementTest extends WebapiAbstract
             ],
         ];
 
-        $tearPriceList = $this->_webApiCall(
+        $tierPriceList = $this->_webApiCall(
             $serviceInfo,
             ['sku' => $productSku, 'customerGroupId' => $customerGroupId]
         );
 
-        $this->assertCount($count, $tearPriceList);
+        $this->assertCount($count, $tierPriceList);
         if ($count) {
-            $this->assertEquals($value, $tearPriceList[0]['value']);
-            $this->assertEquals($qty, $tearPriceList[0]['qty']);
+            $this->assertEquals($value, $tierPriceList[0]['value']);
+            $this->assertEquals($qty, $tierPriceList[0]['qty']);
         }
     }
 
@@ -58,17 +61,15 @@ class ProductTierPriceManagementTest extends WebapiAbstract
     /**
      * @param string|int $customerGroupId
      * @param int $qty
-     * @magentoApiDataFixture Magento/Catalog/_files/product_with_image.php
+     * @magentoApiDataFixture Magento/Catalog/_files/product_simple.php
      * @dataProvider deleteDataProvider
      */
     public function testDelete($customerGroupId, $qty)
     {
         $productSku = 'simple';
-        $objectManager = \Magento\TestFramework\ObjectManager::getInstance();
-        $productBefore = $objectManager->get(ProductRepositoryInterface::class)->get($productSku, false, null, true);
         $serviceInfo = [
             'rest' => [
-                'resourcePath' => self::RESOURCE_PATH
+                'resourcePath' =>   self::RESOURCE_PATH
                     . $productSku . "/group-prices/" . $customerGroupId . "/tiers/" . $qty,
                 'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_DELETE,
             ],
@@ -79,11 +80,7 @@ class ProductTierPriceManagementTest extends WebapiAbstract
             ],
         ];
         $requestData = ['sku' => $productSku, 'customerGroupId' => $customerGroupId, 'qty' => $qty];
-        $this->assertTrue($this->_webApiCall($serviceInfo, $requestData));
-        $productAfter = $objectManager->get(ProductRepositoryInterface::class)->get($productSku, false, null, true);
-        $this->assertSame($productBefore->getImage(), $productAfter->getImage());
-        $this->assertSame($productBefore->getSmallImage(), $productAfter->getSmallImage());
-        $this->assertSame($productBefore->getThumbnail(), $productAfter->getThumbnail());
+        $this->assertTrue($this->_webApiCall($serviceInfo, $requestData, null, "all"));
     }
 
     public function deleteDataProvider()
@@ -199,7 +196,7 @@ class ProductTierPriceManagementTest extends WebapiAbstract
             'qty' => $qty,
             'price' => $price,
         ];
-        $this->_webApiCall($serviceInfo, $requestData);
+        $this->_webApiCall($serviceInfo, $requestData, null, "all");
         $objectManager = \Magento\TestFramework\ObjectManager::getInstance();
         /** @var \Magento\Catalog\Api\ProductTierPriceManagementInterface $service */
         $service = $objectManager->get(\Magento\Catalog\Api\ProductTierPriceManagementInterface::class);

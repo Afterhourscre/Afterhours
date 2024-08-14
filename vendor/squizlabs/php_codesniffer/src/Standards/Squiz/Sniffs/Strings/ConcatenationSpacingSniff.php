@@ -4,13 +4,13 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Sniffs\Strings;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Util\Tokens;
 
 class ConcatenationSpacingSniff implements Sniff
@@ -34,11 +34,11 @@ class ConcatenationSpacingSniff implements Sniff
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(T_STRING_CONCAT);
+        return [T_STRING_CONCAT];
 
     }//end register()
 
@@ -55,6 +55,10 @@ class ConcatenationSpacingSniff implements Sniff
     public function process(File $phpcsFile, $stackPtr)
     {
         $tokens = $phpcsFile->getTokens();
+        if (isset($tokens[($stackPtr + 2)]) === false) {
+            // Syntax error or live coding, bow out.
+            return;
+        }
 
         $ignoreBefore = false;
         $prev         = $phpcsFile->findPrevious(Tokens::$emptyTokens, ($stackPtr - 1), null, true);
@@ -104,7 +108,7 @@ class ConcatenationSpacingSniff implements Sniff
 
         if ($this->spacing === 0) {
             $message = 'Concat operator must not be surrounded by spaces';
-            $data    = array();
+            $data    = [];
         } else {
             if ($this->spacing > 1) {
                 $message = 'Concat operator must be surrounded by %s spaces';
@@ -112,7 +116,7 @@ class ConcatenationSpacingSniff implements Sniff
                 $message = 'Concat operator must be surrounded by a single space';
             }
 
-            $data = array($this->spacing);
+            $data = [$this->spacing];
         }
 
         $fix = $phpcsFile->addFixableError($message, $stackPtr, 'PaddingFound', $data);

@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Tests\Arrays;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class ArrayBracketSpacingUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the ArrayBracketSpacing sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Squiz\Sniffs\Arrays\ArrayBracketSpacingSniff
+ */
+final class ArrayBracketSpacingUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,16 +30,16 @@ class ArrayBracketSpacingUnitTest extends AbstractSniffUnitTest
      */
     public function getErrorList()
     {
-        return array(
-                5  => 3,
-                7  => 3,
-                17 => 2,
-                20 => 2,
-                23 => 2,
-                24 => 2,
-                30 => 1,
-                31 => 2,
-               );
+        return [
+            5  => 3,
+            7  => 3,
+            17 => 2,
+            20 => 2,
+            23 => 2,
+            24 => 2,
+            30 => 1,
+            31 => 2,
+        ];
 
     }//end getErrorList()
 
@@ -49,7 +54,7 @@ class ArrayBracketSpacingUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

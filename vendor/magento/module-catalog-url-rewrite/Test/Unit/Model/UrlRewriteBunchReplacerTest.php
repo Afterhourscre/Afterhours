@@ -3,15 +3,19 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\CatalogUrlRewrite\Test\Unit\Model;
 
 use Magento\CatalogUrlRewrite\Model\UrlRewriteBunchReplacer;
 use Magento\UrlRewrite\Model\UrlPersistInterface;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class UrlRewriteBunchReplacerTest extends \PHPUnit\Framework\TestCase
+class UrlRewriteBunchReplacerTest extends TestCase
 {
     /**
-     * @var UrlPersistInterface | \PHPUnit_Framework_MockObject_MockObject
+     * @var UrlPersistInterface|MockObject
      */
     private $urlPersistMock;
 
@@ -20,9 +24,9 @@ class UrlRewriteBunchReplacerTest extends \PHPUnit\Framework\TestCase
      */
     private $urlRewriteBunchReplacer;
 
-    public function setUp()
+    protected function setUp(): void
     {
-        $this->urlPersistMock = $this->createMock(UrlPersistInterface::class);
+        $this->urlPersistMock = $this->getMockForAbstractClass(UrlPersistInterface::class);
         $this->urlRewriteBunchReplacer = new UrlRewriteBunchReplacer(
             $this->urlPersistMock
         );
@@ -33,7 +37,11 @@ class UrlRewriteBunchReplacerTest extends \PHPUnit\Framework\TestCase
         $urls = [[1], [2]];
         $this->urlPersistMock->expects($this->exactly(2))
             ->method('replace')
-            ->withConsecutive([[[1]]], [[[2]]]);
+            ->willReturnCallback(function ($arg1) {
+                if ($arg1 == [[1]] || $arg1 == [[1]]) {
+                    return null;
+                }
+            });
         $this->urlRewriteBunchReplacer->doBunchReplace($urls, 1);
     }
 }

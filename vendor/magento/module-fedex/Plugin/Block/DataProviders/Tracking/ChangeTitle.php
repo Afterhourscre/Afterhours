@@ -16,7 +16,7 @@ use Magento\Shipping\Block\DataProviders\Tracking\DeliveryDateTitle as Subject;
 class ChangeTitle
 {
     /**
-     * Update title in case if Fedex used as carrier
+     * Title modification in case if FedEx used as carrier
      *
      * @param Subject $subject
      * @param \Magento\Framework\Phrase|string $result

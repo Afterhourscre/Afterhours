@@ -4,10 +4,10 @@
  * See COPYING.txt for license details.
  */
 declare(strict_types=1);
+
 namespace Magento\Framework\App\Filesystem;
 
 use Magento\Framework\Filesystem;
-use Magento\Framework\App\ObjectManager;
 
 /**
  * Magento directories resolver.
@@ -16,6 +16,7 @@ class DirectoryResolver
 {
     /**
      * @var DirectoryList
+     * @deprecated $this->filesystem->getDirectoryWrite() can be used for getting directory
      */
     private $directoryList;
 
@@ -26,13 +27,12 @@ class DirectoryResolver
 
     /**
      * @param DirectoryList $directoryList
-     * @param Filesystem|null $filesystem
-     * @throws \RuntimeException
+     * @param Filesystem $filesystem
      */
-    public function __construct(DirectoryList $directoryList, Filesystem $filesystem = null)
+    public function __construct(DirectoryList $directoryList, Filesystem $filesystem)
     {
         $this->directoryList = $directoryList;
-        $this->filesystem = $filesystem ?: ObjectManager::getInstance()->get(Filesystem::class);
+        $this->filesystem = $filesystem;
     }
 
     /**
@@ -52,8 +52,8 @@ class DirectoryResolver
     {
         $directory = $this->filesystem->getDirectoryWrite($directoryConfig);
         $realPath = $directory->getDriver()->getRealPathSafety($path);
-        $root = $this->directoryList->getPath($directoryConfig);
-        
+        $root = rtrim($directory->getAbsolutePath(), DIRECTORY_SEPARATOR);
+
         return strpos($realPath, $root) === 0;
     }
 }

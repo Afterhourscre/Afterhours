@@ -16,7 +16,6 @@ use Magento\TestFramework\Helper\Bootstrap;
 /**
  * Tests of Paypal Express actions
  *
- * @package Magento\Paypal\Controller
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class ExpressTest extends \Magento\TestFramework\TestCase\AbstractController
@@ -38,9 +37,9 @@ class ExpressTest extends \Magento\TestFramework\TestCase\AbstractController
         $this->dispatch('paypal/express/review');
 
         $html = $this->getResponse()->getBody();
-        $this->assertContains('Simple Product', $html);
-        $this->assertContains('Review', $html);
-        $this->assertContains('/paypal/express/placeOrder/', $html);
+        $this->assertStringContainsString('Simple Product', $html);
+        $this->assertStringContainsString('Review', $html);
+        $this->assertStringContainsString('/paypal/express/placeOrder/', $html);
     }
 
     /**
@@ -64,8 +63,8 @@ class ExpressTest extends \Magento\TestFramework\TestCase\AbstractController
         )->setQuoteId(
             $order->getQuoteId()
         );
-        /** @var $paypalSession Generic */
-        $paypalSession = $this->_objectManager->get(PaypalSession::class);
+        /** @var $paypalSession PaypalSession */
+        $paypalSession = $this->_objectManager->get(PaypalSession::class); // @phpstan-ignore-line
         $paypalSession->setExpressCheckoutToken('token');
 
         $this->dispatch('paypal/express/cancel');
@@ -142,8 +141,6 @@ class ExpressTest extends \Magento\TestFramework\TestCase\AbstractController
      * Test return action with configurable product.
      *
      * @magentoDataFixture Magento/Paypal/_files/quote_express_configurable.php
-     * @magentoDbIsolation enabled
-     * @magentoAppIsolation enabled
      */
     public function testReturnAction()
     {
@@ -218,51 +215,14 @@ class ExpressTest extends \Magento\TestFramework\TestCase\AbstractController
         $sessionMock->method('getExpressCheckoutToken')
             ->willReturn(true);
 
+        // @phpstan-ignore-next-line
         $this->_objectManager->addSharedInstance($sessionMock, PaypalSession::class);
 
         $this->dispatch('paypal/express/returnAction');
         $this->assertRedirect($this->stringContains('checkout/onepage/success'));
 
         $this->_objectManager->removeSharedInstance(ApiFactory::class);
+        // @phpstan-ignore-next-line
         $this->_objectManager->removeSharedInstance(PaypalSession::class);
-    }
-
-    /**
-     * @magentoConfigFixture current_store carriers/freeshipping/active 1
-     * @magentoDataFixture Magento/Sales/_files/quote.php
-     * @magentoDataFixture Magento/Paypal/_files/quote_payment.php
-     * @return void
-     */
-    public function testPlaceOrderZeroGrandTotal()
-    {
-        /** @var \Magento\Framework\Escaper $escaper */
-        $escaper = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->get(\Magento\Framework\Escaper::class);
-        /** @var Quote $quote */
-        $quote = $this->_objectManager->create(Quote::class);
-        $quote->load('test01', 'reserved_order_id');
-        $quote->getShippingAddress()->setShippingMethod('freeshipping');
-        $quote->getShippingAddress()->setCollectShippingRates(true);
-        /** @var \Magento\Quote\Model\Quote\Item[] $items */
-        $items = $quote->getItemsCollection()->getItems();
-        $quoteItem = reset($items);
-        /** @var \Magento\Quote\Model\Quote\Item\Updater $quoteItemUpdater */
-        $quoteItemUpdater = $this->_objectManager->get(\Magento\Quote\Model\Quote\Item\Updater::class);
-        $quoteItemUpdater->update($quoteItem, ['qty' => 1, 'custom_price' => 0]);
-        $quote->setTotalsCollectedFlag(false)->collectTotals()->save();
-
-        $this->_objectManager->get(Session::class)->setQuoteId($quote->getId());
-
-        $this->dispatch('paypal/express/placeOrder');
-        $this->assertSessionMessages(
-            $this->equalTo(
-                [
-                    $escaper->escapeHtml(
-                        (string)__('PayPal can\'t process orders with a zero balance due. '
-                        . 'To finish your purchase, please go through the standard checkout process.')
-                    )
-                ]
-            ),
-            \Magento\Framework\Message\MessageInterface::TYPE_ERROR
-        );
     }
 }

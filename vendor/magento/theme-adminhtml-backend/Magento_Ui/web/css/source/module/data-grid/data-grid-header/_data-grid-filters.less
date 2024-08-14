@@ -99,7 +99,7 @@
     }
 
     .action-menu {
-        max-height: 3.85rem * @data-grid-search-control-action-menu-item__quantity; // ToDo UI: change static item height
+        max-height: 3.85rem * @data-grid-search-control-action-menu-item__quantity; // @todo: change static item height
         overflow-y: auto;
         z-index: @data-grid-search-menu__z-index;
     }
@@ -219,8 +219,8 @@
         display: inline-block;
         margin-bottom: 2em;
         margin-left: 0;
-        padding-left: @data-grid-filters-fieldset__inner-side / 2;
-        padding-right: @data-grid-filters-fieldset__inner-side / 2;
+        padding-left: (@data-grid-filters-fieldset__inner-side / 2);
+        padding-right: (@data-grid-filters-fieldset__inner-side / 2);
         vertical-align: top;
         width: ~'calc(100% / @{data-grid-filters-fieldset__columns} - 4px)';
 
@@ -354,6 +354,7 @@
 
 .admin__current-filters-list-wrap {
     width: 100%;
+    word-break: break-all;
 }
 
 .admin__current-filters-list {

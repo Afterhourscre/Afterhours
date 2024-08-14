@@ -3,48 +3,54 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Theme\Test\Unit\Model\ResourceModel\Design\Config\Scope;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\ScopeTreeProviderInterface;
 use Magento\Framework\Data\Collection\EntityFactoryInterface;
+use Magento\Framework\DataObject;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Theme\Model\Design\Config\MetadataProviderInterface;
+use Magento\Theme\Model\Design\Config\ValueProcessor;
 use Magento\Theme\Model\ResourceModel\Design\Config\Scope\Collection;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class CollectionTest extends \PHPUnit\Framework\TestCase
+class CollectionTest extends TestCase
 {
     /** @var Collection */
     protected $collection;
 
-    /** @var  EntityFactoryInterface|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var  EntityFactoryInterface|MockObject */
     protected $entityFactoryMock;
 
-    /** @var ScopeTreeProviderInterface|\PHPUnit_Framework_MockObject_MockObject*/
+    /** @var ScopeTreeProviderInterface|MockObject*/
     protected $scopeTreeMock;
 
-    /** @var MetadataProviderInterface|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var MetadataProviderInterface|MockObject */
     protected $metadataProviderMock;
 
-    /** @var ScopeConfigInterface|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var ScopeConfigInterface|MockObject */
     protected $appConfigMock;
 
-    /** @var \Magento\Theme\Model\Design\Config\ValueProcessor|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var ValueProcessor|MockObject */
     protected $valueProcessor;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->entityFactoryMock = $this->getMockBuilder(
-            \Magento\Framework\Data\Collection\EntityFactoryInterface::class
+            EntityFactoryInterface::class
         )->getMockForAbstractClass();
-        $this->scopeTreeMock = $this->getMockBuilder(\Magento\Framework\App\ScopeTreeProviderInterface::class)
+        $this->scopeTreeMock = $this->getMockBuilder(ScopeTreeProviderInterface::class)
             ->getMockForAbstractClass();
         $this->metadataProviderMock =
-            $this->getMockBuilder(\Magento\Theme\Model\Design\Config\MetadataProviderInterface::class)
+            $this->getMockBuilder(MetadataProviderInterface::class)
                 ->getMockForAbstractClass();
-        $this->appConfigMock = $this->getMockBuilder(\Magento\Framework\App\Config\ScopeConfigInterface::class)
+        $this->appConfigMock = $this->getMockBuilder(ScopeConfigInterface::class)
             ->getMockForAbstractClass();
-        $this->valueProcessor = $this->getMockBuilder(\Magento\Theme\Model\Design\Config\ValueProcessor::class)
+        $this->valueProcessor = $this->getMockBuilder(ValueProcessor::class)
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -61,6 +67,7 @@ class CollectionTest extends \PHPUnit\Framework\TestCase
      * Test loadData
      *
      * @return void
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function testLoadData()
     {
@@ -71,23 +78,23 @@ class CollectionTest extends \PHPUnit\Framework\TestCase
                     'scope' => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                     'scope_id' => null,
                     'scopes' => [
-                       [
-                           'scope' => ScopeInterface::SCOPE_WEBSITE,
-                           'scope_id' => 1,
-                           'scopes' => [
-                               [
-                                   'scope' => ScopeInterface::SCOPE_GROUP,
-                                   'scope_id' => 1,
-                                   'scopes' => [
-                                       [
-                                           'scope' => ScopeInterface::SCOPE_STORE,
-                                           'scope_id' => 1,
-                                           'scopes' => [],
+                        [
+                            'scope' => ScopeInterface::SCOPE_WEBSITE,
+                            'scope_id' => 1,
+                            'scopes' => [
+                                [
+                                    'scope' => ScopeInterface::SCOPE_GROUP,
+                                    'scope_id' => 1,
+                                    'scopes' => [
+                                        [
+                                            'scope' => ScopeInterface::SCOPE_STORE,
+                                            'scope_id' => 1,
+                                            'scopes' => [],
                                         ],
-                                   ],
-                               ],
-                           ],
-                       ],
+                                    ],
+                                ],
+                            ],
+                        ],
                     ],
                 ]
             );
@@ -113,35 +120,37 @@ class CollectionTest extends \PHPUnit\Framework\TestCase
             );
         $this->valueProcessor->expects($this->atLeastOnce())
             ->method('process')
-            ->withConsecutive(
-                ['DefaultValue', 'default', null, ['path' => 'second/field/path', 'use_in_grid' => 1]],
-                ['WebsiteValue', 'website', 1, ['path' => 'second/field/path', 'use_in_grid' => 1]],
-                ['WebsiteValue', 'store', 1, ['path' => 'second/field/path', 'use_in_grid' => 1]]
-            )
-            ->willReturnOnConsecutiveCalls(
-                'DefaultValue',
-                'WebsiteValue',
-                'WebsiteValue'
-            );
+            ->willReturnCallback(function ($arg1, $arg2, $arg3, $arg4) {
+                if ($arg1 == 'DefaultValue' && $arg2 == 'default' && $arg3 == null &&
+                    $arg4 == ['path' => 'second/field/path', 'use_in_grid' => 1]) {
+                    return 'DefaultValue';
+                } elseif ($arg1 == 'WebsiteValue' && $arg2 == 'website' && $arg3 == 1 &&
+                    $arg4 == ['path' => 'second/field/path', 'use_in_grid' => 1]) {
+                    return 'WebsiteValue';
+                } elseif ($arg1 == 'WebsiteValue' && $arg2 == 'store' && $arg3 == 1 &&
+                    $arg4 == ['path' => 'second/field/path', 'use_in_grid' => 1]) {
+                    return 'WebsiteValue';
+                }
+            });
 
         $expectedResult = [
-            new \Magento\Framework\DataObject([
+            new DataObject([
                 'store_website_id' => null,
                 'store_group_id' => null,
                 'store_id' => null,
                 'second_field' => 'DefaultValue'
             ]),
-            new \Magento\Framework\DataObject([
+            new DataObject([
                 'store_website_id' => 1,
                 'store_group_id' => null,
                 'store_id' => null,
                 'second_field' => 'WebsiteValue'
             ]),
-            new \Magento\Framework\DataObject([
+            new DataObject([
                 'store_website_id' => 1,
                 'store_group_id' => 1,
                 'store_id' => 1,
-                'second_field' => 'WebsiteValue' #parent (website level) value
+                'second_field' => 'WebsiteValue' //parent (website level) value
             ]),
         ];
 

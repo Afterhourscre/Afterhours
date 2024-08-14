@@ -18,14 +18,14 @@ if (trim($block->getPageHeading())) {
 }
 ?>
 <?php if ($titleHtml) : ?>
-    <div class="page-title-wrapper<?= $block->escapeHtmlAttr($cssClass) ?>">
-        <h1 class="page-title"
-            <?php if ($block->getId()) : ?> id="<?= $block->escapeHtmlAttr($block->getId()) ?>" <?php endif; ?>
-            <?php if ($block->getAddBaseAttributeAria()) : ?>
-                aria-labelledby="<?= $block->escapeHtmlAttr($block->getAddBaseAttributeAria()) ?>"
-            <?php endif; ?>>
-            <?= /* @noEscape */ $titleHtml ?>
-        </h1>
-        <?= $block->getChildHtml() ?>
-    </div>
+<div class="page-title-wrapper<?= $block->escapeHtmlAttr($cssClass) ?>">
+    <h1 class="page-title"
+        <?php if ($block->getId()) : ?> id="<?= $block->escapeHtmlAttr($block->getId()) ?>" <?php endif; ?>
+        <?php if ($block->getAddBaseAttributeAria()) : ?>
+            aria-labelledby="<?= $block->escapeHtmlAttr($block->getAddBaseAttributeAria()) ?>"
+        <?php endif; ?>>
+        <?= /* @noEscape */ $titleHtml ?>
+    </h1>
+    <?= $block->getChildHtml() ?>
+</div>
 <?php endif; ?>

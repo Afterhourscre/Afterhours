@@ -9,7 +9,7 @@ namespace Magento\Downloadable\Model\Url;
 
 use Magento\Downloadable\Api\DomainManagerInterface as DomainManager;
 use Magento\Framework\Validator\Ip as IpValidator;
-use Zend\Uri\Uri as UriHandler;
+use Laminas\Uri\Uri as UriHandler;
 
 /**
  * Class is responsible for checking if downloadable product link domain is allowed.
@@ -19,7 +19,7 @@ class DomainValidator
     /**
      * Path to the allowed domains in the deployment config
      */
-    const PARAM_DOWNLOADABLE_DOMAINS = 'downloadable_domains';
+    public const PARAM_DOWNLOADABLE_DOMAINS = 'downloadable_domains';
 
     /**
      * @var IpValidator

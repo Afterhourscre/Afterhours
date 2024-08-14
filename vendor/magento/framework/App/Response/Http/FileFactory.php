@@ -1,16 +1,27 @@
 <?php
 /**
- *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Framework\App\Response\Http;
 
 use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\App\ResponseInterface;
+use Magento\Framework\Filesystem;
 
+/**
+ * Class FileFactory serves to declare file content in response for download.
+ *
+ * @api
+ */
 class FileFactory
 {
     /**
+     * @deprecared
+     * @see $fileResponseFactory
      * @var \Magento\Framework\App\ResponseInterface
      */
     protected $_response;
@@ -21,15 +32,24 @@ class FileFactory
     protected $_filesystem;
 
     /**
-     * @param \Magento\Framework\App\ResponseInterface $response
-     * @param \Magento\Framework\Filesystem $filesystem
+     * @var \Magento\Framework\App\Response\FileFactory
+     */
+    private $fileResponseFactory;
+
+    /**
+     * @param ResponseInterface $response
+     * @param Filesystem $filesystem
+     * @param \Magento\Framework\App\Response\FileFactory|null $fileResponseFactory
      */
     public function __construct(
         \Magento\Framework\App\ResponseInterface $response,
-        \Magento\Framework\Filesystem $filesystem
+        \Magento\Framework\Filesystem $filesystem,
+        ?\Magento\Framework\App\Response\FileFactory $fileResponseFactory = null
     ) {
         $this->_response = $response;
         $this->_filesystem = $filesystem;
+        $this->fileResponseFactory = $fileResponseFactory
+            ?? ObjectManager::getInstance()->get(\Magento\Framework\App\Response\FileFactory::class);
     }
 
     /**
@@ -47,7 +67,6 @@ class FileFactory
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
-     * @SuppressWarnings(PHPMD.ExitExpression)
      */
     public function create(
         $fileName,
@@ -68,41 +87,29 @@ class FileFactory
                 $isFile = true;
                 $file = $content['value'];
                 if (!$dir->isFile($file)) {
+                    // phpcs:ignore Magento2.Exceptions.DirectThrow
                     throw new \Exception((string)new \Magento\Framework\Phrase('File not found'));
                 }
                 $contentLength = $dir->stat($file)['size'];
             }
         }
-        $this->_response->setHttpResponseCode(200)
-            ->setHeader('Pragma', 'public', true)
-            ->setHeader('Cache-Control', 'must-revalidate, post-check=0, pre-check=0', true)
-            ->setHeader('Content-type', $contentType, true)
-            ->setHeader('Content-Length', $contentLength === null ? strlen($fileContent) : $contentLength, true)
-            ->setHeader('Content-Disposition', 'attachment; filename="' . $fileName . '"', true)
-            ->setHeader('Last-Modified', date('r'), true);
 
         if ($content !== null) {
-            $this->_response->sendHeaders();
-            if ($isFile) {
-                $stream = $dir->openFile($file, 'r');
-                while (!$stream->eof()) {
-                    echo $stream->read(1024);
-                }
-            } else {
+            if (!$isFile) {
                 $dir->writeFile($fileName, $fileContent);
                 $file = $fileName;
-                $stream = $dir->openFile($fileName, 'r');
-                while (!$stream->eof()) {
-                    echo $stream->read(1024);
-                }
-            }
-            $stream->close();
-            flush();
-            if (!empty($content['rm'])) {
-                $dir->delete($file);
             }
         }
-        return $this->_response;
+        return $this->fileResponseFactory->create([
+            'options' => [
+                'filePath' => $file,
+                'fileName' => $fileName,
+                'contentType' => $contentType,
+                'contentLength' => $contentLength,
+                'directoryCode' => $baseDir,
+                'remove' => is_array($content) && !empty($content['rm'])
+            ]
+        ]);
     }
 
     /**

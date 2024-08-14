@@ -3,9 +3,17 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Directory\Model\Currency\Import;
 
+use Exception;
+use Laminas\Http\Request;
+use Magento\Directory\Model\CurrencyFactory;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\HTTP\LaminasClientFactory as HttpClientFactory;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Framework\HTTP\LaminasClient;
 
 /**
  * Currency rate import model (From http://fixer.io/)
@@ -15,34 +23,37 @@ class FixerIo extends AbstractImport
     /**
      * @var string
      */
-    const CURRENCY_CONVERTER_URL = 'http://data.fixer.io/api/latest?access_key={{ACCESS_KEY}}'
+    public const CURRENCY_CONVERTER_URL = 'http://data.fixer.io/api/latest?access_key={{ACCESS_KEY}}'
         . '&base={{CURRENCY_FROM}}&symbols={{CURRENCY_TO}}';
 
     /**
-     * Http Client Factory
-     *
-     * @var \Magento\Framework\HTTP\ZendClientFactory
+     * @var HttpClientFactory
      */
     protected $httpClientFactory;
 
     /**
      * Core scope config
      *
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface
+     * @var ScopeConfigInterface
      */
     private $scopeConfig;
 
     /**
+     * @var string
+     */
+    private $currencyConverterServiceHost = '';
+
+    /**
      * Initialize dependencies
      *
-     * @param \Magento\Directory\Model\CurrencyFactory $currencyFactory
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-     * @param \Magento\Framework\HTTP\ZendClientFactory $httpClientFactory
+     * @param CurrencyFactory $currencyFactory
+     * @param ScopeConfigInterface $scopeConfig
+     * @param HttpClientFactory $httpClientFactory
      */
     public function __construct(
-        \Magento\Directory\Model\CurrencyFactory $currencyFactory,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Framework\HTTP\ZendClientFactory $httpClientFactory
+        CurrencyFactory $currencyFactory,
+        ScopeConfigInterface $scopeConfig,
+        HttpClientFactory $httpClientFactory
     ) {
         parent::__construct($currencyFactory);
         $this->scopeConfig = $scopeConfig;
@@ -50,7 +61,7 @@ class FixerIo extends AbstractImport
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function fetchRates()
     {
@@ -69,10 +80,11 @@ class FixerIo extends AbstractImport
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected function _convert($currencyFrom, $currencyTo)
     {
+        return 1;
     }
 
     /**
@@ -83,7 +95,7 @@ class FixerIo extends AbstractImport
      * @param array $currenciesTo
      * @return array
      */
-    private function convertBatch($data, $currencyFrom, $currenciesTo)
+    private function convertBatch(array $data, string $currencyFrom, array $currenciesTo): array
     {
         $accessKey = $this->scopeConfig->getValue('currency/fixerio/api_key', ScopeInterface::SCOPE_STORE);
         if (empty($accessKey)) {
@@ -98,7 +110,7 @@ class FixerIo extends AbstractImport
             [$accessKey, $currencyFrom, $currenciesStr],
             self::CURRENCY_CONVERTER_URL
         );
-
+        // phpcs:ignore Magento2.Functions.DiscouragedFunction
         set_time_limit(0);
         try {
             $response = $this->getServiceResponse($url);
@@ -116,7 +128,8 @@ class FixerIo extends AbstractImport
                 $data[$currencyFrom][$currencyTo] = $this->_numberFormat(1);
             } else {
                 if (empty($response['rates'][$currencyTo])) {
-                    $this->_messages[] = __('We can\'t retrieve a rate from %1 for %2.', $url, $currencyTo);
+                    $serviceHost =  $this->getServiceHost($url);
+                    $this->_messages[] = __('We can\'t retrieve a rate from %1 for %2.', $serviceHost, $currencyTo);
                     $data[$currencyFrom][$currencyTo] = null;
                 } else {
                     $data[$currencyFrom][$currencyTo] = $this->_numberFormat(
@@ -135,27 +148,27 @@ class FixerIo extends AbstractImport
      * @param int $retry
      * @return array
      */
-    private function getServiceResponse($url, $retry = 0)
+    private function getServiceResponse(string $url, int $retry = 0): array
     {
-        /** @var \Magento\Framework\HTTP\ZendClient $httpClient */
+        /** @var LaminasClient $httpClient */
         $httpClient = $this->httpClientFactory->create();
         $response = [];
 
         try {
-            $jsonResponse = $httpClient->setUri($url)
-                ->setConfig(
-                    [
-                        'timeout' => $this->scopeConfig->getValue(
-                            'currency/fixerio/timeout',
-                            ScopeInterface::SCOPE_STORE
-                        ),
-                    ]
-                )
-                ->request('GET')
-                ->getBody();
+            $httpClient->setUri($url);
+            $httpClient->setOptions(
+                [
+                    'timeout' => $this->scopeConfig->getValue(
+                        'currency/fixerio/timeout',
+                        ScopeInterface::SCOPE_STORE
+                    ),
+                ]
+            );
+            $httpClient->setMethod(Request::METHOD_GET);
+            $jsonResponse = $httpClient->send()->getBody();
 
             $response = json_decode($jsonResponse, true);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             if ($retry == 0) {
                 $response = $this->getServiceResponse($url, 1);
             }
@@ -197,5 +210,22 @@ class FixerIo extends AbstractImport
     private function makeEmptyResponse(array $currenciesTo): array
     {
         return array_fill_keys($currenciesTo, null);
+    }
+
+    /**
+     * Get currency converter service host.
+     *
+     * @param string $url
+     * @return string
+     */
+    private function getServiceHost(string $url): string
+    {
+        if (!$this->currencyConverterServiceHost) {
+            // phpcs:ignore Magento2.Functions.DiscouragedFunction
+            $this->currencyConverterServiceHost = parse_url($url, PHP_URL_SCHEME) . '://'
+                // phpcs:ignore Magento2.Functions.DiscouragedFunction
+                . parse_url($url, PHP_URL_HOST);
+        }
+        return $this->currencyConverterServiceHost;
     }
 }

@@ -11,12 +11,9 @@ use Magento\Catalog\Model\Product\Pricing\Renderer\SalableResolver;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable as TypeConfigurable;
 use Magento\ConfigurableProduct\Plugin\Catalog\Model\Product\Pricing\Renderer\SalableResolver as SalableResolverPlugin;
 use Magento\Framework\Pricing\SaleableInterface;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Class SalableResolverTest
- */
 class SalableResolverTest extends TestCase
 {
     /**
@@ -29,7 +26,7 @@ class SalableResolverTest extends TestCase
      */
     private $salableResolver;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->typeConfigurable = $this->createMock(TypeConfigurable::class);
         $this->salableResolver = new SalableResolverPlugin($this->typeConfigurable);
@@ -43,7 +40,7 @@ class SalableResolverTest extends TestCase
      * @return void
      * @dataProvider afterIsSalableDataProvider
      */
-    public function testAfterIsSalable($salableItem, bool $isSalable, bool $typeIsSalable, bool $expectedResult)
+    public function testAfterIsSalable($salableItem, bool $isSalable, bool $typeIsSalable, bool $expectedResult): void
     {
         $salableResolver = $this->createMock(SalableResolver::class);
 
@@ -55,18 +52,18 @@ class SalableResolverTest extends TestCase
     }
 
     /**
-     * Data provider for testAfterIsSalable
-     *
      * @return array
      */
     public function afterIsSalableDataProvider(): array
     {
-        $simpleSalableItem = $this->createMock(SaleableInterface::class);
-        $simpleSalableItem->method('getTypeId')
+        $simpleSalableItem = $this->getMockForAbstractClass(SaleableInterface::class);
+        $simpleSalableItem->expects($this->once())
+            ->method('getTypeId')
             ->willReturn('simple');
 
-        $configurableSalableItem = $this->createMock(SaleableInterface::class);
-        $configurableSalableItem->method('getTypeId')
+        $configurableSalableItem = $this->getMockForAbstractClass(SaleableInterface::class);
+        $configurableSalableItem->expects($this->once())
+            ->method('getTypeId')
             ->willReturn('configurable');
 
         return [

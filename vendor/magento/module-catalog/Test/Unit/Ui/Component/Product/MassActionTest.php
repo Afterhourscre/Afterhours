@@ -11,14 +11,17 @@ use Magento\Catalog\Ui\Component\Product\MassAction;
 use Magento\Framework\AuthorizationInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Framework\View\Element\UiComponent\ContextInterface;
+use Magento\Framework\View\Element\UiComponent\Processor;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
- * Test for Magento\Catalog\Ui\Component\Product\MassAction class.
+ * MassAction test for Component Product
  */
-class MassActionTest extends \PHPUnit\Framework\TestCase
+class MassActionTest extends TestCase
 {
     /**
-     * @var ContextInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var ContextInterface|MockObject
      */
     private $contextMock;
 
@@ -28,7 +31,7 @@ class MassActionTest extends \PHPUnit\Framework\TestCase
     private $objectManager;
 
     /**
-     * @var AuthorizationInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var AuthorizationInterface|MockObject
      */
     private $authorizationMock;
 
@@ -37,10 +40,7 @@ class MassActionTest extends \PHPUnit\Framework\TestCase
      */
     private $massAction;
 
-    /**
-     * @inheritdoc
-     */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->objectManager = new ObjectManager($this);
 
@@ -54,17 +54,14 @@ class MassActionTest extends \PHPUnit\Framework\TestCase
             [
                 'authorization' => $this->authorizationMock,
                 'context' => $this->contextMock,
-                'data' => [],
+                'data' => []
             ]
         );
     }
 
-    /**
-     * @return void
-     */
     public function testGetComponentName()
     {
-        $this->assertTrue($this->massAction->getComponentName() === MassAction::NAME);
+        $this->assertSame(MassAction::NAME, $this->massAction->getComponentName());
     }
 
     /**
@@ -75,13 +72,9 @@ class MassActionTest extends \PHPUnit\Framework\TestCase
      * @return void
      * @dataProvider getPrepareDataProvider
      */
-    public function testPrepare(
-        string $componentName,
-        array $componentData,
-        bool $isAllowed = true,
-        bool $expectActionConfig = true
-    ) {
-        $processor = $this->getMockBuilder(\Magento\Framework\View\Element\UiComponent\Processor::class)
+    public function testPrepare($componentName, $componentData, $isAllowed = true, $expectActionConfig = true)
+    {
+        $processor = $this->getMockBuilder(Processor::class)
             ->disableOriginalConstructor()
             ->getMock();
         $this->contextMock->expects($this->atLeastOnce())->method('getProcessor')->willReturn($processor);
@@ -129,12 +122,12 @@ class MassActionTest extends \PHPUnit\Framework\TestCase
                         [
                             'type' => 'second_sub_action1',
                             'label' => 'Second Sub Action 1',
-                            'url' => '/module/controller/secondSubAction1',
+                            'url' => '/module/controller/secondSubAction1'
                         ],
                         [
                             'type' => 'second_sub_action2',
                             'label' => 'Second Sub Action 2',
-                            'url' => '/module/controller/secondSubAction2',
+                            'url' => '/module/controller/secondSubAction2'
                         ],
                     ],
                     '__disableTmpl' => true
@@ -149,12 +142,12 @@ class MassActionTest extends \PHPUnit\Framework\TestCase
                         [
                             'type' => 'enable',
                             'label' => 'Second Sub Action 1',
-                            'url' => '/module/controller/enable',
+                            'url' => '/module/controller/enable'
                         ],
                         [
                             'type' => 'disable',
                             'label' => 'Second Sub Action 2',
-                            'url' => '/module/controller/disable',
+                            'url' => '/module/controller/disable'
                         ],
                     ],
                     '__disableTmpl' => true
@@ -169,18 +162,18 @@ class MassActionTest extends \PHPUnit\Framework\TestCase
                         [
                             'type' => 'enable',
                             'label' => 'Second Sub Action 1',
-                            'url' => '/module/controller/enable',
+                            'url' => '/module/controller/enable'
                         ],
                         [
                             'type' => 'disable',
                             'label' => 'Second Sub Action 2',
-                            'url' => '/module/controller/disable',
+                            'url' => '/module/controller/disable'
                         ],
                     ],
                     '__disableTmpl' => true
                 ],
                 false,
-                false,
+                false
             ],
             [
                 'delete_component',
@@ -200,7 +193,7 @@ class MassActionTest extends \PHPUnit\Framework\TestCase
                     '__disableTmpl' => true
                 ],
                 false,
-                false,
+                false
             ],
             [
                 'attributes_component',
@@ -220,7 +213,7 @@ class MassActionTest extends \PHPUnit\Framework\TestCase
                     '__disableTmpl' => true
                 ],
                 false,
-                false,
+                false
             ],
         ];
     }
@@ -231,16 +224,10 @@ class MassActionTest extends \PHPUnit\Framework\TestCase
      * @param int $callNum
      * @param string $resource
      * @param bool $isAllowed
-     * @return void
      * @dataProvider isActionAllowedDataProvider
      */
-    public function testIsActionAllowed(
-        bool $expected,
-        string $actionType,
-        int $callNum,
-        string $resource = '',
-        bool $isAllowed = true
-    ) {
+    public function testIsActionAllowed($expected, $actionType, $callNum, $resource = '', $isAllowed = true)
+    {
         $this->authorizationMock->expects($this->exactly($callNum))
             ->method('isAllowed')
             ->with($resource)
@@ -252,16 +239,17 @@ class MassActionTest extends \PHPUnit\Framework\TestCase
     /**
      * @return array
      */
-    public function isActionAllowedDataProvider(): array
+    public function isActionAllowedDataProvider()
     {
         return [
-            'other' => [true, 'other', 0,],
+            'other' => [true, 'other', 0],
             'delete-allowed' => [true, 'delete', 1, 'Magento_Catalog::products'],
             'delete-not-allowed' => [false, 'delete', 1, 'Magento_Catalog::products', false],
             'status-allowed' => [true, 'status', 1, 'Magento_Catalog::products'],
             'status-not-allowed' => [false, 'status', 1, 'Magento_Catalog::products', false],
             'attributes-allowed' => [true, 'attributes', 1, 'Magento_Catalog::update_attributes'],
             'attributes-not-allowed' => [false, 'attributes', 1, 'Magento_Catalog::update_attributes', false],
+
         ];
     }
 }

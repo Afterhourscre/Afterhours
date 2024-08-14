@@ -56,7 +56,7 @@ class CustomerMetadata implements CustomerMetadataInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getAttributes($formCode)
     {
@@ -77,7 +77,7 @@ class CustomerMetadata implements CustomerMetadataInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getAttributeMetadata($attributeCode)
     {
@@ -102,7 +102,7 @@ class CustomerMetadata implements CustomerMetadataInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getAllAttributesMetadata()
     {

@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace Magento\CardinalCommerce\Model;
 
 use Magento\Framework\Serialize\Serializer\Json;
+use Magento\Framework\Encryption\Helper\Security;
 
 /**
  * JSON Web Token management.
@@ -17,7 +18,7 @@ class JwtManagement
     /**
      * The signing algorithm. Cardinal supported algorithm is 'HS256'
      */
-    const SIGN_ALGORITHM = 'HS256';
+    private const SIGN_ALGORITHM = 'HS256';
 
     /**
      * @var Json
@@ -53,7 +54,7 @@ class JwtManagement
             throw new \InvalidArgumentException('Wrong number of segments in JWT');
         }
 
-        list($headB64, $payloadB64, $signatureB64) = $parts;
+        [$headB64, $payloadB64, $signatureB64] = $parts;
 
         $headerJson = $this->urlSafeB64Decode($headB64);
         $header = $this->json->unserialize($headerJson);
@@ -62,7 +63,8 @@ class JwtManagement
         $payload = $this->json->unserialize($payloadJson);
 
         $signature = $this->urlSafeB64Decode($signatureB64);
-        if ($signature !== $this->sign($headB64 . '.' . $payloadB64, $key, $header['alg'])) {
+
+        if (!Security::compareStrings($signature, $this->sign($headB64 . '.' . $payloadB64, $key, $header['alg']))) {
             throw new \InvalidArgumentException('JWT signature verification failed');
         }
 

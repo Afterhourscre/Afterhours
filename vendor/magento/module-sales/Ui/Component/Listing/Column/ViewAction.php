@@ -61,8 +61,7 @@ class ViewAction extends Column
                                     $urlEntityParamName => $item['entity_id']
                                 ]
                             ),
-                            'label' => __('View'),
-                            '__disableTmpl' => true,
+                            'label' => __('View')
                         ]
                     ];
                 }

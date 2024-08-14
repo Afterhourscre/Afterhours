@@ -16,50 +16,58 @@ use Magento\Newsletter\Model\Queue;
 use Magento\Newsletter\Model\ResourceModel\Problem as ProblemResource;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class ProblemTest extends \PHPUnit\Framework\TestCase
+/**
+ * @covers \Magento\Newsletter\Model\Problem
+ */
+class ProblemTest extends TestCase
 {
     /**
-     * @var Context|\PHPUnit_Framework_MockObject_MockObject
+     * @var Context|MockObject
      */
     private $contextMock;
 
     /**
-     * @var Registry|\PHPUnit_Framework_MockObject_MockObject
+     * @var Registry|MockObject
      */
     private $registryMock;
 
     /**
-     * @var SubscriberFactory|\PHPUnit_Framework_MockObject_MockObject
+     * @var SubscriberFactory|MockObject
      */
     private $subscriberFactoryMock;
 
     /**
-     * @var Subscriber|\PHPUnit_Framework_MockObject_MockObject
+     * @var Subscriber|MockObject
      */
     private $subscriberMock;
 
     /**
-     * @var ProblemResource|\PHPUnit_Framework_MockObject_MockObject
+     * @var ProblemResource|MockObject
      */
     private $resourceModelMock;
 
     /**
-     * @var AbstractDb|\PHPUnit_Framework_MockObject_MockObject
+     * @var AbstractDb|MockObject
      */
     private $abstractDbMock;
 
     /**
      * @var ObjectManager
      */
-    protected $objectManager;
+    private $objectManager;
 
     /**
      * @var ProblemModel
      */
     private $problemModel;
 
-    protected function setUp()
+    /**
+     * @inheritdoc
+     */
+    protected function setUp(): void
     {
         $this->contextMock = $this->getMockBuilder(Context::class)
             ->disableOriginalConstructor()
@@ -94,12 +102,15 @@ class ProblemTest extends \PHPUnit\Framework\TestCase
                 'subscriberFactory' => $this->subscriberFactoryMock,
                 'resource' => $this->resourceModelMock,
                 'resourceCollection' => $this->abstractDbMock,
-                'data' => [],
+                'data' => []
             ]
         );
     }
 
-    public function testAddSubscriberData()
+    /**
+     * @return void
+     */
+    public function testAddSubscriberData(): void
     {
         $subscriberId = 1;
         $this->subscriberMock->expects($this->once())
@@ -112,7 +123,10 @@ class ProblemTest extends \PHPUnit\Framework\TestCase
         self::assertEquals($subscriberId, $this->problemModel->getSubscriberId());
     }
 
-    public function testAddQueueData()
+    /**
+     * @return void
+     */
+    public function testAddQueueData(): void
     {
         $queueId = 1;
         $queueMock =  $this->getMockBuilder(Queue::class)
@@ -128,7 +142,10 @@ class ProblemTest extends \PHPUnit\Framework\TestCase
         self::assertEquals($queueId, $this->problemModel->getQueueId());
     }
 
-    public function testAddErrorData()
+    /**
+     * @return void
+     */
+    public function testAddErrorData(): void
     {
         $exceptionMessage = 'Some message';
         $exceptionCode = 111;
@@ -141,39 +158,52 @@ class ProblemTest extends \PHPUnit\Framework\TestCase
         self::assertEquals($exceptionCode, $this->problemModel->getProblemErrorCode());
     }
 
-    public function testGetSubscriberWithNoSubscriberId()
+    /**
+     * @return void
+     */
+    public function testGetSubscriberWithNoSubscriberId(): void
     {
         self::assertNull($this->problemModel->getSubscriber());
     }
 
-    public function testGetSubscriber()
+    /**
+     * @return void
+     */
+    public function testGetSubscriber(): void
     {
         $this->setSubscriber();
         self::assertEquals($this->subscriberMock, $this->problemModel->getSubscriber());
     }
 
-    public function testUnsubscribeWithNoSubscriber()
+    /**
+     * @return void
+     */
+    public function testUnsubscribeWithNoSubscriber(): void
     {
         $this->subscriberMock->expects($this->never())
             ->method('__call')
-            ->with($this->equalTo('setSubscriberStatus'));
+            ->with('setSubscriberStatus');
 
         $result = $this->problemModel->unsubscribe();
 
         self::assertEquals($this->problemModel, $result);
     }
 
-    public function testUnsubscribe()
+    /**
+     * @return void
+     */
+    public function testUnsubscribe(): void
     {
         $this->setSubscriber();
-        $this->subscriberMock->expects($this->at(1))
+        $this->subscriberMock
             ->method('__call')
-            ->with($this->equalTo('setSubscriberStatus'), $this->equalTo([Subscriber::STATUS_UNSUBSCRIBED]))
-            ->willReturnSelf();
-        $this->subscriberMock->expects($this->at(2))
-            ->method('__call')
-            ->with($this->equalTo('setIsStatusChanged'))
-            ->willReturnSelf();
+            ->willReturnCallback(function ($arg1, $arg2) {
+                if ($arg1 == 'setSubscriberStatus' && $arg2[0] == Subscriber::STATUS_UNSUBSCRIBED) {
+                    return $this->subscriberMock;
+                } elseif ($arg1 == 'setIsStatusChanged') {
+                    return $this->subscriberMock;
+                }
+            });
         $this->subscriberMock->expects($this->once())
             ->method('save');
 
@@ -185,7 +215,7 @@ class ProblemTest extends \PHPUnit\Framework\TestCase
     /**
      * Sets subscriber to the Problem model
      */
-    private function setSubscriber()
+    private function setSubscriber(): void
     {
         $subscriberId = 1;
         $this->problemModel->setSubscriberId($subscriberId);

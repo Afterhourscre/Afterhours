@@ -1,14 +1,13 @@
 <?php
 /**
+ * Plugin for \Magento\Framework\Mview\View\StateInterface model
+ *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
 namespace Magento\Catalog\Model\Indexer\Category\Product\Plugin;
 
-/**
- * Plugin for \Magento\Framework\Mview\View\StateInterface model
- */
 class MviewState
 {
     /**

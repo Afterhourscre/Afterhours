@@ -47,10 +47,6 @@
         vertical-align: top;
         z-index: 1;
 
-        &:active {
-            .scale(.975);
-        }
-
         + .admin__control-support-text,
         + .admin__control-label {
             margin-left: @action__height + .5rem;
@@ -389,15 +385,9 @@
     margin-bottom: -22px;
 }
 
-/**
- * @codingStandardsIgnoreStart
- */
 .ui-timepicker-div dl .ui_tpicker_time_label {
     margin-bottom: -25px;
 }
-/**
- * @codingStandardsIgnoreEnd
- */
 
 .ui-timepicker-div dl dd {
     margin: 0 10px 10px 65px;
@@ -412,4 +402,8 @@
     border: none;
     margin: 0;
     padding: 0;
+}
+
+.ui-timepicker-div .ui_tpicker_unit_hide {
+    display:none;
 }

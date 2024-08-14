@@ -13,14 +13,18 @@ use Magento\Framework\Filesystem;
 use Magento\Framework\App\Filesystem\DirectoryList;
 
 /**
- * Page Cache state.
+ * Class PageCacheState
+ *
+ * Page Cache State Observer
+ *
+ * @deprecated 100.4.0 Originally used by now removed observer SwitchPageCacheOnMaintenance
  */
 class PageCacheState
 {
     /**
      * Full Page Cache Off state file name.
      */
-    const PAGE_CACHE_STATE_FILENAME = '.maintenance.fpc.state';
+    private const PAGE_CACHE_STATE_FILENAME = '.maintenance.fpc.state';
 
     /**
      * @var Filesystem\Directory\WriteInterface
@@ -43,7 +47,7 @@ class PageCacheState
      * @param bool $state
      * @return void
      */
-    public function save(bool $state)
+    public function save(bool $state): void
     {
         $this->flagDir->writeFile(self::PAGE_CACHE_STATE_FILENAME, (string)$state);
     }
@@ -67,7 +71,7 @@ class PageCacheState
      *
      * @return void
      */
-    public function flush()
+    public function flush(): void
     {
         $this->flagDir->delete(self::PAGE_CACHE_STATE_FILENAME);
     }

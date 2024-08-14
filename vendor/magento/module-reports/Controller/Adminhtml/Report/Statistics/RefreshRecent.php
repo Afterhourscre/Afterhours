@@ -6,22 +6,20 @@
  */
 namespace Magento\Reports\Controller\Adminhtml\Report\Statistics;
 
-use Magento\Framework\Exception\NotFoundException;
+use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
 
-class RefreshRecent extends \Magento\Reports\Controller\Adminhtml\Report\Statistics
+/**
+ * Refresh recent stats.
+ */
+class RefreshRecent extends \Magento\Reports\Controller\Adminhtml\Report\Statistics implements HttpPostActionInterface
 {
     /**
      * Refresh statistics for last 25 hours
      *
      * @return void
-     * @throws NotFoundException
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new NotFoundException(__('Page not found.'));
-        }
-
         try {
             $collectionsNames = $this->_getCollectionNames();
             /** @var \DateTime $currentDate */

@@ -18,7 +18,6 @@ class Head implements Layout\ReaderInterface
      * Supported types
      */
     const TYPE_HEAD = 'head';
-    const HEAD_FONT = 'font';
     /**#@-*/
 
     /**#@+
@@ -31,12 +30,11 @@ class Head implements Layout\ReaderInterface
     const HEAD_TITLE = 'title';
     const HEAD_META = 'meta';
     const HEAD_ATTRIBUTE = 'attribute';
+    private const HEAD_FONT = 'font';
     /**#@-*/
 
     /**
-     * {@inheritdoc}
-     *
-     * @return string[]
+     * @inheritdoc
      */
     public function getSupportedNodes()
     {
@@ -65,31 +63,66 @@ class Head implements Layout\ReaderInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Read children elements structure and fill scheduled structure
      *
      * @param Layout\Reader\Context $readerContext
      * @param Layout\Element $headElement
-     * @return $this
+     * @return $this|Layout\ReaderInterface
      */
     public function interpret(
         Layout\Reader\Context $readerContext,
         Layout\Element $headElement
     ) {
         $pageConfigStructure = $readerContext->getPageConfigStructure();
-        $nodes = iterator_to_array($headElement, false);
 
-        usort(
-            $nodes,
-            function (Layout\Element $current, Layout\Element $next) {
-                return $current->getAttribute('order') <=> $next->getAttribute('order');
-            }
-        );
+        $orderedNodes = [];
 
-        foreach ($nodes as $node) {
-            $this->processNode($node, $pageConfigStructure);
+        foreach ($headElement as $node) {
+            $nodeOrder = $node->getAttribute('order') ?: 0;
+            $orderedNodes[$nodeOrder][] = $node;
         }
 
+        ksort($orderedNodes);
+        foreach ($orderedNodes as $nodes) {
+            /** @var \Magento\Framework\View\Layout\Element $node */
+            foreach ($nodes as $node) {
+                $this->processNode($node, $pageConfigStructure);
+            }
+        }
         return $this;
+    }
+
+    /**
+     * Get all attributes for current dom element
+     *
+     * @param \Magento\Framework\View\Layout\Element $element
+     * @return array
+     */
+    protected function getAttributes($element)
+    {
+        $attributes = [];
+        foreach ($element->attributes() as $attrName => $attrValue) {
+            $attributes[$attrName] = (string)$attrValue;
+        }
+        return $attributes;
+    }
+
+    /**
+     * Set metadata
+     *
+     * @param \Magento\Framework\View\Page\Config\Structure $pageConfigStructure
+     * @param \Magento\Framework\View\Layout\Element $node
+     * @return void
+     */
+    private function setMetadata($pageConfigStructure, $node)
+    {
+        if (!$node->getAttribute('name') && $node->getAttribute('property')) {
+            $metadataName = $node->getAttribute('property');
+        } else {
+            $metadataName = $node->getAttribute('name');
+        }
+
+        $pageConfigStructure->setMetadata($metadataName, $node->getAttribute('content'));
     }
 
     /**
@@ -133,38 +166,5 @@ class Head implements Layout\ReaderInterface
             default:
                 break;
         }
-    }
-
-    /**
-     * Get all attributes for current dom element
-     *
-     * @param \Magento\Framework\View\Layout\Element $element
-     * @return array
-     */
-    protected function getAttributes($element)
-    {
-        $attributes = [];
-        foreach ($element->attributes() as $attrName => $attrValue) {
-            $attributes[$attrName] = (string)$attrValue;
-        }
-        return $attributes;
-    }
-
-    /**
-     * Set metadata
-     *
-     * @param \Magento\Framework\View\Page\Config\Structure $pageConfigStructure
-     * @param \Magento\Framework\View\Layout\Element $node
-     * @return void
-     */
-    private function setMetadata($pageConfigStructure, $node)
-    {
-        if (!$node->getAttribute('name') && $node->getAttribute('property')) {
-            $metadataName = $node->getAttribute('property');
-        } else {
-            $metadataName = $node->getAttribute('name');
-        }
-
-        $pageConfigStructure->setMetadata($metadataName, $node->getAttribute('content'));
     }
 }

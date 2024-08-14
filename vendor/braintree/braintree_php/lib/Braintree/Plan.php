@@ -1,8 +1,21 @@
 <?php
+
 namespace Braintree;
 
+/**
+ * Plan class object. A plan is a template for subscriptions.
+ *
+ * See our {@link https://developer.paypal.com/braintree/docs/reference/response/plan developer docs} for information on attributes
+ */
 class Plan extends Base
 {
+    /**
+     * Creates an instance from given attributes
+     *
+     * @param array $attributes response object attributes
+     *
+     * @return Plan
+     */
     public static function factory($attributes)
     {
         $instance = new self();
@@ -17,7 +30,7 @@ class Plan extends Base
 
         $addOnArray = [];
         if (isset($attributes['addOns'])) {
-            foreach ($attributes['addOns'] AS $addOn) {
+            foreach ($attributes['addOns'] as $addOn) {
                 $addOnArray[] = AddOn::factory($addOn);
             }
         }
@@ -25,7 +38,7 @@ class Plan extends Base
 
         $discountArray = [];
         if (isset($attributes['discounts'])) {
-            foreach ($attributes['discounts'] AS $discount) {
+            foreach ($attributes['discounts'] as $discount) {
                 $discountArray[] = Discount::factory($discount);
             }
         }
@@ -33,19 +46,59 @@ class Plan extends Base
 
         $planArray = [];
         if (isset($attributes['plans'])) {
-            foreach ($attributes['plans'] AS $plan) {
+            foreach ($attributes['plans'] as $plan) {
                 $planArray[] = self::factory($plan);
             }
         }
         $this->_attributes['plans'] = $planArray;
     }
 
-
-    // static methods redirecting to gateway
-
+    /**
+     * static methods redirecting to gateway class
+     *
+     * @see PlanGateway::all()
+     *
+     * @return Plan[]
+     */
     public static function all()
     {
         return Configuration::gateway()->plan()->all();
     }
+
+    /**
+     * static methods redirecting to gateway class
+     *
+     * @param array $attributes response object attributes
+     *
+     * @return Plan
+     */
+    public static function create($attributes)
+    {
+        return Configuration::gateway()->plan()->create($attributes);
+    }
+
+    /**
+     * static methods redirecting to gateway class
+     *
+     * @param $id int planId
+     *
+     * @return Plan
+     */
+    public static function find($id)
+    {
+        return Configuration::gateway()->plan()->find($id);
+    }
+
+    /**
+     * static methods redirecting to gateway class
+     *
+     * @param $planId     int planId
+     * @param array $attributes response object attributes
+     *
+     * @return Plan
+     */
+    public static function update($planId, $attributes)
+    {
+        return Configuration::gateway()->plan()->update($planId, $attributes);
+    }
 }
-class_alias('Braintree\Plan', 'Braintree_Plan');

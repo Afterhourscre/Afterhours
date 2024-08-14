@@ -3,15 +3,17 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
 namespace Magento\Sales\Model\Order;
 
-use Magento\Framework\Api\SearchCriteria\CollectionProcessorInterface;
 use Magento\Catalog\Model\ProductOptionProcessorInterface;
+use Magento\Framework\Api\SearchCriteria\CollectionProcessorInterface;
 use Magento\Framework\Api\SearchCriteriaInterface;
 use Magento\Framework\DataObject;
 use Magento\Framework\DataObject\Factory as DataObjectFactory;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\ObjectManager\ResetAfterRequestInterface;
 use Magento\Sales\Api\Data\OrderItemInterface;
 use Magento\Sales\Api\Data\OrderItemSearchResultInterfaceFactory;
 use Magento\Sales\Api\OrderItemRepositoryInterface;
@@ -22,7 +24,7 @@ use Magento\Sales\Model\ResourceModel\Metadata;
  * Repository class for @see OrderItemInterface
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class ItemRepository implements OrderItemRepositoryInterface
+class ItemRepository implements OrderItemRepositoryInterface, ResetAfterRequestInterface
 {
     /**
      * @var DataObjectFactory
@@ -84,6 +86,14 @@ class ItemRepository implements OrderItemRepositoryInterface
     }
 
     /**
+     * @inheritDoc
+     */
+    public function _resetState(): void
+    {
+        $this->registry = [];
+    }
+
+    /**
      * Loads entity.
      *
      * @param int $id
@@ -94,13 +104,15 @@ class ItemRepository implements OrderItemRepositoryInterface
     public function get($id)
     {
         if (!$id) {
-            throw new InputException(__('ID required'));
+            throw new InputException(__('An ID is needed. Set the ID and try again.'));
         }
         if (!isset($this->registry[$id])) {
             /** @var OrderItemInterface $orderItem */
             $orderItem = $this->metadata->getNewInstance()->load($id);
             if (!$orderItem->getItemId()) {
-                throw new NoSuchEntityException(__('Requested entity doesn\'t exist'));
+                throw new NoSuchEntityException(
+                    __("The entity that was requested doesn't exist. Verify the entity and try again.")
+                );
             }
 
             $this->productOption->add($orderItem);
@@ -164,15 +176,29 @@ class ItemRepository implements OrderItemRepositoryInterface
     public function save(OrderItemInterface $entity)
     {
         if ($entity->getProductOption()) {
-            $request = $this->getBuyRequest($entity);
-            $productOptions = $entity->getProductOptions();
-            $productOptions['info_buyRequest'] = $request->toArray();
-            $entity->setProductOptions($productOptions);
+            $entity->setProductOptions($this->getItemProductOptions($entity));
         }
 
         $this->metadata->getMapper()->save($entity);
         $this->registry[$entity->getEntityId()] = $entity;
         return $this->registry[$entity->getEntityId()];
+    }
+
+    /**
+     * Return product options
+     *
+     * @param OrderItemInterface $entity
+     * @return array
+     */
+    private function getItemProductOptions(OrderItemInterface $entity): array
+    {
+        $request = $this->getBuyRequest($entity);
+        $productOptions = $entity->getProductOptions();
+        $productOptions['info_buyRequest'] = $productOptions && !empty($productOptions['info_buyRequest'])
+            ? array_merge($productOptions['info_buyRequest'], $request->toArray())
+            : $request->toArray();
+
+        return $productOptions;
     }
 
     /**
@@ -186,6 +212,14 @@ class ItemRepository implements OrderItemRepositoryInterface
     {
         if ($parentId = $orderItem->getParentItemId()) {
             $orderItem->setParentItem($this->get($parentId));
+        } else {
+            $orderCollection = $orderItem->getOrder()->getItemsCollection()->filterByParent($orderItem->getItemId());
+
+            foreach ($orderCollection->getItems() as $item) {
+                if ($item->getParentItemId() === $orderItem->getItemId()) {
+                    $item->setParentItem($orderItem);
+                }
+            }
         }
     }
 

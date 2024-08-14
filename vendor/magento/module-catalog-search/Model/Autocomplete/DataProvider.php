@@ -13,16 +13,17 @@ use Magento\Search\Model\Autocomplete\ItemFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface as ScopeConfig;
 use Magento\Store\Model\ScopeInterface;
 
+/**
+ * Catalog search auto-complete data provider.
+ */
 class DataProvider implements DataProviderInterface
 {
     /**
      * Autocomplete limit
      */
-    private static $CONFIG_AUTOCOMPLETE_LIMIT = 'catalog/search/autocomplete_limit';
+    public const CONFIG_AUTOCOMPLETE_LIMIT = 'catalog/search/autocomplete_limit';
 
     /**
-     * Query factory
-     *
      * @var QueryFactory
      */
     protected $queryFactory;
@@ -35,15 +36,14 @@ class DataProvider implements DataProviderInterface
     protected $itemFactory;
 
     /**
-     * Scope Config Object
-     *
-     * @var ScopeConfig
+     * @var int
      */
-    private $scopeConfig;
+    protected $limit;
 
     /**
      * @param QueryFactory $queryFactory
      * @param ItemFactory $itemFactory
+     * @param ScopeConfig $scopeConfig
      */
     public function __construct(
         QueryFactory $queryFactory,
@@ -52,20 +52,24 @@ class DataProvider implements DataProviderInterface
     ) {
         $this->queryFactory = $queryFactory;
         $this->itemFactory = $itemFactory;
-        $this->scopeConfig = $scopeConfig;
+
+        $this->limit = (int) $scopeConfig->getValue(
+            self::CONFIG_AUTOCOMPLETE_LIMIT,
+            ScopeInterface::SCOPE_STORE
+        );
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getItems()
     {
-        $collection = $this->getSuggestCollection();
         $query = $this->queryFactory->get()->getQueryText();
-        $limit = (int) $this->scopeConfig->getValue(
-            static::$CONFIG_AUTOCOMPLETE_LIMIT,
-            ScopeInterface::SCOPE_STORE
-        );
+        if (!$query) {
+            return [];
+        }
+
+        $collection = $this->getSuggestCollection();
         $result = [];
         foreach ($collection as $item) {
             $resultItem = $this->itemFactory->create([
@@ -78,7 +82,7 @@ class DataProvider implements DataProviderInterface
                 $result[] = $resultItem;
             }
         }
-        return ($limit) ? array_splice($result, 0, $limit) : $result;
+        return ($this->limit) ? array_splice($result, 0, $this->limit) : $result;
     }
 
     /**

@@ -3,6 +3,8 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Sales\Test\Unit\Model\Order\Payment\State;
 
 use Magento\Directory\Model\Currency;
@@ -10,12 +12,13 @@ use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment\State\RegisterCaptureNotificationCommand;
 use Magento\Sales\Model\Order\StatusResolver;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @see RegisterCaptureNotificationCommand
  */
-class RegisterCaptureNotificationCommandTest extends \PHPUnit\Framework\TestCase
+class RegisterCaptureNotificationCommandTest extends TestCase
 {
     /**
      * @var float
@@ -32,20 +35,21 @@ class RegisterCaptureNotificationCommandTest extends \PHPUnit\Framework\TestCase
      *
      * @param bool $isTransactionPending
      * @param bool $isFraudDetected
+     * @param string|null $currentState
      * @param string $expectedState
      * @param string $expectedStatus
      * @param string $expectedMessage
-     *
+     * @return void
      * @dataProvider commandResultDataProvider
      */
     public function testExecute(
-        $isTransactionPending,
-        $isFraudDetected,
+        bool $isTransactionPending,
+        bool $isFraudDetected,
         $currentState,
-        $expectedState,
-        $expectedStatus,
-        $expectedMessage
-    ) {
+        string $expectedState,
+        string $expectedStatus,
+        string $expectedMessage
+    ): void {
         $order = $this->getOrder($currentState);
         $actualReturn = (new RegisterCaptureNotificationCommand($this->getStatusResolver()))->execute(
             $this->getPayment($isTransactionPending, $isFraudDetected),
@@ -69,7 +73,7 @@ class RegisterCaptureNotificationCommandTest extends \PHPUnit\Framework\TestCase
                 Order::STATE_COMPLETE,
                 Order::STATE_COMPLETE,
                 $this->newOrderStatus,
-                'Registered notification about captured amount of %1.'
+                'Registered notification about captured amount of %1.',
             ],
             [
                 false,
@@ -77,7 +81,23 @@ class RegisterCaptureNotificationCommandTest extends \PHPUnit\Framework\TestCase
                 null,
                 Order::STATE_PROCESSING,
                 $this->newOrderStatus,
-                'Registered notification about captured amount of %1.'
+                'Registered notification about captured amount of %1.',
+            ],
+            [
+                false,
+                false,
+                Order::STATE_NEW,
+                Order::STATE_PROCESSING,
+                $this->newOrderStatus,
+                'Registered notification about captured amount of %1.',
+            ],
+            [
+                false,
+                false,
+                Order::STATE_PENDING_PAYMENT,
+                Order::STATE_PROCESSING,
+                $this->newOrderStatus,
+                'Registered notification about captured amount of %1.',
             ],
             [
                 true,
@@ -85,7 +105,7 @@ class RegisterCaptureNotificationCommandTest extends \PHPUnit\Framework\TestCase
                 Order::STATE_PROCESSING,
                 Order::STATE_PAYMENT_REVIEW,
                 $this->newOrderStatus,
-                'An amount of %1 will be captured after being approved at the payment gateway.'
+                'An amount of %1 will be captured after being approved at the payment gateway.',
             ],
             [
                 false,
@@ -93,7 +113,7 @@ class RegisterCaptureNotificationCommandTest extends \PHPUnit\Framework\TestCase
                 Order::STATE_PROCESSING,
                 Order::STATE_PAYMENT_REVIEW,
                 Order::STATUS_FRAUD,
-                'Order is suspended as its capture amount %1 is suspected to be fraudulent.'
+                'Order is suspended as its capture amount %1 is suspected to be fraudulent.',
             ],
             [
                 true,
@@ -101,7 +121,7 @@ class RegisterCaptureNotificationCommandTest extends \PHPUnit\Framework\TestCase
                 Order::STATE_PROCESSING,
                 Order::STATE_PAYMENT_REVIEW,
                 Order::STATUS_FRAUD,
-                'Order is suspended as its capture amount %1 is suspected to be fraudulent.'
+                'Order is suspended as its capture amount %1 is suspected to be fraudulent.',
             ],
         ];
     }

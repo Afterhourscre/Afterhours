@@ -6,9 +6,9 @@
  */
 namespace Magento\Catalog\Controller\Adminhtml\Product\Set;
 
-use Magento\Framework\Exception\NotFoundException;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 
-class Delete extends \Magento\Catalog\Controller\Adminhtml\Product\Set
+class Delete extends \Magento\Catalog\Controller\Adminhtml\Product\Set implements HttpPostActionInterface
 {
     /**
      * @var \Magento\Eav\Api\AttributeSetRepositoryInterface
@@ -31,15 +31,10 @@ class Delete extends \Magento\Catalog\Controller\Adminhtml\Product\Set
 
     /**
      * @return \Magento\Backend\Model\View\Result\Redirect
-     * @throws NotFoundException
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new NotFoundException(__('Page not found'));
-        }
-
-        $setId = (int)$this->getRequest()->getParam('id');
+        $setId = $this->getRequest()->getParam('id');
         $resultRedirect = $this->resultRedirectFactory->create();
         try {
             $this->attributeSetRepository->deleteById($setId);
@@ -49,7 +44,6 @@ class Delete extends \Magento\Catalog\Controller\Adminhtml\Product\Set
             $this->messageManager->addErrorMessage(__('We can\'t delete this set right now.'));
             $resultRedirect->setUrl($this->_redirect->getRedirectUrl($this->getUrl('*')));
         }
-
         return $resultRedirect;
     }
 }

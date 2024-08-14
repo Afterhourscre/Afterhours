@@ -17,7 +17,7 @@
              data-mage-init='{"downloadable":{
                  "linkElement":"input:checkbox[value]",
                  "allElements":"#links_all",
-                 "config":<?= /* @noEscape */ $block->getJsonConfig() ?>}
+                 "config":<?= $block->escapeHtmlAttr($block->getJsonConfig()) ?>}
              }'
              data-container-for="downloadable-links">
             <?php foreach ($_links as $_link) : ?>
@@ -25,20 +25,16 @@
                 <div class="field choice" data-role="link">
                     <?php if ($_linksPurchasedSeparately) : ?>
                         <input type="checkbox"
-                                <?php if ($_isRequired) : ?>
-                                   data-validate="{'validate-one-checkbox-required-by-name':'downloadable-links-list'}"
-                                <?php endif; ?>
+                               <?php if ($_isRequired) : ?>data-validate="{'validate-one-checkbox-required-by-name':'downloadable-links-list'}" <?php endif; ?>
                                name="links[]"
                                id="links_<?= $block->escapeHtmlAttr($_link->getId()) ?>"
-                               value="<?= $block->escapeHtmlAttr($_link->getId()) ?>"
-                                <?= /* @noEscape */ $block->getLinkCheckedValue($_link) ?> />
+                               value="<?= $block->escapeHtmlAttr($_link->getId()) ?>" <?= $block->escapeHtml($block->getLinkCheckedValue($_link)) ?> />
                     <?php endif; ?>
                     <label class="label" for="links_<?= $block->escapeHtmlAttr($_link->getId()) ?>">
                         <span><?= $block->escapeHtml($_link->getTitle()) ?></span>
                         <?php if ($_link->getSampleFile() || $_link->getSampleUrl()) : ?>
                             <a class="sample link"
-                               href="<?= $block->escapeUrl($block->getLinkSampleUrl($_link)) ?>"
-                                <?= $block->getIsOpenInNewWindow() ? 'target="_blank"' : '' ?>>
+                               href="<?= $block->escapeUrl($block->getLinkSampleUrl($_link)) ?>" <?= $block->getIsOpenInNewWindow() ? 'target="_blank"' : '' ?>>
                                 <?= $block->escapeHtml(__('sample')) ?>
                             </a>
                         <?php endif; ?>

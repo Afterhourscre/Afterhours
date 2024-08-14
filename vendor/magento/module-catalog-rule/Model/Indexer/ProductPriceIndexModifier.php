@@ -51,7 +51,7 @@ class ProductPriceIndexModifier implements PriceModifierInterface
     /**
      * @inheritdoc
      */
-    public function modifyPrice(IndexTableStructure $priceTable, array $entityIds = [])
+    public function modifyPrice(IndexTableStructure $priceTable, array $entityIds = []) : void
     {
         $connection = $this->resourceConnection->getConnection($this->connectionName);
 
@@ -71,7 +71,7 @@ class ProductPriceIndexModifier implements PriceModifierInterface
             []
         );
         if ($entityIds) {
-            $select->where('i.entity_id IN (?)', $entityIds);
+            $select->where('i.entity_id IN (?)', $entityIds, \Zend_Db::INT_TYPE);
         }
 
         $finalPrice = $priceTable->getFinalPriceField();

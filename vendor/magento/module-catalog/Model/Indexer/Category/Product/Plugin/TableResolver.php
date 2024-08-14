@@ -13,7 +13,7 @@ use Magento\Catalog\Model\Indexer\Category\Product\AbstractAction;
 use Magento\Framework\Search\Request\Dimension;
 
 /**
- * Class that replace catalog_category_product_index table name  on  the table name segmented per store
+ * Class that replace catalog_category_product_index table name on the table name segmented per store
  */
 class TableResolver
 {
@@ -40,7 +40,7 @@ class TableResolver
     }
 
     /**
-     * replacing catalog_category_product_index table name on the table name segmented per store
+     * Replacing catalog_category_product_index table name on the table name segmented per store
      *
      * @param ResourceConnection $subject
      * @param string $result
@@ -55,7 +55,10 @@ class TableResolver
         string $result,
         $modelEntity
     ) {
-        if (!is_array($modelEntity) && $modelEntity === AbstractAction::MAIN_INDEX_TABLE) {
+        if (!is_array($modelEntity) &&
+            $modelEntity === AbstractAction::MAIN_INDEX_TABLE &&
+            $this->storeManager->getStore()->getId()
+        ) {
             $catalogCategoryProductDimension = new Dimension(
                 \Magento\Store\Model\Store::ENTITY,
                 $this->storeManager->getStore()->getId()

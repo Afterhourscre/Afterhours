@@ -10,7 +10,6 @@ namespace Magento\Newsletter\Block\Adminhtml\Template;
  *
  * @api
  * @since 100.0.2
- * @SuppressWarnings(PHPMD.RequestAwareBlockMethod)
  */
 class Preview extends \Magento\Backend\Block\Widget
 {
@@ -75,6 +74,9 @@ class Preview extends \Magento\Backend\Block\Widget
         if ($this->getRequest()->getParam('subscriber')) {
             $vars['subscriber']->load($this->getRequest()->getParam('subscriber'));
         }
+        $vars['subscriber_data']['unsubscription_link'] = $vars['subscriber'] ?
+            $vars['subscriber']->getUnsubscriptionLink() :
+            null;
 
         $template->emulateDesign($this->getStoreId());
         $templateProcessed = $this->_appState->emulateAreaCode(

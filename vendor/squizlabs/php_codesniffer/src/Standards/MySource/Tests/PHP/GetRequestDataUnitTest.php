@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\MySource\Tests\PHP;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class GetRequestDataUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the GetRequestData sniff.
+ *
+ * @covers PHP_CodeSniffer\Standards\MySource\Sniffs\PHP\GetRequestDataSniff
+ */
+final class GetRequestDataUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,15 +30,15 @@ class GetRequestDataUnitTest extends AbstractSniffUnitTest
      */
     public function getErrorList()
     {
-        return array(
-                2  => 1,
-                5  => 1,
-                8  => 1,
-                21 => 1,
-                26 => 1,
-                27 => 1,
-                28 => 1,
-               );
+        return [
+            2  => 1,
+            5  => 1,
+            8  => 1,
+            21 => 1,
+            26 => 1,
+            27 => 1,
+            28 => 1,
+        ];
 
     }//end getErrorList()
 
@@ -48,7 +53,7 @@ class GetRequestDataUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

@@ -12,7 +12,9 @@ use Magento\Catalog\Model\Session as CatalogSession;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 
 /**
- * Responds for saving toolbar settings to catalog session.
+ * Class ToolbarMemorizer
+ *
+ * Responds for saving toolbar settings to catalog session
  */
 class ToolbarMemorizer
 {
@@ -77,9 +79,9 @@ class ToolbarMemorizer
     }
 
     /**
-     * Get sort order.
+     * Get sort order
      *
-     * @return string|bool|null
+     * @return string|bool
      */
     public function getOrder()
     {
@@ -87,14 +89,13 @@ class ToolbarMemorizer
             $this->order = $this->toolbarModel->getOrder() ??
                 ($this->isMemorizingAllowed() ? $this->catalogSession->getData(Toolbar::ORDER_PARAM_NAME) : null);
         }
-
         return $this->order;
     }
 
     /**
-     * Get sort direction.
+     * Get sort direction
      *
-     * @return string|bool|null
+     * @return string|bool
      */
     public function getDirection()
     {
@@ -102,14 +103,13 @@ class ToolbarMemorizer
             $this->direction = $this->toolbarModel->getDirection() ??
                 ($this->isMemorizingAllowed() ? $this->catalogSession->getData(Toolbar::DIRECTION_PARAM_NAME) : null);
         }
-
         return $this->direction;
     }
 
     /**
-     * Get sort mode.
+     * Get sort mode
      *
-     * @return string|bool|null
+     * @return string|bool
      */
     public function getMode()
     {
@@ -117,14 +117,13 @@ class ToolbarMemorizer
             $this->mode = $this->toolbarModel->getMode() ??
                 ($this->isMemorizingAllowed() ? $this->catalogSession->getData(Toolbar::MODE_PARAM_NAME) : null);
         }
-
         return $this->mode;
     }
 
     /**
-     * Get products per page limit.
+     * Get products per page limit
      *
-     * @return string|bool|null
+     * @return string|bool
      */
     public function getLimit()
     {
@@ -132,12 +131,11 @@ class ToolbarMemorizer
             $this->limit = $this->toolbarModel->getLimit() ??
                 ($this->isMemorizingAllowed() ? $this->catalogSession->getData(Toolbar::LIMIT_PARAM_NAME) : null);
         }
-
         return $this->limit;
     }
 
     /**
-     * Method to save all catalog parameters in catalog session.
+     * Method to save all catalog parameters in catalog session
      *
      * @return void
      */
@@ -152,32 +150,30 @@ class ToolbarMemorizer
     }
 
     /**
-     * Check configuration for enabled/disabled toolbar memorizing.
+     * Check configuration for enabled/disabled toolbar memorizing
      *
      * @return bool
      */
-    public function isMemorizingAllowed(): bool
+    public function isMemorizingAllowed()
     {
         if ($this->isMemorizingAllowed === null) {
             $this->isMemorizingAllowed = $this->scopeConfig->isSetFlag(self::XML_PATH_CATALOG_REMEMBER_PAGINATION);
         }
-
         return $this->isMemorizingAllowed;
     }
 
     /**
-     * Memorize parameter value for session.
+     * Memorize parameter value for session
      *
      * @param string $param parameter name
      * @param mixed $value parameter value
-     * @return ToolbarMemorizer
+     * @return $this
      */
-    private function memorizeParam(string $param, $value): ToolbarMemorizer
+    private function memorizeParam($param, $value)
     {
         if ($value && $this->catalogSession->getData($param) != $value) {
             $this->catalogSession->setData($param, $value);
         }
-
         return $this;
     }
 }

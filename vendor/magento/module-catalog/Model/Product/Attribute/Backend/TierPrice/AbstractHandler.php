@@ -3,6 +3,8 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Catalog\Model\Product\Attribute\Backend\TierPrice;
 
 use Magento\Framework\EntityManager\Operation\ExtensionInterface;
@@ -35,6 +37,7 @@ abstract class AbstractHandler implements ExtensionInterface
     /**
      * Get additional tier price fields.
      *
+     * @param array $objectArray
      * @return array
      */
     protected function getAdditionalFields(array $objectArray): array
@@ -51,12 +54,12 @@ abstract class AbstractHandler implements ExtensionInterface
      * Check whether price has percentage value.
      *
      * @param array $priceRow
-     * @return integer|null
+     * @return float|null
      */
-    protected function getPercentage(array $priceRow)
+    protected function getPercentage(array $priceRow): ?float
     {
         return isset($priceRow['percentage_value']) && is_numeric($priceRow['percentage_value'])
-            ? (int)$priceRow['percentage_value']
+            ? (float)$priceRow['percentage_value']
             : null;
     }
 
@@ -65,6 +68,7 @@ abstract class AbstractHandler implements ExtensionInterface
      *
      * @param array $data
      * @return array
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     protected function prepareTierPrice(array $data): array
     {

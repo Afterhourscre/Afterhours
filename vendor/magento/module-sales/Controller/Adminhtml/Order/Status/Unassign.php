@@ -6,20 +6,15 @@
  */
 namespace Magento\Sales\Controller\Adminhtml\Order\Status;
 
-use Magento\Framework\Exception\NotFoundException;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 
-class Unassign extends \Magento\Sales\Controller\Adminhtml\Order\Status
+class Unassign extends \Magento\Sales\Controller\Adminhtml\Order\Status implements HttpPostActionInterface
 {
     /**
      * @return \Magento\Backend\Model\View\Result\Redirect
-     * @throws NotFoundException
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new NotFoundException(__('Page not found'));
-        }
-
         $state = $this->getRequest()->getParam('state');
         $status = $this->_initStatus();
         if ($status) {

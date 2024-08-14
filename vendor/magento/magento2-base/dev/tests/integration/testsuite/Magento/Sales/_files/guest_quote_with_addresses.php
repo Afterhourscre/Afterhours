@@ -5,11 +5,17 @@
  */
 declare(strict_types=1);
 
-require __DIR__ . '/address_list.php';
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\TestFramework\Workaround\Override\Fixture\Resolver;
 
-\Magento\TestFramework\Helper\Bootstrap::getInstance()->loadArea('frontend');
+Resolver::getInstance()->requireDataFixture('Magento/Sales/_files/address_list.php');
+
+\Magento\TestFramework\Helper\Bootstrap::getInstance()->loadArea(\Magento\Framework\App\Area::AREA_FRONTEND);
 
 $objectManager = \Magento\TestFramework\Helper\Bootstrap::getObjectManager();
+/** @var ProductRepositoryInterface $productRepository */
+$productRepository = $objectManager->get(ProductRepositoryInterface::class);
+
 /** @var \Magento\Catalog\Model\Product $product */
 $product = $objectManager->create(\Magento\Catalog\Model\Product::class);
 $product->setTypeId('simple')
@@ -29,11 +35,20 @@ $product->setTypeId('simple')
             'is_in_stock' => 1,
         ]
     )->save();
-
-$productRepository = $objectManager->create(\Magento\Catalog\Api\ProductRepositoryInterface::class);
 $product = $productRepository->get('simple-product-guest-quote');
 
-$addressData = reset($addresses);
+$addressData = [
+    'telephone' => 3234676,
+    'postcode' => 47676,
+    'country_id' => 'DE',
+    'city' => 'CityX',
+    'street' => ['Black str, 48'],
+    'lastname' => 'Smith',
+    'firstname' => 'John',
+    'vat_id' => 12345,
+    'address_type' => 'shipping',
+    'email' => 'some_email@mail.com',
+];
 
 $billingAddress = $objectManager->create(
     \Magento\Quote\Model\Quote\Address::class,
@@ -51,11 +66,12 @@ $quote = $objectManager->create(\Magento\Quote\Model\Quote::class);
 $quote->setCustomerIsGuest(true)
     ->setStoreId($store->getId())
     ->setReservedOrderId('guest_quote')
+    ->setCheckoutMethod('guest')
     ->setBillingAddress($billingAddress)
     ->setShippingAddress($shippingAddress)
     ->addProduct($product);
 $quote->getPayment()->setMethod('checkmo');
-$quote->getShippingAddress()->setShippingMethod('flatrate_flatrate')->setCollectShippingRates(1);
+$quote->getShippingAddress()->setShippingMethod('flatrate_flatrate')->setCollectShippingRates(true);
 $quote->collectTotals();
 
 $quoteRepository = $objectManager->create(\Magento\Quote\Api\CartRepositoryInterface::class);

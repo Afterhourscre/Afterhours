@@ -10,8 +10,10 @@ namespace Magento\Cms\Controller\Adminhtml;
 use Magento\TestFramework\TestCase\AbstractBackendController;
 
 /**
- * @magentoDataFixture Magento/Cms/Fixtures/page_list.php
+ * Testing seach in grid.
+ *
  * @magentoAppArea adminhtml
+ * @magentoDataFixture Magento/Cms/Fixtures/page_list.php
  */
 class FulltextGridSearchTest extends AbstractBackendController
 {

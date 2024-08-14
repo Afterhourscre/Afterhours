@@ -7,63 +7,77 @@
 -->
 
 <tests xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:noNamespaceSchemaLocation="../../../../../../../dev/tests/acceptance/vendor/magento/magento2-functional-testing-framework/src/Magento/FunctionalTestingFramework/Test/etc/testSchema.xsd">
+       xsi:noNamespaceSchemaLocation="urn:magento:mftf:Test/etc/testSchema.xsd">
     <test name="AdminMultipleWebsitesUseDefaultValuesTest">
         <annotations>
+            <features value="Catalog"/>
+            <stories value="Create websites"/>
             <title value="Use Default Value checkboxes should be checked for new website scope"/>
             <description value="Use Default Value checkboxes for product attribute should be checked for new website scope"/>
-            <severity value="MAJOR"/>
-            <testCaseId value="MAGETWO-92990"/>
-            <group value="catalog"/>
+            <severity value="BLOCKER"/>
+            <testCaseId value="MC-25783"/>
+            <group value="Catalog"/>
+            <group value="cloud"/>
         </annotations>
-        <after>
-            <deleteData url="V1/products/{{_defaultProduct.sku}}" stepKey="deleteProduct"/>
-            <actionGroup ref="AdminDeleteWebsiteActionGroup" stepKey="deleteSecondWebsite">
-                <argument name="websiteName" value="Second Website"/>
+
+        <before>
+            <actionGroup ref="AdminLoginActionGroup" stepKey="loginAsAdmin"/>
+
+            <actionGroup ref="AdminCreateWebsiteActionGroup" stepKey="createAdditionalWebsite">
+                <argument name="newWebsiteName" value="{{customWebsite.name}}"/>
+                <argument name="websiteCode" value="{{customWebsite.code}}"/>
             </actionGroup>
-            <actionGroup ref="logout" stepKey="logoutOfAdmin"/>
+            <actionGroup ref="AdminCreateNewStoreGroupActionGroup" stepKey="createNewStore">
+                <argument name="website" value="{{customWebsite.name}}"/>
+                <argument name="storeGroupName" value="{{customStoreGroup.name}}"/>
+                <argument name="storeGroupCode" value="{{customStoreGroup.code}}"/>
+            </actionGroup>
+            <actionGroup ref="AdminCreateStoreViewActionGroup" stepKey="createNewStoreView">
+                <argument name="StoreGroup" value="customStoreGroup"/>
+                <argument name="customStore" value="customStore"/>
+            </actionGroup>
+            <actionGroup ref="CliIndexerReindexActionGroup" stepKey="reindex">
+                <argument name="indices" value=""/>
+            </actionGroup>
+        </before>
+
+        <after>
+            <actionGroup ref="AdminDeleteWebsiteActionGroup" stepKey="deleteSecondWebsite">
+                <argument name="websiteName" value="{{customWebsite.name}}"/>
+            </actionGroup>
+            <actionGroup ref="CliIndexerReindexActionGroup" stepKey="reindex">
+                <argument name="indices" value=""/>
+            </actionGroup>
+            <actionGroup ref="AdminClearFiltersActionGroup" stepKey="clearFilters"/>
+            <actionGroup ref="AdminLogoutActionGroup" stepKey="adminLogout"/>
         </after>
-        <actionGroup ref="LoginActionGroup" stepKey="loginAsAdmin"/>
-        <actionGroup ref="AdminCreateWebsiteActionGroup" stepKey="createAdditionalWebsite">
-            <argument name="newWebsiteName" value="Second Website"/>
-            <argument name="websiteCode" value="second_website"/>
-        </actionGroup>
-        <actionGroup ref="AdminCreateNewStoreGroupActionGroup" stepKey="createNewStoreGroup">
-            <argument name="website" value="Second Website"/>
-            <argument name="storeGroupName" value="Second Store"/>
-            <argument name="storeGroupCode" value="second_store"/>
-        </actionGroup>
-        <actionGroup ref="AdminCreateStoreViewActionGroup" stepKey="createNewStore">
-            <argument name="storeGroup" value="secondStoreGroup"/>
-            <argument name="customStore" value="secondStore"/>
-        </actionGroup>
 
         <!--Create a Simple Product -->
-        <amOnPage url="{{AdminProductIndexPage.url}}" stepKey="navigateToCatalogProductGrid"/>
-        <waitForPageLoad stepKey="waitForProductsGridPageLoad"/>
-        <click selector="{{AdminProductGridActionSection.addProductToggle}}" stepKey="clickAddProductDropdown"/>
-        <click selector="{{AdminProductGridActionSection.addSimpleProduct}}" stepKey="clickAddSimpleProduct"/>
-        <waitForPageLoad stepKey="waitForPageProductFormLoad"/>
+        <actionGroup ref="AdminOpenProductIndexPageActionGroup" stepKey="navigateToCatalogProductGrid"/>
+        <comment userInput="Adding the comment to replace clickAddProductToggle action for preserving Backward Compatibility" stepKey="clickAddProductDropdown"/>
+        <actionGroup ref="AdminClickAddProductToggleAndSelectProductTypeActionGroup" stepKey="clickAddSimpleProduct">
+            <argument name="productType" value="simple"/>
+        </actionGroup>
         <fillField userInput="{{_defaultProduct.name}}" selector="{{AdminProductFormSection.productName}}" stepKey="fillProductName"/>
         <fillField userInput="{{_defaultProduct.sku}}" selector="{{AdminProductFormSection.productSku}}" stepKey="fillProductSKU"/>
         <fillField userInput="{{_defaultProduct.price}}" selector="{{AdminProductFormSection.productPrice}}" stepKey="fillProductPrice"/>
-        <fillField userInput="{{_defaultProduct.quantity}}" selector="{{AdminProductFormSection.productQuantity}}" stepKey="fillProductQuantity"/>
+        <actionGroup ref="AdminFillProductQtyOnProductFormActionGroup" stepKey="fillProductQuantity">
+            <argument name="productQty" value="{{_defaultProduct.quantity}}"/>
+        </actionGroup>
 
         <!-- Add product to second website and save the product -->
         <click selector="{{ProductInWebsitesSection.sectionHeader}}" stepKey="openProductInWebsites"/>
-        <click selector="{{ProductInWebsitesSection.website('Second Website')}}" stepKey="selectSecondWebsite"/>
+        <click selector="{{ProductInWebsitesSection.website(customWebsite.name)}}" stepKey="selectSecondWebsite"/>
         <click selector="{{AdminProductFormActionSection.saveButton}}" stepKey="clickSave"/>
-        <waitForPageLoad stepKey="waitForProductSave"/>
+        <waitForLoadingMaskToDisappear stepKey="waitForProductPageSave"/>
         <seeElement selector="{{AdminProductMessagesSection.successMessage}}" stepKey="seeSaveProductMessage"/>
 
         <!-- switch to the second store view -->
-        <scrollToTopOfPage stepKey="scrollToPageTopToSeeStoreSwitcher"/>
         <click selector="{{AdminProductFormActionSection.changeStoreButton}}" stepKey="clickStoreviewSwitcher"/>
-        <click selector="{{AdminProductFormActionSection.selectStoreView('Second Store View')}}" stepKey="chooseStoreView"/>
+        <click selector="{{AdminProductFormActionSection.selectStoreView(customStore.name)}}" stepKey="chooseStoreView"/>
         <click selector="{{AdminConfirmationModalSection.ok}}" stepKey="acceptStoreSwitchingMessage"/>
-        <scrollToTopOfPage stepKey="scrollToPageTopToSeeStoreSwitcher2"/>
-        <waitForElementVisible selector="{{AdminMainActionsSection.storeSwitcher}}" stepKey="waitForStoreSwitcherToBeVisible"/>
-        <see userInput="Second Store View" selector="{{AdminMainActionsSection.storeSwitcher}}" stepKey="seeNewStoreViewName"/>
+        <waitForPageLoad time="30" stepKey="waitForPageLoad9"/>
+        <see userInput="{{customStore.name}}" selector="{{AdminMainActionsSection.storeSwitcher}}" stepKey="seeNewStoreViewName"/>
 
         <!-- Check if Use Default Value checkboxes are checked -->
         <seeCheckboxIsChecked selector="{{AdminProductFormSection.productStatusUseDefault}}" stepKey="seeProductStatusCheckboxChecked"/>

@@ -4,7 +4,9 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ *
+ * @deprecated 3.9.0
  */
 
 namespace PHP_CodeSniffer\Standards\MySource\Sniffs\Debug;
@@ -19,11 +21,11 @@ class DebugCodeSniff implements Sniff
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(T_DOUBLE_COLON);
+        return [T_DOUBLE_COLON];
 
     }//end register()
 
@@ -45,7 +47,7 @@ class DebugCodeSniff implements Sniff
         if (strtolower($tokens[$className]['content']) === 'debug') {
             $method = $phpcsFile->findNext(T_WHITESPACE, ($stackPtr + 1), null, true);
             $error  = 'Call to debug function Debug::%s() must be removed';
-            $data   = array($tokens[$method]['content']);
+            $data   = [$tokens[$method]['content']];
             $phpcsFile->addError($error, $stackPtr, 'Found', $data);
         }
 

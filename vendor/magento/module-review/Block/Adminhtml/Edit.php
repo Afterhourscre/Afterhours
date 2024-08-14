@@ -3,7 +3,6 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-
 namespace Magento\Review\Block\Adminhtml;
 
 /**
@@ -57,7 +56,6 @@ class Edit extends \Magento\Backend\Block\Widget\Form\Container
      *
      * @return void
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-     * @SuppressWarnings(PHPMD.RequestAwareBlockMethod)
      */
     protected function _construct()
     {
@@ -188,7 +186,7 @@ class Edit extends \Magento\Backend\Block\Widget\Form\Container
                 ) . '\', ' . '\'' . $this->getUrl(
                     '*/*/delete',
                     [$this->_objectId => $this->getRequest()->getParam($this->_objectId), 'ret' => 'pending']
-                ) . '\'' . ', {data: {}})'
+                ) . '\', {data: {}})'
             );
             $this->_coreRegistry->register('ret', 'pending');
         }
@@ -222,10 +220,16 @@ class Edit extends \Magento\Backend\Block\Widget\Form\Container
                         );
                     }
            }
-           Event.observe(window, \'load\', function(){
-                 Event.observe($("select_stores"), \'change\', review.updateRating);
-           });
         ';
+        if (!$this->_storeManager->hasSingleStore()) {
+            $this->_formInitScripts[] = '
+                    require(["jquery","prototype"], function(jQuery){
+                        Event.observe(window, \'load\', function(){
+                        Event.observe($("select_stores"), \'change\', review.updateRating);
+                        });
+                      })
+                 ';
+        }
     }
 
     /**

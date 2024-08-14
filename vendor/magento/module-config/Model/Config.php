@@ -74,8 +74,6 @@ class Config extends \Magento\Framework\DataObject
     protected $_objectFactory;
 
     /**
-     * TransactionFactory
-     *
      * @var \Magento\Framework\DB\TransactionFactory
      */
     protected $_transactionFactory;
@@ -115,6 +113,11 @@ class Config extends \Magento\Framework\DataObject
     private $scopeTypeNormalizer;
 
     /**
+     * @var \Magento\Framework\MessageQueue\PoisonPill\PoisonPillPutInterface
+     */
+    private $pillPut;
+
+    /**
      * @param \Magento\Framework\App\Config\ReinitableConfigInterface $config
      * @param \Magento\Framework\Event\ManagerInterface $eventManager
      * @param \Magento\Config\Model\Config\Structure $configStructure
@@ -126,6 +129,7 @@ class Config extends \Magento\Framework\DataObject
      * @param array $data
      * @param ScopeResolverPool|null $scopeResolverPool
      * @param ScopeTypeNormalizer|null $scopeTypeNormalizer
+     * @param \Magento\Framework\MessageQueue\PoisonPill\PoisonPillPutInterface|null $pillPut
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
@@ -139,7 +143,8 @@ class Config extends \Magento\Framework\DataObject
         SettingChecker $settingChecker = null,
         array $data = [],
         ScopeResolverPool $scopeResolverPool = null,
-        ScopeTypeNormalizer $scopeTypeNormalizer = null
+        ScopeTypeNormalizer $scopeTypeNormalizer = null,
+        \Magento\Framework\MessageQueue\PoisonPill\PoisonPillPutInterface $pillPut = null
     ) {
         parent::__construct($data);
         $this->_eventManager = $eventManager;
@@ -155,6 +160,8 @@ class Config extends \Magento\Framework\DataObject
             ?? ObjectManager::getInstance()->get(ScopeResolverPool::class);
         $this->scopeTypeNormalizer = $scopeTypeNormalizer
             ?? ObjectManager::getInstance()->get(ScopeTypeNormalizer::class);
+        $this->pillPut = $pillPut ?: \Magento\Framework\App\ObjectManager::getInstance()
+            ->get(\Magento\Framework\MessageQueue\PoisonPill\PoisonPillPutInterface::class);
     }
 
     /**
@@ -175,6 +182,10 @@ class Config extends \Magento\Framework\DataObject
             return $this;
         }
 
+        /**
+         * Reload config to make sure config data is consistent with the database at this point.
+         */
+        $this->_appConfig->reinit();
         $oldConfig = $this->_getConfig(true);
 
         /** @var \Magento\Framework\DB\Transaction $deleteTransaction */
@@ -198,9 +209,9 @@ class Config extends \Magento\Framework\DataObject
                 $deleteTransaction
             );
 
-            $groupChangedPaths = $this->getChangedPaths($sectionId, $groupId, $groupData, $oldConfig, $extraOldGroups);
-            $changedPaths = \array_merge($changedPaths, $groupChangedPaths);
+            $changedPaths[] = $this->getChangedPaths($sectionId, $groupId, $groupData, $oldConfig, $extraOldGroups);
         }
+        $changedPaths = array_merge([], ...$changedPaths);
 
         try {
             $deleteTransaction->delete();
@@ -223,6 +234,8 @@ class Config extends \Magento\Framework\DataObject
             $this->_appConfig->reinit();
             throw $e;
         }
+
+        $this->pillPut->put();
 
         return $this;
     }
@@ -276,8 +289,8 @@ class Config extends \Magento\Framework\DataObject
      *
      * @param Field $field
      * @param string $fieldId Need for support of clone_field feature
-     * @param array &$oldConfig Need for compatibility with _processGroup()
-     * @param array &$extraOldGroups Need for compatibility with _processGroup()
+     * @param array $oldConfig Need for compatibility with _processGroup()
+     * @param array $extraOldGroups Need for compatibility with _processGroup()
      * @return string
      */
     private function getFieldPath(Field $field, string $fieldId, array &$oldConfig, array &$extraOldGroups): string
@@ -326,8 +339,8 @@ class Config extends \Magento\Framework\DataObject
      * @param string $sectionId
      * @param string $groupId
      * @param array $groupData
-     * @param array &$oldConfig
-     * @param array &$extraOldGroups
+     * @param array $oldConfig
+     * @param array $extraOldGroups
      * @return array
      */
     private function getChangedPaths(
@@ -344,7 +357,7 @@ class Config extends \Magento\Framework\DataObject
                 $field = $this->getField($sectionId, $groupId, $fieldId);
                 $path = $this->getFieldPath($field, $fieldId, $oldConfig, $extraOldGroups);
                 if ($this->isValueChanged($oldConfig, $path, $fieldData)) {
-                    $changedPaths[] = $path;
+                    $changedPaths[] = [$path];
                 }
             }
         }
@@ -359,11 +372,11 @@ class Config extends \Magento\Framework\DataObject
                     $oldConfig,
                     $extraOldGroups
                 );
-                $changedPaths = \array_merge($changedPaths, $subGroupChangedPaths);
+                $changedPaths[] = $subGroupChangedPaths;
             }
         }
 
-        return $changedPaths;
+        return \array_merge([], ...$changedPaths);
     }
 
     /**
@@ -373,8 +386,8 @@ class Config extends \Magento\Framework\DataObject
      * @param array $groupData
      * @param array $groups
      * @param string $sectionPath
-     * @param array &$extraOldGroups
-     * @param array &$oldConfig
+     * @param array $extraOldGroups
+     * @param array $oldConfig
      * @param \Magento\Framework\DB\Transaction $saveTransaction
      * @param \Magento\Framework\DB\Transaction $deleteTransaction
      * @return void
@@ -424,11 +437,11 @@ class Config extends \Magento\Framework\DataObject
                 if (!isset($fieldData['value'])) {
                     $fieldData['value'] = null;
                 }
-                
+
                 if ($field->getType() == 'multiline' && is_array($fieldData['value'])) {
                     $fieldData['value'] = trim(implode(PHP_EOL, $fieldData['value']));
                 }
-                
+
                 $data = [
                     'field' => $fieldId,
                     'groups' => $groups,
@@ -442,7 +455,7 @@ class Config extends \Magento\Framework\DataObject
                 $backendModel->addData($data);
                 $this->_checkSingleStoreMode($field, $backendModel);
 
-                $path = $this->getFieldPath($field, $fieldId, $extraOldGroups, $oldConfig);
+                $path = $this->getFieldPath($field, $fieldId, $oldConfig, $extraOldGroups);
                 $backendModel->setPath($path)->setValue($fieldData['value']);
 
                 $inherit = !empty($fieldData['inherit']);
@@ -521,7 +534,7 @@ class Config extends \Magento\Framework\DataObject
      */
     public function setDataByPath($path, $value)
     {
-        $path = trim($path);
+        $path = $path !== null ? trim($path) : '';
         if ($path === '') {
             throw new \UnexpectedValueException('Path must not be empty');
         }
@@ -670,7 +683,7 @@ class Config extends \Magento\Framework\DataObject
      * Get config data value
      *
      * @param string $path
-     * @param null|bool &$inherit
+     * @param null|bool $inherit
      * @param null|array $configData
      * @return \Magento\Framework\Simplexml\Element
      */

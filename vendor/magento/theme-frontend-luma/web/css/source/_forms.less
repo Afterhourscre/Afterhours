@@ -98,19 +98,18 @@
         &::-ms-expand {
             display: none;
         }
-
-        .lt-ie10 & {
-            background-image: none;
-            padding-right: 4px;
-        }
     }
 
     select {
         .select-styling();
     }
 
+    select.admin__control-multiselect {
+        height: auto;
+    }
+
     .field-error,
-    div.mage-error[generated] {
+    div.mage-error {
         margin-top: 7px;
     }
 

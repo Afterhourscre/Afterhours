@@ -7,34 +7,37 @@
 
 namespace Magento\Catalog\Controller\Adminhtml\Product\Attribute;
 
+use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
 use Magento\Backend\App\Action\Context;
 use Magento\Backend\Model\View\Result\Redirect;
-use Magento\Catalog\Controller\Adminhtml\Product\Attribute;
-use Magento\Catalog\Model\Product\AttributeSet\BuildFactory;
-use Magento\Catalog\Helper\Product;
 use Magento\Catalog\Api\Data\ProductAttributeInterface;
+use Magento\Catalog\Controller\Adminhtml\Product\Attribute;
+use Magento\Catalog\Helper\Product;
+use Magento\Catalog\Model\Product\Attribute\Frontend\Inputtype\Presentation;
+use Magento\Framework\Serialize\Serializer\FormData;
+use Magento\Catalog\Model\Product\AttributeSet\BuildFactory;
 use Magento\Catalog\Model\ResourceModel\Eav\AttributeFactory;
-use Magento\Eav\Model\Entity\Attribute\Set;
 use Magento\Eav\Model\Adminhtml\System\Config\Source\Inputtype\Validator;
 use Magento\Eav\Model\Adminhtml\System\Config\Source\Inputtype\ValidatorFactory;
+use Magento\Eav\Model\Entity\Attribute\Set;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute\Group\CollectionFactory;
 use Magento\Framework\App\ObjectManager;
-use Magento\Framework\Serialize\Serializer\FormData;
 use Magento\Framework\Cache\FrontendInterface;
-use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\Result\Json;
+use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filter\FilterManager;
 use Magento\Framework\Registry;
 use Magento\Framework\View\LayoutFactory;
 use Magento\Framework\View\Result\PageFactory;
-use Magento\Framework\Exception\NotFoundException;
 
 /**
+ * Product attribute save controller.
+ *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class Save extends Attribute
+class Save extends Attribute implements HttpPostActionInterface
 {
     /**
      * @var BuildFactory
@@ -72,7 +75,12 @@ class Save extends Attribute
     private $layoutFactory;
 
     /**
-     * @var FormData
+     * @var Presentation
+     */
+    private $presentation;
+
+    /**
+     * @var FormData|null
      */
     private $formDataSerializer;
 
@@ -80,14 +88,15 @@ class Save extends Attribute
      * @param Context $context
      * @param FrontendInterface $attributeLabelCache
      * @param Registry $coreRegistry
-     * @param BuildFactory $buildFactory
      * @param PageFactory $resultPageFactory
+     * @param BuildFactory $buildFactory
      * @param AttributeFactory $attributeFactory
      * @param ValidatorFactory $validatorFactory
      * @param CollectionFactory $groupCollectionFactory
      * @param FilterManager $filterManager
      * @param Product $productHelper
      * @param LayoutFactory $layoutFactory
+     * @param Presentation|null $presentation
      * @param FormData|null $formDataSerializer
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
@@ -103,6 +112,7 @@ class Save extends Attribute
         FilterManager $filterManager,
         Product $productHelper,
         LayoutFactory $layoutFactory,
+        Presentation $presentation = null,
         FormData $formDataSerializer = null
     ) {
         parent::__construct($context, $attributeLabelCache, $coreRegistry, $resultPageFactory);
@@ -113,32 +123,28 @@ class Save extends Attribute
         $this->validatorFactory = $validatorFactory;
         $this->groupCollectionFactory = $groupCollectionFactory;
         $this->layoutFactory = $layoutFactory;
-        $this->formDataSerializer = $formDataSerializer ?? ObjectManager::getInstance()->get(FormData::class);
+        $this->presentation = $presentation ?: ObjectManager::getInstance()->get(Presentation::class);
+        $this->formDataSerializer = $formDataSerializer
+            ?: ObjectManager::getInstance()->get(FormData::class);
     }
 
     /**
      * @inheritdoc
-     * @throws NotFoundException
      *
+     * @return Redirect
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new NotFoundException(__('Page not found'));
-        }
-
         try {
-            $optionData = $this->formDataSerializer->unserialize(
-                $this->getRequest()->getParam('serialized_options', '[]')
-            );
+            $optionData = $this->formDataSerializer
+                ->unserialize($this->getRequest()->getParam('serialized_options', '[]'));
         } catch (\InvalidArgumentException $e) {
             $message = __("The attribute couldn't be saved due to an error. Verify your information and try again. "
                 . "If the error persists, please try again later.");
             $this->messageManager->addErrorMessage($message);
-
             return $this->returnResult('catalog/*/edit', ['_current' => true], ['error' => true]);
         }
 
@@ -166,7 +172,6 @@ class Save extends Attribute
                 } catch (AlreadyExistsException $alreadyExists) {
                     $this->messageManager->addErrorMessage(__('An attribute set named \'%1\' already exists.', $name));
                     $this->_session->setAttributeData($data);
-
                     return $this->returnResult('catalog/*/edit', ['_current' => true], ['error' => true]);
                 } catch (LocalizedException $e) {
                     $this->messageManager->addErrorMessage($e->getMessage());
@@ -179,6 +184,9 @@ class Save extends Attribute
             }
 
             $attributeId = $this->getRequest()->getParam('attribute_id');
+            if (!empty($data['attribute_id']) && $data['attribute_id'] != $attributeId) {
+                $attributeId = $data['attribute_id'];
+            }
 
             /** @var ProductAttributeInterface $model */
             $model = $this->attributeFactory->create();
@@ -188,7 +196,10 @@ class Save extends Attribute
             $attributeCode = $model && $model->getId()
                 ? $model->getAttributeCode()
                 : $this->getRequest()->getParam('attribute_code');
-            $attributeCode = $attributeCode ?: $this->generateCode($this->getRequest()->getParam('frontend_label')[0]);
+            if (!$attributeCode) {
+                $frontendLabel = $this->getRequest()->getParam('frontend_label')[0] ?? '';
+                $attributeCode = $this->generateCode($frontendLabel);
+            }
             $data['attribute_code'] = $attributeCode;
 
             //validate frontend_input
@@ -199,7 +210,6 @@ class Save extends Attribute
                     foreach ($inputType->getMessages() as $message) {
                         $this->messageManager->addErrorMessage($message);
                     }
-
                     return $this->returnResult(
                         'catalog/*/edit',
                         ['attribute_id' => $attributeId, '_current' => true],
@@ -208,17 +218,17 @@ class Save extends Attribute
                 }
             }
 
+            $data = $this->presentation->convertPresentationDataToInputType($data);
+
             if ($attributeId) {
                 if (!$model->getId()) {
                     $this->messageManager->addErrorMessage(__('This attribute no longer exists.'));
-
                     return $this->returnResult('catalog/*/', [], ['error' => true]);
                 }
                 // entity type check
-                if ($model->getEntityTypeId() != $this->_entityTypeId) {
+                if ($model->getEntityTypeId() != $this->_entityTypeId || array_key_exists('backend_model', $data)) {
                     $this->messageManager->addErrorMessage(__('We can\'t update the attribute.'));
                     $this->_session->setAttributeData($data);
-
                     return $this->returnResult('catalog/*/', [], ['error' => true]);
                 }
 
@@ -252,6 +262,12 @@ class Save extends Attribute
                 // Unset attribute field for system attributes
                 unset($data['apply_to']);
             }
+
+            if ($model->getBackendType() == 'static' && !$model->getIsUserDefined()) {
+                $data['frontend_class'] = $model->getFrontendClass();
+            }
+
+            unset($data['entity_type_id']);
 
             $model->addData($data);
 
@@ -299,7 +315,6 @@ class Save extends Attribute
                     if ($attributeSet !== null) {
                         $requestParams['new_attribute_set_id'] = $attributeSet->getId();
                     }
-
                     return $this->returnResult('catalog/product/addAttribute', $requestParams, ['error' => false]);
                 } elseif ($this->getRequest()->getParam('back', false)) {
                     return $this->returnResult(
@@ -308,12 +323,13 @@ class Save extends Attribute
                         ['error' => false]
                     );
                 }
-
                 return $this->returnResult('catalog/*/', [], ['error' => false]);
             } catch (\Exception $e) {
                 $this->messageManager->addErrorMessage($e->getMessage());
+                if ($attributeId === null) {
+                    unset($data['frontend_input']);
+                }
                 $this->_session->setAttributeData($data);
-
                 return $this->returnResult(
                     'catalog/*/edit',
                     ['attribute_id' => $attributeId, '_current' => true],
@@ -321,7 +337,6 @@ class Save extends Attribute
                 );
             }
         }
-
         return $this->returnResult('catalog/*/', [], ['error' => true]);
     }
 
@@ -341,10 +356,8 @@ class Save extends Attribute
 
             $response['messages'] = [$layout->getMessagesBlock()->getGroupedHtml()];
             $response['params'] = $params;
-
             return $this->resultFactory->create(ResultFactory::TYPE_JSON)->setData($response);
         }
-
         return $this->resultFactory->create(ResultFactory::TYPE_REDIRECT)->setPath($path, $params);
     }
 

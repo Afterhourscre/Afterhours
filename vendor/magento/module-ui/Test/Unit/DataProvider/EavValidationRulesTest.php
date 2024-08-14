@@ -3,17 +3,17 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\Ui\Test\Unit\DataProvider;
 
 use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Ui\DataProvider\EavValidationRules;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-/**
- * Class EavValidationRulesTest
- */
-class EavValidationRulesTest extends \PHPUnit\Framework\TestCase
+class EavValidationRulesTest extends TestCase
 {
     /**
      * @var ObjectManager
@@ -21,16 +21,19 @@ class EavValidationRulesTest extends \PHPUnit\Framework\TestCase
     protected $objectManager;
 
     /**
-     * @var \Magento\Ui\DataProvider\EavValidationRules
+     * @var EavValidationRules
      */
     protected $subject;
 
     /**
-     * @var \Magento\Eav\Model\Entity\Attribute\AbstractAttribute|\PHPUnit_Framework_MockObject_MockObject
+     * @var AbstractAttribute|MockObject
      */
     protected $attributeMock;
 
-    protected function setUp()
+    /**
+     * {@inheritDoc}
+     */
+    protected function setUp(): void
     {
         $this->objectManager = new ObjectManager($this);
         $this->attributeMock =
@@ -43,11 +46,13 @@ class EavValidationRulesTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
+     * @param string $attributeInputType
+     * @param mixed $validateRules
      * @param array $data
      * @param array $expected
      * @dataProvider buildDataProvider
      */
-    public function testBuild($attributeInputType, $validateRules, $data, $expected)
+    public function testBuild($attributeInputType, $validateRules, $data, $expected): void
     {
         $this->attributeMock->expects($this->once())->method('getFrontendInput')->willReturn($attributeInputType);
         $this->attributeMock->expects($this->any())->method('getValidateRules')->willReturn($validateRules);

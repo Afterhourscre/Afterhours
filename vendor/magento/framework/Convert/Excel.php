@@ -5,6 +5,8 @@
  */
 namespace Magento\Framework\Convert;
 
+use Magento\Framework\Escaper;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Filesystem\File\WriteInterface;
 
 /**
@@ -13,7 +15,7 @@ use Magento\Framework\Filesystem\File\WriteInterface;
 class Excel
 {
     /**
-     * @var \Magento\Framework\Escaper
+     * @var Escaper
      */
     private $escaper;
 
@@ -50,17 +52,17 @@ class Excel
      *
      * @param \Iterator $iterator
      * @param array $rowCallback
-     * @param \Magento\Framework\Escaper|null $escaper
+     * @param Escaper|null $escaper
      */
     public function __construct(
         \Iterator $iterator,
         $rowCallback = [],
-        \Magento\Framework\Escaper $escaper = null
+        Escaper $escaper = null
     ) {
         $this->_iterator = $iterator;
         $this->_rowCallback = $rowCallback;
-        $this->escaper = $escaper ?? \Magento\Framework\App\ObjectManager::getInstance()->get(
-            \Magento\Framework\Escaper::class
+        $this->escaper = $escaper ?? ObjectManager::getInstance()->get(
+            Escaper::class
         );
     }
 
@@ -148,7 +150,8 @@ class Excel
 
         foreach ($row as $value) {
             $value = $this->escaper->escapeHtml($value);
-            $dataType = is_numeric($value) && $value[0] !== '+' && $value[0] !== '0' ? 'Number' : 'String';
+            $dataType = is_numeric($value) && (is_string($value) && ctype_space($value[0]) === false) &&
+                $value[0] !== '+' && $value[0] !== '0' ? 'Number' : 'String';
 
             /**
              * Security enhancement for CSV data processing by Excel-like applications.

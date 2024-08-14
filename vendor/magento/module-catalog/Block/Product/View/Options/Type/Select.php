@@ -6,7 +6,7 @@
 
 namespace Magento\Catalog\Block\Product\View\Options\Type;
 
-use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
+use Magento\Catalog\Model\Product\Option;
 use Magento\Catalog\Block\Product\View\Options\Type\Select\CheckableFactory;
 use Magento\Catalog\Block\Product\View\Options\Type\Select\MultipleFactory;
 use Magento\Framework\App\ObjectManager;
@@ -26,7 +26,6 @@ class Select extends \Magento\Catalog\Block\Product\View\Options\AbstractOptions
      * @var CheckableFactory
      */
     private $checkableFactory;
-
     /**
      * @var MultipleFactory
      */
@@ -59,23 +58,20 @@ class Select extends \Magento\Catalog\Block\Product\View\Options\AbstractOptions
      *
      * @return string
      */
-    public function getValuesHtml()
+    public function getValuesHtml(): string
     {
         $option = $this->getOption();
         $optionType = $option->getType();
-
-        if ($optionType === ProductCustomOptionInterface::OPTION_TYPE_DROP_DOWN ||
-            $optionType === ProductCustomOptionInterface::OPTION_TYPE_MULTIPLE
+        if ($optionType === Option::OPTION_TYPE_DROP_DOWN ||
+            $optionType === Option::OPTION_TYPE_MULTIPLE
         ) {
             $optionBlock = $this->multipleFactory->create();
         }
-
-        if ($optionType === ProductCustomOptionInterface::OPTION_TYPE_RADIO ||
-            $optionType === ProductCustomOptionInterface::OPTION_TYPE_CHECKBOX
+        if ($optionType === Option::OPTION_TYPE_RADIO ||
+            $optionType === Option::OPTION_TYPE_CHECKBOX
         ) {
             $optionBlock = $this->checkableFactory->create();
         }
-
         return $optionBlock
             ->setOption($option)
             ->setProduct($this->getProduct())

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of PHP CS Fixer.
  *
@@ -12,9 +14,10 @@
 
 namespace PhpCsFixer\Fixer\PhpUnit;
 
-use PhpCsFixer\AbstractFixer;
+use PhpCsFixer\Fixer\AbstractPhpUnitFixer;
 use PhpCsFixer\FixerDefinition\CodeSample;
 use PhpCsFixer\FixerDefinition\FixerDefinition;
+use PhpCsFixer\FixerDefinition\FixerDefinitionInterface;
 use PhpCsFixer\Preg;
 use PhpCsFixer\Tokenizer\Token;
 use PhpCsFixer\Tokenizer\Tokens;
@@ -22,17 +25,14 @@ use PhpCsFixer\Tokenizer\Tokens;
 /**
  * @author Roland Franssen <franssen.roland@gmail.com>
  */
-final class PhpUnitFqcnAnnotationFixer extends AbstractFixer
+final class PhpUnitFqcnAnnotationFixer extends AbstractPhpUnitFixer
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function getDefinition()
+    public function getDefinition(): FixerDefinitionInterface
     {
         return new FixerDefinition(
             'PHPUnit annotations should be a FQCNs including a root namespace.',
-            array(new CodeSample(
-'<?php
+            [new CodeSample(
+                '<?php
 final class MyTest extends \PHPUnit_Framework_TestCase
 {
     /**
@@ -46,39 +46,40 @@ final class MyTest extends \PHPUnit_Framework_TestCase
     }
 }
 '
-            ))
+            )]
         );
     }
 
     /**
      * {@inheritdoc}
+     *
+     * Must run before NoUnusedImportsFixer, PhpdocOrderByValueFixer.
      */
-    public function getPriority()
+    public function getPriority(): int
     {
-        // should be run before NoUnusedImportsFixer
         return -9;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function isCandidate(Tokens $tokens)
+    protected function applyPhpUnitClassFix(Tokens $tokens, int $startIndex, int $endIndex): void
     {
-        return $tokens->isTokenKindFound(T_DOC_COMMENT);
+        $prevDocCommentIndex = $tokens->getPrevTokenOfKind($startIndex, [[T_DOC_COMMENT]]);
+
+        if (null !== $prevDocCommentIndex) {
+            $startIndex = $prevDocCommentIndex;
+        }
+
+        $this->fixPhpUnitClass($tokens, $startIndex, $endIndex);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function applyFix(\SplFileInfo $file, Tokens $tokens)
+    private function fixPhpUnitClass(Tokens $tokens, int $startIndex, int $endIndex): void
     {
-        foreach ($tokens as $index => $token) {
-            if ($token->isGivenKind(T_DOC_COMMENT)) {
-                $tokens[$index] = new Token(array(T_DOC_COMMENT, Preg::replace(
-                    '~^(\s*\*\s*@(?:expectedException|covers|coversDefaultClass|uses)\h+)(\w.*)$~m',
-                    '$1\\\\$2',
-                    $token->getContent()
-                )));
+        for ($index = $startIndex; $index < $endIndex; ++$index) {
+            if ($tokens[$index]->isGivenKind(T_DOC_COMMENT)) {
+                $tokens[$index] = new Token([T_DOC_COMMENT, Preg::replace(
+                    '~^(\s*\*\s*@(?:expectedException|covers|coversDefaultClass|uses)\h+)(?!(?:self|static)::)(\w.*)$~m',
+                    '$1\\\$2',
+                    $tokens[$index]->getContent()
+                )]);
             }
         }
     }

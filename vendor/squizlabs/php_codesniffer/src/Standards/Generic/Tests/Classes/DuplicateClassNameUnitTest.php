@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Generic\Tests\Classes;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class DuplicateClassNameUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the DuplicateClassName sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Generic\Sniffs\Classes\DuplicateClassNameSniff
+ */
+final class DuplicateClassNameUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,7 +30,7 @@ class DuplicateClassNameUnitTest extends AbstractSniffUnitTest
      */
     public function getErrorList()
     {
-        return array();
+        return [];
 
     }//end getErrorList()
 
@@ -44,29 +49,32 @@ class DuplicateClassNameUnitTest extends AbstractSniffUnitTest
     {
         switch ($testFile) {
         case 'DuplicateClassNameUnitTest.1.inc':
-            return array(
-                    6 => 1,
-                    7 => 1,
-                   );
-            break;
+            return [
+                10 => 1,
+                11 => 1,
+                12 => 1,
+                13 => 1,
+            ];
+
         case 'DuplicateClassNameUnitTest.2.inc':
-            return array(
-                    2 => 1,
-                    3 => 1,
-                   );
-            break;
+            return [
+                2 => 1,
+                3 => 1,
+                4 => 1,
+                5 => 1,
+            ];
+
         case 'DuplicateClassNameUnitTest.5.inc':
-            return array(
-                    3 => 1,
-                    7 => 1,
-                   );
-            break;
+            return [
+                3 => 1,
+                7 => 1,
+            ];
+
         case 'DuplicateClassNameUnitTest.6.inc':
-            return array(10 => 1);
-            break;
+            return [10 => 1];
+
         default:
-            return array();
-            break;
+            return [];
         }//end switch
 
     }//end getWarningList()

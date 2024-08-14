@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\MySource\Tests\Channels;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class DisallowSelfActionsUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the DisallowSelfActions sniff.
+ *
+ * @covers PHP_CodeSniffer\Standards\MySource\Sniffs\Channels\DisallowSelfActionsSniff
+ */
+final class DisallowSelfActionsUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,12 +30,12 @@ class DisallowSelfActionsUnitTest extends AbstractSniffUnitTest
      */
     public function getErrorList()
     {
-        return array(
-                12 => 1,
-                13 => 1,
-                28 => 1,
-                29 => 1,
-               );
+        return [
+            12 => 1,
+            13 => 1,
+            28 => 1,
+            29 => 1,
+        ];
 
     }//end getErrorList()
 
@@ -45,7 +50,7 @@ class DisallowSelfActionsUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

@@ -42,14 +42,16 @@ class SynonymAnalyzer implements SynonymAnalyzerInterface
      *   3 => [ 0 => "british", 1 => "english" ],
      *   4 => [ 0 => "queen", 1 => "monarch" ]
      * ]
+     *
      * @param string $phrase
      * @return array
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getSynonymsForPhrase($phrase)
     {
         $result = [];
 
-        if (empty(trim($phrase))) {
+        if ($phrase === null || empty(trim($phrase))) {
             return $result;
         }
 
@@ -66,10 +68,10 @@ class SynonymAnalyzer implements SynonymAnalyzerInterface
             $synonyms = [$word];
 
             if ($synonymGroups) {
-                $pattern = $this->getSearchPattern(array_slice($words, $offset));
+                $pattern = $this->getSearchPattern(\array_slice($words, $offset));
                 $position = $this->findInArray($pattern, $synonymGroups);
                 if ($position !== null) {
-                    $synonyms = explode(',', $synonymGroups[$position]);
+                    $synonyms = explode(',', $synonymGroups[$position] ?? '');
                 }
             }
 
@@ -92,12 +94,13 @@ class SynonymAnalyzer implements SynonymAnalyzerInterface
     {
         $position = 0;
         foreach ($synonymGroupsToExamine as $synonymGroup) {
-            $matchingResultCode = preg_match($pattern, $synonymGroup);
+            $matchingResultCode = preg_match($pattern, $synonymGroup ?? '');
             if ($matchingResultCode === 1) {
                 return $position;
             }
             $position++;
         }
+
         return null;
     }
 
@@ -134,7 +137,10 @@ class SynonymAnalyzer implements SynonymAnalyzerInterface
     {
         $patterns = [];
         for ($lastItem = count($words); $lastItem > 0; $lastItem--) {
-            $phrase = implode("\s+", array_slice($words, 0, $lastItem));
+            $safeRegexWords = array_map(function ($word) {
+                return preg_quote($word, '/');
+            }, $words);
+            $phrase = implode("\s+", \array_slice($safeRegexWords, 0, $lastItem));
             $patterns[] = '^' . $phrase . ',';
             $patterns[] = ',' . $phrase . ',';
             $patterns[] = ',' . $phrase . '$';
@@ -151,11 +157,13 @@ class SynonymAnalyzer implements SynonymAnalyzerInterface
      *
      * @param string $phrase
      * @return string[]
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     private function getSynonymGroupsByPhrase(string $phrase): array
     {
         $result = [];
 
+        /** @var array $synonymGroups */
         $synonymGroups = $this->synReaderModel->loadByPhrase($phrase)->getData();
         foreach ($synonymGroups as $row) {
             $result[] = $row['synonyms'];

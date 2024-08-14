@@ -3,6 +3,7 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\Store\Model;
 
@@ -11,6 +12,8 @@ use Magento\Store\Model\StoreSwitcher\CannotSwitchStoreException;
 
 /**
  * Handles store switching procedure and detects url for final redirect after store switching.
+ *
+ * @api
  */
 interface StoreSwitcherInterface
 {

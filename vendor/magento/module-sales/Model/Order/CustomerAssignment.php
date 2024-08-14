@@ -7,11 +7,14 @@ declare(strict_types=1);
 
 namespace Magento\Sales\Model\Order;
 
-use Magento\Sales\Api\Data\OrderInterface;
-use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Framework\Event\ManagerInterface;
+use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\OrderRepositoryInterface;
 
+/**
+ * Assign customer to order.
+ */
 class CustomerAssignment
 {
     /**
@@ -39,13 +42,23 @@ class CustomerAssignment
     }
 
     /**
+     * Assign customer to order.
+     *
      * @param OrderInterface $order
      * @param CustomerInterface $customer
      */
-    public function execute(OrderInterface $order, CustomerInterface $customer)/*: void*/
+    public function execute(OrderInterface $order, CustomerInterface $customer): void
     {
-        $order->setCustomerId($customer->getId());
-        $order->setCustomerIsGuest(false);
+        $order->setCustomerId($customer->getId())
+            ->setCustomerIsGuest(false)
+            ->setCustomerEmail($customer->getEmail())
+            ->setCustomerFirstname($customer->getFirstname())
+            ->setCustomerLastname($customer->getLastname())
+            ->setCustomerMiddlename($customer->getMiddlename())
+            ->setCustomerPrefix($customer->getPrefix())
+            ->setCustomerSuffix($customer->getSuffix())
+            ->setCustomerGroupId($customer->getGroupId());
+
         $this->orderRepository->save($order);
 
         $this->eventManager->dispatch(

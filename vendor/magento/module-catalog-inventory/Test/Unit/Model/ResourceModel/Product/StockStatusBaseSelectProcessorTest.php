@@ -3,6 +3,8 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\CatalogInventory\Test\Unit\Model\ResourceModel\Product;
 
 use Magento\Catalog\Model\ResourceModel\Product\BaseSelectProcessorInterface;
@@ -11,16 +13,18 @@ use Magento\CatalogInventory\Model\Stock;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Select;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class StockStatusBaseSelectProcessorTest extends \PHPUnit\Framework\TestCase
+class StockStatusBaseSelectProcessorTest extends TestCase
 {
     /**
-     * @var ResourceConnection|\PHPUnit_Framework_MockObject_MockObject
+     * @var ResourceConnection|MockObject
      */
     private $resource;
 
     /**
-     * @var Select|\PHPUnit_Framework_MockObject_MockObject
+     * @var Select|MockObject
      */
     private $select;
 
@@ -29,10 +33,14 @@ class StockStatusBaseSelectProcessorTest extends \PHPUnit\Framework\TestCase
      */
     private $stockStatusBaseSelectProcessor;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->resource = $this->getMockBuilder(ResourceConnection::class)->disableOriginalConstructor()->getMock();
-        $this->select = $this->getMockBuilder(Select::class)->disableOriginalConstructor()->getMock();
+        $this->resource = $this->getMockBuilder(ResourceConnection::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->select = $this->getMockBuilder(Select::class)
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $this->stockStatusBaseSelectProcessor =  (new ObjectManager($this))->getObject(
             StockStatusBaseSelectProcessor::class,
@@ -59,11 +67,16 @@ class StockStatusBaseSelectProcessorTest extends \PHPUnit\Framework\TestCase
 
         $this->select->expects($this->exactly(2))
             ->method('where')
-            ->withConsecutive(
-                ['stock.stock_status = ?', Stock::STOCK_IN_STOCK, null],
-                ['stock.website_id = ?', 0, null]
-            )
-            ->willReturnSelf();
+            ->willReturnCallback(function (...$args) {
+                static $index = 0;
+                $expectedArgs = [
+                    ['stock.stock_status = ?', Stock::STOCK_IN_STOCK, null],
+                    ['stock.website_id = ?', 0, null]
+                ];
+                $returnValue = $this->select;
+                $index++;
+                return $args === $expectedArgs[$index - 1] ? $returnValue : null;
+            });
 
         $this->stockStatusBaseSelectProcessor->process($this->select);
     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of PHP CS Fixer.
  *
@@ -15,6 +17,7 @@ namespace PhpCsFixer\Fixer\Casing;
 use PhpCsFixer\AbstractFixer;
 use PhpCsFixer\FixerDefinition\CodeSample;
 use PhpCsFixer\FixerDefinition\FixerDefinition;
+use PhpCsFixer\FixerDefinition\FixerDefinitionInterface;
 use PhpCsFixer\Tokenizer\CT;
 use PhpCsFixer\Tokenizer\Token;
 use PhpCsFixer\Tokenizer\Tokens;
@@ -24,36 +27,27 @@ use PhpCsFixer\Tokenizer\Tokens;
  */
 final class MagicConstantCasingFixer extends AbstractFixer
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function getDefinition()
+    public function getDefinition(): FixerDefinitionInterface
     {
         return new FixerDefinition(
             'Magic constants should be referred to using the correct casing.',
-            array(new CodeSample("<?php\necho __dir__;"))
+            [new CodeSample("<?php\necho __dir__;\n")]
         );
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function isCandidate(Tokens $tokens)
+    public function isCandidate(Tokens $tokens): bool
     {
         return $tokens->isAnyTokenKindsFound($this->getMagicConstantTokens());
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function applyFix(\SplFileInfo $file, Tokens $tokens)
+    protected function applyFix(\SplFileInfo $file, Tokens $tokens): void
     {
         $magicConstants = $this->getMagicConstants();
         $magicConstantTokens = $this->getMagicConstantTokens();
 
         foreach ($tokens as $index => $token) {
             if ($token->isGivenKind($magicConstantTokens)) {
-                $tokens[$index] = new Token(array($token->getId(), $magicConstants[$token->getId()]));
+                $tokens[$index] = new Token([$token->getId(), $magicConstants[$token->getId()]]);
             }
         }
     }
@@ -61,12 +55,12 @@ final class MagicConstantCasingFixer extends AbstractFixer
     /**
      * @return array<int, string>
      */
-    private function getMagicConstants()
+    private function getMagicConstants(): array
     {
         static $magicConstants = null;
 
         if (null === $magicConstants) {
-            $magicConstants = array(
+            $magicConstants = [
                 T_LINE => '__LINE__',
                 T_FILE => '__FILE__',
                 T_DIR => '__DIR__',
@@ -75,20 +69,17 @@ final class MagicConstantCasingFixer extends AbstractFixer
                 T_METHOD_C => '__METHOD__',
                 T_NS_C => '__NAMESPACE__',
                 CT::T_CLASS_CONSTANT => 'class',
-            );
-
-            if (defined('T_TRAIT_C')) {
-                $magicConstants[T_TRAIT_C] = '__TRAIT__';
-            }
+                T_TRAIT_C => '__TRAIT__',
+            ];
         }
 
         return $magicConstants;
     }
 
     /**
-     * @return array<int>
+     * @return list<int>
      */
-    private function getMagicConstantTokens()
+    private function getMagicConstantTokens(): array
     {
         static $magicConstantTokens = null;
 

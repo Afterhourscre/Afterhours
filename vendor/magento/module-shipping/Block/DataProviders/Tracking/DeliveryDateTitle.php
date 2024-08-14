@@ -15,7 +15,7 @@ use Magento\Shipping\Model\Tracking\Result\Status;
 class DeliveryDateTitle implements ArgumentInterface
 {
     /**
-     * Return title if carrier is defined
+     * Returns Title in case if carrier defined
      *
      * @param Status $trackingStatus
      * @return \Magento\Framework\Phrase|string

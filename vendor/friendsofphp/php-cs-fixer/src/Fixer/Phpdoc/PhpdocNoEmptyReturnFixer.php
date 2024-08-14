@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of PHP CS Fixer.
  *
@@ -17,31 +19,25 @@ use PhpCsFixer\DocBlock\Annotation;
 use PhpCsFixer\DocBlock\DocBlock;
 use PhpCsFixer\FixerDefinition\CodeSample;
 use PhpCsFixer\FixerDefinition\FixerDefinition;
-use PhpCsFixer\Preg;
+use PhpCsFixer\FixerDefinition\FixerDefinitionInterface;
 use PhpCsFixer\Tokenizer\Token;
 use PhpCsFixer\Tokenizer\Tokens;
 
 /**
- * @author Graham Campbell <graham@alt-three.com>
+ * @author Graham Campbell <hello@gjcampbell.co.uk>
  */
 final class PhpdocNoEmptyReturnFixer extends AbstractFixer
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function isCandidate(Tokens $tokens)
+    public function isCandidate(Tokens $tokens): bool
     {
         return $tokens->isTokenKindFound(T_DOC_COMMENT);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getDefinition()
+    public function getDefinition(): FixerDefinitionInterface
     {
         return new FixerDefinition(
-            '`@return` void and `@return null` annotations should be omitted from PHPDoc.',
-            array(
+            '`@return void` and `@return null` annotations should be omitted from PHPDoc.',
+            [
                 new CodeSample(
                     '<?php
 /**
@@ -58,24 +54,22 @@ function foo() {}
 function foo() {}
 '
                 ),
-            )
+            ]
         );
     }
 
     /**
      * {@inheritdoc}
+     *
+     * Must run before NoEmptyPhpdocFixer, PhpdocAlignFixer, PhpdocOrderFixer, PhpdocSeparationFixer, PhpdocTrimFixer.
+     * Must run after AlignMultilineCommentFixer, CommentToPhpdocFixer, PhpdocIndentFixer, PhpdocScalarFixer, PhpdocToCommentFixer, PhpdocTypesFixer, VoidReturnFixer.
      */
-    public function getPriority()
+    public function getPriority(): int
     {
-        // must be run before the PhpdocSeparationFixer, PhpdocOrderFixer
-        // must be run after the PhpdocAddMissingParamAnnotationFixer
-        return 10;
+        return 4;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function applyFix(\SplFileInfo $file, Tokens $tokens)
+    protected function applyFix(\SplFileInfo $file, Tokens $tokens): void
     {
         foreach ($tokens as $index => $token) {
             if (!$token->isGivenKind(T_DOC_COMMENT)) {
@@ -85,27 +79,38 @@ function foo() {}
             $doc = new DocBlock($token->getContent());
             $annotations = $doc->getAnnotationsOfType('return');
 
-            if (empty($annotations)) {
+            if (0 === \count($annotations)) {
                 continue;
             }
 
             foreach ($annotations as $annotation) {
-                $this->fixAnnotation($doc, $annotation);
+                $this->fixAnnotation($annotation);
             }
 
-            $tokens[$index] = new Token(array(T_DOC_COMMENT, $doc->getContent()));
+            $newContent = $doc->getContent();
+
+            if ($newContent === $token->getContent()) {
+                continue;
+            }
+
+            if ('' === $newContent) {
+                $tokens->clearTokenAndMergeSurroundingWhitespace($index);
+
+                continue;
+            }
+
+            $tokens[$index] = new Token([T_DOC_COMMENT, $doc->getContent()]);
         }
     }
 
     /**
-     * Remove return void or return null annotations..
-     *
-     * @param DocBlock   $doc
-     * @param Annotation $annotation
+     * Remove `return void` or `return null` annotations.
      */
-    private function fixAnnotation(DocBlock $doc, Annotation $annotation)
+    private function fixAnnotation(Annotation $annotation): void
     {
-        if (1 === Preg::match('/@return\s+(void|null)(?!\|)/', $doc->getLine($annotation->getStart())->getContent())) {
+        $types = $annotation->getNormalizedTypes();
+
+        if (1 === \count($types) && ('null' === $types[0] || 'void' === $types[0])) {
             $annotation->remove();
         }
     }

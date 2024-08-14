@@ -3,19 +3,24 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Customer\Test\Unit\Controller\Section;
 
+use Laminas\Http\AbstractMessage;
+use Laminas\Http\Response;
 use Magento\Customer\Controller\Section\Load;
 use Magento\Customer\CustomerData\Section\Identifier;
 use Magento\Customer\CustomerData\SectionPoolInterface;
 use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\Request\Http as HttpRequest;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Escaper;
-use \PHPUnit_Framework_MockObject_MockObject as MockObject;
-use Magento\Framework\App\Request\Http as HttpRequest;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class LoadTest extends \PHPUnit\Framework\TestCase
+class LoadTest extends TestCase
 {
     /**
      * @var Load
@@ -43,7 +48,7 @@ class LoadTest extends \PHPUnit\Framework\TestCase
     private $sectionPoolMock;
 
     /**
-     * @var \Magento\Framework\Escaper|MockObject
+     * @var Escaper|MockObject
      */
     private $escaperMock;
 
@@ -57,7 +62,7 @@ class LoadTest extends \PHPUnit\Framework\TestCase
      */
     private $httpRequestMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->contextMock = $this->createMock(Context::class);
         $this->resultJsonFactoryMock = $this->createMock(JsonFactory::class);
@@ -94,15 +99,20 @@ class LoadTest extends \PHPUnit\Framework\TestCase
             ->willReturn($this->resultJsonMock);
         $this->resultJsonMock->expects($this->exactly(2))
             ->method('setHeader')
-            ->withConsecutive(
-                ['Cache-Control', 'max-age=0, must-revalidate, no-cache, no-store'],
-                ['Pragma', 'no-cache']
-            );
+            ->willReturnCallback(function ($arg1, $arg2) {
+                if ($arg1 === 'Cache-Control' && $arg2 === 'max-age=0, must-revalidate, no-cache, no-store') {
+                    return null;
+                } elseif ($arg1 === 'Pragma' && $arg2 === 'no-cache') {
+                    return null;
+                }
+            });
 
         $this->httpRequestMock->expects($this->exactly(2))
             ->method('getParam')
-            ->withConsecutive(['sections'], ['force_new_section_timestamp'])
-            ->willReturnOnConsecutiveCalls($sectionNames, $forceNewSectionTimestamp);
+            ->willReturnCallback(fn($param) => match ([$param]) {
+                ['sections'] => $sectionNames,
+                ['force_new_section_timestamp'] => $forceNewSectionTimestamp
+            });
 
         $this->sectionPoolMock->expects($this->once())
             ->method('getSectionsData')
@@ -126,7 +136,7 @@ class LoadTest extends \PHPUnit\Framework\TestCase
     /**
      * @return array
      */
-    public function executeDataProvider()
+    public static function executeDataProvider()
     {
         return [
             [
@@ -141,6 +151,12 @@ class LoadTest extends \PHPUnit\Framework\TestCase
                 'sectionNamesAsArray' => null,
                 'forceNewTimestamp' => false
             ],
+            [
+                'sectionNames' => ['sectionName1', 'sectionName2', 'sectionName3'],
+                'forceNewSectionTimestamp' => 'forceNewSectionTimestamp',
+                'sectionNamesAsArray' => ['sectionName1', 'sectionName2', 'sectionName3'],
+                'forceNewTimestamp' => true
+            ],
         ];
     }
 
@@ -151,10 +167,13 @@ class LoadTest extends \PHPUnit\Framework\TestCase
             ->willReturn($this->resultJsonMock);
         $this->resultJsonMock->expects($this->exactly(2))
             ->method('setHeader')
-            ->withConsecutive(
-                ['Cache-Control', 'max-age=0, must-revalidate, no-cache, no-store'],
-                ['Pragma', 'no-cache']
-            );
+            ->willReturnCallback(function ($arg1, $arg2) {
+                if ($arg1 === 'Cache-Control' && $arg2 === 'max-age=0, must-revalidate, no-cache, no-store') {
+                    return null;
+                } elseif ($arg1 === 'Pragma' && $arg2 === 'no-cache') {
+                    return null;
+                }
+            });
 
         $this->httpRequestMock->expects($this->once())
             ->method('getParam')
@@ -164,8 +183,8 @@ class LoadTest extends \PHPUnit\Framework\TestCase
         $this->resultJsonMock->expects($this->once())
             ->method('setStatusHeader')
             ->with(
-                \Zend\Http\Response::STATUS_CODE_400,
-                \Zend\Http\AbstractMessage::VERSION_11,
+                Response::STATUS_CODE_400,
+                AbstractMessage::VERSION_11,
                 'Bad Request'
             );
 

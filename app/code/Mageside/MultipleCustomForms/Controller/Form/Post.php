@@ -77,6 +77,7 @@ class Post extends \Magento\Framework\App\Action\Action
 
     public function execute()
     {
+
         $form = null;
         $errors = false;
 
@@ -87,10 +88,12 @@ class Post extends \Magento\Framework\App\Action\Action
         }
 
         if ($formId = $this->_request->getParam('form_id')) {
+
             /** @var \Mageside\MultipleCustomForms\Model\CustomForm $form */
             $form = $this->_customFormFactory->create()->load($formId);
 
-            $params = $this->prepareParams();
+            $params = $this->prepareParams(); 
+           
             if (!$form->validateData($params)) {
                 $this->addMessage('Invalid form data.', 'error', $form);
 

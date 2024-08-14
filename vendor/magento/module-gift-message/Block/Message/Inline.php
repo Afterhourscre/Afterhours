@@ -36,8 +36,6 @@ class Inline extends \Magento\Framework\View\Element\Template
     protected $_template = 'Magento_GiftMessage::inline.phtml';
 
     /**
-     * Gift message message
-     *
      * @var \Magento\GiftMessage\Helper\Message|null
      */
     protected $_giftMessageMessage = null;
@@ -278,9 +276,9 @@ class Inline extends \Magento\Framework\View\Element\Template
     }
 
     /**
-     * Call method getItemsHasMessages.
+     * Call method getItemsHasMessages
      *
-     * @deprecated Misspelled method
+     * @deprecated 100.2.4 Misspelled method
      * @see getItemsHasMessages
      */
     public function getItemsHasMesssages()
@@ -324,13 +322,14 @@ class Inline extends \Magento\Framework\View\Element\Template
      */
     public function getEscaped($value, $defaultValue = '')
     {
-        return $this->escapeHtml(trim($value) != '' ? $value : $defaultValue);
+        $value = ($value !== null && trim($value) != '') ? $value : $defaultValue;
+        return $this->escapeHtml($value);
     }
 
     /**
-     * Check availability of order level functionality.
+     * Check availability of order level functionality
      *
-     * @return bool|null
+     * @return bool
      */
     public function isMessagesOrderAvailable()
     {
@@ -338,7 +337,6 @@ class Inline extends \Magento\Framework\View\Element\Template
         if (!$entity->hasIsGiftOptionsAvailable()) {
             $this->_eventManager->dispatch('gift_options_prepare', ['entity' => $entity]);
         }
-
         return $entity->getIsGiftOptionsAvailable();
     }
 
@@ -360,7 +358,8 @@ class Inline extends \Magento\Framework\View\Element\Template
      */
     public function isItemMessagesAvailable($item)
     {
-        $type = substr($this->getType(), 0, 5) == 'multi' ? 'address_item' : 'item';
+        $type = $this->getType() !== null && substr($this->getType(), 0, 5) === 'multi' ?
+            'address_item' : 'item';
         return $this->_giftMessageMessage->isMessagesAllowed($type, $item);
     }
 
@@ -388,9 +387,6 @@ class Inline extends \Magento\Framework\View\Element\Template
      */
     public function getImage($product, $imageId, $attributes = [])
     {
-        return $this->imageBuilder->setProduct($product)
-            ->setImageId($imageId)
-            ->setAttributes($attributes)
-            ->create();
+        return $this->imageBuilder->create($product, $imageId, $attributes);
     }
 }

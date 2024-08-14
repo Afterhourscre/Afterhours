@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\PSR1\Tests\Classes;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class ClassDeclarationUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the ClassDeclaration sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\PSR1\Sniffs\Classes\ClassDeclarationSniff
+ */
+final class ClassDeclarationUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -28,17 +33,13 @@ class ClassDeclarationUnitTest extends AbstractSniffUnitTest
     public function getErrorList($testFile='')
     {
         if ($testFile === 'ClassDeclarationUnitTest.2.inc') {
-            return array();
+            return [];
         }
 
-        if (PHP_VERSION_ID >= 50300) {
-            return array(
-                    2 => 1,
-                    3 => 2,
-                   );
-        } else {
-            return array(3 => 1);
-        }
+        return [
+            2 => 1,
+            3 => 2,
+        ];
 
     }//end getErrorList()
 
@@ -53,7 +54,7 @@ class ClassDeclarationUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

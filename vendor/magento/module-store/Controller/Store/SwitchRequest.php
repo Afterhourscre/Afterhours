@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace Magento\Store\Controller\Store;
 
 use Magento\Framework\App\Action\Context;
-use Magento\Framework\App\Action\Action;
+use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Store\Model\StoreSwitcher\HashGenerator;
@@ -21,7 +21,7 @@ use Magento\Store\Model\StoreSwitcher\HashGenerator\HashData;
 /**
  * Builds correct url to target store and performs redirect.
  */
-class SwitchRequest extends Action
+class SwitchRequest extends \Magento\Framework\App\Action\Action implements HttpGetActionInterface
 {
 
     /**

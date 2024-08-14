@@ -49,6 +49,10 @@
             form {
                 &.form-purchase-order {
                     margin-bottom: 15px;
+
+                    .input-text {
+                        width: 40%;
+                    }
                 }
             }
         }
@@ -63,10 +67,13 @@
                     }
                 }
             }
-            
+            /**
+             * @codingStandardsIgnoreStart
+             */
             #po_number {
                 margin-bottom: 20px;
             }
+            //  @codingStandardsIgnoreEnd
         }
 
         .payment-method-title {
@@ -117,6 +124,7 @@
 
             .primary {
                 .action-update {
+                    margin-bottom: 20px;
                     margin-right: 0;
                 }
             }
@@ -128,6 +136,10 @@
             .billing-address-details {
                 .lib-css(line-height, @checkout-billing-address-details__line-height);
                 .lib-css(padding, @checkout-billing-address-details__padding);
+            }
+
+            input[type="checkbox"] {
+                vertical-align: top;
             }
         }
 

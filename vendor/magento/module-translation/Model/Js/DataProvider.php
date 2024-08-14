@@ -30,8 +30,6 @@ class DataProvider implements DataProviderInterface
     protected $config;
 
     /**
-     * Files utility
-     *
      * @var \Magento\Framework\App\Utility\Files
      */
     protected $filesUtility;
@@ -103,7 +101,6 @@ class DataProvider implements DataProviderInterface
 
         $dictionary = [];
         foreach ($files as $filePath) {
-            /** @var \Magento\Framework\Filesystem\File\Read $read */
             $read = $this->fileReadFactory->create($filePath[0], \Magento\Framework\Filesystem\DriverPool::FILE);
             $content = $read->readAll();
             foreach ($this->getPhrases($content) as $phrase) {
@@ -120,6 +117,8 @@ class DataProvider implements DataProviderInterface
                 }
             }
         }
+
+        ksort($dictionary);
 
         return $dictionary;
     }
@@ -141,7 +140,7 @@ class DataProvider implements DataProviderInterface
             if ($result) {
                 if (isset($matches[2])) {
                     foreach ($matches[2] as $match) {
-                        $phrases[] = str_replace(["\'", '\"'], ["'", '"'], $match);
+                        $phrases[] = $match !== null ? str_replace(["\'", '\"'], ["'", '"'], $match) : '';
                     }
                 }
             }

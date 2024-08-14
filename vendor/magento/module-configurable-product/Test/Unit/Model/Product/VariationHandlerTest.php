@@ -3,17 +3,31 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\ConfigurableProduct\Test\Unit\Model\Product;
 
+use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Type;
+use Magento\Catalog\Model\ProductFactory;
+use Magento\CatalogInventory\Api\StockConfigurationInterface;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\ConfigurableProduct\Model\Product\VariationHandler;
+use Magento\Eav\Model\Entity;
+use Magento\Eav\Model\Entity\Attribute;
+use Magento\Eav\Model\Entity\Attribute\Frontend\FrontendInterface;
+use Magento\Eav\Model\Entity\Attribute\Set;
+use Magento\Eav\Model\Entity\Attribute\SetFactory;
+use Magento\Eav\Model\EntityFactory;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @SuppressWarnings(PHPMD.LongVariable)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class VariationHandlerTest extends \PHPUnit\Framework\TestCase
+class VariationHandlerTest extends TestCase
 {
     /**
      * @var VariationHandler
@@ -21,61 +35,64 @@ class VariationHandlerTest extends \PHPUnit\Framework\TestCase
     protected $model;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject|\Magento\Eav\Model\Entity\Attribute\SetFactory
+     * @var MockObject|SetFactory
      */
     protected $attributeSetFactory;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject|\Magento\Eav\Model\EntityFactory
+     * @var MockObject|EntityFactory
      */
     protected $entityFactoryMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject|\Magento\Catalog\Model\ProductFactory
+     * @var MockObject|ProductFactory
      */
     protected $productFactoryMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject|\Magento\CatalogInventory\Api\StockConfigurationInterface
+     * @var MockObject|StockConfigurationInterface
      */
     protected $stockConfiguration;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject|\Magento\ConfigurableProduct\Model\Product\Type\Configurable
+     * @var MockObject|Configurable
      */
     protected $configurableProduct;
 
     /**
-     * @var \Magento\Framework\TestFramework\Unit\Helper\ObjectManager
+     * @var ObjectManager
      */
     protected $objectHelper;
 
     /**
-     * @var \Magento\Catalog\Model\Product|\PHPUnit_Framework_MockObject_MockObject
+     * @var Product|MockObject
      */
     private $product;
 
     /**
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->objectHelper = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
-        $this->productFactoryMock = $this->createPartialMock(\Magento\Catalog\Model\ProductFactory::class, ['create']);
-        $this->entityFactoryMock = $this->createPartialMock(\Magento\Eav\Model\EntityFactory::class, ['create']);
+        $this->objectHelper = new ObjectManager($this);
+        $this->productFactoryMock = $this->createPartialMock(ProductFactory::class, ['create']);
+        $this->entityFactoryMock = $this->createPartialMock(EntityFactory::class, ['create']);
         $this->attributeSetFactory = $this->createPartialMock(
-            \Magento\Eav\Model\Entity\Attribute\SetFactory::class,
+            SetFactory::class,
             ['create']
         );
-        $this->stockConfiguration = $this->createMock(\Magento\CatalogInventory\Api\StockConfigurationInterface::class);
+        $this->stockConfiguration = $this->getMockForAbstractClass(StockConfigurationInterface::class);
         $this->configurableProduct = $this->createMock(
-            \Magento\ConfigurableProduct\Model\Product\Type\Configurable::class
+            Configurable::class
         );
 
-        $this->product = $this->createPartialMock(\Magento\Catalog\Model\Product::class, ['getMediaGallery']);
+        $this->product = $this->getMockBuilder(Product::class)
+            ->addMethods(['getMediaGallery'])
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $this->model = $this->objectHelper->getObject(
-            \Magento\ConfigurableProduct\Model\Product\VariationHandler::class,
+            VariationHandler::class,
             [
                 'productFactory' => $this->productFactoryMock,
                 'entityFactory' => $this->entityFactoryMock,
@@ -88,21 +105,21 @@ class VariationHandlerTest extends \PHPUnit\Framework\TestCase
 
     public function testPrepareAttributeSet()
     {
-
-        $productMock = $this->getMockBuilder(\Magento\Catalog\Model\Product::class)
-            ->setMethods(['getNewVariationsAttributeSetId'])
+        $productMock = $this->getMockBuilder(Product::class)
+            ->addMethods(['getNewVariationsAttributeSetId'])
             ->disableOriginalConstructor()
             ->getMock();
-        $attributeMock = $this->getMockBuilder(\Magento\Eav\Model\Entity\Attribute::class)
-            ->setMethods(['isInSet', 'setAttributeSetId', 'setAttributeGroupId', 'save'])
+        $attributeMock = $this->getMockBuilder(Attribute::class)
+            ->addMethods(['setAttributeGroupId'])
+            ->onlyMethods(['isInSet', 'setAttributeSetId', 'save'])
             ->disableOriginalConstructor()
             ->getMock();
-        $attributeSetMock = $this->getMockBuilder(\Magento\Eav\Model\Entity\Attribute\Set::class)
-            ->setMethods(['load', 'addSetInfo', 'getDefaultGroupId'])
+        $attributeSetMock = $this->getMockBuilder(Set::class)
+            ->onlyMethods(['load', 'addSetInfo', 'getDefaultGroupId'])
             ->disableOriginalConstructor()
             ->getMock();
-        $eavEntityMock = $this->getMockBuilder(\Magento\Eav\Model\Entity::class)
-            ->setMethods(['setType', 'getTypeId'])
+        $eavEntityMock = $this->getMockBuilder(Entity::class)
+            ->onlyMethods(['setType', 'getTypeId'])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -148,10 +165,9 @@ class VariationHandlerTest extends \PHPUnit\Framework\TestCase
                 'name' => 'config-red',
                 'configurable_attribute' => '{"new_attr":"6"}',
                 'sku' => 'config-red',
-                'quantity_and_stock_status' =>
-                    [
-                        'qty' => '',
-                    ],
+                'quantity_and_stock_status' => [
+                    'qty' => '',
+                ],
             ]
         ];
 
@@ -168,11 +184,10 @@ class VariationHandlerTest extends \PHPUnit\Framework\TestCase
             'is_decimal_divided' => 0
         ];
 
-        $parentProductMock = $this->getMockBuilder(\Magento\Catalog\Model\Product::class)
-            ->setMethods(
+        $parentProductMock = $this->getMockBuilder(Product::class)
+            ->addMethods(['getNewVariationsAttributeSetId'])
+            ->onlyMethods(
                 [
-                    '__wakeup',
-                    'getNewVariationsAttributeSetId',
                     'getStockData',
                     'getQuantityAndStockStatus',
                     'getWebsiteIds'
@@ -180,10 +195,10 @@ class VariationHandlerTest extends \PHPUnit\Framework\TestCase
             )
             ->disableOriginalConstructor()
             ->getMock();
-        $newSimpleProductMock = $this->getMockBuilder(\Magento\Catalog\Model\Product::class)
-            ->setMethods(
+        $newSimpleProductMock = $this->getMockBuilder(Product::class)
+            ->addMethods(['setWebsiteIds'])
+            ->onlyMethods(
                 [
-                    '__wakeup',
                     'save',
                     'getId',
                     'setStoreId',
@@ -192,7 +207,6 @@ class VariationHandlerTest extends \PHPUnit\Framework\TestCase
                     'getTypeInstance',
                     'getStoreId',
                     'addData',
-                    'setWebsiteIds',
                     'setStatus',
                     'setVisibility'
                 ]
@@ -200,17 +214,18 @@ class VariationHandlerTest extends \PHPUnit\Framework\TestCase
             ->disableOriginalConstructor()
             ->getMock();
         $productTypeMock = $this->getMockBuilder(Type::class)
-            ->setMethods(['getSetAttributes'])
+            ->addMethods(['getSetAttributes'])
             ->disableOriginalConstructor()
             ->getMock();
-        $editableAttributeMock = $this->getMockBuilder(\Magento\Eav\Model\Entity\Attribute::class)
-            ->setMethods(['getIsUnique', 'getAttributeCode', 'getFrontend', 'getIsVisible'])
+        $editableAttributeMock = $this->getMockBuilder(Attribute::class)
+            ->addMethods(['getIsVisible'])
+            ->onlyMethods(['getIsUnique', 'getAttributeCode', 'getFrontend'])
             ->disableOriginalConstructor()
             ->getMock();
-        $frontendAttributeMock = $this->getMockBuilder(\Magento\Eav\Model\Entity\Attribute\Frontend::class)
-            ->setMethods(['getInputType'])
+        $frontendAttributeMock = $this->getMockBuilder(FrontendInterface::class)
+            ->addMethods(['getInputType'])
             ->disableOriginalConstructor()
-            ->getMock();
+            ->getMockForAbstractClass();
 
         $parentProductMock->expects($this->once())
             ->method('getNewVariationsAttributeSetId')
@@ -249,7 +264,7 @@ class VariationHandlerTest extends \PHPUnit\Framework\TestCase
     /**
      * @return array
      */
-    public function dataProviderTestGenerateSimpleProducts()
+    public static function dataProviderTestGenerateSimpleProducts()
     {
         return [
             [
@@ -315,7 +330,7 @@ class VariationHandlerTest extends \PHPUnit\Framework\TestCase
     /**
      * @return array
      */
-    public function productDataProviderForProcessMediaGalleryForFillingGallery()
+    public static function productDataProviderForProcessMediaGalleryForFillingGallery()
     {
         return [
             'empty array' => [

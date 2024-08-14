@@ -13,7 +13,7 @@ use Magento\CatalogInventory\Model\StockRegistry;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
 
 /**
- * ViewModel for Wishlist Cart Block.
+ * ViewModel for Wishlist Cart Block
  */
 class AllowedQuantity implements ArgumentInterface
 {
@@ -36,7 +36,7 @@ class AllowedQuantity implements ArgumentInterface
     }
 
     /**
-     * Set product configuration item.
+     * Set product configuration item
      *
      * @param ItemInterface $item
      * @return self
@@ -44,12 +44,11 @@ class AllowedQuantity implements ArgumentInterface
     public function setItem(ItemInterface $item): self
     {
         $this->item = $item;
-
         return $this;
     }
 
     /**
-     * Get product configuration item.
+     * Get product configuration item
      *
      * @return ItemInterface
      */

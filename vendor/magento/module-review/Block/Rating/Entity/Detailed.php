@@ -7,8 +7,6 @@ namespace Magento\Review\Block\Rating\Entity;
 
 /**
  * Entity rating block
- *
- * @author      Magento Core Team <core@magentocommerce.com>
  */
 class Detailed extends \Magento\Framework\View\Element\Template
 {
@@ -37,6 +35,8 @@ class Detailed extends \Magento\Framework\View\Element\Template
     }
 
     /**
+     * Returns block html
+     *
      * @return string
      */
     protected function _toHtml()
@@ -49,7 +49,7 @@ class Detailed extends \Magento\Framework\View\Element\Template
         $reviewsCount = $this->_ratingFactory->create()->getTotalReviews($entityId, true);
         if ($reviewsCount == 0) {
             #return __('Be the first to review this product');
-            $this->setTemplate('empty.phtml');
+            $this->setTemplate('Magento_Review::empty.phtml');
             return parent::_toHtml();
         }
 

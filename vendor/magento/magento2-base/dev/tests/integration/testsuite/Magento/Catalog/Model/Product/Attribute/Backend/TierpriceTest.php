@@ -3,6 +3,8 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Catalog\Model\Product\Attribute\Backend;
 
 use Magento\Catalog\Api\Data\ProductInterface;
@@ -35,7 +37,7 @@ class TierpriceTest extends \PHPUnit\Framework\TestCase
      */
     protected $_model;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->_model = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->create(
             \Magento\Catalog\Model\Product\Attribute\Backend\Tierprice::class
@@ -76,10 +78,11 @@ class TierpriceTest extends \PHPUnit\Framework\TestCase
      * Test that duplicated tier price values issues exception during validation.
      *
      * @dataProvider validateDuplicateDataProvider
-     * @expectedException \Magento\Framework\Exception\LocalizedException
      */
     public function testValidateDuplicate(array $tierPricesData)
     {
+        $this->expectException(\Magento\Framework\Exception\LocalizedException::class);
+
         $product = new \Magento\Framework\DataObject();
         $product->setTierPrice($tierPricesData);
 
@@ -110,10 +113,11 @@ class TierpriceTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @expectedException \Magento\Framework\Exception\LocalizedException
      */
     public function testValidateDuplicateWebsite()
     {
+        $this->expectException(\Magento\Framework\Exception\LocalizedException::class);
+
         $product = new \Magento\Framework\DataObject();
         $product->setTierPrice(
             [
@@ -127,10 +131,11 @@ class TierpriceTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @expectedException \Magento\Framework\Exception\LocalizedException
      */
     public function testValidatePercentage()
     {
+        $this->expectException(\Magento\Framework\Exception\LocalizedException::class);
+
         $product = new \Magento\Framework\DataObject();
         $product->setTierPrice(
             [
@@ -153,7 +158,7 @@ class TierpriceTest extends \PHPUnit\Framework\TestCase
         ];
 
         $newData = $this->_model->preparePriceData($data, \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE, 1);
-        $this->assertEquals(4, count($newData));
+        $this->assertCount(4, $newData);
         $this->assertArrayHasKey('1-2', $newData);
         $this->assertArrayHasKey('1-5', $newData);
         $this->assertArrayHasKey('1-5.3', $newData);
@@ -173,19 +178,19 @@ class TierpriceTest extends \PHPUnit\Framework\TestCase
         $this->_model->afterLoad($product);
         $price = $product->getTierPrice();
         $this->assertNotEmpty($price);
-        $this->assertEquals(5, count($price));
+        $this->assertCount(5, $price);
     }
 
     /**
      * @dataProvider saveExistingProductDataProvider
      * @param array $tierPricesData
-     * @param $tierPriceCount
+     * @param int $tierPriceCount
      * @throws \Magento\Framework\Exception\CouldNotSaveException
      * @throws \Magento\Framework\Exception\InputException
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      * @throws \Magento\Framework\Exception\StateException
      */
-    public function testSaveExistingProduct(array $tierPricesData, $tierPriceCount)
+    public function testSaveExistingProduct(array $tierPricesData, int $tierPriceCount): void
     {
         /** @var $product \Magento\Catalog\Model\Product */
         $product = $this->productRepository->get('simple', true);
@@ -279,13 +284,13 @@ class TierpriceTest extends \PHPUnit\Framework\TestCase
     /**
      * @dataProvider saveNewProductDataProvider
      * @param array $tierPricesData
-     * @param $tierPriceCount
+     * @param int $tierPriceCount
      * @throws \Magento\Framework\Exception\CouldNotSaveException
      * @throws \Magento\Framework\Exception\InputException
      * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Magento\Framework\Exception\StateException
      */
-    public function testSaveNewProduct(array $tierPricesData, $tierPriceCount)
+    public function testSaveNewProduct(array $tierPricesData, int $tierPriceCount): void
     {
         /** @var $product \Magento\Catalog\Model\Product */
         $product = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()

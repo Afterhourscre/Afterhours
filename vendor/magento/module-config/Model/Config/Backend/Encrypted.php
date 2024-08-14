@@ -7,7 +7,7 @@
 namespace Magento\Config\Model\Config\Backend;
 
 /**
- * Encrypted config field backend model
+ * Encrypted config field backend model.
  *
  * @api
  * @since 100.0.2

@@ -3,12 +3,15 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\CatalogRule\Model\Indexer;
 
 /**
  * Manage additional tables used while building new index to preserve
  * index tables until the process finishes.
+ *
+ * @api
  */
 interface IndexerTableSwapperInterface
 {

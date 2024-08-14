@@ -3,24 +3,26 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Cms\Test\Unit\Model\ResourceModel;
 
-use Magento\Cms\Api\Data\PageInterface;
+use Magento\Cms\Model\Page;
 use Magento\Cms\Model\ResourceModel\Page as PageResourceModel;
-use Magento\Framework\Model\ResourceModel\Db\Context;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\Store\Model\StoreManagerInterface;
-use Magento\Framework\Stdlib\DateTime;
+use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\EntityManager\EntityManager;
 use Magento\Framework\EntityManager\MetadataPool;
-use Magento\Cms\Model\Page;
-use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\Model\ResourceModel\Db\Context;
+use Magento\Framework\Stdlib\DateTime;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Store\Model\StoreManagerInterface;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
- * Class PageTest
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class PageTest extends \PHPUnit\Framework\TestCase
+class PageTest extends TestCase
 {
     /**
      * @var PageResourceModel
@@ -28,41 +30,41 @@ class PageTest extends \PHPUnit\Framework\TestCase
     protected $model;
 
     /**
-     * @var Context|\PHPUnit_Framework_MockObject_MockObject
+     * @var Context|MockObject
      */
     protected $contextMock;
 
     /**
-     * @var StoreManagerInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var StoreManagerInterface|MockObject
      */
     protected $storeManagerMock;
 
     /**
-     * @var DateTime|\PHPUnit_Framework_MockObject_MockObject
+     * @var DateTime|MockObject
      */
     protected $dateTimeMock;
 
     /**
-     * @var EntityManager|\PHPUnit_Framework_MockObject_MockObject
+     * @var EntityManager|MockObject
      */
     protected $entityManagerMock;
 
     /**
-     * @var MetadataPool|\PHPUnit_Framework_MockObject_MockObject
+     * @var MetadataPool|MockObject
      */
     protected $metadataPoolMock;
 
     /**
-     * @var Page|\PHPUnit_Framework_MockObject_MockObject
+     * @var Page|MockObject
      */
     protected $pageMock;
 
     /**
-     * @var ResourceConnection|\PHPUnit_Framework_MockObject_MockObject
+     * @var ResourceConnection|MockObject
      */
     protected $resourcesMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->contextMock = $this->getMockBuilder(Context::class)
             ->disableOriginalConstructor()
@@ -123,10 +125,13 @@ class PageTest extends \PHPUnit\Framework\TestCase
             ->willReturn('10 Feb 2016');
         $this->pageMock->expects($this->any())
             ->method('setData')
-            ->withConsecutive(
-                ['custom_theme_from', null],
-                ['custom_theme_to', '10 Feb 2016']
-            );
+            ->willReturnCallback(function ($arg1, $arg2) {
+                if ($arg1 == 'custom_theme_from' || is_null($arg2)) {
+                    return null;
+                } elseif ($arg1 == 'custom_theme_to' && $arg2 == '10 Feb 2016') {
+                    return null;
+                }
+            });
 
         $this->model->beforeSave($this->pageMock);
     }

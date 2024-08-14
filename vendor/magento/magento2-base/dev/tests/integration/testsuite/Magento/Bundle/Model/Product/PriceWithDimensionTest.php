@@ -3,11 +3,13 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Bundle\Model\Product;
 
 /**
  * @magentoDbIsolation disabled
- * @--magentoIndexerDimensionMode catalog_product_price website_and_customer_group
+ * @magentoIndexerDimensionMode catalog_product_price website_and_customer_group
  * @group indexer_dimension
  * @magentoDataFixture Magento/Bundle/_files/product_with_tier_pricing.php
  */
@@ -18,18 +20,21 @@ class PriceWithDimensionTest extends \PHPUnit\Framework\TestCase
      */
     protected $_model;
 
-    protected function setUp()
+    /**
+     * Set up
+     */
+    protected function setUp(): void
     {
         $this->_model = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->create(
             \Magento\Bundle\Model\Product\Price::class
         );
     }
 
+    /**
+     * Get tier price
+     */
     public function testGetTierPrice()
     {
-        $this->markTestSkipped(
-            'Skipped because of MAGETWO-99136'
-        );
         /** @var \Magento\Catalog\Api\ProductRepositoryInterface $productRepository */
         $productRepository = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()
             ->create(\Magento\Catalog\Api\ProductRepositoryInterface::class);

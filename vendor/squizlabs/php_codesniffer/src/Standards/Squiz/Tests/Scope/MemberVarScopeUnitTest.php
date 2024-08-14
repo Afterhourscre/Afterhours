@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Tests\Scope;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class MemberVarScopeUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the MemberVarScope sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Squiz\Sniffs\Scope\MemberVarScopeSniff
+ */
+final class MemberVarScopeUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,7 +30,16 @@ class MemberVarScopeUnitTest extends AbstractSniffUnitTest
      */
     public function getErrorList()
     {
-        return array(7 => 1);
+        return [
+            7  => 1,
+            25 => 1,
+            29 => 1,
+            33 => 1,
+            39 => 1,
+            41 => 1,
+            66 => 2,
+            67 => 1,
+        ];
 
     }//end getErrorList()
 
@@ -40,7 +54,7 @@ class MemberVarScopeUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [71 => 1];
 
     }//end getWarningList()
 

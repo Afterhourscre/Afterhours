@@ -7,7 +7,9 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ *
+ * @deprecated 3.9.0
  */
 
 namespace PHP_CodeSniffer\Standards\MySource\Sniffs\PHP;
@@ -22,11 +24,11 @@ class AjaxNullComparisonSniff implements Sniff
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(T_FUNCTION);
+        return [T_FUNCTION];
 
     }//end register()
 
@@ -47,14 +49,19 @@ class AjaxNullComparisonSniff implements Sniff
         // Make sure it is an API function. We know this by the doc comment.
         $commentEnd   = $phpcsFile->findPrevious(T_DOC_COMMENT_CLOSE_TAG, $stackPtr);
         $commentStart = $phpcsFile->findPrevious(T_DOC_COMMENT_OPEN_TAG, ($commentEnd - 1));
-        $comment      = $phpcsFile->getTokensAsString($commentStart, ($commentEnd - $commentStart));
+        // If function doesn't contain any doc comments - skip it.
+        if ($commentEnd === false || $commentStart === false) {
+            return;
+        }
+
+        $comment = $phpcsFile->getTokensAsString($commentStart, ($commentEnd - $commentStart));
         if (strpos($comment, '* @api') === false) {
             return;
         }
 
         // Find all the vars passed in as we are only interested in comparisons
         // to NULL for these specific variables.
-        $foundVars = array();
+        $foundVars = [];
         $open      = $tokens[$stackPtr]['parenthesis_opener'];
         $close     = $tokens[$stackPtr]['parenthesis_closer'];
         for ($i = ($open + 1); $i < $close; $i++) {

@@ -3,12 +3,17 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
+declare(strict_types=1);
+
 namespace Magento\Catalog\Model\Indexer\Category\Product\Action;
 
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Model\Config;
 use Magento\Catalog\Model\Indexer\Category\Product\AbstractAction;
 use Magento\Catalog\Model\ResourceModel\Indexer\ActiveTableSwitcher;
+use Magento\Catalog\Model\Indexer\Category\Product;
+use Magento\Framework\App\DeploymentConfig;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\DB\Query\Generator as QueryGenerator;
@@ -61,6 +66,18 @@ class Full extends AbstractAction
     private $processManager;
 
     /**
+     * @var DeploymentConfig|null
+     */
+    private $deploymentConfig;
+
+    /**
+     * Deployment config path
+     *
+     * @var string
+     */
+    private const DEPLOYMENT_CONFIG_INDEXER_BATCHES = 'indexer/batch_size/';
+
+    /**
      * @param ResourceConnection $resource
      * @param StoreManagerInterface $storeManager
      * @param Config $config
@@ -70,7 +87,8 @@ class Full extends AbstractAction
      * @param MetadataPool|null $metadataPool
      * @param int|null $batchRowsCount
      * @param ActiveTableSwitcher|null $activeTableSwitcher
-     * @param ProcessManager $processManager
+     * @param ProcessManager|null $processManager
+     * @param DeploymentConfig|null $deploymentConfig
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
@@ -83,7 +101,8 @@ class Full extends AbstractAction
         MetadataPool $metadataPool = null,
         $batchRowsCount = null,
         ActiveTableSwitcher $activeTableSwitcher = null,
-        ProcessManager $processManager = null
+        ProcessManager $processManager = null,
+        ?DeploymentConfig $deploymentConfig = null
     ) {
         parent::__construct(
             $resource,
@@ -104,6 +123,7 @@ class Full extends AbstractAction
         $this->batchRowsCount = $batchRowsCount;
         $this->activeTableSwitcher = $activeTableSwitcher ?: $objectManager->get(ActiveTableSwitcher::class);
         $this->processManager = $processManager ?: $objectManager->get(ProcessManager::class);
+        $this->deploymentConfig = $deploymentConfig ?: ObjectManager::getInstance()->get(DeploymentConfig::class);
     }
 
     /**
@@ -111,7 +131,7 @@ class Full extends AbstractAction
      *
      * @return void
      */
-    private function createTables()
+    private function createTables(): void
     {
         foreach ($this->storeManager->getStores() as $store) {
             $this->tableMaintainer->createTablesForStore((int)$store->getId());
@@ -123,7 +143,7 @@ class Full extends AbstractAction
      *
      * @return void
      */
-    private function clearReplicaTables()
+    private function clearReplicaTables(): void
     {
         foreach ($this->storeManager->getStores() as $store) {
             $this->connection->truncateTable($this->tableMaintainer->getMainReplicaTable((int)$store->getId()));
@@ -135,7 +155,7 @@ class Full extends AbstractAction
      *
      * @return void
      */
-    private function switchTables()
+    private function switchTables(): void
     {
         $tablesToSwitch = [];
         foreach ($this->storeManager->getStores() as $store) {
@@ -145,9 +165,11 @@ class Full extends AbstractAction
     }
 
     /**
-     * @inheritdoc
+     * Refresh entities index
+     *
+     * @return $this
      */
-    public function execute()
+    public function execute(): Full
     {
         $this->createTables();
         $this->clearReplicaTables();
@@ -162,14 +184,14 @@ class Full extends AbstractAction
      *
      * @return void
      */
-    protected function reindex()
+    protected function reindex(): void
     {
         $userFunctions = [];
 
         foreach ($this->storeManager->getStores() as $store) {
             if ($this->getPathFromCategoryId($store->getRootCategoryId())) {
                 $userFunctions[$store->getId()] = function () use ($store) {
-                    return $this->reindexStore($store);
+                    $this->reindexStore($store);
                 };
             }
         }
@@ -182,7 +204,7 @@ class Full extends AbstractAction
      *
      * @param Store $store
      */
-    private function reindexStore($store)
+    private function reindexStore($store): void
     {
         $this->reindexRootCategory($store);
         $this->reindexAnchorCategories($store);
@@ -195,7 +217,7 @@ class Full extends AbstractAction
      * @param Store $store
      * @return void
      */
-    private function publishData($store)
+    private function publishData($store): void
     {
         $select = $this->connection->select()->from($this->tableMaintainer->getMainTmpTable((int)$store->getId()));
         $columns = array_keys(
@@ -216,7 +238,7 @@ class Full extends AbstractAction
     /**
      * @inheritdoc
      */
-    protected function reindexRootCategory(Store $store)
+    protected function reindexRootCategory(Store $store): void
     {
         if ($this->isIndexRootCategoryNeeded()) {
             $this->reindexCategoriesBySelect($this->getAllProducts($store), 'cp.entity_id IN (?)', $store);
@@ -229,7 +251,7 @@ class Full extends AbstractAction
      * @param Store $store
      * @return void
      */
-    protected function reindexAnchorCategories(Store $store)
+    protected function reindexAnchorCategories(Store $store): void
     {
         $this->reindexCategoriesBySelect($this->getAnchorCategoriesSelect($store), 'ccp.product_id IN (?)', $store);
     }
@@ -240,7 +262,7 @@ class Full extends AbstractAction
      * @param Store $store
      * @return void
      */
-    protected function reindexNonAnchorCategories(Store $store)
+    protected function reindexNonAnchorCategories(Store $store): void
     {
         $this->reindexCategoriesBySelect($this->getNonAnchorCategoriesSelect($store), 'ccp.product_id IN (?)', $store);
     }
@@ -253,7 +275,7 @@ class Full extends AbstractAction
      * @param Store $store
      * @return void
      */
-    private function reindexCategoriesBySelect(Select $basicSelect, $whereCondition, $store)
+    private function reindexCategoriesBySelect(Select $basicSelect, $whereCondition, $store): void
     {
         $this->tableMaintainer->createMainTmpTable((int)$store->getId());
 
@@ -261,6 +283,11 @@ class Full extends AbstractAction
         $columns = array_keys(
             $this->connection->describeTable($this->tableMaintainer->getMainTmpTable((int)$store->getId()))
         );
+
+        $this->batchRowsCount = $this->deploymentConfig->get(
+            self::DEPLOYMENT_CONFIG_INDEXER_BATCHES . Product::INDEXER_ID
+        ) ?? $this->batchRowsCount;
+
         $this->batchSizeManagement->ensureBatchSize($this->connection, $this->batchRowsCount);
 
         $select = $this->connection->select();
@@ -277,7 +304,7 @@ class Full extends AbstractAction
             $this->connection->delete($this->tableMaintainer->getMainTmpTable((int)$store->getId()));
             $entityIds = $this->connection->fetchCol($query);
             $resultSelect = clone $basicSelect;
-            $resultSelect->where($whereCondition, $entityIds);
+            $resultSelect->where($whereCondition, $entityIds, \Zend_Db::INT_TYPE);
             $this->connection->query(
                 $this->connection->insertFromSelect(
                     $resultSelect,

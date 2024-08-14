@@ -6,20 +6,20 @@
  */
 namespace Magento\Customer\Controller\Address;
 
-use Magento\Framework\Exception\NotFoundException;
+use Magento\Framework\App\Action\HttpGetActionInterface;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 
-class Delete extends \Magento\Customer\Controller\Address
+/**
+ * Delete customer address controller action.
+ */
+class Delete extends \Magento\Customer\Controller\Address implements HttpPostActionInterface, HttpGetActionInterface
 {
     /**
+     * @inheritdoc
      * @return \Magento\Framework\Controller\Result\Redirect
-     * @throws NotFoundException
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new NotFoundException(__('Page not found'));
-        }
-
         $addressId = $this->getRequest()->getParam('id', false);
 
         if ($addressId && $this->_formKeyValidator->validate($this->getRequest())) {
@@ -32,7 +32,7 @@ class Delete extends \Magento\Customer\Controller\Address
                     $this->messageManager->addErrorMessage(__('We can\'t delete the address right now.'));
                 }
             } catch (\Exception $other) {
-                $this->messageManager->addExceptionMessage($other, __('We can\'t delete the address right now.'));
+                $this->messageManager->addException($other, __('We can\'t delete the address right now.'));
             }
         }
         return $this->resultRedirectFactory->create()->setPath('*/*/index');

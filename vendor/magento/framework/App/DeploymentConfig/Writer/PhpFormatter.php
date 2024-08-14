@@ -12,16 +12,17 @@ namespace Magento\Framework\App\DeploymentConfig\Writer;
 class PhpFormatter implements FormatterInterface
 {
     /**
-     * 4 space indentation for array formatting
+     * 4 space indentation for array formatting.
      */
     const INDENT = '    ';
 
     /**
      * Format deployment configuration.
+     *
      * If $comments is present, each item will be added
      * as comment to the corresponding section
      *
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function format($data, array $comments = [])
     {
@@ -71,16 +72,20 @@ class PhpFormatter implements FormatterInterface
     }
 
     /**
+     * Format generated config files using the short array syntax.
+     *
      * If variable to export is an array, format with the php >= 5.4 short array syntax. Otherwise use
      * default var_export functionality.
      *
      * @param mixed $var
-     * @param int $depth
+     * @param integer $depth
      * @return string
      */
-    private function varExportShort($var, int $depth = 0): string
+    private function varExportShort($var, int $depth = 0)
     {
-        if (!is_array($var)) {
+        if (null === $var) {
+            return 'null';
+        } elseif (!is_array($var)) {
             return var_export($var, true);
         }
 

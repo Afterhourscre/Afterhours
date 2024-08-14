@@ -47,6 +47,8 @@ class ReadHandler implements ExtensionInterface
     }
 
     /**
+     * Execute read handler for catalog product gallery
+     *
      * @param Product $entity
      * @param array $arguments
      * @return object
@@ -62,13 +64,15 @@ class ReadHandler implements ExtensionInterface
 
         $this->addMediaDataToProduct(
             $entity,
-            $mediaEntries
+            $this->sortMediaEntriesByPosition($mediaEntries)
         );
-        
+
         return $entity;
     }
 
     /**
+     * Add media data to product
+     *
      * @param Product $product
      * @param array $mediaEntries
      * @return void
@@ -86,6 +90,8 @@ class ReadHandler implements ExtensionInterface
     }
 
     /**
+     * Get attribute
+     *
      * @return \Magento\Catalog\Api\Data\ProductAttributeInterface
      * @since 101.0.0
      */
@@ -99,8 +105,10 @@ class ReadHandler implements ExtensionInterface
     }
 
     /**
+     * Find default value
+     *
      * @param string $key
-     * @param string[] &$image
+     * @param string[] $image
      * @return string
      * @deprecated 101.0.1
      * @since 101.0.0
@@ -112,5 +120,31 @@ class ReadHandler implements ExtensionInterface
         }
 
         return '';
+    }
+
+    /**
+     * Sort media entries by position
+     *
+     * @param array $mediaEntries
+     * @return array
+     */
+    private function sortMediaEntriesByPosition(array $mediaEntries): array
+    {
+        $mediaEntriesWithNullPositions = [];
+        foreach ($mediaEntries as $index => $mediaEntry) {
+            if ($mediaEntry['position'] === null) {
+                $mediaEntriesWithNullPositions[] = $mediaEntry;
+                unset($mediaEntries[$index]);
+            }
+        }
+        if (!empty($mediaEntries)) {
+            usort(
+                $mediaEntries,
+                function ($entryA, $entryB) {
+                    return ($entryA['position'] < $entryB['position']) ? -1 : 1;
+                }
+            );
+        }
+        return array_merge($mediaEntries, $mediaEntriesWithNullPositions);
     }
 }

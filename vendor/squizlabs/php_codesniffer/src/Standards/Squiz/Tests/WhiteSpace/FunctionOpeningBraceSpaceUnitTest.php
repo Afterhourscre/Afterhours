@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Tests\WhiteSpace;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class FunctionOpeningBraceSpaceUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the FunctionOpeningBraceSpace sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\FunctionOpeningBraceSpaceSniff
+ */
+final class FunctionOpeningBraceSpaceUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,26 +30,26 @@ class FunctionOpeningBraceSpaceUnitTest extends AbstractSniffUnitTest
      *
      * @return array<int, int>
      */
-    public function getErrorList($testFile='FunctionOpeningBraceSpaceUnitTest.inc')
+    public function getErrorList($testFile='')
     {
         switch ($testFile) {
         case 'FunctionOpeningBraceSpaceUnitTest.inc':
-            return array(
-                    10 => 1,
-                    25 => 1,
-                   );
-            break;
+            return [
+                10 => 1,
+                25 => 1,
+                49 => 1,
+            ];
+
         case 'FunctionOpeningBraceSpaceUnitTest.js':
-            return array(
-                    11 => 1,
-                    31 => 1,
-                    38 => 1,
-                    88 => 1,
-                   );
-            break;
+            return [
+                11 => 1,
+                31 => 1,
+                38 => 1,
+                88 => 1,
+            ];
+
         default:
-            return array();
-            break;
+            return [];
         }//end switch
 
     }//end getErrorList()
@@ -60,7 +65,7 @@ class FunctionOpeningBraceSpaceUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

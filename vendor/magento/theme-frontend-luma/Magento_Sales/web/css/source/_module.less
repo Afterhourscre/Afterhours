@@ -66,6 +66,10 @@
             &:not(:last-child) {
                 margin-bottom: @indent__l;
             }
+
+            &.order-items-shipment {
+                overflow: visible;
+            }
         }
 
         .table-order-items {
@@ -206,6 +210,7 @@
 
         .items-qty {
             &:extend(.abs-reset-list all);
+            
             .item {
                 white-space: nowrap;
             }
@@ -307,7 +312,6 @@
             margin-right: 30px;
 
             &.print {
-                &:extend(.abs-action-print all);
                 display: none;
                 margin: 0;
             }
@@ -343,7 +347,14 @@
         }
 
         .product-item-name {
-            display: inline-block;
+            float: left;
+            width: calc(~'100% - 20px');
+        }
+
+        .product-item::after {
+            clear: both;
+            content: '';
+            display: table;
         }
 
         .product-item {
@@ -352,7 +363,8 @@
             }
 
             .field.item {
-                display: inline-block;
+                float: left;
+                width: 20px;
             }
         }
     }
@@ -392,6 +404,17 @@
         &.orders-recent {
             &:extend(.abs-account-table-margin-mobile all);
             &:extend(.abs-no-border-top all);
+            .table-order-items {
+                &.table {
+                    tbody {
+                        > tr {
+                            > td.col {
+                                padding-left: 0;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -471,6 +494,7 @@
 
         .data.table .col.options {
             padding: 0 10px 15px;
+
             &:before {
                 display: none;
             }
@@ -568,6 +592,7 @@
 
     .order-actions-toolbar {
         .action.print {
+            &:extend(.abs-action-print all);
             display: block;
             float: right;
         }
@@ -583,7 +608,7 @@
                 &:extend(.abs-add-box-sizing-desktop all);
                 clear: none;
                 float: left;
-                width: 100%/4;
+                width: (100%/4);
             }
         }
     }
@@ -688,7 +713,7 @@
     }
 }
 
-.media-width(@extremum, @break) when (@extremum = 'min') and (@break = @screen__l) { 
+.media-width(@extremum, @break) when (@extremum = 'min') and (@break = @screen__l) {
     .order-links {
         .item {
             margin: 0 @tab-control__margin-right 0 0;

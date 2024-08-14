@@ -3,18 +3,15 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-
 namespace Magento\Deploy\Service;
 
 use Magento\Deploy\Package\Package;
 use Magento\Deploy\Package\PackageFile;
-use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\State as AppState;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Locale\ResolverInterface as LocaleResolver;
 use Magento\Framework\View\Asset\ContentProcessorException;
 use Magento\Deploy\Console\InputValidator;
-use Magento\Framework\View\Design\Theme\ListInterface;
-use Magento\Framework\View\DesignInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -32,7 +29,7 @@ class DeployPackage
     private $appState;
 
     /**
-     * Locale resolver inetrface
+     * Locale resolver interface
      *
      * Check if given locale code is a valid one
      *
@@ -95,7 +92,6 @@ class DeployPackage
      * @param array $options
      * @param bool $skipLogging
      * @return bool true on success
-     * @throws \Exception
      */
     public function deploy(Package $package, array $options, $skipLogging = false)
     {
@@ -139,9 +135,11 @@ class DeployPackage
             } catch (ContentProcessorException $exception) {
                 $errorMessage = __('Compilation from source: ')
                     . $file->getSourcePath()
-                    . PHP_EOL . $exception->getMessage();
+                    . PHP_EOL . $exception->getMessage() . PHP_EOL;
                 $this->errorsCount++;
                 $this->logger->critical($errorMessage);
+                $package->deleteFile($file->getFileId());
+                throw new LocalizedException($errorMessage);
             } catch (\Exception $exception) {
                 $this->logger->critical(
                     'Compilation from source ' . $file->getSourcePath() . ' failed' . PHP_EOL . (string)$exception
@@ -228,6 +226,7 @@ class DeployPackage
     private function checkFileSkip($filePath, array $options)
     {
         if ($filePath !== '.') {
+            $filePath = (string)$filePath;
             // phpcs:ignore Magento2.Functions.DiscouragedFunction
             $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
             // phpcs:ignore Magento2.Functions.DiscouragedFunction
@@ -253,23 +252,6 @@ class DeployPackage
      */
     private function register(Package $package, PackageFile $file = null, $skipLogging = false)
     {
-        $logMessage = '.';
-        if ($file) {
-            $logMessage = "Processing file '{$file->getSourcePath()}'";
-            if ($file->getArea()) {
-                $logMessage .= "  for area '{$file->getArea()}'";
-            }
-            if ($file->getTheme()) {
-                $logMessage .= ", theme '{$file->getTheme()}'";
-            }
-            if ($file->getLocale()) {
-                $logMessage .= ", locale '{$file->getLocale()}'";
-            }
-            if ($file->getModule()) {
-                $logMessage .= "module '{$file->getModule()}'";
-            }
-        }
-
         $info = [
             'count' => $this->count,
             'last' => $file ? $file->getSourcePath() : ''
@@ -277,6 +259,23 @@ class DeployPackage
         $this->deployStaticFile->writeTmpFile('info.json', $package->getPath(), json_encode($info));
 
         if (!$skipLogging) {
+            $logMessage = '.';
+            if ($file) {
+                $logMessage = "Processing file '{$file->getSourcePath()}'";
+                if ($file->getArea()) {
+                    $logMessage .= "  for area '{$file->getArea()}'";
+                }
+                if ($file->getTheme()) {
+                    $logMessage .= ", theme '{$file->getTheme()}'";
+                }
+                if ($file->getLocale()) {
+                    $logMessage .= ", locale '{$file->getLocale()}'";
+                }
+                if ($file->getModule()) {
+                    $logMessage .= "module '{$file->getModule()}'";
+                }
+            }
+
             $this->logger->info($logMessage);
         }
     }

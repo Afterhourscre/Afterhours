@@ -7,9 +7,10 @@
 use Composer\Console\Application;
 use Magento\Composer\MagentoComposerApplication;
 use Magento\Composer\ConsoleArrayInputFactory;
+use PHPUnit\Framework\MockObject\MockObject;
 use Symfony\Component\Console\Output\BufferedOutput;
 
-class MagentoComposerApplicationTest extends PHPUnit_Framework_TestCase
+class MagentoComposerApplicationTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var MagentoComposerApplication
@@ -17,36 +18,25 @@ class MagentoComposerApplicationTest extends PHPUnit_Framework_TestCase
     protected $application;
 
     /**
-     * @var Application|\PHPUnit_Framework_MockObject_MockObject
+     * @var Application|MockObject
      */
     protected $composerApplication;
 
     /**
-     * @var ConsoleArrayInputFactory|\PHPUnit_Framework_MockObject_MockObject
+     * @var ConsoleArrayInputFactory|MockObject
      */
     protected $inputFactory;
 
     /**
-     * @var BufferedOutput|\PHPUnit_Framework_MockObject_MockObject
+     * @var BufferedOutput|MockObject
      */
     protected $consoleOutput;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->composerApplication = $this->getMock(
-            'Composer\Console\Application',
-            [
-                'resetComposer',
-                'create',
-                'run'
-            ],
-            [],
-            '',
-            false,
-            false
-        );
-        $this->inputFactory = $this->getMock('Magento\Composer\ConsoleArrayInputFactory', [], [], '', false);
-        $this->consoleOutput = $this->getMock('Symfony\Component\Console\Output\BufferedOutput', [], [], '', false);
+        $this->composerApplication = $this->createMock(\Composer\Console\Application::class);
+        $this->inputFactory = $this->createMock(\Magento\Composer\ConsoleArrayInputFactory::class);
+        $this->consoleOutput = $this->createMock(\Symfony\Component\Console\Output\BufferedOutput::class);
 
         $this->application = new MagentoComposerApplication(
             'path1',
@@ -57,13 +47,11 @@ class MagentoComposerApplicationTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    /**
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessage Command "update" failed
-     */
     function testWrongExitCode()
     {
         $this->composerApplication->expects($this->once())->method('run')->willReturn(1);
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Command "update" failed');
 
         $this->application->runComposerCommand(['command'=>'update']);
     }

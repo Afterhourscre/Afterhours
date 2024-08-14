@@ -704,7 +704,7 @@ class SetupUtil
      *
      * @return void
      */
-    private function updateItems(Quote $quote, array $items)
+    private function updateItems(Quote $quote, array $items): void
     {
         $updater = $this->objectManager->get(Updater::class);
         $productRepository = $this->objectManager->get(ProductRepositoryInterface::class);

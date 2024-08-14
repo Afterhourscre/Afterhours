@@ -15,7 +15,9 @@ use Magento\Store\Model\ScopeInterface;
  * Can be used to process totals information that will be rendered during checkout.
  * Abstract class provides sorting routing to sort total information based on configuration settings.
  *
+ * phpcs:disable Magento2.Classes.AbstractApi
  * @api
+ * @since 100.0.2
  */
 abstract class AbstractTotalsProcessor
 {

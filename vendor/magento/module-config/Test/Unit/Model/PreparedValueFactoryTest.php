@@ -3,29 +3,32 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Config\Test\Unit\Model;
 
 use Magento\Config\Model\Config\BackendFactory;
-use Magento\Config\Model\PreparedValueFactory;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Config\Model\Config\StructureFactory;
-use Magento\Framework\App\Config\Value;
 use Magento\Config\Model\Config\Structure;
 use Magento\Config\Model\Config\Structure\Element\Field;
 use Magento\Config\Model\Config\Structure\Element\Group;
+use Magento\Config\Model\Config\StructureFactory;
+use Magento\Config\Model\PreparedValueFactory;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\Config\Value;
 use Magento\Framework\App\ScopeInterface;
-use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 use Magento\Framework\App\ScopeResolver;
 use Magento\Framework\App\ScopeResolverPool;
+use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 use Magento\Store\Model\ScopeTypeNormalizer;
-use PHPUnit_Framework_MockObject_MockObject as Mock;
+use PHPUnit\Framework\MockObject\MockObject as Mock;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @inheritdoc
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
  */
-class PreparedValueFactoryTest extends \PHPUnit\Framework\TestCase
+class PreparedValueFactoryTest extends TestCase
 {
     /**
      * @var StructureFactory|Mock
@@ -85,15 +88,15 @@ class PreparedValueFactoryTest extends \PHPUnit\Framework\TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->structureFactoryMock = $this->getMockBuilder(StructureFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
         $this->valueFactoryMock = $this->getMockBuilder(BackendFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
         $this->structureMock = $this->getMockBuilder(Structure::class)
             ->disableOriginalConstructor()
@@ -103,7 +106,7 @@ class PreparedValueFactoryTest extends \PHPUnit\Framework\TestCase
             ->getMock();
         $this->valueMock = $this->getMockBuilder(Value::class)
             ->disableOriginalConstructor()
-            ->setMethods([
+            ->addMethods([
                 'setPath', 'setScope', 'setScopeId', 'setValue', 'setField',
                 'setGroupId', 'setFieldConfig', 'setScopeCode'
             ])
@@ -248,7 +251,7 @@ class PreparedValueFactoryTest extends \PHPUnit\Framework\TestCase
     /**
      * @return array
      */
-    public function createDataProvider()
+    public static function createDataProvider()
     {
         return [
             'standard flow' => [
@@ -381,12 +384,10 @@ class PreparedValueFactoryTest extends \PHPUnit\Framework\TestCase
         ];
     }
 
-    /**
-     * @expectedException \Magento\Framework\Exception\RuntimeException
-     * @expectedExceptionMessage Some exception
-     */
     public function testCreateWithException()
     {
+        $this->expectException('Magento\Framework\Exception\RuntimeException');
+        $this->expectExceptionMessage('Some exception');
         $this->structureFactoryMock->expects($this->once())
             ->method('create')
             ->willThrowException(new \Exception('Some exception'));

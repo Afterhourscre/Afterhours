@@ -3,6 +3,7 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
 namespace Magento\Customer\Model;
 
 use Magento\Customer\Api\CustomerMetadataInterface;
@@ -16,10 +17,12 @@ use Magento\Framework\Exception\AuthenticationException;
 use Magento\Framework\Exception\EmailNotConfirmedException;
 use Magento\Framework\Exception\InvalidEmailOrPasswordException;
 use Magento\Framework\Indexer\StateInterface;
+use Magento\Framework\ObjectManager\ResetAfterRequestInterface;
 use Magento\Framework\Reflection\DataObjectProcessor;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Math\Random;
+use Magento\Framework\Indexer\IndexerInterface;
 
 /**
  * Customer model
@@ -43,47 +46,47 @@ use Magento\Framework\Math\Random;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @since 100.0.2
  */
-class Customer extends \Magento\Framework\Model\AbstractModel
+class Customer extends \Magento\Framework\Model\AbstractModel implements ResetAfterRequestInterface
 {
     /**
      * Configuration paths for email templates and identities
      */
-    const XML_PATH_REGISTER_EMAIL_TEMPLATE = 'customer/create_account/email_template';
+    public const XML_PATH_REGISTER_EMAIL_TEMPLATE = 'customer/create_account/email_template';
 
-    const XML_PATH_REGISTER_EMAIL_IDENTITY = 'customer/create_account/email_identity';
+    public const XML_PATH_REGISTER_EMAIL_IDENTITY = 'customer/create_account/email_identity';
 
-    const XML_PATH_REMIND_EMAIL_TEMPLATE = 'customer/password/remind_email_template';
+    public const XML_PATH_REMIND_EMAIL_TEMPLATE = 'customer/password/remind_email_template';
 
-    const XML_PATH_FORGOT_EMAIL_TEMPLATE = 'customer/password/forgot_email_template';
+    public const XML_PATH_FORGOT_EMAIL_TEMPLATE = 'customer/password/forgot_email_template';
 
-    const XML_PATH_FORGOT_EMAIL_IDENTITY = 'customer/password/forgot_email_identity';
+    public const XML_PATH_FORGOT_EMAIL_IDENTITY = 'customer/password/forgot_email_identity';
 
-    const XML_PATH_RESET_PASSWORD_TEMPLATE = 'customer/password/reset_password_template';
+    public const XML_PATH_RESET_PASSWORD_TEMPLATE = 'customer/password/reset_password_template';
 
     /**
-     * @deprecated
-     * @see AccountConfirmation::XML_PATH_IS_CONFIRM
+     * @deprecated @see \Magento\Customer\Model\AccountConfirmation::XML_PATH_IS_CONFIRM
      */
-    const XML_PATH_IS_CONFIRM = 'customer/create_account/confirm';
+    public const XML_PATH_IS_CONFIRM = 'customer/create_account/confirm';
 
-    const XML_PATH_CONFIRM_EMAIL_TEMPLATE = 'customer/create_account/email_confirmation_template';
+    public const XML_PATH_CONFIRM_EMAIL_TEMPLATE = 'customer/create_account/email_confirmation_template';
 
-    const XML_PATH_CONFIRMED_EMAIL_TEMPLATE = 'customer/create_account/email_confirmed_template';
+    public const XML_PATH_CONFIRMED_EMAIL_TEMPLATE = 'customer/create_account/email_confirmed_template';
 
-    const XML_PATH_GENERATE_HUMAN_FRIENDLY_ID = 'customer/create_account/generate_human_friendly_id';
+    public const XML_PATH_GENERATE_HUMAN_FRIENDLY_ID = 'customer/create_account/generate_human_friendly_id';
 
-    const SUBSCRIBED_YES = 'yes';
+    public const SUBSCRIBED_YES = 'yes';
 
-    const SUBSCRIBED_NO = 'no';
+    public const SUBSCRIBED_NO = 'no';
 
-    const ENTITY = 'customer';
+    public const ENTITY = 'customer';
 
-    const CUSTOMER_GRID_INDEXER_ID = 'customer_grid';
+    public const CUSTOMER_GRID_INDEXER_ID = 'customer_grid';
 
     /**
      * Configuration path to expiration period of reset password link
      */
-    const XML_PATH_CUSTOMER_RESET_PASSWORD_LINK_EXPIRATION_PERIOD = 'customer/password/reset_link_expiration_period';
+    public const XML_PATH_CUSTOMER_RESET_PASSWORD_LINK_EXPIRATION_PERIOD =
+        'customer/password/reset_link_expiration_period';
 
     /**
      * Model event prefix
@@ -220,6 +223,18 @@ class Customer extends \Magento\Framework\Model\AbstractModel
     private $accountConfirmation;
 
     /**
+     * Caching property to store customer address data models by the address ID.
+     *
+     * @var array
+     */
+    private $storedAddress;
+
+    /**
+     * @var IndexerInterface|null
+     */
+    private $indexer;
+
+    /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\Registry $registry
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
@@ -297,6 +312,19 @@ class Customer extends \Magento\Framework\Model\AbstractModel
     }
 
     /**
+     * Micro-caching optimization
+     *
+     * @return IndexerInterface
+     */
+    private function getIndexer() : IndexerInterface
+    {
+        if ($this->indexer === null) {
+            $this->indexer = $this->indexerRegistry->get(self::CUSTOMER_GRID_INDEXER_ID);
+        }
+        return $this->indexer;
+    }
+
+    /**
      * Initialize customer model
      *
      * @return void
@@ -317,7 +345,10 @@ class Customer extends \Magento\Framework\Model\AbstractModel
         $addressesData = [];
         /** @var \Magento\Customer\Model\Address $address */
         foreach ($this->getAddresses() as $address) {
-            $addressesData[] = $address->getDataModel();
+            if (!isset($this->storedAddress[$address->getId()])) {
+                $this->storedAddress[$address->getId()] = $address->getDataModel();
+            }
+            $addressesData[] = $this->storedAddress[$address->getId()];
         }
         $customerDataObject = $this->customerDataFactory->create();
         $this->dataObjectHelper->populateWithArray(
@@ -387,9 +418,11 @@ class Customer extends \Magento\Framework\Model\AbstractModel
     public function authenticate($login, $password)
     {
         $this->loadByEmail($login);
-        if ($this->getConfirmation() && $this->isConfirmationRequired()) {
+        if ($this->getConfirmation() &&
+            $this->accountConfirmation->isConfirmationRequired($this->getWebsiteId(), $this->getId(), $this->getEmail())
+        ) {
             throw new EmailNotConfirmedException(
-                __('This account is not confirmed.')
+                __("This account isn't confirmed. Verify and try again.")
             );
         }
         if (!$this->validatePassword($password)) {
@@ -408,8 +441,9 @@ class Customer extends \Magento\Framework\Model\AbstractModel
     /**
      * Load customer by email
      *
-     * @param   string $customerEmail
-     * @return  $this
+     * @param string $customerEmail
+     * @return $this
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function loadByEmail($customerEmail)
     {
@@ -420,8 +454,9 @@ class Customer extends \Magento\Framework\Model\AbstractModel
     /**
      * Change customer password
      *
-     * @param   string $newPassword
-     * @return  $this
+     * @param string $newPassword
+     * @return $this
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function changePassword($newPassword)
     {
@@ -433,6 +468,7 @@ class Customer extends \Magento\Framework\Model\AbstractModel
      * Get full customer name
      *
      * @return string
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getName()
     {
@@ -455,8 +491,9 @@ class Customer extends \Magento\Framework\Model\AbstractModel
     /**
      * Add address to address collection
      *
-     * @param   Address $address
-     * @return  $this
+     * @param Address $address
+     * @return $this
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function addAddress(Address $address)
     {
@@ -480,6 +517,7 @@ class Customer extends \Magento\Framework\Model\AbstractModel
      *
      * @param int $addressId
      * @return Address
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getAddressItemById($addressId)
     {
@@ -500,6 +538,7 @@ class Customer extends \Magento\Framework\Model\AbstractModel
      * Customer addresses collection
      *
      * @return \Magento\Customer\Model\ResourceModel\Address\Collection
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getAddressesCollection()
     {
@@ -531,6 +570,7 @@ class Customer extends \Magento\Framework\Model\AbstractModel
      * Retrieve all customer attributes
      *
      * @return Attribute[]
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getAttributes()
     {
@@ -585,6 +625,7 @@ class Customer extends \Magento\Framework\Model\AbstractModel
      *
      * @param string $password
      * @return boolean
+     * @throws \Exception
      */
     public function validatePassword($password)
     {
@@ -759,7 +800,7 @@ class Customer extends \Magento\Framework\Model\AbstractModel
 
         if (!isset($types[$type])) {
             throw new \Magento\Framework\Exception\LocalizedException(
-                __('Please correct the transactional account email type.')
+                __('The transactional account email type is incorrect. Verify and try again.')
             );
         }
 
@@ -781,7 +822,7 @@ class Customer extends \Magento\Framework\Model\AbstractModel
      * Check if accounts confirmation is required in config
      *
      * @return bool
-     * @deprecated
+     * @deprecated 101.0.4
      * @see AccountConfirmation::isConfirmationRequired
      */
     public function isConfirmationRequired()
@@ -961,9 +1002,11 @@ class Customer extends \Magento\Framework\Model\AbstractModel
      * Retrieve attribute set id for customer.
      *
      * @return int
+     * @since 102.0.1
      */
     public function getAttributeSetId()
     {
+        // phpstan:ignore "Call to an undefined static method*"
         return parent::getAttributeSetId() ?: CustomerMetadataInterface::ATTRIBUTE_SET_ID_CUSTOMER;
     }
 
@@ -984,6 +1027,7 @@ class Customer extends \Magento\Framework\Model\AbstractModel
      * Validate customer attribute values.
      *
      * @deprecated 100.1.0
+     * @see \Magento\Customer\Model\AccountManagement::validate()
      * @return bool
      */
     public function validate()
@@ -1048,25 +1092,13 @@ class Customer extends \Magento\Framework\Model\AbstractModel
     }
 
     /**
-     * Prepare customer for delete
-     *
-     * @return $this
-     */
-    public function beforeDelete()
-    {
-        //TODO : Revisit and figure handling permissions in MAGETWO-11084 Implementation: Service Context Provider
-        return parent::beforeDelete();
-    }
-
-    /**
      * Processing object after save data
      *
      * @return $this
      */
     public function afterSave()
     {
-        $indexer = $this->indexerRegistry->get(self::CUSTOMER_GRID_INDEXER_ID);
-        if ($indexer->getState()->getStatus() == StateInterface::STATUS_VALID) {
+        if ($this->getIndexer()->getState()->getStatus() == StateInterface::STATUS_VALID) {
             $this->_getResource()->addCommitCallback([$this, 'reindex']);
         }
         return parent::afterSave();
@@ -1090,9 +1122,7 @@ class Customer extends \Magento\Framework\Model\AbstractModel
      */
     public function reindex()
     {
-        /** @var \Magento\Framework\Indexer\IndexerInterface $indexer */
-        $indexer = $this->indexerRegistry->get(self::CUSTOMER_GRID_INDEXER_ID);
-        $indexer->reindexRow($this->getId());
+        $this->getIndexer()->reindexRow($this->getId());
     }
 
     /**
@@ -1171,12 +1201,12 @@ class Customer extends \Magento\Framework\Model\AbstractModel
      * Check whether confirmation may be skipped when registering using certain email address
      *
      * @return bool
-     * @deprecated
+     * @deprecated 101.0.4
      * @see AccountConfirmation::isConfirmationRequired
      */
     protected function canSkipConfirmation()
     {
-        if (!$this->getId()) {
+        if (!$this->getId() || $this->getEmail() === null) {
             return false;
         }
 
@@ -1247,7 +1277,7 @@ class Customer extends \Magento\Framework\Model\AbstractModel
     {
         if (!is_string($passwordLinkToken) || empty($passwordLinkToken)) {
             throw new AuthenticationException(
-                __('Please enter a valid password reset token.')
+                __('A valid password reset token is missing. Enter and try again.')
             );
         }
         $this->_getResource()->changeResetPasswordLinkToken($this, $passwordLinkToken);
@@ -1258,6 +1288,8 @@ class Customer extends \Magento\Framework\Model\AbstractModel
      * Check if current reset password link token is expired
      *
      * @return boolean
+     * @deprecated
+     * @see \Magento\Customer\Model\AccountManagement::isResetPasswordLinkTokenExpired
      */
     public function isResetPasswordLinkTokenExpired()
     {
@@ -1276,12 +1308,9 @@ class Customer extends \Magento\Framework\Model\AbstractModel
             return true;
         }
 
-        $dayDifference = floor(($currentTimestamp - $tokenTimestamp) / (24 * 60 * 60));
-        if ($dayDifference >= $expirationPeriod) {
-            return true;
-        }
+        $hourDifference = floor(($currentTimestamp - $tokenTimestamp) / (60 * 60));
 
-        return false;
+        return $hourDifference >= $expirationPeriod;
     }
 
     /**
@@ -1298,6 +1327,8 @@ class Customer extends \Magento\Framework\Model\AbstractModel
     }
 
     /**
+     * Create Address from Factory
+     *
      * @return Address
      */
     protected function _createAddressInstance()
@@ -1306,6 +1337,8 @@ class Customer extends \Magento\Framework\Model\AbstractModel
     }
 
     /**
+     * Create Address Collection from Factory
+     *
      * @return \Magento\Customer\Model\ResourceModel\Address\Collection
      */
     protected function _createAddressCollection()
@@ -1314,6 +1347,8 @@ class Customer extends \Magento\Framework\Model\AbstractModel
     }
 
     /**
+     * Get Template Types
+     *
      * @return array
      */
     protected function getTemplateTypes()
@@ -1368,5 +1403,13 @@ class Customer extends \Magento\Framework\Model\AbstractModel
     public function getPassword()
     {
         return (string) $this->getData('password');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function _resetState(): void
+    {
+        $this->_errors = [];
     }
 }

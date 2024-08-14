@@ -12,10 +12,14 @@
     <preference for="Magento\ConfigurableProduct\Api\Data\OptionInterface" type="Magento\ConfigurableProduct\Model\Product\Type\Configurable\Attribute" />
     <preference for="Magento\ConfigurableProduct\Api\Data\OptionValueInterface" type="Magento\ConfigurableProduct\Model\Product\Type\Configurable\OptionValue" />
     <preference for="Magento\ConfigurableProduct\Api\Data\ConfigurableItemOptionValueInterface" type="Magento\ConfigurableProduct\Model\Quote\Item\ConfigurableItemOptionValue" />
+    <preference for="Magento\ConfigurableProduct\Pricing\Price\PriceResolverInterface" type="Magento\ConfigurableProduct\Pricing\Price\ConfigurablePriceResolver" />
     <preference for="Magento\ConfigurableProduct\Pricing\Price\ConfigurableOptionsProviderInterface" type="Magento\ConfigurableProduct\Pricing\Price\ConfigurableOptionsProvider" />
     <preference for="Magento\ConfigurableProduct\Pricing\Price\LowestPriceOptionsProviderInterface" type="Magento\ConfigurableProduct\Pricing\Price\LowestPriceOptionsProvider" />
     <preference for="Magento\ConfigurableProduct\Model\AttributeOptionProviderInterface" type="Magento\ConfigurableProduct\Model\AttributeOptionProvider" />
     <preference for="Magento\ConfigurableProduct\Model\ResourceModel\Attribute\OptionSelectBuilderInterface" type="Magento\ConfigurableProduct\Model\ResourceModel\Attribute\OptionSelectBuilder" />
+    <preference for="Magento\ConfigurableProduct\Model\ResourceModel\Product\Indexer\Price\OptionsIndexerInterface" type="Magento\ConfigurableProduct\Model\ResourceModel\Product\Indexer\Price\OptionsIndexer" />
+    <preference for="Magento\ConfigurableProduct\Model\ResourceModel\Product\Indexer\Price\OptionsSelectBuilderInterface" type="Magento\ConfigurableProduct\Model\ResourceModel\Product\Indexer\Price\OptionsSelectBuilder" />
+    <preference for="Magento\ConfigurableProduct\Pricing\Price\ConfigurableOptionsFilterInterface" type="Magento\ConfigurableProduct\Pricing\Price\ConfigurableOptionsCompositeFilter" />
 
     <type name="Magento\CatalogInventory\Model\Quote\Item\QuantityValidator\Initializer\Option">
         <plugin name="configurable_product" type="Magento\ConfigurableProduct\Model\Quote\Item\QuantityValidator\Initializer\Option\Plugin\ConfigurableProduct" sortOrder="50" />
@@ -32,6 +36,13 @@
     <type name="Magento\Eav\Model\Entity\Attribute\Backend\AbstractBackend">
         <plugin name="ConfigurableProduct::skipValidation" type="Magento\ConfigurableProduct\Plugin\Model\Attribute\Backend\AttributeValidation"/>
     </type>
+    <type name="Magento\ConfigurableProduct\Plugin\Model\Attribute\Backend\AttributeValidation">
+        <arguments>
+            <argument name="unskippableAttributes" xsi:type="array">
+                <item name="custom_layout_update" xsi:type="string">custom_layout_update</item>
+            </argument>
+        </arguments>
+    </type>
     <type name="Magento\Catalog\Model\Entity\Product\Attribute\Group\AttributeMapperInterface">
         <plugin name="configurable_product" type="Magento\ConfigurableProduct\Model\Entity\Product\Attribute\Group\AttributeMapper\Plugin" sortOrder="50" />
     </type>
@@ -43,17 +54,10 @@
             </argument>
         </arguments>
     </type>
-    <type name="Magento\CatalogInventory\Observer\SaveInventoryDataObserver">
-        <arguments>
-            <argument name="parentItemProcessorPool" xsi:type="array">
-                <item name="configurable" xsi:type="object"> Magento\ConfigurableProduct\Model\Inventory\ParentItemProcessor</item>
-            </argument>
-        </arguments>
-    </type>
     <type name="Magento\Sales\Model\ResourceModel\Report\Bestsellers">
         <arguments>
             <argument name="ignoredProductTypes" xsi:type="array">
-                <item name="configurable" xsi:type="const">\Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE</item>
+                <item name="configurable" xsi:type="const">Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE</item>
             </argument>
         </arguments>
     </type>
@@ -157,6 +161,7 @@
     <type name="Magento\ConfigurableProduct\Pricing\Price\ConfigurableRegularPrice">
         <arguments>
             <argument name="priceResolver" xsi:type="object">ConfigurableRegularPriceResolver</argument>
+            <argument name="configurableMaxPriceCalculator" xsi:type="object">Magento\ConfigurableProduct\Model\ConfigurableMaxPriceCalculator</argument>
         </arguments>
     </type>
     <type name="Magento\Catalog\Model\Product\Attribute\Backend\Price">
@@ -204,6 +209,13 @@
         <arguments>
             <argument name="tableStrategy" xsi:type="object">Magento\Catalog\Model\ResourceModel\Product\Indexer\TemporaryTableStrategy</argument>
             <argument name="connectionName" xsi:type="string">indexer</argument>
+            <argument name="baseSelectProcessor" xsi:type="object">Magento\ConfigurableProduct\Model\ResourceModel\Product\Indexer\Price\BaseStockStatusSelectProcessor</argument>
+        </arguments>
+    </type>
+    <type name="Magento\ConfigurableProduct\Model\ResourceModel\Product\Indexer\Price\OptionsSelectBuilder">
+        <arguments>
+            <argument name="selectProcessor" xsi:type="object">Magento\ConfigurableProduct\Model\ResourceModel\Product\Indexer\Price\BaseStockStatusSelectProcessor</argument>
+            <argument name="connectionName" xsi:type="string">indexer</argument>
         </arguments>
     </type>
     <type name="Magento\ConfigurableProduct\Plugin\Model\ResourceModel\Product">
@@ -211,13 +223,6 @@
             <argument name="productIndexer" xsi:type="object">Magento\Catalog\Model\Indexer\Product\Full</argument>
         </arguments>
     </type>
-    <virtualType name="LinkedProductSelectBuilderByIndexMinPrice" type="Magento\ConfigurableProduct\Model\ResourceModel\Product\LinkedProductSelectBuilderComposite">
-        <arguments>
-            <argument name="linkedProductSelectBuilder" xsi:type="array">
-                <item name="indexPrice" xsi:type="object">Magento\Catalog\Model\ResourceModel\Product\Indexer\LinkedProductSelectBuilderByIndexPrice</item>
-            </argument>
-        </arguments>
-    </virtualType>
     <type name="Magento\ConfigurableProduct\Pricing\Price\LowestPriceOptionsProvider">
         <arguments>
             <argument name="linkedProductSelectBuilder" xsi:type="object">Magento\ConfigurableProduct\Model\ResourceModel\Product\LinkedProductSelectBuilder</argument>
@@ -226,7 +231,7 @@
     <type name="Magento\ConfigurableProduct\Model\ResourceModel\Product\LinkedProductSelectBuilder">
         <arguments>
             <argument name="baseSelectProcessor" xsi:type="object">Magento\ConfigurableProduct\Model\ResourceModel\Product\StockStatusBaseSelectProcessor</argument>
-            <argument name="linkedProductSelectBuilder" xsi:type="object">LinkedProductSelectBuilderByIndexMinPrice</argument>
+            <argument name="linkedProductSelectBuilder" xsi:type="object">Magento\Catalog\Model\ResourceModel\Product\Indexer\LinkedProductSelectBuilderByIndexPrice</argument>
         </arguments>
     </type>
     <type name="Magento\Catalog\Model\Product\Pricing\Renderer\SalableResolver">
@@ -234,9 +239,6 @@
     </type>
     <type name="Magento\Catalog\Model\Product">
         <plugin name="product_identities_extender" type="Magento\ConfigurableProduct\Model\Plugin\ProductIdentitiesExtender" />
-    </type>
-    <type name="Magento\SalesRule\Model\Rule\Condition\Product">
-        <plugin name="apply_rule_on_configurable_children" type="Magento\ConfigurableProduct\Plugin\SalesRule\Model\Rule\Condition\Product" />
     </type>
     <type name="Magento\Catalog\Model\Product\Configuration\Item\ItemResolverComposite">
         <arguments>
@@ -252,6 +254,9 @@
             </argument>
         </arguments>
     </type>
+    <type name="Magento\SalesRule\Model\Rule\Condition\Product">
+        <plugin name="apply_rule_on_configurable_children" type="Magento\ConfigurableProduct\Plugin\SalesRule\Model\Rule\Condition\Product" />
+    </type>
     <type name="Magento\Tax\Model\Sales\Total\Quote\CommonTaxCollector">
         <plugin name="apply_tax_class_id" type="Magento\ConfigurableProduct\Plugin\Tax\Model\Sales\Total\Quote\CommonTaxCollector" />
     </type>
@@ -261,5 +266,23 @@
                 <item name="configurable" xsi:type="string">configurable</item>
             </argument>
         </arguments>
+    </type>
+    <type name="Magento\CatalogInventory\Observer\SaveInventoryDataObserver">
+        <arguments>
+            <argument name="parentItemProcessorPool" xsi:type="array">
+                <item name="configurable" xsi:type="object"> Magento\ConfigurableProduct\Model\Inventory\ParentItemProcessor</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\ConfigurableProduct\Model\Plugin\Frontend\UsedProductsCache">
+        <arguments>
+            <argument name="cache" xsi:type="object">Magento\Framework\App\Cache\Type\Collection</argument>
+        </arguments>
+        <arguments>
+            <argument name="serializer" xsi:type="object">Magento\Framework\Serialize\Serializer\Json</argument>
+        </arguments>
+    </type>
+    <type name="Magento\CatalogInventory\Model\ResourceModel\Stock\Item">
+        <plugin name="updateStockChangedAuto" type="Magento\ConfigurableProduct\Model\Plugin\UpdateStockChangedAuto" />
     </type>
 </config>

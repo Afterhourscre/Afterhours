@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of PHP CS Fixer.
  *
@@ -15,6 +17,7 @@ namespace PhpCsFixer\Fixer\Operator;
 use PhpCsFixer\AbstractFixer;
 use PhpCsFixer\FixerDefinition\CodeSample;
 use PhpCsFixer\FixerDefinition\FixerDefinition;
+use PhpCsFixer\FixerDefinition\FixerDefinitionInterface;
 use PhpCsFixer\Tokenizer\Token;
 use PhpCsFixer\Tokenizer\Tokens;
 
@@ -23,33 +26,34 @@ use PhpCsFixer\Tokenizer\Tokens;
  */
 final class StandardizeNotEqualsFixer extends AbstractFixer
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function getDefinition()
+    public function getDefinition(): FixerDefinitionInterface
     {
         return new FixerDefinition(
             'Replace all `<>` with `!=`.',
-            array(new CodeSample("<?php\n\$a = \$b <> \$c;"))
+            [new CodeSample("<?php\n\$a = \$b <> \$c;\n")]
         );
     }
 
     /**
      * {@inheritdoc}
+     *
+     * Must run before BinaryOperatorSpacesFixer.
      */
-    public function isCandidate(Tokens $tokens)
+    public function getPriority(): int
+    {
+        return 0;
+    }
+
+    public function isCandidate(Tokens $tokens): bool
     {
         return $tokens->isTokenKindFound(T_IS_NOT_EQUAL);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function applyFix(\SplFileInfo $file, Tokens $tokens)
+    protected function applyFix(\SplFileInfo $file, Tokens $tokens): void
     {
         foreach ($tokens as $index => $token) {
             if ($token->isGivenKind(T_IS_NOT_EQUAL)) {
-                $tokens[$index] = new Token(array(T_IS_NOT_EQUAL, '!='));
+                $tokens[$index] = new Token([T_IS_NOT_EQUAL, '!=']);
             }
         }
     }

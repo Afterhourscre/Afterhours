@@ -3,6 +3,7 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\Sales\ViewModel\Customer;
 
@@ -78,7 +79,7 @@ class AddressFormatter implements ArgumentInterface
      *
      * @return string
      */
-    public function getAddressesJson(array $addressArray)
+    public function getAddressesJson(array $addressArray): string
     {
         $data = $this->getEmptyAddressForm();
         foreach ($addressArray as $addressId => $address) {
@@ -101,7 +102,7 @@ class AddressFormatter implements ArgumentInterface
      * @param array $address
      * @return string
      */
-    public function getAddressAsString(array $address)
+    public function getAddressAsString(array $address): string
     {
         $formatTypeRenderer = $this->addressFormatHelper->getFormatTypeRenderer('oneline');
         $result = '';
@@ -117,7 +118,7 @@ class AddressFormatter implements ArgumentInterface
      *
      * @return array
      */
-    private function getEmptyAddressForm()
+    private function getEmptyAddressForm(): array
     {
         $defaultCountryId = $this->directoryHelper->getDefaultCountry($this->session->getStore());
         $emptyAddressForm = $this->customerFormFactory->create(

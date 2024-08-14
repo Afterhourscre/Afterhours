@@ -3,21 +3,14 @@
  * See COPYING.txt for license details.
  */
 
-(function (factory) {
-    'use strict';
-
-    if (typeof define === 'function' && define.amd) {
-        define([
-            'jquery',
-            'moment',
-            'jquery/ui',
-            'jquery/validate',
-            'mage/translate'
-        ], factory);
-    } else {
-        factory(jQuery);
-    }
-}(function ($, moment) {
+define([
+    'jquery',
+    'moment',
+    'mageUtils',
+    'jquery-ui-modules/widget',
+    'jquery/validate',
+    'mage/translate'
+], function ($, moment, utils) {
     'use strict';
 
     var creditCartTypes, rules, showLabel, originValidateDelegate;
@@ -211,12 +204,24 @@
      * @returns {float}
      */
     function resolveModulo(qty, qtyIncrements) {
+        var divideEpsilon = 10000,
+            epsilon,
+            remainder;
+
         while (qtyIncrements < 1) {
             qty *= 10;
             qtyIncrements *= 10;
         }
 
-        return qty % qtyIncrements;
+        epsilon = qtyIncrements / divideEpsilon;
+        remainder = qty % qtyIncrements;
+
+        if (Math.abs(remainder - qtyIncrements) < epsilon ||
+            Math.abs(remainder) < epsilon) {
+            remainder = 0;
+        }
+
+        return remainder;
     }
 
     /**
@@ -226,7 +231,7 @@
     rules = {
         'max-words': [
             function (value, element, params) {
-                return this.optional(element) || $.mage.stripHtml(value).match(/\b\w+\b/g).length < params;
+                return this.optional(element) || $.mage.stripHtml(value).match(/\b\w+\b/g).length <= params;
             },
             $.mage.__('Please enter {0} words or less.')
         ],
@@ -385,7 +390,7 @@
         ],
         'time12h': [
             function (value, element) {
-                return this.optional(element) || /^((0?[1-9]|1[012])(:[0-5]\d){0,2}(\ [AP]M))$/i.test(value);
+                return this.optional(element) || /^((0?[1-9]|1[012])(:[0-5]\d){0,2}(\s[AP]M))$/i.test(value);
             },
             $.mage.__('Please enter a valid time, between 00:00 am and 12:00 pm')
         ],
@@ -559,7 +564,7 @@
         /* eslint-enable max-len */
         'pattern': [
             function (value, element, param) {
-                return this.optional(element) || param.test(value);
+                return this.optional(element) || new RegExp(param).test(value);
             },
             $.mage.__('Invalid format.')
         ],
@@ -632,11 +637,18 @@
             },
             $.mage.__('Please enter a valid email address (Ex: johndoe@domain.com).')
         ],
+        //replace jquery.validation.js email validation rule
+        'email' : [
+            function (v) {
+                return $.mage.isEmptyNoTrim(v) || /^([a-z0-9,!\#\$%&'\*\+\/=\?\^_`\{\|\}~-]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z0-9,!\#\$%&'\*\+\/=\?\^_`\{\|\}~-]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*@([a-z0-9-]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z0-9-]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*\.(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]){2,})$/i.test(v); //eslint-disable-line max-len
+            },
+            $.mage.__('Please enter a valid email address.')
+        ],
         'validate-emailSender': [
             function (v) {
-                return $.mage.isEmptyNoTrim(v) || /^[\S ]+$/.test(v);
+                return $.mage.isEmptyNoTrim(v) || /^(?!.*:)[\S ]+$/.test(v);
             },
-            $.mage.__('Please enter a valid email address (Ex: johndoe@domain.com).')
+            $.mage.__('Please use only visible characters and spaces. The colon character is not allowed.')
         ],
         'validate-password': [
             function (v) {
@@ -646,7 +658,7 @@
                     return false;
                 }
                 //strip leading and trailing spaces
-                pass = $.trim(v);
+                pass = v.trim();
 
                 if (!pass.length) {
                     return true;
@@ -663,7 +675,7 @@
                 if (v == null) {
                     return false;
                 }
-                pass = $.trim(v);
+                pass = v.trim();
                 // strip leading and trailing spaces
                 if (pass.length === 0) {
                     return true;
@@ -687,7 +699,7 @@
                     counter = 0,
                     passwordMinLength = $(elm).data('password-min-length'),
                     passwordMinCharacterSets = $(elm).data('password-min-character-sets'),
-                    pass = $.trim(v),
+                    pass = v.trim(),
                     result = pass.length >= passwordMinLength;
 
                 if (result === false) {
@@ -1022,9 +1034,9 @@
         ],
         'validate-code': [
             function (v) {
-                return $.mage.isEmptyNoTrim(v) || /^[a-z]+[a-z0-9_]+$/.test(v);
+                return $.mage.isEmptyNoTrim(v) || /^[a-zA-Z]+[a-zA-Z0-9_]+$/.test(v);
             },
-            $.mage.__('Please use only letters (a-z), numbers (0-9) or underscore (_) in this field, and the first character should be a letter.') //eslint-disable-line max-len
+            $.mage.__('Please use only letters (a-z or A-Z), numbers (0-9) or underscore (_) in this field, and the first character should be a letter.') //eslint-disable-line max-len
         ],
         'validate-alphanum': [
             function (v) {
@@ -1032,9 +1044,15 @@
             },
             $.mage.__('Please use only letters (a-z or A-Z) or numbers (0-9) in this field. No spaces or other characters are allowed.') //eslint-disable-line max-len
         ],
+        'validate-not-number-first': [
+            function (value) {
+                return $.mage.isEmptyNoTrim(value) || /^[^0-9-\.].*$/.test(value.trim());
+            },
+            $.mage.__('First character must be letter.')
+        ],
         'validate-date': [
             function (value, params, additionalParams) {
-                var test = moment(value, additionalParams.dateFormat);
+                var test = moment(value, utils.convertToMomentFormat(additionalParams.dateFormat));
 
                 return $.mage.isEmptyNoTrim(value) || test.isValid();
             },
@@ -1131,7 +1149,7 @@
         ],
         'validate-state': [
             function (v) {
-                return v !== 0 || v === '';
+                return v !== 0;
             },
             $.mage.__('Please select State/Province.')
         ],
@@ -1144,7 +1162,7 @@
                     ovId = $('#' + $(elm).attr('id') + '_value');
 
                     if (ovId.length > 0) {
-                        result = !$.mage.isEmptyNoTrim($(ovId).val());
+                        result = !$.mage.isEmptyNoTrim(ovId.val());
                     }
                 }
 
@@ -1670,7 +1688,7 @@
 
                 return true;
             },
-            $.mage.__('Password cannot be the same as email address.')
+            $.mage.__('The password can\'t be the same as the email address. Create a new password and try again.')
         ]
     };
 
@@ -1790,7 +1808,8 @@
             valid = true,
             validateConfig = {
                 errorElement: 'label',
-                ignore: '.ignore-validate'
+                ignore: '.ignore-validate',
+                hideError: false
             },
             form, validator, classes, elementValue;
 
@@ -1828,7 +1847,10 @@
                 valid = false;
                 errors[element.get(0).name] = this.messages[className];
                 validator.invalid[element.get(0).name] = true;
-                validator.showErrors(errors);
+
+                if (!validateConfig.hideError) {
+                    validator.showErrors(errors);
+                }
 
                 return valid;
             }
@@ -1878,6 +1900,10 @@
                 if (element.siblings('.tooltip').length) {
                     errorPlacement = element.siblings('.tooltip');
                 }
+                //logic for select with tooltip in after element
+                if (element.next().find('.tooltip').length) {
+                    errorPlacement = element.next();
+                }
                 errorPlacement.after(error);
             }
         },
@@ -1919,12 +1945,17 @@
                 .find('.control')
                 .find('input, select, textarea')
                 .attr('aria-required', 'true');
-
+            this.element
+                .find('.field.additional')
+                .find('.control')
+                .find('input, select, textarea')
+                .removeAttr('aria-required');
             this._listenFormValidate();
         },
 
         /**
          * Validation listening.
+         *
          * @protected
          */
         _listenFormValidate: function () {
@@ -1963,13 +1994,13 @@
             }
 
             if (firstActive.length) {
-                $('body').stop().animate({
-                    scrollTop: firstActive.offset().top - windowHeight / 2
+                $('html, body').stop().animate({
+                    scrollTop: firstActive.parent().offset().top - windowHeight / 2
                 });
-                firstActive.focus();
+                firstActive.trigger('focus');
             }
         }
     });
 
     return $.mage.validation;
-}));
+});

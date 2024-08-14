@@ -6,7 +6,7 @@ define([
     'jquery',
     'Magento_Catalog/js/price-utils',
     'underscore',
-    'jquery/ui',
+    'jquery-ui-modules/widget',
     'mage/dropdown',
     'mage/template'
 ], function ($, priceUtils, _) {
@@ -70,7 +70,7 @@ define([
         wasOpened: false,
 
         /**
-         * Creates widget instance.
+         * Creates widget instance
          *
          * @private
          */
@@ -88,7 +88,7 @@ define([
         },
 
         /**
-         * Init msrp popup.
+         * Init msrp popup
          *
          * @private
          */
@@ -101,7 +101,8 @@ define([
             $msrpPopup.trigger('contentUpdated');
 
             $msrpPopup.find('button')
-                .on('click', this.handleMsrpAddToCart.bind(this))
+                .on('click',
+                    this.handleMsrpAddToCart.bind(this))
                 .filter(this.options.popupCartButtonId)
                 .text($(this.options.addToCartButton).text());
 
@@ -115,7 +116,7 @@ define([
         },
 
         /**
-         * Init info popup.
+         * Init info popup
          *
          * @private
          */
@@ -135,8 +136,7 @@ define([
         },
 
         /**
-         * Init tier price popup.
-         *
+         * Init tier price popup
          * @private
          */
         initTierPopup: function () {
@@ -163,22 +163,22 @@ define([
         },
 
         /**
-         * Handle 'AddToCart' click on Msrp popup.
-         *
+         * handle 'AddToCart' click on Msrp popup
          * @param {Object} ev
+         *
          * @private
          */
         handleMsrpAddToCart: function (ev) {
             ev.preventDefault();
 
             if (this.options.addToCartButton) {
-                $(this.options.addToCartButton).click();
+                $(this.options.addToCartButton).trigger('click');
                 this.closePopup(this.$popup);
             }
         },
 
         /**
-         * Handle 'paypal checkout buttons' click on Msrp popup.
+         * handle 'paypal checkout buttons' click on Msrp popup
          *
          * @private
          */
@@ -187,7 +187,7 @@ define([
         },
 
         /**
-         * Handle 'AddToCart' click on Tier popup.
+         * handle 'AddToCart' click on Tier popup
          *
          * @param {Object} ev
          * @private
@@ -199,13 +199,13 @@ define([
                 this.options.inputQty && !isNaN(this.tierOptions.qty)
             ) {
                 $(this.options.inputQty).val(this.tierOptions.qty);
-                $(this.options.addToCartButton).click();
+                $(this.options.addToCartButton).trigger('click');
                 this.closePopup(this.$popup);
             }
         },
 
         /**
-         * Handle 'paypal checkout buttons' click on Tier popup.
+         * handle 'paypal checkout buttons' click on Tier popup
          *
          * @private
          */
@@ -218,7 +218,7 @@ define([
         },
 
         /**
-         * Open and set up popup.
+         * Open and set up popup
          *
          * @param {Object} event
          */
@@ -241,7 +241,7 @@ define([
         },
 
         /**
-         * Toggle MAP popup visibility.
+         * Toggle MAP popup visibility
          *
          * @param {HTMLElement} $elem
          * @private
@@ -258,7 +258,7 @@ define([
         },
 
         /**
-         * Close MAP information popup.
+         * Close MAP information popup
          *
          * @param {HTMLElement} $elem
          */
@@ -268,7 +268,7 @@ define([
         },
 
         /**
-         * Handler for addToCart action.
+         * Handler for addToCart action
          *
          * @param {Object} e
          */
@@ -280,7 +280,7 @@ define([
             }
 
             if (this.options.addToCartButton) {
-                $(this.options.addToCartButton).click();
+                $(this.options.addToCartButton).trigger('click');
 
                 return false;
             }
@@ -290,7 +290,7 @@ define([
             }
 
             e.preventDefault();
-            $(this.options.cartForm).submit();
+            $(this.options.cartForm).trigger('submit');
         },
 
         /**
@@ -299,8 +299,9 @@ define([
          * @param {Event} event
          * @param {mixed} priceIndex
          * @param {Object} prices
+         * @param {Object|undefined} $priceBox
          */
-        onUpdateMsrpPrice: function onUpdateMsrpPrice(event, priceIndex, prices) {
+        onUpdateMsrpPrice: function onUpdateMsrpPrice(event, priceIndex, prices, $priceBox) {
 
             var defaultMsrp,
                 defaultPrice,
@@ -322,63 +323,70 @@ define([
                 finalPrice = prices[priceIndex].finalPrice.amount;
 
                 if (msrpPrice === null || msrpPrice <= finalPrice) {
-                    this.updateNonMsrpPrice(priceUtils.formatPrice(finalPrice));
+                    this.updateNonMsrpPrice(priceUtils.formatPriceLocale(finalPrice), $priceBox);
                 } else {
                     this.updateMsrpPrice(
-                        priceUtils.formatPrice(finalPrice),
-                        priceUtils.formatPrice(msrpPrice),
-                        false);
+                        priceUtils.formatPriceLocale(finalPrice),
+                        priceUtils.formatPriceLocale(msrpPrice),
+                        false,
+                        $priceBox);
                 }
             } else {
                 this.updateMsrpPrice(
-                    priceUtils.formatPrice(defaultPrice),
-                    priceUtils.formatPrice(defaultMsrp),
-                    true);
+                    priceUtils.formatPriceLocale(defaultPrice),
+                    priceUtils.formatPriceLocale(defaultMsrp),
+                    true,
+                    $priceBox);
             }
         },
 
         /**
-         * Update prices for configurable product with MSRP enabled.
+         * Update prices for configurable product with MSRP enabled
          *
          * @param {String} finalPrice
          * @param {String} msrpPrice
          * @param {Boolean} useDefaultPrice
+         * @param {Object|undefined} $priceBox
          */
-        updateMsrpPrice: function (finalPrice, msrpPrice, useDefaultPrice) {
+        updateMsrpPrice: function (finalPrice, msrpPrice, useDefaultPrice, $priceBox) {
             var options = this.tierOptions || this.options;
 
-            $(this.options.fallbackPriceContainer).hide();
-            $(this.options.displayPriceContainer).show();
-            $(this.options.mapInfoLinks).show();
+            $(this.options.fallbackPriceContainer, $priceBox).hide();
+            $(this.options.displayPriceContainer, $priceBox).show();
+            $(this.options.mapInfoLinks, $priceBox).show();
 
             if (useDefaultPrice || !this.wasOpened) {
-                this.$popup.find(this.options.msrpLabelId).html(options.msrpPrice);
-                this.$popup.find(this.options.priceLabelId).html(options.realPrice);
-                $(this.options.displayPriceElement).html(msrpPrice);
+                if (this.$popup) {
+                    this.$popup.find(this.options.msrpLabelId).html(options.msrpPrice);
+                    this.$popup.find(this.options.priceLabelId).html(options.realPrice);
+                }
+
+                $(this.options.displayPriceElement, $priceBox).html(msrpPrice);
                 this.wasOpened = true;
             }
 
             if (!useDefaultPrice) {
                 this.$popup.find(this.options.msrpPriceElement).html(msrpPrice);
                 this.$popup.find(this.options.priceElement).html(finalPrice);
-                $(this.options.displayPriceElement).html(msrpPrice);
+                $(this.options.displayPriceElement, $priceBox).html(msrpPrice);
             }
         },
 
         /**
-         * Display non MAP price for irrelevant products.
+         * Display non MAP price for irrelevant products
          *
          * @param {String} price
+         * @param {Object|undefined} $priceBox
          */
-        updateNonMsrpPrice: function (price) {
-            $(this.options.fallbackPriceElement).html(price);
-            $(this.options.displayPriceContainer).hide();
-            $(this.options.mapInfoLinks).hide();
-            $(this.options.fallbackPriceContainer).show();
+        updateNonMsrpPrice: function (price, $priceBox) {
+            $(this.options.fallbackPriceElement, $priceBox).html(price);
+            $(this.options.displayPriceContainer, $priceBox).hide();
+            $(this.options.mapInfoLinks, $priceBox).hide();
+            $(this.options.fallbackPriceContainer, $priceBox).show();
         },
 
         /**
-         * Handler for submit form.
+         * Handler for submit form
          *
          * @private
          */
@@ -387,6 +395,7 @@ define([
                 $(this.options.cartButtonId).prop('disabled', true);
             }
         }
+
     });
 
     return $.mage.addToCart;

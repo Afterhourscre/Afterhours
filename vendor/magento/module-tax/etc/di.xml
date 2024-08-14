@@ -37,8 +37,8 @@
             </argument>
         </arguments>
     </type>
-    <preference for="Magento\Tax\Api\Data\TaxRateSearchResultsInterface" type="Magento\Framework\Api\SearchResults" />
-    <preference for="Magento\Tax\Api\Data\TaxClassSearchResultsInterface" type="Magento\Framework\Api\SearchResults" />
+    <preference for="Magento\Tax\Api\Data\TaxRateSearchResultsInterface" type="Magento\Tax\Model\TaxRateSearchResults" />
+    <preference for="Magento\Tax\Api\Data\TaxClassSearchResultsInterface" type="Magento\Tax\Model\TaxClassSearchResults" />
     <preference for="Magento\Tax\Api\OrderTaxManagementInterface" type="Magento\Tax\Model\Sales\Order\TaxManagement" />
     <preference for="Magento\Tax\Api\Data\OrderTaxDetailsAppliedTaxInterface" type="Magento\Tax\Model\Sales\Order\Tax" />
     <preference for="Magento\Tax\Api\Data\OrderTaxDetailsInterface" type="Magento\Tax\Model\Sales\Order\Details" />
@@ -47,7 +47,7 @@
     <preference for="Magento\Tax\Api\TaxClassRepositoryInterface" type="Magento\Tax\Model\TaxClass\Repository" />
     <preference for="Magento\Tax\Api\Data\TaxClassInterface" type="Magento\Tax\Model\ClassModel" />
     <preference for="Magento\Tax\Api\Data\TaxRuleInterface" type="Magento\Tax\Model\Calculation\Rule" />
-    <preference for="Magento\Tax\Api\Data\TaxRuleSearchResultsInterface" type="Magento\Framework\Api\SearchResults" />
+    <preference for="Magento\Tax\Api\Data\TaxRuleSearchResultsInterface" type="Magento\Tax\Model\TaxRuleSearchResults" />
     <preference for="Magento\Tax\Api\TaxRateManagementInterface" type="Magento\Tax\Model\TaxRateManagement" />
     <preference for="Magento\Tax\Api\TaxRateRepositoryInterface" type="Magento\Tax\Model\Calculation\RateRepository" />
     <preference for="Magento\Tax\Api\Data\TaxRateTitleInterface" type="Magento\Tax\Model\Calculation\Rate\Title" />
@@ -62,6 +62,8 @@
     <preference for="Magento\Tax\Api\Data\GrandTotalDetailsInterface" type="Magento\Tax\Model\Calculation\GrandTotalDetails" />
     <preference for="Magento\Tax\Api\Data\GrandTotalRatesInterface" type="Magento\Tax\Model\Calculation\GrandTotalRates" />
     <preference for="Magento\Tax\Api\TaxAddressManagerInterface" type="Magento\Tax\Model\TaxAddressManager" />
+    <preference for="Magento\Tax\Api\Data\OrderTaxItemInterface" type="Magento\Sales\Model\Data\Order\Tax\Item" />
+    <preference for="Magento\Tax\Api\Data\OrderTaxInterface" type="Magento\Sales\Model\Data\Order\Tax" />
     <type name="Magento\Quote\Model\Quote\Address\ToOrder">
         <plugin name="add_tax_to_order" type="Magento\Tax\Model\Quote\ToOrderConverter"/>
     </type>
@@ -79,7 +81,7 @@
         </arguments>
     </type>
     <type name="Magento\Sales\Api\OrderRepositoryInterface">
-        <plugin name="save_order_tax" type="Magento\Tax\Model\Plugin\OrderSave"/>
+        <plugin name="add_taxes_extension_attributes" type="Magento\Tax\Model\Plugin\AddTaxesExtensionAttribute"/>
     </type>
     <type name="Magento\Tax\Model\ResourceModel\Sales\Order\Tax">
         <arguments>
@@ -183,4 +185,20 @@
     <type name="Magento\Catalog\Ui\DataProvider\Product\Listing\DataProvider">
         <plugin name="taxSettingsProvider" type="Magento\Tax\Plugin\Ui\DataProvider\TaxSettings"/>
     </type>
+    <type name="Magento\Eav\Model\Config">
+        <arguments>
+            <argument name="attributesForPreload" xsi:type="array">
+                <item name="catalog_product" xsi:type="array">
+                    <item name="tax_class_id" xsi:type="string">catalog_product</item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
+    <virtualType name="OrderRelationsComposite">
+        <arguments>
+            <argument name="relationProcessors" xsi:type="array">
+                <item name="applied_taxes" xsi:type="object">Magento\Tax\Model\ResourceModel\Sales\Order\Relation</item>
+            </argument>
+        </arguments>
+    </virtualType>
 </config>

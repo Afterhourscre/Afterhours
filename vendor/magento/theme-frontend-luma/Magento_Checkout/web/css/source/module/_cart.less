@@ -63,10 +63,6 @@
 
             .field {
                 margin: 0 0 16px;
-
-                &.note {
-                    display: none;
-                }
             }
 
             .actions-toolbar {
@@ -101,6 +97,7 @@
                 .field {
                     .radio {
                         float: left;
+                        margin-top: 4px;
                     }
 
                     .radio {
@@ -149,12 +146,6 @@
         }
 
         &:extend(.abs-adjustment-incl-excl-tax all);
-
-        .action {
-            &.multicheckout {
-                color: @color-blue2;
-            }
-        }
     }
 
     //  Totals block
@@ -276,6 +267,10 @@
                     .lib-icon-font-symbol(
                     @_icon-font-content: @icon-trash
                     );
+
+                    &:hover {
+                        .lib-css(text-decoration, @link__text-decoration);
+                    }
                 }
             }
 
@@ -422,14 +417,6 @@
             &:extend(.abs-sidebar-totals-mobile all);
         }
     }
-    .order-items.table-wrapper {
-        .col.price,
-        .col.qty,
-        .col.subtotal,
-        .col.msrp {
-            text-align: left;
-        }
-    }
 }
 
 .media-width(@extremum, @break) when (@extremum = 'max') and (@break = @screen__m) {
@@ -437,7 +424,14 @@
     .cart-container {
         .form-cart {
             .actions.main {
-                text-align: center;
+                .lib-vendor-prefix-display();
+                .lib-vendor-prefix-flex-direction(column);
+                .lib-vendor-box-align(center);
+
+                .clear,
+                .continue {
+                    .lib-css(margin, 0 0 @indent__m 0);
+                }
             }
         }
     }
@@ -544,6 +538,18 @@
 //  Desktop
 //  _____________________________________________
 
+.media-width(@extremum, @break) when (@extremum = 'min') and (@break = @screen__s) {
+    .cart-container {
+        .block.crosssell {
+            .products-grid {
+                .product-item-actions {
+                    margin: 0 0 @indent__s;
+                }
+            }
+        }
+    }
+}
+
 .media-width(@extremum, @break) when (@extremum = 'min') and (@break = @screen__m) {
     .checkout-cart-index {
         .page-main {
@@ -568,6 +574,10 @@
 
         .widget {
             float: left;
+
+            &.block {
+                margin-bottom: @indent__base;
+            }
         }
     }
 
@@ -717,7 +727,12 @@
                     position: static;
                 }
             }
+
             &.discount {
+                width: auto;
+            }
+
+            .actions-toolbar {
                 width: auto;
             }
         }
@@ -736,7 +751,7 @@
             padding: 0 4% 0 0;
 
             .products-grid .product-item {
-                width: 100%/4;
+                width: (100%/4);
             }
         }
     }

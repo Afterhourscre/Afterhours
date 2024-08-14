@@ -3,29 +3,46 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\Eav\Test\Unit\Model\Attribute\Data;
 
+use Magento\Eav\Model\Attribute;
+use Magento\Eav\Model\Attribute\Data\Text;
+use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
+use Magento\Eav\Model\Entity\Type;
+use Magento\Eav\Model\Entity\TypeFactory;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Locale\ResolverInterface;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Framework\Stdlib\StringUtils;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Framework\Validator\Alnum;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * Eav text attribute model test
  */
-class TextTest extends \PHPUnit\Framework\TestCase
+class TextTest extends TestCase
 {
     /**
-     * @var \Magento\Eav\Model\Attribute\Data\Text
+     * @var Text
      */
     private $model;
 
-    protected function setUp()
+    /**
+     * {@inheritDoc}
+     */
+    protected function setUp(): void
     {
-        $locale = $this->createMock(\Magento\Framework\Stdlib\DateTime\TimezoneInterface::class);
-        $localeResolver = $this->createMock(\Magento\Framework\Locale\ResolverInterface::class);
-        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
-        $helper = new StringUtils;
+        $locale = $this->getMockForAbstractClass(TimezoneInterface::class);
+        $localeResolver = $this->getMockForAbstractClass(ResolverInterface::class);
+        $logger = $this->getMockForAbstractClass(LoggerInterface::class);
+        $helper = new StringUtils();
 
-        $this->model = new \Magento\Eav\Model\Attribute\Data\Text($locale, $logger, $localeResolver, $helper);
+        $this->model = new Text($locale, $logger, $localeResolver, $helper);
         $this->model->setAttribute(
             $this->createAttribute(
                 [
@@ -38,42 +55,39 @@ class TextTest extends \PHPUnit\Framework\TestCase
         );
     }
 
-    protected function tearDown()
+    /**
+     * {@inheritDoc}
+     */
+    protected function tearDown(): void
     {
         $this->model = null;
     }
 
     /**
-     * Test of string validation.
-     *
-     * @return void
+     * Test for string validation
      */
-    public function testValidateValueString()
+    public function testValidateValueString(): void
     {
         $inputValue = '0';
         $expectedResult = true;
-        $this->assertEquals($expectedResult, $this->model->validateValue($inputValue));
+        self::assertEquals($expectedResult, $this->model->validateValue($inputValue));
     }
 
     /**
-     * Test of integer validation.
-     *
-     * @return void
+     * Test for integer validation
      */
-    public function testValidateValueInteger()
+    public function testValidateValueInteger(): void
     {
         $inputValue = 0;
         $expectedResult = ['"Test" is a required value.'];
         $result = $this->model->validateValue($inputValue);
-        $this->assertEquals($expectedResult, [(string)$result[0]]);
+        self::assertEquals($expectedResult, [(string)$result[0]]);
     }
 
     /**
-     * Test without length validation.
-     *
-     * @return void
+     * Test without length validation
      */
-    public function testWithoutLengthValidation()
+    public function testWithoutLengthValidation(): void
     {
         $expectedResult = true;
         $defaultAttributeData = [
@@ -85,22 +99,23 @@ class TextTest extends \PHPUnit\Framework\TestCase
 
         $defaultAttributeData['validate_rules']['min_text_length'] = 2;
         $this->model->setAttribute($this->createAttribute($defaultAttributeData));
-        $this->assertEquals($expectedResult, $this->model->validateValue('t'));
+        self::assertEquals($expectedResult, $this->model->validateValue('t'));
 
         $defaultAttributeData['validate_rules']['max_text_length'] = 3;
         $this->model->setAttribute($this->createAttribute($defaultAttributeData));
-        $this->assertEquals($expectedResult, $this->model->validateValue('test'));
+        self::assertEquals($expectedResult, $this->model->validateValue('test'));
     }
 
     /**
      * Test of alphanumeric validation.
      *
-     * @param string $value
-     * @param bool|array $expectedResult
+     * @param {String} $value - provided value
+     * @param {Boolean|Array} $expectedResult - validation result
      * @return void
+     * @throws LocalizedException
      * @dataProvider alphanumDataProvider
      */
-    public function testAlphanumericValidation(string $value, $expectedResult)
+    public function testAlphanumericValidation($value, $expectedResult): void
     {
         $defaultAttributeData = [
             'store_label' => 'Test',
@@ -109,12 +124,12 @@ class TextTest extends \PHPUnit\Framework\TestCase
             'validate_rules' => [
                 'min_text_length' => 0,
                 'max_text_length' => 10,
-                'input_validation' => 'alphanumeric',
+                'input_validation' => 'alphanumeric'
             ],
         ];
 
         $this->model->setAttribute($this->createAttribute($defaultAttributeData));
-        $this->assertEquals($expectedResult, $this->model->validateValue($value));
+        self::assertEquals($expectedResult, $this->model->validateValue($value));
     }
 
     /**
@@ -127,17 +142,14 @@ class TextTest extends \PHPUnit\Framework\TestCase
         return [
             ['QazWsx', true],
             ['QazWsx123', true],
-            [
-                'QazWsx 123',
-                [\Zend_Validate_Alnum::NOT_ALNUM => '"Test" contains non-alphabetic or non-numeric characters.'],
+            ['QazWsx 123',
+                [Alnum::NOT_ALNUM => '"Test" contains non-alphabetic or non-numeric characters.']
             ],
-            [
-                'QazWsx_123',
-                [\Zend_Validate_Alnum::NOT_ALNUM => '"Test" contains non-alphabetic or non-numeric characters.'],
+            ['QazWsx_123',
+                [Alnum::NOT_ALNUM => '"Test" contains non-alphabetic or non-numeric characters.']
             ],
-            [
-                'QazWsx12345',
-                [__('"%1" length must be equal or less than %2 characters.', 'Test', 10)],
+            ['QazWsx12345', [
+                __('"%1" length must be equal or less than %2 characters.', 'Test', 10)]
             ],
         ];
     }
@@ -145,12 +157,13 @@ class TextTest extends \PHPUnit\Framework\TestCase
     /**
      * Test of alphanumeric validation with spaces.
      *
-     * @param string $value
-     * @param bool|array $expectedResult
+     * @param {String} $value - provided value
+     * @param {Boolean|Array} $expectedResult - validation result
      * @return void
+     * @throws LocalizedException
      * @dataProvider alphanumWithSpacesDataProvider
      */
-    public function testAlphanumericValidationWithSpaces(string $value, $expectedResult)
+    public function testAlphanumericValidationWithSpaces($value, $expectedResult): void
     {
         $defaultAttributeData = [
             'store_label' => 'Test',
@@ -159,12 +172,12 @@ class TextTest extends \PHPUnit\Framework\TestCase
             'validate_rules' => [
                 'min_text_length' => 0,
                 'max_text_length' => 10,
-                'input_validation' => 'alphanum-with-spaces',
+                'input_validation' => 'alphanum-with-spaces'
             ],
         ];
 
         $this->model->setAttribute($this->createAttribute($defaultAttributeData));
-        $this->assertEquals($expectedResult, $this->model->validateValue($value));
+        self::assertEquals($expectedResult, $this->model->validateValue($value));
     }
 
     /**
@@ -178,38 +191,51 @@ class TextTest extends \PHPUnit\Framework\TestCase
             ['QazWsx', true],
             ['QazWsx123', true],
             ['QazWsx 123', true],
-            [
-                'QazWsx_123',
-                [\Zend_Validate_Alnum::NOT_ALNUM => '"Test" contains non-alphabetic or non-numeric characters.'],
+            ['QazWsx_123',
+                [Alnum::NOT_ALNUM => '"Test" contains non-alphabetic or non-numeric characters.']
             ],
-            [
-                'QazWsx12345',
-                [__('"%1" length must be equal or less than %2 characters.', 'Test', 10)],
+            ['QazWsx12345', [
+                __('"%1" length must be equal or less than %2 characters.', 'Test', 10)]
             ],
         ];
     }
 
     /**
-     * @param array $attributeData
-     * @return \Magento\Eav\Model\Attribute
+     * Test for string with diacritics validation
      */
-    protected function createAttribute($attributeData): \Magento\Eav\Model\Entity\Attribute\AbstractAttribute
+    public function testValidateValueStringWithDiacritics(): void
     {
-        $attributeClass = \Magento\Eav\Model\Attribute::class;
-        $objectManagerHelper = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
-        $eavTypeFactory = $this->createMock(\Magento\Eav\Model\Entity\TypeFactory::class);
+        $inputValue = "á â à å ä ð é ê è ë í î ì ï ó ô ò ø õ ö ú û ù ü æ œ ç ß a ĝ ń ŕ ý ð ñ";
+        $expectedResult = true;
+        self::assertEquals($expectedResult, $this->model->validateValue($inputValue));
+    }
+
+    /**
+     * @param array $attributeData
+     * @return Attribute
+     */
+    protected function createAttribute($attributeData): AbstractAttribute
+    {
+        $attributeClass = Attribute::class;
+        $objectManagerHelper = new ObjectManager($this);
+        $eavTypeFactory = $this->createMock(TypeFactory::class);
         $arguments = $objectManagerHelper->getConstructArguments(
             $attributeClass,
             ['eavTypeFactory' => $eavTypeFactory, 'data' => $attributeData]
         );
 
-        /** @var $attribute \Magento\Eav\Model\Entity\Attribute\AbstractAttribute|
-         * \PHPUnit_Framework_MockObject_MockObject
+        $entityTypeMock = $this->createMock(Type::class);
+
+        /** @var \Magento\Eav\Model\Entity\Attribute\AbstractAttribute|MockObject $attribute
          */
         $attribute = $this->getMockBuilder($attributeClass)
-            ->setMethods(['_init'])
+            ->onlyMethods(['_init', 'getEntityType'])
             ->setConstructorArgs($arguments)
             ->getMock();
+
+        $attribute->expects($this->any())
+            ->method('getEntityType')
+            ->willReturn($entityTypeMock);
         return $attribute;
     }
 }

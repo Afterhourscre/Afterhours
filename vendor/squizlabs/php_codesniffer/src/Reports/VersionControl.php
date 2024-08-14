@@ -5,7 +5,7 @@
  * @author    Ben Selby <benmatselby@gmail.com>
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Reports;
@@ -31,20 +31,20 @@ abstract class VersionControl implements Report
      * and FALSE if it ignored the file. Returning TRUE indicates that the file and
      * its data should be counted in the grand totals.
      *
-     * @param array                 $report      Prepared report data.
-     * @param \PHP_CodeSniffer\File $phpcsFile   The file being reported on.
-     * @param bool                  $showSources Show sources?
-     * @param int                   $width       Maximum allowed line width.
+     * @param array                       $report      Prepared report data.
+     * @param \PHP_CodeSniffer\Files\File $phpcsFile   The file being reported on.
+     * @param bool                        $showSources Show sources?
+     * @param int                         $width       Maximum allowed line width.
      *
      * @return bool
      */
     public function generateFileReport($report, File $phpcsFile, $showSources=false, $width=80)
     {
-        $blames = $this->getBlameContent($report['filename']);
+        $blames = $this->getBlameContent($phpcsFile->getFilename());
 
-        $authorCache = array();
-        $praiseCache = array();
-        $sourceCache = array();
+        $authorCache = [];
+        $praiseCache = [];
+        $sourceCache = [];
 
         foreach ($report['messages'] as $line => $lineErrors) {
             $author = 'Unknown';
@@ -57,10 +57,10 @@ abstract class VersionControl implements Report
 
             if (isset($authorCache[$author]) === false) {
                 $authorCache[$author] = 0;
-                $praiseCache[$author] = array(
-                                         'good' => 0,
-                                         'bad'  => 0,
-                                        );
+                $praiseCache[$author] = [
+                    'good' => 0,
+                    'bad'  => 0,
+                ];
             }
 
             $praiseCache[$author]['bad']++;
@@ -72,10 +72,10 @@ abstract class VersionControl implements Report
                     if ($showSources === true) {
                         $source = $error['source'];
                         if (isset($sourceCache[$author][$source]) === false) {
-                            $sourceCache[$author][$source] = array(
-                                                              'count'   => 1,
-                                                              'fixable' => $error['fixable'],
-                                                             );
+                            $sourceCache[$author][$source] = [
+                                'count'   => 1,
+                                'fixable' => $error['fixable'],
+                            ];
                         } else {
                             $sourceCache[$author][$source]['count']++;
                         }
@@ -101,10 +101,10 @@ abstract class VersionControl implements Report
                 }
 
                 $authorCache[$author] = 0;
-                $praiseCache[$author] = array(
-                                         'good' => 0,
-                                         'bad'  => 0,
-                                        );
+                $praiseCache[$author] = [
+                    'good' => 0,
+                    'bad'  => 0,
+                ];
             }
 
             $praiseCache[$author]['good']++;
@@ -171,9 +171,9 @@ abstract class VersionControl implements Report
             return;
         }
 
-        $authorCache = array();
-        $praiseCache = array();
-        $sourceCache = array();
+        $authorCache = [];
+        $praiseCache = [];
+        $sourceCache = [];
 
         foreach ($lines as $line) {
             $parts = explode('>>', $line);
@@ -187,10 +187,10 @@ abstract class VersionControl implements Report
                 break;
             case 'PRAISE':
                 if (isset($praiseCache[$parts[1]]) === false) {
-                    $praiseCache[$parts[1]] = array(
-                                               'good' => $parts[2],
-                                               'bad'  => $parts[3],
-                                              );
+                    $praiseCache[$parts[1]] = [
+                        'good' => $parts[2],
+                        'bad'  => $parts[3],
+                    ];
                 } else {
                     $praiseCache[$parts[1]]['good'] += $parts[2];
                     $praiseCache[$parts[1]]['bad']  += $parts[3];
@@ -198,14 +198,14 @@ abstract class VersionControl implements Report
                 break;
             case 'SOURCE':
                 if (isset($praiseCache[$parts[1]]) === false) {
-                    $praiseCache[$parts[1]] = array();
+                    $praiseCache[$parts[1]] = [];
                 }
 
                 if (isset($sourceCache[$parts[1]][$parts[2]]) === false) {
-                    $sourceCache[$parts[1]][$parts[2]] = array(
-                                                          'count'   => $parts[3],
-                                                          'fixable' => (bool) $parts[4],
-                                                         );
+                    $sourceCache[$parts[1]][$parts[2]] = [
+                        'count'   => $parts[3],
+                        'fixable' => (bool) $parts[4],
+                    ];
                 } else {
                     $sourceCache[$parts[1]][$parts[2]]['count'] += $parts[3];
                 }

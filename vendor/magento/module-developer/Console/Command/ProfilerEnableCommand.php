@@ -6,41 +6,35 @@
 
 namespace Magento\Developer\Console\Command;
 
+use InvalidArgumentException;
+use Magento\Framework\Console\Cli;
 use Magento\Framework\Filesystem\Io\File;
+use Magento\Framework\Profiler\Driver\Standard\Output\Csvfile;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Input\InputArgument;
 
-/**
- * CLI Command to enable Magento profiler.
- */
 class ProfilerEnableCommand extends Command
 {
     /**
-     * Profiler flag file
+     * Profiler flag file path
      */
-    const PROFILER_FLAG_FILE = 'var/profiler.flag';
+    public const PROFILER_FLAG_FILE = 'var/profiler.flag';
 
     /**
      * Profiler type default setting
      */
-    const TYPE_DEFAULT = 'html';
+    public const TYPE_DEFAULT = 'html';
 
     /**
      * Built in profiler types
      */
-    const BUILT_IN_TYPES = ['html', 'csvfile'];
+    public const BUILT_IN_TYPES = ['html', 'csvfile'];
 
-    /**
-     * Command name
-     */
-    const COMMAND_NAME = 'dev:profiler:enable';
+    public const COMMAND_NAME = 'dev:profiler:enable';
 
-    /**
-     * Success message
-     */
-    const SUCCESS_MESSAGE = 'Profiler enabled with %s output.';
+    public const SUCCESS_MESSAGE = 'Profiler enabled with %s output.';
 
     /**
      * @var File
@@ -51,38 +45,44 @@ class ProfilerEnableCommand extends Command
      * Initialize dependencies.
      *
      * @param File $filesystem
-     * @param string|null $name The name of the command; passing null means it must be set in configure()
      * @internal param ConfigInterface $resourceConfig
      */
-    public function __construct(File $filesystem, $name = null)
+    public function __construct(File $filesystem)
     {
-        parent::__construct($name ?: self::COMMAND_NAME);
+        parent::__construct();
         $this->filesystem = $filesystem;
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected function configure()
     {
-        $this->setDescription('Enable the profiler.')
-            ->addArgument('type', InputArgument::OPTIONAL, 'Profiler type', self::TYPE_DEFAULT);
+        $this->setName(self::COMMAND_NAME)
+            ->setDescription('Enable the profiler.')
+            ->addArgument('type', InputArgument::OPTIONAL, 'Profiler type');
 
         parent::configure();
     }
 
     /**
-     * {@inheritdoc}
-     * @throws \InvalidArgumentException
+     * @inheritdoc
+     *
+     * @throws InvalidArgumentException
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $type = $input->getArgument('type');
-        if (!in_array($type, self::BUILT_IN_TYPES)) {
+        if (!$type) {
+            $type = self::TYPE_DEFAULT;
+        }
+
+        if (!in_array($type, self::BUILT_IN_TYPES, true)) {
             $builtInTypes = implode(', ', self::BUILT_IN_TYPES);
             $output->writeln(
-                '<comment>' . sprintf('Type %s is not one of the built-in output types (%s).', $type) .
-                sprintf('Make sure the necessary class exists.', $type, $builtInTypes) . '</comment>'
+                '<comment>'
+                . sprintf('Type %s is not one of the built-in output types (%s).', $type, $builtInTypes) .
+                '</comment>'
             );
         }
 
@@ -93,15 +93,17 @@ class ProfilerEnableCommand extends Command
                 $output->write(
                     '<info> ' . sprintf(
                         'Output will be saved in %s',
-                        \Magento\Framework\Profiler\Driver\Standard\Output\Csvfile::DEFAULT_FILEPATH
+                        Csvfile::DEFAULT_FILEPATH
                     )
                     . '</info>'
                 );
             }
             $output->write(PHP_EOL);
-            return;
-        }
 
+            return Cli::RETURN_SUCCESS;
+        }
         $output->writeln('<error>Something went wrong while enabling the profiler.</error>');
+
+        return Cli::RETURN_FAILURE;
     }
 }

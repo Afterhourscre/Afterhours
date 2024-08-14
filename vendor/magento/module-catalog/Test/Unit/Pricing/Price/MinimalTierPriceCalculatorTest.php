@@ -3,18 +3,22 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\Catalog\Test\Unit\Pricing\Price;
 
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Catalog\Pricing\Price\FinalPrice;
 use Magento\Catalog\Pricing\Price\MinimalTierPriceCalculator;
-use Magento\Framework\Pricing\SaleableInterface;
-use Magento\Framework\Pricing\PriceInfoInterface;
 use Magento\Catalog\Pricing\Price\TierPrice;
-use Magento\Framework\Pricing\Amount\AmountInterface;
 use Magento\Framework\Pricing\Adjustment\CalculatorInterface;
+use Magento\Framework\Pricing\Amount\AmountInterface;
+use Magento\Framework\Pricing\PriceInfoInterface;
+use Magento\Framework\Pricing\SaleableInterface;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class MinimalTierPriceCalculatorTest extends \PHPUnit\Framework\TestCase
+class MinimalTierPriceCalculatorTest extends TestCase
 {
     /**
      * @var ObjectManager
@@ -27,26 +31,26 @@ class MinimalTierPriceCalculatorTest extends \PHPUnit\Framework\TestCase
     private $object;
 
     /**
-     * @var SaleableInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var SaleableInterface|MockObject
      */
     private $saleable;
 
     /**
-     * @var PriceInfoInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var PriceInfoInterface|MockObject
      */
     private $priceInfo;
 
     /**
-     * @var TierPrice|\PHPUnit_Framework_MockObject_MockObject
+     * @var TierPrice|MockObject
      */
     private $price;
 
     /**
-     * @var CalculatorInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var CalculatorInterface|MockObject
      */
     private $calculator;
 
-    public function setUp()
+    protected function setUp(): void
     {
         $this->price = $this->createMock(TierPrice::class);
         $this->priceInfo = $this->getMockForAbstractClass(PriceInfoInterface::class);
@@ -70,10 +74,10 @@ class MinimalTierPriceCalculatorTest extends \PHPUnit\Framework\TestCase
         $notMinPrice = 10;
 
         $minAmount = $this->getMockForAbstractClass(AmountInterface::class);
-        $minAmount->expects($this->once())->method('getValue')->willReturn($minPrice);
+        $minAmount->expects($this->atLeastOnce())->method('getValue')->willReturn($minPrice);
 
         $notMinAmount = $this->getMockForAbstractClass(AmountInterface::class);
-        $notMinAmount->expects($this->once())->method('getValue')->willReturn($notMinPrice);
+        $notMinAmount->expects($this->atLeastOnce())->method('getValue')->willReturn($notMinPrice);
 
         $tierPriceList = [
             [
@@ -86,10 +90,14 @@ class MinimalTierPriceCalculatorTest extends \PHPUnit\Framework\TestCase
 
         $this->price->expects($this->once())->method('getTierPriceList')->willReturn($tierPriceList);
 
-        $this->priceInfo->expects($this->once())->method('getPrice')->with(TierPrice::PRICE_CODE)
-            ->willReturn($this->price);
+        $this->priceInfo->expects($this->atLeastOnce())
+            ->method('getPrice')
+            ->willReturnCallback(fn($param) => match ([$param]) {
+                [TierPrice::PRICE_CODE] => $this->price,
+                [FinalPrice::PRICE_CODE] => $notMinAmount
+            });
 
-        $this->saleable->expects($this->once())->method('getPriceInfo')->willReturn($this->priceInfo);
+        $this->saleable->expects($this->atLeastOnce())->method('getPriceInfo')->willReturn($this->priceInfo);
         return $minPrice;
     }
 
@@ -104,12 +112,8 @@ class MinimalTierPriceCalculatorTest extends \PHPUnit\Framework\TestCase
         $minPrice = $this->getValueTierPricesExistShouldReturnMinTierPrice();
 
         $amount = $this->getMockForAbstractClass(AmountInterface::class);
+        $amount->method('getValue')->willReturn($minPrice);
 
-        $this->calculator->expects($this->once())
-            ->method('getAmount')
-            ->with($minPrice, $this->saleable)
-            ->willReturn($amount);
-
-        $this->assertSame($amount, $this->object->getAmount($this->saleable));
+        $this->assertEquals($amount, $this->object->getAmount($this->saleable));
     }
 }

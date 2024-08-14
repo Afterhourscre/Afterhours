@@ -13,12 +13,11 @@
         <section name="AdminProductFormActionSection"/>
         <section name="AdminProductSEOSection"/>
         <section name="AdminProductImagesSection"/>
+        <section name="AdminAddProductsToOptionPanel"/>
         <section name="AdminProductMessagesSection"/>
-        <section name="AdminMessagesSection"/>
-        <section name="AdminProductCustomizableOptionsSection" />
-        <section name="AdminAddProductsToOptionPanelSection" />
+        <section name="AdminProductAttributesSection"/>
+        <section name="AdminProductFormRelatedUpSellCrossSellSection"/>
         <section name="AdminProductFormAdvancedPricingSection"/>
-        <section name="AdminProductContentSection"/>
-        <section name="AdminProductCustomizableOptionsImportModalSection"/>
+        <section name="AdminAddAttributeModalSection"/>
     </page>
 </pages>

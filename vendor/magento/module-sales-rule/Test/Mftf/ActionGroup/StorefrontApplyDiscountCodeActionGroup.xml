@@ -12,10 +12,10 @@
         <arguments>
             <argument name="discountCode" type="string"/>
         </arguments>
-        <click selector="{{StorefrontDiscountSection.discountTab}}" stepKey="clickToAddDiscount"/>
-        <fillField selector="{{StorefrontDiscountSection.discountInput}}" userInput="{{discountCode}}" stepKey="fillFieldDiscountCode"/>
-        <click selector="{{StorefrontDiscountSection.applyCodeBtn}}" stepKey="clickToApplyDiscount"/>
-        <waitForPageLoad stepKey="waitForDiscountToBeAdded"/>
-        <see selector="{{StorefrontDiscountSection.discountVerificationMsg}}" userInput="Your coupon was successfully applied" stepKey="assertDiscountApplyMessage"/>
+        <conditionalClick selector="{{DiscountSection.DiscountTab}}" dependentSelector="{{DiscountSection.CouponInput}}" visible="false" stepKey="clickToAddDiscount"/>
+        <fillField selector="{{DiscountSection.DiscountInput}}" userInput="{{discountCode}}" stepKey="fillFieldDiscountCode"/>
+        <click selector="{{DiscountSection.ApplyCodeBtn}}" stepKey="clickToApplyDiscount"/>
+        <waitForText selector="{{DiscountSection.DiscountVerificationMsg}}" userInput="Your coupon was successfully applied" stepKey="waitForDiscountToBeAdded"/>
+        <see selector="{{DiscountSection.DiscountVerificationMsg}}" userInput="Your coupon was successfully applied" stepKey="assertDiscountApplyMessage"/>
     </actionGroup>
 </actionGroups>

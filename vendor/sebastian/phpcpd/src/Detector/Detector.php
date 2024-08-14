@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /*
  * This file is part of PHP Copy/Paste Detector (PHPCPD).
  *
@@ -7,61 +7,32 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
 namespace SebastianBergmann\PHPCPD\Detector;
 
-use SebastianBergmann\PHPCPD\Detector\Strategy\AbstractStrategy;
 use SebastianBergmann\PHPCPD\CodeCloneMap;
-use Symfony\Component\Console\Helper\ProgressHelper;
+use SebastianBergmann\PHPCPD\Detector\Strategy\AbstractStrategy;
 
-/**
- * PHPCPD code analyser.
- *
- * @author    Johann-Peter Hartmann <johann-peter.hartmann@mayflower.de>
- * @author    Sebastian Bergmann <sebastian@phpunit.de>
- * @copyright Sebastian Bergmann <sebastian@phpunit.de>
- * @license   http://www.opensource.org/licenses/BSD-3-Clause  The BSD 3-Clause License
- * @link      http://github.com/sebastianbergmann/phpcpd/tree
- * @since     Class available since Release 1.0.0
- */
-class Detector
+final class Detector
 {
     /**
-     * @var SebastianBergmann\PHPCPD\Detector\Strategy\AbstractStrategy
+     * @var AbstractStrategy
      */
-    protected $strategy;
+    private $strategy;
 
-    /**
-     * @var Symfony\Component\Console\Helper\ProgressHelper
-     */
-    protected $progressHelper;
-
-    /**
-     * Constructor.
-     *
-     * @param AbstractStrategy $strategy
-     * @since Method available since Release 1.3.0
-     */
-    public function __construct(AbstractStrategy $strategy, ProgressHelper $progressHelper = null)
+    public function __construct(AbstractStrategy $strategy)
     {
-        $this->strategy       = $strategy;
-        $this->progressHelper = $progressHelper;
+        $this->strategy = $strategy;
     }
 
-    /**
-     * Copy & Paste Detection (CPD).
-     *
-     * @param  Iterator|array $files     List of files to process
-     * @param  integer        $minLines  Minimum number of identical lines
-     * @param  integer        $minTokens Minimum number of identical tokens
-     * @param  boolean        $fuzzy
-     * @return CodeCloneMap   Map of exact clones found in the list of files
-     */
-    public function copyPasteDetection($files, $minLines = 5, $minTokens = 70, $fuzzy = false)
+    public function copyPasteDetection(iterable $files, int $minLines = 5, int $minTokens = 70, bool $fuzzy = false): CodeCloneMap
     {
         $result = new CodeCloneMap;
 
         foreach ($files as $file) {
+            if (empty($file)) {
+                continue;
+            }
+
             $this->strategy->processFile(
                 $file,
                 $minLines,
@@ -69,10 +40,6 @@ class Detector
                 $result,
                 $fuzzy
             );
-
-            if ($this->progressHelper !== null) {
-                $this->progressHelper->advance();
-            }
         }
 
         return $result;

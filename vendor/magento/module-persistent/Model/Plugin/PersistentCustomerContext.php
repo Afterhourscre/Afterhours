@@ -3,6 +3,8 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Persistent\Model\Plugin;
 
 /**
@@ -11,7 +13,7 @@ namespace Magento\Persistent\Model\Plugin;
 class PersistentCustomerContext
 {
     /**
-     * Persistent session
+     * Persistent session.
      *
      * @var \Magento\Persistent\Helper\Session
      */
@@ -27,6 +29,8 @@ class PersistentCustomerContext
     }
 
     /**
+     * Sets appropriate header if customer session is persistent.
+     *
      * @param \Magento\Framework\App\Http\Context $subject
      * @return mixed
      */

@@ -8,10 +8,8 @@
 <?php $_option = $block->getOption(); ?>
 <div class="field admin__field<?= $_option->getIsRequire() ? ' required _required' : '' ?>">
     <label class="admin__field-label label">
-        <span>
-            <?= $block->escapeHtml($_option->getTitle()) ?>
-            <?= /* @noEscape */ $block->getFormattedPrice() ?>
-        </span>
+        <?= $block->escapeHtml($_option->getTitle()) ?>
+        <?= /* @noEscape */ $block->getFormattedPrice() ?>
     </label>
     <div class="control admin__field-control">
         <?php if ($_option->getType() == \Magento\Catalog\Api\Data\ProductCustomOptionInterface::OPTION_TYPE_FIELD) :?>

@@ -13,9 +13,11 @@ use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Query\Generator as QueryGenerator;
 use Magento\Framework\DB\Select;
 use Magento\Framework\EntityManager\MetadataPool;
+use Magento\Framework\ObjectManager\ResetAfterRequestInterface;
+use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\Store;
-use Magento\Catalog\Model\Indexer\Category\Product\TableMaintainer;
 
+// phpcs:disable Magento2.Classes.AbstractApi
 /**
  * Class AbstractAction
  *
@@ -23,29 +25,31 @@ use Magento\Catalog\Model\Indexer\Category\Product\TableMaintainer;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @since 100.0.2
+ * phpcs:disable Magento2.Annotation.MethodAnnotationStructure.InvalidDeprecatedTagUsage
  */
-abstract class AbstractAction
+abstract class AbstractAction implements ResetAfterRequestInterface
 {
     /**
      * Chunk size
      */
-    const RANGE_CATEGORY_STEP = 500;
+    public const RANGE_CATEGORY_STEP = 500;
 
     /**
      * Chunk size for product
      */
-    const RANGE_PRODUCT_STEP = 1000000;
+    public const RANGE_PRODUCT_STEP = 1000000;
 
     /**
      * Catalog category index table name
      */
-    const MAIN_INDEX_TABLE = 'catalog_category_product_index';
+    public const MAIN_INDEX_TABLE = 'catalog_category_product_index';
 
     /**
      * Suffix for table to show it is temporary
      * @deprecated
+     * @see getIndexTable
      */
-    const TEMPORARY_TABLE_SUFFIX = '_tmp';
+    public const TEMPORARY_TABLE_SUFFIX = '_tmp';
 
     /**
      * Cached non anchor categories select by store id
@@ -110,6 +114,7 @@ abstract class AbstractAction
 
     /**
      * @var TableMaintainer
+     * @since 102.0.5
      */
     protected $tableMaintainer;
 
@@ -125,10 +130,9 @@ abstract class AbstractAction
     private $queryGenerator;
 
     /**
-     * Current store id.
-     * @var int
+     * @var StoreInterface
      */
-    private $currentStoreId = 0;
+    private $currentStore;
 
     /**
      * @param ResourceConnection $resource
@@ -156,6 +160,20 @@ abstract class AbstractAction
     }
 
     /**
+     * @inheritDoc
+     */
+    public function _resetState(): void
+    {
+        $this->nonAnchorSelects = [];
+        $this->anchorSelects = [];
+        $this->productsSelects = [];
+        $this->categoryPath = [];
+        $this->useTempTable = true;
+        $this->tempTreeIndexTableName = null;
+        $this->currentStore = null;
+    }
+
+    /**
      * Run full reindex
      *
      * @return $this
@@ -171,12 +189,34 @@ abstract class AbstractAction
     {
         foreach ($this->storeManager->getStores() as $store) {
             if ($this->getPathFromCategoryId($store->getRootCategoryId())) {
-                $this->currentStoreId = $store->getId();
+                $this->setCurrentStore($store);
                 $this->reindexRootCategory($store);
                 $this->reindexAnchorCategories($store);
                 $this->reindexNonAnchorCategories($store);
             }
         }
+    }
+
+    /**
+     * Set current store
+     *
+     * @param StoreInterface $store
+     * @return $this
+     */
+    private function setCurrentStore(StoreInterface $store): self
+    {
+        $this->currentStore = $store;
+        return $this;
+    }
+
+    /**
+     * Get current store
+     *
+     * @return StoreInterface
+     */
+    private function getCurrentStore(): StoreInterface
+    {
+        return $this->currentStore;
     }
 
     /**
@@ -197,7 +237,7 @@ abstract class AbstractAction
      * The name is switched between 'catalog_category_product_index' and 'catalog_category_product_index_replica'
      *
      * @return string
-     * @deprecated
+     * @deprecated 102.0.5
      */
     protected function getMainTable()
     {
@@ -208,7 +248,7 @@ abstract class AbstractAction
      * Return temporary index table name
      *
      * @return string
-     * @deprecated
+     * @deprecated 102.0.5
      */
     protected function getMainTmpTable()
     {
@@ -222,6 +262,7 @@ abstract class AbstractAction
      *
      * @param int $storeId
      * @return string
+     * @since 102.0.5
      */
     protected function getIndexTable($storeId)
     {
@@ -396,7 +437,7 @@ abstract class AbstractAction
             [
                 'cc.entity_id',
                 'ccp.product_id',
-                'visibility'
+                'visibility',
             ]
         );
     }
@@ -419,14 +460,17 @@ abstract class AbstractAction
      * @param int $range
      * @return Select[]
      */
-    protected function prepareSelectsByRange(Select $select, $field, $range = self::RANGE_CATEGORY_STEP)
-    {
+    protected function prepareSelectsByRange(
+        Select $select,
+        string $field,
+        int $range = self::RANGE_CATEGORY_STEP
+    ) {
         if ($this->isRangingNeeded()) {
             $iterator = $this->queryGenerator->generate(
                 $field,
                 $select,
                 $range,
-                \Magento\Framework\DB\Query\BatchIteratorInterface::NON_UNIQUE_FIELD_ITERATOR
+                \Magento\Framework\DB\Query\BatchIteratorInterface::UNIQUE_FIELD_ITERATOR
             );
 
             $queries = [];
@@ -480,15 +524,13 @@ abstract class AbstractAction
      */
     protected function createAnchorSelect(Store $store)
     {
+        $this->setCurrentStore($store);
         $isAnchorAttributeId = $this->config->getAttribute(
             \Magento\Catalog\Model\Category::ENTITY,
             'is_anchor'
         )->getId();
         $statusAttributeId = $this->config->getAttribute(Product::ENTITY, 'status')->getId();
-        $visibilityAttributeId = $this->config->getAttribute(
-            Product::ENTITY,
-            'visibility'
-        )->getId();
+        $visibilityAttributeId = $this->config->getAttribute(Product::ENTITY, 'visibility')->getId();
         $rootCatIds = explode('/', $this->getPathFromCategoryId($store->getRootCategoryId()));
         array_pop($rootCatIds);
 
@@ -504,14 +546,19 @@ abstract class AbstractAction
             []
         )->joinInner(
             ['cc2' => $temporaryTreeTable],
-            'cc2.parent_id = cc.entity_id AND cc.entity_id NOT IN (' . implode(
-                ',',
-                $rootCatIds
-            ) . ')',
+            $this->connection->quoteInto(
+                'cc2.parent_id = cc.entity_id AND cc.entity_id NOT IN (?)',
+                $rootCatIds,
+                \Zend_Db::INT_TYPE
+            ),
             []
         )->joinInner(
             ['ccp' => $this->getTable('catalog_category_product')],
             'ccp.category_id = cc2.child_id',
+            []
+        )->joinLeft(
+            ['ccp2' => $this->getTable('catalog_category_product')],
+            'ccp2.category_id = cc2.parent_id AND ccp.product_id = ccp2.product_id',
             []
         )->joinInner(
             ['cpe' => $this->getTable('catalog_product_entity')],
@@ -575,7 +622,9 @@ abstract class AbstractAction
             [
                 'category_id' => 'cc.entity_id',
                 'product_id' => 'ccp.product_id',
-                'position' => new \Zend_Db_Expr('ccp.position + 10000'),
+                'position' => new \Zend_Db_Expr(
+                    $this->connection->getIfNullSql('ccp2.position', 'MIN(ccp.position) + 10000')
+                ),
                 'is_parent' => new \Zend_Db_Expr('0'),
                 'store_id' => new \Zend_Db_Expr($store->getId()),
                 'visibility' => new \Zend_Db_Expr($this->connection->getIfNullSql('cpvs.value', 'cpvd.value')),
@@ -588,6 +637,8 @@ abstract class AbstractAction
     }
 
     /**
+     * Get temporary table name
+     *
      * Get temporary table name for concurrent indexing in persistent connection
      * Temp table name is NOT shared between action instances and each action has it's own temp tree index
      *
@@ -643,7 +694,6 @@ abstract class AbstractAction
             ['child_id'],
             ['type' => \Magento\Framework\DB\Adapter\AdapterInterface::INDEX_TYPE_INDEX]
         );
-
         // Drop the temporary table in case it already exists on this (persistent?) connection.
         $this->connection->dropTemporaryTable($temporaryName);
         $this->connection->createTemporaryTable($temporaryTable);
@@ -654,10 +704,9 @@ abstract class AbstractAction
     }
 
     /**
-     * Populate the temporary category tree index table.
+     * Populate the temporary category tree index table
      *
      * @param string $temporaryName
-     * @return void
      * @since 101.0.0
      */
     protected function fillTempCategoryTreeIndex($temporaryName)
@@ -675,14 +724,14 @@ abstract class AbstractAction
                     ['entity_id', 'path']
                 )->joinInner(
                     ['ccacd' => $this->getTable('catalog_category_entity_int')],
-                    'ccacd.' . $categoryLinkField . ' = c.' . $categoryLinkField
-                    . ' AND ccacd.store_id = 0' . ' AND ccacd.attribute_id = ' . $isActiveAttributeId,
+                    'ccacd.' . $categoryLinkField . ' = c.' . $categoryLinkField . ' AND ccacd.store_id = 0' .
+                    ' AND ccacd.attribute_id = ' . $isActiveAttributeId,
                     []
                 )->joinLeft(
                     ['ccacs' => $this->getTable('catalog_category_entity_int')],
                     'ccacs.' . $categoryLinkField . ' = c.' . $categoryLinkField
-                    . ' AND ccacs.attribute_id = ccacd.attribute_id AND ccacs.store_id = '
-                    . $this->currentStoreId,
+                    . ' AND ccacs.attribute_id = ccacd.attribute_id AND ccacs.store_id = ' .
+                    $this->getCurrentStore()->getId(),
                     []
                 )->where(
                     $this->connection->getIfNullSql('ccacs.value', 'ccacd.value') . ' = ?',
@@ -694,8 +743,14 @@ abstract class AbstractAction
         foreach ($selects as $select) {
             $values = [];
 
-            foreach ($this->connection->fetchAll($select) as $category) {
-                foreach (explode('/', $category['path']) as $parentId) {
+            $categories = $this->connection->fetchAll($select);
+            foreach ($categories as $category) {
+                $categoriesTree = explode('/', $category['path']);
+                foreach ($categoriesTree as $parentId) {
+                    if (!in_array($this->getCurrentStore()->getRootCategoryId(), $categoriesTree, true)) {
+                        break;
+                    }
+
                     if ($parentId !== $category['entity_id']) {
                         $values[] = [$parentId, $category['entity_id']];
                     }
@@ -709,7 +764,7 @@ abstract class AbstractAction
     }
 
     /**
-     * Retrieve select for reindex products of non anchor categories
+     * Retrieve select for reindex products of anchor categories
      *
      * @param Store $store
      * @return Select
@@ -754,14 +809,8 @@ abstract class AbstractAction
     protected function getAllProducts(Store $store)
     {
         if (!isset($this->productsSelects[$store->getId()])) {
-            $statusAttributeId = $this->config->getAttribute(
-                Product::ENTITY,
-                'status'
-            )->getId();
-            $visibilityAttributeId = $this->config->getAttribute(
-                Product::ENTITY,
-                'visibility'
-            )->getId();
+            $statusAttributeId = $this->config->getAttribute(Product::ENTITY, 'status')->getId();
+            $visibilityAttributeId = $this->config->getAttribute(Product::ENTITY, 'visibility')->getId();
 
             $metadata = $this->metadataPool->getMetadata(ProductInterface::class);
             $linkField = $metadata->getLinkField();
@@ -821,7 +870,7 @@ abstract class AbstractAction
                     'category_id' => new \Zend_Db_Expr($store->getRootCategoryId()),
                     'product_id' => 'cp.entity_id',
                     'position' => new \Zend_Db_Expr(
-                        $this->connection->getCheckSql('ccp.product_id IS NOT NULL', 'ccp.position', '0')
+                        $this->connection->getCheckSql('ccp.product_id IS NOT NULL', 'MIN(ccp.position)', '10000')
                     ),
                     'is_parent' => new \Zend_Db_Expr(
                         $this->connection->getCheckSql('ccp.product_id IS NOT NULL', '1', '0')

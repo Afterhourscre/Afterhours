@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /*
  * This file is part of Composer.
@@ -12,6 +12,8 @@
 
 namespace Composer\Util;
 
+use Composer\XdebugHandler\XdebugHandler;
+
 /**
  * Provides ini file location functions that work with and without a restart.
  * When the process has restarted it uses a tmp ini and stores the original
@@ -21,44 +23,40 @@ namespace Composer\Util;
  */
 class IniHelper
 {
-    const ENV_ORIGINAL = 'COMPOSER_ORIGINAL_INIS';
-
     /**
      * Returns an array of php.ini locations with at least one entry
      *
      * The equivalent of calling php_ini_loaded_file then php_ini_scanned_files.
      * The loaded ini location is the first entry and may be empty.
      *
-     * @return array
+     * @return string[]
      */
-    public static function getAll()
+    public static function getAll(): array
     {
-        if ($env = strval(getenv(self::ENV_ORIGINAL))) {
-            return explode(PATH_SEPARATOR, $env);
-        }
-
-        $paths = array(strval(php_ini_loaded_file()));
-
-        if ($scanned = php_ini_scanned_files()) {
-            $paths = array_merge($paths, array_map('trim', explode(',', $scanned)));
-        }
-
-        return $paths;
+        return XdebugHandler::getAllIniFiles();
     }
 
     /**
-     * Describes the location of the loaded php.ini file
-     *
-     * @return string
+     * Describes the location of the loaded php.ini file(s)
      */
-    public static function getMessage()
+    public static function getMessage(): string
     {
         $paths = self::getAll();
 
         if (empty($paths[0])) {
+            array_shift($paths);
+        }
+
+        $ini = array_shift($paths);
+
+        if (empty($ini)) {
             return 'A php.ini file does not exist. You will have to create one.';
         }
 
-        return 'The php.ini used by your command-line PHP is: '.$paths[0];
+        if (!empty($paths)) {
+            return 'Your command-line PHP is using multiple ini files. Run `php --ini` to show them.';
+        }
+
+        return 'The php.ini used by your command-line PHP is: '.$ini;
     }
 }

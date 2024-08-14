@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Tests\CSS;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class EmptyStyleDefinitionUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the EmptyStyleDefinition sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Squiz\Sniffs\CSS\EmptyStyleDefinitionSniff
+ */
+final class EmptyStyleDefinitionUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,10 +30,12 @@ class EmptyStyleDefinitionUnitTest extends AbstractSniffUnitTest
      */
     public function getErrorList()
     {
-        return array(
-                3 => 1,
-                4 => 1,
-               );
+        return [
+            3  => 1,
+            4  => 1,
+            8  => 1,
+            10 => 1,
+        ];
 
     }//end getErrorList()
 
@@ -43,7 +50,7 @@ class EmptyStyleDefinitionUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Tests\CSS;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class ShorthandSizeUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the ShorthandSize sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Squiz\Sniffs\CSS\ShorthandSizeSniff
+ */
+final class ShorthandSizeUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,17 +30,18 @@ class ShorthandSizeUnitTest extends AbstractSniffUnitTest
      */
     public function getErrorList()
     {
-        return array(
-                8  => 1,
-                9  => 1,
-                10 => 1,
-                11 => 1,
-                12 => 1,
-                13 => 1,
-                15 => 1,
-                16 => 1,
-                17 => 1,
-               );
+        return [
+            8  => 1,
+            9  => 1,
+            10 => 1,
+            11 => 1,
+            12 => 1,
+            13 => 1,
+            15 => 1,
+            16 => 1,
+            17 => 1,
+            21 => 1,
+        ];
 
     }//end getErrorList()
 
@@ -50,7 +56,7 @@ class ShorthandSizeUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

@@ -9,6 +9,8 @@ namespace Magento\Indexer\Model;
 
 /**
  * DTO to work with dimension modes
+ *
+ * @api
  */
 class DimensionModes
 {
@@ -26,7 +28,7 @@ class DimensionModes
             $result = [];
             foreach ($dimensions as $dimension) {
                 $result[$dimension->getName()] = $dimension;
-            };
+            }
             return $result;
         })(...$dimensions);
     }

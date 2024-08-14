@@ -22,7 +22,7 @@ $numColumns = count($block->getColumns());
             <?php if ($block->isHeaderVisible() || $block->getFilterVisibility()) : ?>
                 <tr>
                 <?php foreach ($block->getColumns() as $_column) : ?>
-                <?php /* @var $_column \Magento\Backend\Block\Widget\Grid\Column */ ?>
+                    <?php /* @var $_column \Magento\Backend\Block\Widget\Grid\Column */ ?>
                     <?php if ($_column->getHeaderHtml() == '&nbsp;') :?>
                         <th class="data-grid-th" data-column="<?= $block->escapeHtmlAttr($_column->getId()) ?>"
                             <?= $_column->getHeaderHtmlProperty() ?>>&nbsp;</th>
@@ -47,37 +47,36 @@ $numColumns = count($block->getColumns());
     <tbody>
 
         <?php if ($block->getCollection()->getSize() > 0 && !$block->getIsCollapsed()) : ?>
-        <?php foreach ($block->getCollection() as $_index => $_item) : ?>
-            <?php if ($block->hasMultipleRows($_item)) :?>
-                <?php $block->updateItemByFirstMultiRow($_item); ?>
-                <tr title="<?= $block->escapeUrl($block->getRowUrl($_item)) ?>" data-role="row"
+            <?php foreach ($block->getCollection() as $_index => $_item) : ?>
+                <?php if ($block->hasMultipleRows($_item)) :?>
+                    <?php $block->updateItemByFirstMultiRow($_item); ?>
+                <tr title="<?= $block->escapeHtmlAttr($block->getRowUrl($_item)) ?>" data-role="row"
                     <?php if ($_class = $block->getRowClass($_item)) :?> class="<?= $block->escapeHtmlAttr($_class) ?>"<?php endif;?>
                 ><?php $i = 0; foreach ($block->getColumns() as $_column) :
                     if ($block->shouldRenderCell($_item, $_column)) :
-                        $_rowspan = $block->getRowspan($_item, $_column);
+                            $_rowspan = $block->getRowspan($_item, $_column);
                         ?><td data-column="<?= $block->escapeHtmlAttr($_column->getId()) ?>"
-                            <?= /* @noEscape */($_rowspan ? 'rowspan="' . $_rowspan . '" ' : '') ?>
-                            class="<?= $block->escapeHtmlAttr($_column->getCssProperty()) ?> <?= /* @noEscape */ $_column->getId() == 'massaction' ? 'data-grid-checkbox-cell': '' ?> <?= ++$i == $numColumns ? 'last' : '' ?>"
+                                <?= /* @noEscape */ ($_rowspan ? 'rowspan="' . $_rowspan . '" ' : '') ?>
+                                class="<?= $block->escapeHtmlAttr($_column->getCssProperty()) ?> <?= /* @noEscape */ $_column->getId() == 'massaction' ? 'data-grid-checkbox-cell': '' ?> <?= ++$i == $numColumns ? 'last' : '' ?>"
                             >
-                            <?= /* @noEscape */ (($_html = $_column->getRowField($_item)) != '' ? $_html : '&nbsp;') ?>
-                        </td>
-                        <?php
-                        if ($block->shouldRenderEmptyCell($_item, $_column)) : ?>
-                            <td colspan="<?= $block->escapeHtmlAttr($block->getEmptyCellColspan($_item)) ?>" class="last">
-                            <?= $block->escapeHtmlAttr($block->getEmptyCellLabel()) ?>
+                                <?= /* @noEscape */ (($_html = $_column->getRowField($_item)) != '' ? $_html : '&nbsp;') ?>
                             </td><?php
+                            if ($block->shouldRenderEmptyCell($_item, $_column)) :?>
+                                <td colspan="<?= $block->escapeHtmlAttr($block->getEmptyCellColspan($_item)) ?>" class="last">
+                                <?= $block->escapeHtml($block->getEmptyCellLabel()) ?>
+                                </td><?php
+                            endif;
                         endif;
-                    endif;
-                endforeach;
-                ?></tr>
-                <?php $_isFirstRow = true; ?>
-                <?php foreach ($block->getMultipleRows($_item) as $_i) :?>
-                    <?php
-                    if ($_isFirstRow) {
-                        $_isFirstRow = false;
-                        continue;
-                    }
-                    ?>
+                    endforeach;
+?></tr>
+                    <?php $_isFirstRow = true; ?>
+                    <?php foreach ($block->getMultipleRows($_item) as $_i) : ?>
+                        <?php
+                        if ($_isFirstRow) {
+                            $_isFirstRow = false;
+                            continue;
+                        }
+                        ?>
                     <tr data-role="row">
                         <?php $i = 0; foreach ($block->getMultipleRowColumns($_i) as $_column) :
                             ?><td data-column="<?= $block->escapeHtmlAttr($_column->getId()) ?>"
@@ -89,19 +88,19 @@ $numColumns = count($block->getColumns());
                     </tr>
                 <?php endforeach;?>
 
-                <?php if ($block->shouldRenderSubTotal($_item)) : ?>
+                    <?php if ($block->shouldRenderSubTotal($_item)) : ?>
                     <tr class="subtotals">
                         <?php $i = 0; foreach ($block->getMultipleRowColumns() as $_column) : ?>
                             <td data-column="<?= $block->escapeHtmlAttr($_column->getId()) ?>"
                                 class="<?= $block->escapeHtmlAttr($_column->getCssProperty()) ?> <?= /* @noEscape */ $_column->getId() == 'massaction' ? 'data-grid-checkbox-cell': '' ?> <?= ++$i == $numColumns ? 'last' : '' ?>"
                             >
-                                <?= /* @noEscape */ $_column->hasSubtotalsLabel() ? $block->escapeHtml($_column->getSubtotalsLabel()) : $_column->getRowField($block->getSubTotals($_item)); ?>
+                                <?= /* @noEscape */ $_column->hasSubtotalsLabel() ? $block->escapeHtml($_column->getSubtotalsLabel()) : $_column->getRowField($block->getSubTotals($_item)) ?>
                             </td>
                         <?php endforeach; ?>
                     </tr>
                 <?php endif; ?>
             <?php else : ?>
-                <tr data-role="row" title="<?= $block->escapeUrl($block->getRowUrl($_item)) ?>"<?php if ($_class = $block->getRowClass($_item)) : ?>
+                <tr data-role="row" title="<?= $block->escapeHtmlAttr($block->getRowUrl($_item)) ?>"<?php if ($_class = $block->getRowClass($_item)) : ?>
                     class="<?= $block->escapeHtmlAttr($_class) ?>"<?php endif;?>
                 >
                     <?php $i = 0; foreach ($block->getColumns() as $_column) : ?>
@@ -111,7 +110,7 @@ $numColumns = count($block->getColumns());
                             >
                                 <?= /* @noEscape */ (($_html = $_column->getRowField($_item)) != '' ? $_html : '&nbsp;') ?>
                             </td>
-                            <?php if ($block->shouldRenderEmptyCell($_item, $_column)) :?>
+                            <?php if ($block->shouldRenderEmptyCell($_item, $_column)) : ?>
                                 <td data-column="<?= $block->escapeHtmlAttr($_column->getId()) ?>"
                                     colspan="<?= $block->escapeHtmlAttr($block->getEmptyCellColspan($_item)) ?>"
                                     class="col-no-records <?= $block->escapeHtmlAttr($block->getEmptyTextClass()) ?> last"
@@ -127,7 +126,7 @@ $numColumns = count($block->getColumns());
         <?php elseif ($block->getEmptyText()) : ?>
             <tr class="data-grid-tr-no-data" data-role="row">
                 <td class="<?= $block->escapeHtmlAttr($block->getEmptyTextClass()) ?>"
-                    colspan="<?= $block->escapeHtmlAttr($numColumns) ?>"><?= $block->escapeHtmlAttr($block->getEmptyText()) ?></td>
+                    colspan="<?= $block->escapeHtmlAttr($numColumns) ?>"><?= $block->escapeHtml($block->getEmptyText()) ?></td>
             </tr>
         <?php endif; ?>
     </tbody>
@@ -139,8 +138,7 @@ $numColumns = count($block->getColumns());
                 <th data-column="<?= $block->escapeHtmlAttr($_column->getId()) ?>"
                     class="<?= $block->escapeHtmlAttr($_column->getCssProperty()) ?>"
                 >
-                    <?= /* @noEscape */ ($_column->hasTotalsLabel()) ? $block->escapeHtml($_column->getTotalsLabel())
-                        : $_column->getRowField($block->getTotals()) ?>
+                    <?= /* @noEscape */ ($_column->hasTotalsLabel()) ? $block->escapeHtml($_column->getTotalsLabel()) : $_column->getRowField($block->getTotals()) ?>
                 </th>
             <?php endforeach; ?>
         </tr>

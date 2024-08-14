@@ -6,6 +6,9 @@
 namespace Magento\SalesRule\Model\ResourceModel;
 
 use Magento\Framework\Model\AbstractModel;
+use Magento\Framework\Model\ResourceModel\Db\Context;
+use Magento\Framework\Stdlib\DateTime;
+use Magento\Framework\Stdlib\DateTime\DateTime as Date;
 
 /**
  * SalesRule Resource Coupon
@@ -15,6 +18,33 @@ use Magento\Framework\Model\AbstractModel;
 class Coupon extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb implements
     \Magento\SalesRule\Model\Spi\CouponResourceInterface
 {
+    /**
+     * @var Date
+     */
+    private $date;
+
+    /**
+     * @var DateTime
+     */
+    private $dateTime;
+
+    /**
+     * @param Context $context
+     * @param Date $date
+     * @param DateTime $dateTime
+     * @param string|null $connectionName
+     */
+    public function __construct(
+        Context $context,
+        Date $date,
+        DateTime $dateTime,
+        $connectionName = null
+    ) {
+        parent::__construct($context, $connectionName);
+        $this->date = $date;
+        $this->dateTime = $dateTime;
+    }
+
     /**
      * Constructor adds unique fields
      *
@@ -37,16 +67,19 @@ class Coupon extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb implem
         // maintain single primary coupon per rule
         $object->setIsPrimary($object->getIsPrimary() ? 1 : null);
 
+        $object->setUsageLimit($object->getUsageLimit() ?? 0);
+        $object->setUsagePerCustomer($object->getUsagePerCustomer() ?? 0);
+        $object->setCreatedAt($object->getCreatedAt() ?? $this->dateTime->formatDate($this->date->gmtTimestamp()));
         return parent::_beforeSave($object);
     }
 
     /**
      * Load primary coupon (is_primary = 1) for specified rule
      *
-     *
      * @param \Magento\SalesRule\Model\Coupon $object
      * @param \Magento\SalesRule\Model\Rule|int $rule
      * @return bool
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function loadPrimaryByRule(\Magento\SalesRule\Model\Coupon $object, $rule)
     {

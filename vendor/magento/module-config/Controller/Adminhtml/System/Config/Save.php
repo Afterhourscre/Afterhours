@@ -3,10 +3,12 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
 namespace Magento\Config\Controller\Adminhtml\System\Config;
 
+use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
 use Magento\Config\Controller\Adminhtml\System\AbstractConfig;
-use Magento\Framework\Exception\NotFoundException;
+use Magento\Framework\Exception\LocalizedException;
 
 /**
  * System Configuration Save Controller
@@ -14,7 +16,7 @@ use Magento\Framework\Exception\NotFoundException;
  * @author     Magento Core Team <core@magentocommerce.com>
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class Save extends AbstractConfig
+class Save extends AbstractConfig implements HttpPostActionInterface
 {
     /**
      * Backend Config Model Factory
@@ -53,6 +55,18 @@ class Save extends AbstractConfig
         $this->_configFactory = $configFactory;
         $this->_cache = $cache;
         $this->string = $string;
+    }
+
+    /**
+     * Save configuration state
+     * phpcs:disable Generic.CodeAnalysis.UselessOverridingMethod
+     *
+     * @param array $configState
+     * @return bool
+     */
+    public function _saveState($configState = []): bool
+    {
+        return parent::_saveState($configState);
     }
 
     /**
@@ -203,33 +217,20 @@ class Save extends AbstractConfig
      * Save configuration
      *
      * @return \Magento\Backend\Model\View\Result\Redirect
-     * @throws NotFoundException
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new NotFoundException(__('Page not found'));
-        }
-
         try {
             // custom save logic
-            $this->_saveSection();
-            $section = $this->getRequest()->getParam('section');
-            $website = $this->getRequest()->getParam('website');
-            $store = $this->getRequest()->getParam('store');
+            $configData = $this->getConfigData();
 
-            $configData = [
-                'section' => $section,
-                'website' => $website,
-                'store' => $store,
-                'groups' => $this->_getGroupsForSave(),
-            ];
-            $configData = $this->filterNodes($configData);
-
-            /** @var \Magento\Config\Model\Config $configModel  */
+            /** @var \Magento\Config\Model\Config $configModel */
             $configModel = $this->_configFactory->create(['data' => $configData]);
             $configModel->save();
-
+            $this->_eventManager->dispatch(
+                'admin_system_config_save',
+                ['configData' => $configData, 'request' => $this->getRequest()]
+            );
             $this->messageManager->addSuccess(__('You saved the configuration.'));
         } catch (\Magento\Framework\Exception\LocalizedException $e) {
             $messages = explode("\n", $e->getMessage());
@@ -319,20 +320,50 @@ class Save extends AbstractConfig
      * @param array $configData
      * @return array
      */
-    private function filterNodes(array $configData): array
+    public function filterNodes(array $configData): array
     {
         if (!empty($configData['groups'])) {
-            $systemXmlPathsFromKeys = array_keys($this->_configStructure->getFieldPaths());
-            $systemXmlPathsFromValues = array_reduce(
-                array_values($this->_configStructure->getFieldPaths()),
-                'array_merge',
-                []
-            );
             //Full list of paths defined in system.xml
-            $systemXmlConfig = array_merge($systemXmlPathsFromKeys, $systemXmlPathsFromValues);
+            $fieldPaths = $this->_configStructure->getFieldPaths();
+            $systemXmlConfig = array_merge(array_keys($fieldPaths), ...array_values($fieldPaths));
             $configData['groups'] = $this->filterPaths($configData['section'], $configData['groups'], $systemXmlConfig);
         }
+        return $configData;
+    }
 
+    /**
+     * Get Config data from Request
+     *
+     * @return array
+     * @throws LocalizedException
+     */
+    public function getConfigData()
+    {
+        $this->_saveSection();
+        $section = $this->getRequest()->getParam('section');
+        $website = $this->getRequest()->getParam('website');
+        $store = $this->getRequest()->getParam('store');
+        $configData = [
+            'section' => $section,
+            'website' => $website,
+            'store' => $store,
+            'groups' => $this->_getGroupsForSave(),
+        ];
+        $configData = $this->filterNodes($configData);
+
+        $groups = $this->getRequest()->getParam('groups');
+
+        if (isset($groups['country']['fields'])) {
+            if (isset($groups['country']['fields']['eu_countries'])) {
+                $countries = $groups['country']['fields']['eu_countries'];
+                if (empty($countries['value']) &&
+                    !isset($countries['inherit'])) {
+                    throw new LocalizedException(
+                        __('Something went wrong while saving this configuration.')
+                    );
+                }
+            }
+        }
         return $configData;
     }
 }

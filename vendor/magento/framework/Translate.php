@@ -11,6 +11,7 @@ use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Filesystem\Driver\File;
 use Magento\Framework\Filesystem\DriverInterface;
+use Magento\Framework\ObjectManager\ResetAfterRequestInterface;
 
 /**
  * Translate library
@@ -18,17 +19,15 @@ use Magento\Framework\Filesystem\DriverInterface;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.TooManyFields)
  */
-class Translate implements \Magento\Framework\TranslateInterface
+class Translate implements \Magento\Framework\TranslateInterface, ResetAfterRequestInterface
 {
-    const CONFIG_AREA_KEY = 'area';
-    const CONFIG_LOCALE_KEY = 'locale';
-    const CONFIG_SCOPE_KEY = 'scope';
-    const CONFIG_THEME_KEY = 'theme';
-    const CONFIG_MODULE_KEY = 'module';
+    public const CONFIG_AREA_KEY = 'area';
+    public const CONFIG_LOCALE_KEY = 'locale';
+    public const CONFIG_SCOPE_KEY = 'scope';
+    public const CONFIG_THEME_KEY = 'theme';
+    public const CONFIG_MODULE_KEY = 'module';
 
     /**
-     * Locale code
-     *
      * @var string
      */
     protected $_localeCode;
@@ -60,7 +59,7 @@ class Translate implements \Magento\Framework\TranslateInterface
     protected $_viewDesign;
 
     /**
-     * @var \Magento\Framework\Cache\FrontendInterface $cache
+     * @var \Magento\Framework\Cache\FrontendInterface
      */
     protected $_cache;
 
@@ -120,14 +119,14 @@ class Translate implements \Magento\Framework\TranslateInterface
     protected $packDictionary;
 
     /**
-     * @var DriverInterface
-     */
-    private $fileDriver;
-
-    /**
      * @var \Magento\Framework\Serialize\SerializerInterface
      */
     private $serializer;
+
+    /**
+     * @var DriverInterface
+     */
+    private $fileDriver;
 
     /**
      * @param \Magento\Framework\View\DesignInterface $viewDesign
@@ -176,14 +175,15 @@ class Translate implements \Magento\Framework\TranslateInterface
         $this->directory = $filesystem->getDirectoryRead(DirectoryList::ROOT);
         $this->_csvParser = $csvParser;
         $this->packDictionary = $packDictionary;
-        $this->fileDriver = $fileDriver ?: ObjectManager::getInstance()->get(File::class);
+        $this->fileDriver = $fileDriver
+            ?? ObjectManager::getInstance()->get(File::class);
 
         $this->_config = [
             self::CONFIG_AREA_KEY => null,
             self::CONFIG_LOCALE_KEY => null,
             self::CONFIG_SCOPE_KEY => null,
             self::CONFIG_THEME_KEY => null,
-            self::CONFIG_MODULE_KEY => null
+            self::CONFIG_MODULE_KEY => null,
         ];
     }
 
@@ -193,7 +193,6 @@ class Translate implements \Magento\Framework\TranslateInterface
      * @param string|null $area
      * @param bool $forceReload
      * @return $this
-     * @throws Exception\LocalizedException
      */
     public function loadData($area = null, $forceReload = false)
     {
@@ -208,7 +207,8 @@ class Translate implements \Magento\Framework\TranslateInterface
         );
 
         if (!$forceReload) {
-            if (false !== $data = $this->_loadCache()) {
+            $data = $this->_loadCache();
+            if (false !== $data) {
                 $this->_data = $data;
                 return $this;
             }
@@ -277,6 +277,7 @@ class Translate implements \Magento\Framework\TranslateInterface
 
     /**
      * Retrieve name of the current module
+     *
      * @return mixed
      */
     protected function getControllerModuleName()
@@ -330,6 +331,8 @@ class Translate implements \Magento\Framework\TranslateInterface
                 continue;
             }
 
+            $key = is_array($key) ? $key : (string) $key;
+            $value = is_array($value) ? $value : (string) $value;
             $key = str_replace('""', '"', $key);
             $value = str_replace('""', '"', $value);
 
@@ -401,7 +404,7 @@ class Translate implements \Magento\Framework\TranslateInterface
      * @param array $config
      * @return string|null
      */
-    private function getThemeTranslationFileName($locale, array $config)
+    private function getThemeTranslationFileName(?string $locale, array $config): ?string
     {
         $fileName = $this->_viewFileSystem->getLocaleFileName(
             'i18n' . '/' . $locale . '.csv',
@@ -459,7 +462,7 @@ class Translate implements \Magento\Framework\TranslateInterface
      * @param string $locale
      * @return string
      *
-     * @deprecated
+     * @deprecated 102.0.1
      *
      * @see \Magento\Framework\Translate::getThemeTranslationFilesList
      */
@@ -543,11 +546,9 @@ class Translate implements \Magento\Framework\TranslateInterface
     /**
      * Retrieve cache identifier
      *
-     * @param bool $forceReload
      * @return string
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    protected function getCacheId($forceReload = false)
+    protected function getCacheId()
     {
         $_cacheId = \Magento\Framework\App\Cache\Type\Translate::TYPE_IDENTIFIER;
         $_cacheId .= '_' . $this->_config[self::CONFIG_LOCALE_KEY];
@@ -589,7 +590,8 @@ class Translate implements \Magento\Framework\TranslateInterface
      * Get serializer
      *
      * @return \Magento\Framework\Serialize\SerializerInterface
-     * @deprecated 100.2.0
+     * @deprecated 101.0.0
+     * @see we don't recommend this approach anymore
      */
     private function getSerializer()
     {
@@ -598,5 +600,17 @@ class Translate implements \Magento\Framework\TranslateInterface
                 ->get(Serialize\SerializerInterface::class);
         }
         return $this->serializer;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function _resetState(): void
+    {
+        $this->_config = [];
+        $this->_data = [];
+        $this->_localeCode = null;
+        $this->_cacheId = null;
+        $this->serializer = null;
     }
 }

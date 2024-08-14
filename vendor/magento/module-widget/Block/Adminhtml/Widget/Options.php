@@ -156,10 +156,11 @@ class Options extends \Magento\Backend\Block\Widget\Form\Generic
             $data['value'] = isset($values[$fieldName]) ? $values[$fieldName] : '';
         } else {
             $data['value'] = $parameter->getValue();
-            //prepare unique id value
-            if ($fieldName == 'unique_id' && $data['value'] == '') {
-                $data['value'] = hash('sha256', microtime(1));
-            }
+        }
+
+        //prepare unique id value
+        if ($fieldName == 'unique_id' && $data['value'] == '') {
+            $data['value'] = hash('sha256', microtime(1));
         }
 
         if (is_array($data['value'])) {
@@ -171,7 +172,7 @@ class Options extends \Magento\Backend\Block\Widget\Form\Generic
             }
         } else {
             // phpcs:ignore Magento2.Functions.DiscouragedFunction
-            $data['value'] = html_entity_decode($data['value']);
+            $data['value'] = \is_string($data['value']) ? html_entity_decode($data['value']) : '';
         }
 
         // prepare element dropdown values
@@ -192,7 +193,7 @@ class Options extends \Magento\Backend\Block\Widget\Form\Generic
         // hidden element
         if (!$parameter->getVisible()) {
             $fieldType = 'hidden';
-            // just an element renderer
+        // just an element renderer
         } elseif ($fieldType && $this->_isClassName($fieldType)) {
             $fieldRenderer = $this->getLayout()->createBlock($fieldType);
             $fieldType = $this->_defaultElementType;
@@ -243,6 +244,6 @@ class Options extends \Magento\Backend\Block\Widget\Form\Generic
      */
     protected function _isClassName($fieldType)
     {
-        return preg_match('/[A-Z]/', $fieldType) > 0;
+        return $fieldType && preg_match('/[A-Z]/', $fieldType) > 0;
     }
 }

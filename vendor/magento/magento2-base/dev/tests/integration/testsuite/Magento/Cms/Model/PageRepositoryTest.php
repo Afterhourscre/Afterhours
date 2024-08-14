@@ -3,95 +3,103 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
 declare(strict_types=1);
 
 namespace Magento\Cms\Model;
 
-use Magento\Backend\Model\Auth;
+use Magento\Cms\Api\GetPageByIdentifierInterface;
 use Magento\Cms\Api\PageRepositoryInterface;
-use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\TestFramework\Helper\Bootstrap;
 use PHPUnit\Framework\TestCase;
-use Magento\TestFramework\Bootstrap as TestBootstrap;
-use Magento\Framework\Acl\Builder;
 
 /**
- * Test class for page repository.
+ * Test page repo.
  */
 class PageRepositoryTest extends TestCase
 {
     /**
-     * Test subject.
-     *
      * @var PageRepositoryInterface
      */
-    private $repository;
+    private $repo;
 
     /**
-     * @var Auth
+     * @var GetPageByIdentifierInterface
      */
-    private $authorization;
+    private $retriever;
 
     /**
-     * @var SearchCriteriaBuilder
+     * @inheritDoc
      */
-    private $criteriaBuilder;
-
-    /**
-     * @var Builder
-     */
-    private $aclBuilder;
-
-    /**
-     * @inheritdoc
-     */
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->repository = Bootstrap::getObjectManager()->create(PageRepositoryInterface::class);
-        $this->authorization = Bootstrap::getObjectManager()->get(Auth::class);
-        $this->criteriaBuilder = Bootstrap::getObjectManager()->get(SearchCriteriaBuilder::class);
-        $this->aclBuilder = Bootstrap::getObjectManager()->get(Builder::class);
+        Bootstrap::getObjectManager()->configure([
+            'preferences' => [
+                \Magento\Cms\Model\Page\CustomLayoutManagerInterface::class =>
+                    \Magento\TestFramework\Cms\Model\CustomLayoutManager::class
+            ]
+        ]);
+        $objectManager = Bootstrap::getObjectManager();
+        $this->repo = $objectManager->get(PageRepositoryInterface::class);
+        $this->retriever = $objectManager->get(GetPageByIdentifierInterface::class);
     }
 
     /**
-     * @inheritdoc
-     */
-    protected function tearDown()
-    {
-        parent::tearDown();
-
-        $this->authorization->logout();
-        $this->aclBuilder->resetRuntimeAcl();
-    }
-
-    /**
-     * Test authorization when saving page's design settings.
+     * Test that the field is deprecated.
      *
-     * @magentoDataFixture Magento/Cms/_files/pages.php
-     * @magentoAppArea adminhtml
-     * @magentoDbIsolation enabled
-     * @magentoAppIsolation enabled
+     * @throws \Throwable
+     * @magentoDataFixture Magento/Cms/_files/pages_with_layout_xml.php
+     * @return void
      */
-    public function testSaveDesign()
+    public function testSaveUpdateXml(): void
     {
-        $pages = $this->repository->getList(
-            $this->criteriaBuilder->addFilter('identifier', 'page_design_blank')->create()
-        )->getItems();
-        $page = array_pop($pages);
-        $this->authorization->login(TestBootstrap::ADMIN_NAME, TestBootstrap::ADMIN_PASSWORD);
+        $page = $this->retriever->execute('test_custom_layout_page_1', 0);
+        $page->setTitle($page->getTitle() . 'TEST');
 
-        //Admin doesn't have access to page's design.
-        $this->aclBuilder->getAcl()->deny(null, 'Magento_Cms::save_design');
+        //Is successfully saved without changes to the custom layout xml.
+        $page = $this->repo->save($page);
 
-        $page->setCustomTheme('test');
-        $page = $this->repository->save($page);
-        $this->assertNotEquals('test', $page->getCustomTheme());
+        //New value is not accepted.
+        $page->setCustomLayoutUpdateXml('<container name="new_container_for_save_update_xml" />');
+        $forbidden = false;
+        try {
+            $page = $this->repo->save($page);
+        } catch (CouldNotSaveException $exception) {
+            $forbidden = true;
+        }
+        $this->assertTrue($forbidden);
 
-        //Admin has access to page' design.
-        $this->aclBuilder->getAcl()->allow(null, ['Magento_Cms::save', 'Magento_Cms::save_design']);
+        //New value is not accepted.
+        $page->setLayoutUpdateXml('<container name="new_container_for_save_update_xml2" />');
+        $forbidden = false;
+        try {
+            $page = $this->repo->save($page);
+        } catch (CouldNotSaveException $exception) {
+            $forbidden = true;
+        }
+        $this->assertTrue($forbidden);
 
-        $page->setCustomTheme('test');
-        $page = $this->repository->save($page);
-        $this->assertEquals('test', $page->getCustomTheme());
+        //Can be removed
+        $page->setCustomLayoutUpdateXml(null);
+        $page->setLayoutUpdateXml(null);
+        $page = $this->repo->save($page);
+        $this->assertEmpty($page->getCustomLayoutUpdateXml());
+        $this->assertEmpty($page->getLayoutUpdateXml());
+    }
+
+    /**
+     * Verifies that cms page with identifier which duplicates existed route shouldn't be saved
+     *
+     * @return void
+     * @throws \Throwable
+     * @magentoDataFixture Magento/Cms/_files/pages.php
+     */
+    public function testSaveWithRouteDuplicate(): void
+    {
+        $page = $this->retriever->execute('page100', 0);
+        $page->setIdentifier('customer');
+        $this->expectException(CouldNotSaveException::class);
+        $this->repo->save($page);
     }
 }

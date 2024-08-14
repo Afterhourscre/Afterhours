@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Generic\Tests\ControlStructures;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class InlineControlStructureUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the InlineControlStructure sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Generic\Sniffs\ControlStructures\InlineControlStructureSniff
+ */
+final class InlineControlStructureUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,64 +30,72 @@ class InlineControlStructureUnitTest extends AbstractSniffUnitTest
      *
      * @return array<int, int>
      */
-    public function getErrorList($testFile='InlineControlStructureUnitTest.inc')
+    public function getErrorList($testFile='')
     {
         switch ($testFile) {
-        case 'InlineControlStructureUnitTest.inc':
-            return array(
-                    3   => 1,
-                    7   => 1,
-                    11  => 1,
-                    13  => 1,
-                    15  => 1,
-                    17  => 1,
-                    23  => 1,
-                    42  => 1,
-                    43  => 1,
-                    45  => 1,
-                    46  => 1,
-                    49  => 1,
-                    62  => 1,
-                    66  => 1,
-                    78  => 1,
-                    120 => 1,
-                    128 => 1,
-                    134 => 1,
-                    142 => 1,
-                    143 => 1,
-                    144 => 1,
-                    150 => 1,
-                    158 => 1,
-                    159 => 1,
-                    162 => 1,
-                    163 => 1,
-                    164 => 1,
-                    167 => 1,
-                    168 => 1,
-                    170 => 1,
-                    178 => 1,
-                    185 => 1,
-                    188 => 2,
-                    191 => 1,
-                    195 => 1,
-                    198 => 1,
-                   );
-            break;
+        case 'InlineControlStructureUnitTest.1.inc':
+            return [
+                3   => 1,
+                7   => 1,
+                11  => 1,
+                13  => 1,
+                15  => 1,
+                17  => 1,
+                23  => 1,
+                45  => 1,
+                46  => 1,
+                49  => 1,
+                62  => 1,
+                66  => 1,
+                78  => 1,
+                120 => 1,
+                128 => 1,
+                134 => 1,
+                142 => 1,
+                143 => 1,
+                144 => 1,
+                150 => 1,
+                158 => 1,
+                159 => 1,
+                162 => 1,
+                163 => 1,
+                164 => 1,
+                167 => 1,
+                168 => 1,
+                170 => 1,
+                178 => 1,
+                185 => 1,
+                188 => 2,
+                191 => 1,
+                195 => 1,
+                198 => 1,
+                206 => 1,
+                222 => 1,
+                232 => 1,
+                235 => 1,
+                236 => 1,
+                238 => 1,
+                242 => 1,
+                260 => 1,
+                269 => 1,
+                278 => 1,
+            ];
+
         case 'InlineControlStructureUnitTest.js':
-            return array(
-                    3  => 1,
-                    7  => 1,
-                    11 => 1,
-                    13 => 1,
-                    15 => 1,
-                    21 => 1,
-                    27 => 1,
-                    30 => 1,
-                   );
-            break;
+            return [
+                3  => 1,
+                7  => 1,
+                11 => 1,
+                13 => 1,
+                15 => 1,
+                21 => 1,
+                27 => 1,
+                30 => 1,
+                35 => 1,
+            ];
+
         default:
-            return array();
-            break;
+            return [];
         }//end switch
 
     }//end getErrorList()
@@ -98,7 +111,7 @@ class InlineControlStructureUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

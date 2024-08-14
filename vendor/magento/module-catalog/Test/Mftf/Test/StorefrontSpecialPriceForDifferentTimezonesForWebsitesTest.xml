@@ -11,66 +11,88 @@
     <test name="StorefrontSpecialPriceForDifferentTimezonesForWebsitesTest">
         <annotations>
             <features value="Catalog"/>
+            <stories value="Special price"/>
             <title value="Check that special price displayed when 'default config' scope timezone does not match 'website' scope timezone"/>
             <description value="Check that special price displayed when 'default config' scope timezone does not match 'website' scope timezone"/>
-            <stories value="Verify product special price"/>
-            <severity value="MAJOR"/>
-            <testCaseId value="MC-13788"/>
-            <useCaseId value="MAGETWO-95452"/>
+            <severity value="BLOCKER"/>
+            <testCaseId value="MAGETWO-97508"/>
+            <useCaseId value="MAGETWO-96847"/>
             <group value="Catalog"/>
+            <group value="cloud"/>
         </annotations>
         <before>
-            <actionGroup ref="LoginAsAdmin" stepKey="login"/>
-            <createData entity="SimpleProduct3" stepKey="createProduct"/>
+            <actionGroup ref="AdminLoginActionGroup" stepKey="login"/>
+
+            <!--Create product-->
+            <createData entity="SimpleProduct2" stepKey="createProduct"/>
 
             <!--Create customer-->
             <createData entity="Simple_US_Customer" stepKey="createCustomer"/>
-
-            <!--Set timezone for default config-->
-            <amOnPage url="{{AdminConfigurationGeneralSectionPage.url('#general_locale-link')}}" stepKey="openLocaleSection"/>
-            <selectOption selector="{{LocaleOptionsSection.timezone}}" userInput="Central European Standard Time (Europe/Paris)" stepKey="setTimezone"/>
-            <click selector="{{AdminMainActionsSection.save}}" stepKey="saveConfig"/>
-            <!--Set timezone for Main Website-->
-            <actionGroup ref="AdminSwitchWebsiteActionGroup" stepKey="adminSwitchStoreViewActionGroup">
-                <argument name="scopeName" value="_defaultWebsite.name"/>
-            </actionGroup>
-            <uncheckOption selector="{{LocaleOptionsSection.useDefault}}"  stepKey="uncheckUseDefault"/>
-            <selectOption selector="{{LocaleOptionsSection.timezone}}" userInput="Greenwich Mean Time (Africa/Abidjan)" stepKey="setTimezone1"/>
-            <click selector="{{AdminMainActionsSection.save}}" stepKey="saveConfig1"/>
         </before>
         <after>
             <!--Delete create data-->
             <deleteData createDataKey="createProduct" stepKey="deleteProduct"/>
+            <actionGroup ref="StorefrontCustomerLogoutActionGroup" stepKey="logoutCustomer" />
             <deleteData createDataKey="createCustomer" stepKey="deleteCustomer"/>
 
-            <!--Reset timezone-->
-            <amOnPage url="{{AdminConfigurationGeneralSectionPage.url('#general_locale-link')}}" stepKey="openLocaleSectionReset"/>
-            <selectOption selector="{{LocaleOptionsSection.timezone}}" userInput="{{_ENV.DEFAULT_TIMEZONE}}" stepKey="resetTimezone"/>
-            <click selector="{{AdminMainActionsSection.save}}" stepKey="saveConfigReset"/>
-
-            <actionGroup ref="AdminSwitchWebsiteActionGroup" stepKey="AdminSwitchStoreViewActionGroup">
-                <argument name="scopeName" value="_defaultWebsite.name"/>
-            </actionGroup>
-            <checkOption selector="{{LocaleOptionsSection.useDefault}}"  stepKey="checkUseDefault"/>
-            <click selector="{{AdminMainActionsSection.save}}" stepKey="saveConfigReset1"/>
-
-            <actionGroup ref="logout" stepKey="logout"/>
+            <actionGroup ref="AdminLogoutActionGroup" stepKey="logout"/>
         </after>
 
+        <!--Set timezone for default config-->
+        <actionGroup ref="AdminOpenGeneralConfigurationPageActionGroup" stepKey="goToGeneralConfig"/>
+        <conditionalClick selector="{{LocaleOptionsSection.sectionHeader}}" dependentSelector="{{LocaleOptionsSection.timezone}}" visible="false" stepKey="openLocaleSection"/>
+        <grabValueFrom selector="{{LocaleOptionsSection.timezone}}" stepKey="originalTimezone"/>
+        <selectOption selector="{{LocaleOptionsSection.timezone}}" userInput="Central European Standard Time (Europe/Paris)" stepKey="setTimezone"/>
+        <click selector="{{AdminMainActionsSection.save}}" stepKey="saveConfig"/>
+
+        <!--Set timezone for Main Website-->
+        <actionGroup ref="AdminOpenGeneralConfigurationPageActionGroup" stepKey="goToGeneralConfig1"/>
+        <actionGroup ref="AdminSwitchWebsiteActionGroup" stepKey="AdminSwitchStoreViewActionGroup">
+            <argument name="website" value="_defaultWebsite"/>
+        </actionGroup>
+        <conditionalClick selector="{{LocaleOptionsSection.sectionHeader}}" dependentSelector="{{LocaleOptionsSection.timezone}}" visible="false" stepKey="openLocaleSection1"/>
+        <uncheckOption selector="{{LocaleOptionsSection.useDefault}}"  stepKey="uncheckUseDefault"/>
+        <grabValueFrom selector="{{LocaleOptionsSection.timezone}}" stepKey="originalTimezone1"/>
+        <selectOption selector="{{LocaleOptionsSection.timezone}}" userInput="Greenwich Mean Time (Africa/Abidjan)" stepKey="setTimezone1"/>
+        <click selector="{{AdminMainActionsSection.save}}" stepKey="saveConfig1"/>
+
         <!--Set special price to created product-->
-        <amOnPage url="{{AdminProductEditPage.url($$createProduct.id$$)}}" stepKey="openAdminEditPage"/>
+        <actionGroup ref="AdminProductPageOpenByIdActionGroup" stepKey="openAdminEditPage">
+            <argument name="productId" value="$$createProduct.id$$"/>
+        </actionGroup>
         <actionGroup ref="AddSpecialPriceToProductActionGroup" stepKey="setSpecialPriceToCreatedProduct">
             <argument name="price" value="15"/>
         </actionGroup>
-        <actionGroup ref="saveProductForm" stepKey="saveProductForm"/>
+        <actionGroup ref="SaveProductFormActionGroup" stepKey="saveProductForm"/>
 
         <!--Login to storefront from customer and check price-->
-        <actionGroup ref="CustomerLoginOnStorefront" stepKey="logInFromCustomer">
-            <argument name="customer" value="$$createCustomer$$"/>
+        <actionGroup ref="LoginToStorefrontActionGroup" stepKey="logInFromCustomer">
+            <argument name="Customer" value="$$createCustomer$$"/>
         </actionGroup>
 
         <!--Go to the product page and check special price-->
-        <amOnPage url="{{StorefrontProductPage.url($$createProduct.name$$)}}" stepKey="amOnSimpleProductPage"/>
-        <see selector="{{StorefrontProductInfoMainSection.specialPriceValue}}" userInput='$15.00' stepKey="assertSpecialPrice"/>
-     </test>
+        <amOnPage url="{{StorefrontProductPage.url($$createProduct.custom_attributes[url_key]$$)}}" stepKey="amOnSimpleProductPage"/>
+        <waitForPageLoad stepKey="waitForPageLoad"/>
+        <grabTextFrom selector="{{StorefrontProductInfoMainSection.specialPriceValue}}" stepKey="grabSpecialPrice"/>
+        <assertEquals stepKey="assertSpecialPrice">
+			<actualResult type="const">$grabSpecialPrice</actualResult>
+			<expectedResult type="string">$15.00</expectedResult>
+        </assertEquals>
+
+        <!--Reset timezone-->
+        <actionGroup ref="AdminOpenGeneralConfigurationPageActionGroup" stepKey="goToGeneralConfigReset"/>
+        <conditionalClick selector="{{LocaleOptionsSection.sectionHeader}}" dependentSelector="{{LocaleOptionsSection.timezone}}" visible="false" stepKey="openLocaleSectionReset"/>
+        <selectOption selector="{{LocaleOptionsSection.timezone}}" userInput="$originalTimezone" stepKey="resetTimezone"/>
+        <click selector="{{AdminMainActionsSection.save}}" stepKey="saveConfigReset"/>
+
+        <!--Reset timezone-->
+        <actionGroup ref="AdminOpenGeneralConfigurationPageActionGroup" stepKey="goToGeneralConfigReset1"/>
+        <actionGroup ref="AdminSwitchWebsiteActionGroup" stepKey="AdminSwitchStoreViewActionGroup1">
+            <argument name="website" value="_defaultWebsite"/>
+        </actionGroup>
+        <conditionalClick selector="{{LocaleOptionsSection.sectionHeader}}" dependentSelector="{{LocaleOptionsSection.timezone}}" visible="false" stepKey="openLocaleSectionReset1"/>
+        <uncheckOption selector="{{LocaleOptionsSection.useDefault}}"  stepKey="uncheckUseDefault1"/>
+        <selectOption selector="{{LocaleOptionsSection.timezone}}" userInput="$originalTimezone" stepKey="resetTimezone1"/>
+        <click selector="{{AdminMainActionsSection.save}}" stepKey="saveConfigReset1"/>
+    </test>
 </tests>

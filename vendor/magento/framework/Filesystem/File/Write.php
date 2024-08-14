@@ -3,10 +3,12 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
 namespace Magento\Framework\Filesystem\File;
 
 use Magento\Framework\Filesystem\DriverInterface;
 use Magento\Framework\Exception\FileSystemException;
+use Magento\Framework\Phrase;
 
 class Write extends Read implements WriteInterface
 {
@@ -27,15 +29,22 @@ class Write extends Read implements WriteInterface
      * Assert file existence for proper mode
      *
      * @return void
-     * @throws \Magento\Framework\Exception\FileSystemException
+     * @throws FileSystemException
      */
     protected function assertValid()
     {
         $fileExists = $this->driver->isExists($this->path);
-        if (!$fileExists && preg_match('/r/', $this->mode)) {
-            throw new FileSystemException(new \Magento\Framework\Phrase('The file "%1" doesn\'t exist', [$this->path]));
-        } elseif ($fileExists && preg_match('/x/', $this->mode)) {
-            throw new FileSystemException(new \Magento\Framework\Phrase('The file "%1" already exists', [$this->path]));
+        $mode = $this->mode ?? '';
+        if (preg_match('/(?:^-|\s-)/', basename($this->path))) {
+            throw new FileSystemException(
+                new Phrase('The filename "%1" contains invalid characters', [basename($this->path)])
+            );
+        } elseif (!$fileExists && preg_match('/r/', $mode)) {
+            throw new FileSystemException(
+                new Phrase('The "%1" file doesn\'t exist.', [$this->path])
+            );
+        } elseif ($fileExists && preg_match('/x/', $mode)) {
+            throw new FileSystemException(new Phrase('The file "%1" already exists', [$this->path]));
         }
     }
 
@@ -52,7 +61,7 @@ class Write extends Read implements WriteInterface
             return $this->driver->fileWrite($this->resource, $data);
         } catch (FileSystemException $e) {
             throw new FileSystemException(
-                new \Magento\Framework\Phrase('Cannot write to the "%1" file. %2', [$this->path, $e->getMessage()])
+                new Phrase('Cannot write to the "%1" file. %2', [$this->path, $e->getMessage()])
             );
         }
     }
@@ -72,7 +81,7 @@ class Write extends Read implements WriteInterface
             return $this->driver->filePutCsv($this->resource, $data, $delimiter, $enclosure);
         } catch (FileSystemException $e) {
             throw new FileSystemException(
-                new \Magento\Framework\Phrase('Cannot write to the "%1" file. %2', [$this->path, $e->getMessage()])
+                new Phrase('Cannot write to the "%1" file. %2', [$this->path, $e->getMessage()])
             );
         }
     }
@@ -89,7 +98,7 @@ class Write extends Read implements WriteInterface
             return $this->driver->fileFlush($this->resource);
         } catch (FileSystemException $e) {
             throw new FileSystemException(
-                new \Magento\Framework\Phrase('Cannot flush the "%1" file. %2', [$this->path, $e->getMessage()])
+                new Phrase('Cannot flush the "%1" file. %2', [$this->path, $e->getMessage()])
             );
         }
     }
@@ -100,7 +109,7 @@ class Write extends Read implements WriteInterface
      * @param int $lockMode
      * @return bool
      */
-    public function lock($lockMode = LOCK_EX)
+    public function lock($lockMode = \LOCK_EX)
     {
         return $this->driver->fileLock($this->resource, $lockMode);
     }

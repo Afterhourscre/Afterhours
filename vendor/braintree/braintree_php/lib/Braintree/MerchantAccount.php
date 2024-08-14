@@ -1,6 +1,10 @@
-<?php
+<?php //phpcs:disable
+
 namespace Braintree;
 
+/**
+ * See our {@link https://developer.paypal.com/braintree/docs/reference/response/merchant-account developer docs} for information on attributes
+ */
 class MerchantAccount extends Base
 {
     const STATUS_ACTIVE = 'active';
@@ -11,6 +15,13 @@ class MerchantAccount extends Base
     const FUNDING_DESTINATION_EMAIL = 'email';
     const FUNDING_DESTINATION_MOBILE_PHONE = 'mobile_phone';
 
+    /**
+     * Creates an instance from given attributes
+     *
+     * @param array $attributes response object attributes
+     *
+     * @return MerchantAccount
+     */
     public static function factory($attributes)
     {
         $instance = new self();
@@ -61,4 +72,3 @@ class MerchantAccount extends Base
         return Configuration::gateway()->merchantAccount()->update($merchant_account_id, $attributes);
     }
 }
-class_alias('Braintree\MerchantAccount', 'Braintree_MerchantAccount');

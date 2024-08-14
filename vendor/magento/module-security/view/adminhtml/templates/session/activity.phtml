@@ -58,7 +58,8 @@ $sessionInfoCollection = $block->getSessionInfoCollection();
                             $block->escapeJs($block->escapeUrl($block->getUrl('security/session/logoutAll')))
                         ?>"
                     }}'
-                <?php else : ?>disabled<?php endif ?>
+                <?php else : ?>disabled<?php
+                endif ?>
                 title="<?= $block->escapeHtmlAttr(__('Log out all other sessions')) ?>">
                 <?= $block->escapeHtml(__('Log out all other sessions')) ?>
             </button>

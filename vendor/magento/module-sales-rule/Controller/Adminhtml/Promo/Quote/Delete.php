@@ -6,23 +6,18 @@
  */
 namespace Magento\SalesRule\Controller\Adminhtml\Promo\Quote;
 
-use Magento\Framework\Exception\NotFoundException;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 
-class Delete extends \Magento\SalesRule\Controller\Adminhtml\Promo\Quote
+class Delete extends \Magento\SalesRule\Controller\Adminhtml\Promo\Quote implements HttpPostActionInterface
 {
     /**
      * Delete promo quote action
      *
      * @return void
-     * @throws NotFoundException
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new NotFoundException(__('Page not found'));
-        }
-
-        $id = (int)$this->getRequest()->getParam('id');
+        $id = $this->getRequest()->getParam('id');
         if ($id) {
             try {
                 $model = $this->_objectManager->create(\Magento\SalesRule\Model\Rule::class);

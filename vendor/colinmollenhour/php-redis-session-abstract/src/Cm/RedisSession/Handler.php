@@ -51,6 +51,7 @@ namespace Cm\RedisSession;
  */
 
 use Cm\RedisSession\Handler\ConfigInterface;
+use Cm\RedisSession\Handler\ConfigSentinelPasswordInterface;
 use Cm\RedisSession\Handler\LoggerInterface;
 
 class Handler implements \SessionHandlerInterface
@@ -246,12 +247,21 @@ class Handler implements \SessionHandlerInterface
      */
     protected $_lifeTime;
 
+    /** @var null|array Callback method to call. It will receive 2 parameters: $userAgent, $isBot */
+    static public $_botCheckCallback = null;
+
+    /**
+     * @var boolean
+     */
+    private $_readOnly;
+
     /**
      * @param ConfigInterface $config
      * @param LoggerInterface $logger
+     * @param boolean $readOnly
      * @throws ConnectionFailedException
      */
-    public function __construct(ConfigInterface $config, LoggerInterface $logger)
+    public function __construct(ConfigInterface $config, LoggerInterface $logger, $readOnly = false)
     {
         $this->config = $config;
         $this->logger = $logger;
@@ -268,6 +278,7 @@ class Handler implements \SessionHandlerInterface
         $this->_dbNum =     $this->config->getDatabase() ?: self::DEFAULT_DATABASE;
 
         // General config
+        $this->_readOnly =              $readOnly;
         $this->_compressionThreshold =  $this->config->getCompressionThreshold() ?: self::DEFAULT_COMPRESSION_THRESHOLD;
         $this->_compressionLibrary =    $this->config->getCompressionLibrary() ?: self::DEFAULT_COMPRESSION_LIBRARY;
         $this->_maxConcurrency =        $this->config->getMaxConcurrency() ?: self::DEFAULT_MAX_CONCURRENCY;
@@ -284,10 +295,13 @@ class Handler implements \SessionHandlerInterface
         $sentinelMaster =          $this->config->getSentinelMaster();
         $sentinelVerifyMaster =    $this->config->getSentinelVerifyMaster();
         $sentinelConnectRetries =  $this->config->getSentinelConnectRetries();
+        $sentinelPassword =        $this->config instanceof ConfigSentinelPasswordInterface
+            ? $this->config->getSentinelPassword()
+            : $pass;
 
         // Connect and authenticate
         if ($sentinelServers && $sentinelMaster) {
-            $servers = preg_split('/\s*,\s*/', trim($sentinelServers), NULL, PREG_SPLIT_NO_EMPTY);
+            $servers = preg_split('/\s*,\s*/', trim($sentinelServers), -1, PREG_SPLIT_NO_EMPTY);
             $sentinel = NULL;
             $exception = NULL;
             for ($i = 0; $i <= $sentinelConnectRetries; $i++) // Try to connect to sentinels in round-robin fashion
@@ -296,6 +310,20 @@ class Handler implements \SessionHandlerInterface
                     $sentinelClient = new \Credis_Client($server, NULL, $timeout, $persistent);
                     $sentinelClient->forceStandalone();
                     $sentinelClient->setMaxConnectRetries(0);
+                    if ($sentinelPassword) {
+                        try {
+                            $sentinelClient->auth($sentinelPassword);
+                        } catch (\CredisException $e) {
+                            // Prevent throwing exception if Sentinel has no password set (error messages are different between redis 5 and redis 6)
+                            if ($e->getCode() !== 0 || (
+                                strpos($e->getMessage(), 'ERR Client sent AUTH, but no password is set') === false && 
+                                strpos($e->getMessage(), 'ERR AUTH <password> called without any password configured for the default user. Are you sure your configuration is correct?') === false)
+                            ) {
+                                throw $e;
+                            }
+                        }
+                    }
+                   
                     $sentinel = new \Credis_Sentinel($sentinelClient);
                     $sentinel
                         ->setClientTimeout($timeout)
@@ -312,7 +340,7 @@ class Handler implements \SessionHandlerInterface
                             if ($pass) $redisMaster->auth($pass);
                             $roleData = $redisMaster->role();
                             if ( ! $roleData || $roleData[0] != 'master') {
-                                throw new Exception('Unable to determine master redis server.');
+                                throw new \Exception('Unable to determine master redis server.');
                             }
                         }
                     }
@@ -320,7 +348,7 @@ class Handler implements \SessionHandlerInterface
 
                     $this->_redis = $redisMaster;
                     break 2;
-                } catch (Exception $e) {
+                } catch (\Exception $e) {
                     unset($sentinelClient);
                     $exception = $e;
                 }
@@ -328,7 +356,7 @@ class Handler implements \SessionHandlerInterface
             unset($sentinel);
 
             if ( ! $this->_redis) {
-                throw new ConnectionFailedException('Unable to connect to a Redis: '.$exception->getMessage(), $exception);
+                throw new ConnectionFailedException('Unable to connect to a Redis: '.$exception->getMessage(), 0, $exception);
             }
         }
         else {
@@ -359,6 +387,7 @@ class Handler implements \SessionHandlerInterface
      * @return bool
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
+    #[\ReturnTypeWillChange]
     public function open($savePath, $sessionName)
     {
         return true;
@@ -392,12 +421,26 @@ class Handler implements \SessionHandlerInterface
     }
 
     /**
+     * Set/unset read only flag
+     *
+     * @param boolean $readOnly
+     * @return self
+     */
+    public function setReadOnly($readOnly)
+    {
+        $this->_readOnly = $readOnly;
+
+        return $this;
+    }
+
+    /**
      * Fetch session data
      *
      * @param string $sessionId
      * @return string
      * @throws ConcurrentConnectionsExceededException
      */
+    #[\ReturnTypeWillChange]
     public function read($sessionId)
     {
         // Get lock on session. Increment the "lock" field and if the new value is 1, we have the lock.
@@ -410,7 +453,7 @@ class Handler implements \SessionHandlerInterface
         $this->_log(sprintf("Attempting to take lock on ID %s", $sessionId));
 
         $this->_redis->select($this->_dbNum);
-        while ($this->_useLocking)
+        while ($this->_useLocking && !$this->_readOnly)
         {
             // Increment lock value for this session and retrieve the new value
             $oldLock = $lock;
@@ -467,14 +510,21 @@ class Handler implements \SessionHandlerInterface
                 // Limit concurrent lock waiters to prevent server resource hogging
                 if ($waiting >= $this->_maxConcurrency) {
                     // Overloaded sessions get 503 errors
-                    $this->_redis->hIncrBy($sessionId, 'wait', -1);
-                    $this->_sessionWritten = true; // Prevent session from getting written
-                    $writes = $this->_redis->hGet($sessionId, 'writes');
+                    try {
+                        $this->_redis->hIncrBy($sessionId, 'wait', -1);
+                        $this->_sessionWritten = true; // Prevent session from getting written
+                        $sessionInfo = $this->_redis->hMGet($sessionId, ['writes','req']);
+                    } catch (Exception $e) {
+                        $this->_log("$e", LoggerInterface::WARNING);
+                    }
                     $this->_log(
                         sprintf(
                             'Session concurrency exceeded for ID %s; displaying HTTP 503 (%s waiting, %s total '
-                            . 'requests)',
-                            $sessionId, $waiting, $writes
+                            . 'requests) - Locked URL: %s',
+                            $sessionId,
+                            $waiting,
+                            isset($sessionInfo['writes']) ? $sessionInfo['writes'] : '-',
+                            isset($sessionInfo['req']) ? $sessionInfo['req'] : '-'
                         ),
                         LoggerInterface::WARNING
                     );
@@ -570,8 +620,8 @@ class Handler implements \SessionHandlerInterface
             if ($lock != 1) {
                 $this->_log(
                     sprintf(
-                        "Successfully broke lock for ID %s after %.5f seconds (%d attempts). Lock: %d\nLast request of '
-                            . 'broken lock: %s",
+                        "Successfully broke lock for ID %s after %.5f seconds (%d attempts). Lock: %d\nLast request of "
+                            . "broken lock: %s",
                         $sessionId,
                         (microtime(true) - $timeStart),
                         $tries,
@@ -604,10 +654,11 @@ class Handler implements \SessionHandlerInterface
      * @param string $sessionData
      * @return boolean
      */
+    #[\ReturnTypeWillChange]
     public function write($sessionId, $sessionData)
     {
-        if ($this->_sessionWritten) {
-            $this->_log(sprintf("Repeated session write detected; skipping for ID %s", $sessionId));
+        if ($this->_sessionWritten || $this->_readOnly) {
+            $this->_log(sprintf(($this->_sessionWritten ? "Repeated" : "Read-only") . " session write detected; skipping for ID %s", $sessionId));
             return true;
         }
         $this->_sessionWritten = true;
@@ -649,12 +700,13 @@ class Handler implements \SessionHandlerInterface
      * @param string $sessionId
      * @return boolean
      */
+    #[\ReturnTypeWillChange]
     public function destroy($sessionId)
     {
         $this->_log(sprintf("Destroying ID %s", $sessionId));
         $this->_redis->pipeline();
         if($this->_dbNum) $this->_redis->select($this->_dbNum);
-        $this->_redis->del(self::SESSION_PREFIX.$sessionId);
+        $this->_redis->unlink(self::SESSION_PREFIX.$sessionId);
         $this->_redis->exec();
         return true;
     }
@@ -664,6 +716,7 @@ class Handler implements \SessionHandlerInterface
      *
      * @return bool
      */
+    #[\ReturnTypeWillChange]
     public function close()
     {
         $this->_log("Closing connection");
@@ -677,6 +730,7 @@ class Handler implements \SessionHandlerInterface
      * @param int $maxLifeTime ignored
      * @return boolean
      */
+    #[\ReturnTypeWillChange]
     public function gc($maxLifeTime)
     {
         return true;
@@ -690,6 +744,17 @@ class Handler implements \SessionHandlerInterface
     public function getFailedLockAttempts()
     {
         return $this->failedLockAttempts;
+    }
+
+    static public function isBotAgent($userAgent)
+    {
+        $isBot = !$userAgent || preg_match(self::BOT_REGEX, $userAgent);
+
+        if (is_array(self::$_botCheckCallback) && isset(self::$_botCheckCallback[0]) && self::$_botCheckCallback[1] && method_exists(self::$_botCheckCallback[0], self::$_botCheckCallback[1])) {
+            $isBot = (bool) call_user_func_array(self::$_botCheckCallback, [$userAgent, $isBot]);
+        }
+
+        return $isBot;
     }
 
     /**
@@ -706,8 +771,7 @@ class Handler implements \SessionHandlerInterface
             $botLifetime = is_null($this->config->getBotLifetime()) ? self::DEFAULT_BOT_LIFETIME : $this->config->getBotLifetime();
             if ($botLifetime) {
                 $userAgent = empty($_SERVER['HTTP_USER_AGENT']) ? false : $_SERVER['HTTP_USER_AGENT'];
-                $isBot = ! $userAgent || preg_match(self::BOT_REGEX, $userAgent);
-                if ($isBot) {
+                if (self::isBotAgent($userAgent)) {
                     $this->_log(sprintf("Bot detected for user agent: %s", $userAgent));
                     $botFirstLifetime = is_null($this->config->getBotFirstLifetime()) ? self::DEFAULT_BOT_FIRST_LIFETIME : $this->config->getBotFirstLifetime();
                     if ($this->_sessionWrites <= 1 && $botFirstLifetime) {

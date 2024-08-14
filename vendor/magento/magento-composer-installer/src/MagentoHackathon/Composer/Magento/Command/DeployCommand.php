@@ -18,17 +18,17 @@ use MagentoHackathon\Composer\Magento\Installer;
  * @author Tiago Ribeiro <tiago.ribeiro@seegno.com>
  * @author Rui Marinho <rui.marinho@seegno.com>
  */
-class DeployCommand extends \Composer\Command\Command
+class DeployCommand extends \Composer\Command\BaseCommand
 {
     protected function configure()
     {
         $this
             ->setName('magento-module-deploy')
             ->setDescription('Deploy all Magento modules loaded via composer.json')
-            ->setDefinition(array(
+            ->setDefinition([
             // we dont need to define verbose, because composer already defined it internal
             //new InputOption('verbose', 'v', InputOption::VALUE_NONE, 'Show modified files for each directory that contains changes.'),
-        ))
+        ])
             ->setHelp(<<<EOT
 This command deploys all magento Modules
 
@@ -55,7 +55,7 @@ EOT
         $deployManager = new DeployManager( $this->getIO() );
 
         $extra          = $composer->getPackage()->getExtra();
-        $sortPriority   = isset($extra['magento-deploy-sort-priority']) ? $extra['magento-deploy-sort-priority'] : array();
+        $sortPriority   = $extra['magento-deploy-sort-priority'] ?? [];
         $deployManager->setSortPriority( $sortPriority );
 
 

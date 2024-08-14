@@ -4,13 +4,12 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting;
 
 use PHP_CodeSniffer\Files\File;
-use PHP_CodeSniffer\Util\Tokens;
 
 class ClassCommentSniff extends FileCommentSniff
 {
@@ -19,15 +18,16 @@ class ClassCommentSniff extends FileCommentSniff
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(
-                T_CLASS,
-                T_INTERFACE,
-                T_TRAIT,
-               );
+        return [
+            T_CLASS,
+            T_INTERFACE,
+            T_TRAIT,
+            T_ENUM,
+        ];
 
     }//end register()
 
@@ -43,20 +43,37 @@ class ClassCommentSniff extends FileCommentSniff
      */
     public function process(File $phpcsFile, $stackPtr)
     {
-        $this->currentFile = $phpcsFile;
-
         $tokens    = $phpcsFile->getTokens();
         $type      = strtolower($tokens[$stackPtr]['content']);
-        $errorData = array($type);
+        $errorData = [$type];
 
-        $find   = Tokens::$methodPrefixes;
-        $find[] = T_WHITESPACE;
+        $find = [
+            T_ABSTRACT   => T_ABSTRACT,
+            T_FINAL      => T_FINAL,
+            T_READONLY   => T_READONLY,
+            T_WHITESPACE => T_WHITESPACE,
+        ];
 
-        $commentEnd = $phpcsFile->findPrevious($find, ($stackPtr - 1), null, true);
+        for ($commentEnd = ($stackPtr - 1); $commentEnd >= 0; $commentEnd--) {
+            if (isset($find[$tokens[$commentEnd]['code']]) === true) {
+                continue;
+            }
+
+            if ($tokens[$commentEnd]['code'] === T_ATTRIBUTE_END
+                && isset($tokens[$commentEnd]['attribute_opener']) === true
+            ) {
+                $commentEnd = $tokens[$commentEnd]['attribute_opener'];
+                continue;
+            }
+
+            break;
+        }
+
         if ($tokens[$commentEnd]['code'] !== T_DOC_COMMENT_CLOSE_TAG
             && $tokens[$commentEnd]['code'] !== T_COMMENT
         ) {
-            $phpcsFile->addError('Missing class doc comment', $stackPtr, 'Missing');
+            $errorData[] = $phpcsFile->getDeclarationName($stackPtr);
+            $phpcsFile->addError('Missing doc comment for %s %s', $stackPtr, 'Missing', $errorData);
             $phpcsFile->recordMetric($stackPtr, 'Class has doc comment', 'no');
             return;
         }
@@ -64,7 +81,7 @@ class ClassCommentSniff extends FileCommentSniff
         $phpcsFile->recordMetric($stackPtr, 'Class has doc comment', 'yes');
 
         if ($tokens[$commentEnd]['code'] === T_COMMENT) {
-            $phpcsFile->addError('You must use "/**" style comments for a class comment', $stackPtr, 'WrongStyle');
+            $phpcsFile->addError('You must use "/**" style comments for a %s comment', $stackPtr, 'WrongStyle', $errorData);
             return;
         }
 
@@ -94,7 +111,7 @@ class ClassCommentSniff extends FileCommentSniff
             $content = $tokens[($tag + 2)]['content'];
             if ((strstr($content, 'Release:') === false)) {
                 $error = 'Invalid version "%s" in doc comment; consider "Release: <package_version>" instead';
-                $data  = array($content);
+                $data  = [$content];
                 $phpcsFile->addWarning($error, $tag, 'InvalidVersion', $data);
             }
         }

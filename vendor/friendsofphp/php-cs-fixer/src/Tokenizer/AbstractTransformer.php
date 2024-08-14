@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of PHP CS Fixer.
  *
@@ -21,22 +23,18 @@ use PhpCsFixer\Utils;
  */
 abstract class AbstractTransformer implements TransformerInterface
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function getName()
+    public function getName(): string
     {
-        $nameParts = explode('\\', get_called_class());
-        $name = substr(end($nameParts), 0, -strlen('Transformer'));
+        $nameParts = explode('\\', static::class);
+        $name = substr(end($nameParts), 0, -\strlen('Transformer'));
 
         return Utils::camelCaseToUnderscore($name);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getPriority()
+    public function getPriority(): int
     {
         return 0;
     }
+
+    abstract public function getCustomTokens(): array;
 }

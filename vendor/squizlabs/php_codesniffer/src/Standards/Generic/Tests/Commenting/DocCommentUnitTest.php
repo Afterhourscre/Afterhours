@@ -4,15 +4,35 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Generic\Tests\Commenting;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class DocCommentUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the DocCommentSniff sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Generic\Sniffs\Commenting\DocCommentSniff
+ */
+final class DocCommentUnitTest extends AbstractSniffUnitTest
 {
+
+
+    /**
+     * Get a list of CLI values to set before the file is tested.
+     *
+     * @param string                  $testFile The name of the file being tested.
+     * @param \PHP_CodeSniffer\Config $config   The config data for the test run.
+     *
+     * @return void
+     */
+    public function setCliValues($testFile, $config)
+    {
+        $config->tabWidth = 4;
+
+    }//end setCliValues()
 
 
     /**
@@ -21,11 +41,16 @@ class DocCommentUnitTest extends AbstractSniffUnitTest
      * The key of the array should represent the line number and the value
      * should represent the number of errors that should occur on that line.
      *
+     * @param string $testFile The name of the file being tested.
+     *
      * @return array(int => int)
      */
-    public function getErrorList()
+    public function getErrorList($testFile='')
     {
-        return array(
+        switch ($testFile) {
+        case 'DocCommentUnitTest.1.inc':
+        case 'DocCommentUnitTest.1.js':
+            return [
                 14  => 1,
                 16  => 1,
                 18  => 1,
@@ -53,13 +78,33 @@ class DocCommentUnitTest extends AbstractSniffUnitTest
                 171 => 3,
                 179 => 1,
                 183 => 1,
-                184 => 1,
-                185 => 2,
+                184 => 2,
+                185 => 1,
                 186 => 1,
                 187 => 2,
-                191 => 1,
-                194 => 4,
-               );
+                193 => 1,
+                196 => 1,
+                199 => 1,
+                203 => 1,
+                206 => 1,
+                211 => 1,
+                214 => 4,
+                218 => 1,
+                220 => 2,
+                222 => 1,
+                224 => 3,
+                243 => 1,
+                244 => 1,
+                246 => 1,
+                248 => 1,
+                249 => 1,
+                263 => 1,
+                266 => 1,
+            ];
+
+        default:
+            return [];
+        }//end switch
 
     }//end getErrorList()
 
@@ -74,7 +119,7 @@ class DocCommentUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

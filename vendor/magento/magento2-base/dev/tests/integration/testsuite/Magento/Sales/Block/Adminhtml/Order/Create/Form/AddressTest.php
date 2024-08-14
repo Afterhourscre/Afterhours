@@ -21,7 +21,7 @@ use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\TestFramework\Helper\Xpath;
 use Magento\TestFramework\ObjectManager;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use PHPUnit\Framework\MockObject\MockObject as MockObject;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
@@ -47,7 +47,7 @@ class AddressTest extends \PHPUnit\Framework\TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->objectManager = Bootstrap::getObjectManager();
 
@@ -84,7 +84,6 @@ class AddressTest extends \PHPUnit\Framework\TestCase
      * Checks address collection output encoded to json.
      *
      * @magentoDataFixture Magento/Customer/Fixtures/customer_sec_website_2_addresses.php
-     * @magentoDbIsolation enabled
      */
     public function testGetAddressCollectionJson()
     {

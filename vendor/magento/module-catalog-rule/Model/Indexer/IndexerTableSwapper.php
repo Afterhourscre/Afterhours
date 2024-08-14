@@ -3,6 +3,7 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\CatalogRule\Model\Indexer;
 
@@ -39,7 +40,6 @@ class IndexerTableSwapper implements IndexerTableSwapperInterface
      * @param string $originalTableName
      *
      * @return string Created table name.
-     * @throws \Throwable
      */
     private function createTemporaryTable(string $originalTableName): string
     {
@@ -75,8 +75,7 @@ class IndexerTableSwapper implements IndexerTableSwapperInterface
     {
         $originalTable = $this->resourceConnection->getTableName($originalTable);
         if (!array_key_exists($originalTable, $this->temporaryTables)) {
-            $this->temporaryTables[$originalTable]
-                = $this->createTemporaryTable($originalTable);
+            $this->temporaryTables[$originalTable] = $this->createTemporaryTable($originalTable);
         }
 
         return $this->temporaryTables[$originalTable];
@@ -92,6 +91,7 @@ class IndexerTableSwapper implements IndexerTableSwapperInterface
         $toDrop = [];
         /** @var string[] $temporaryTablesRenamed */
         $temporaryTablesRenamed = [];
+        $restoreTriggerQueries = [];
         //Renaming temporary tables to original tables' names, dropping old
         //tables.
         foreach ($originalTablesNames as $tableName) {
@@ -100,13 +100,14 @@ class IndexerTableSwapper implements IndexerTableSwapperInterface
                 $tableName . $this->generateRandomSuffix()
             );
             $temporaryTableName = $this->getWorkingTableName($tableName);
+            $restoreTriggerQueries[] = $this->getRestoreTriggerQueries($tableName);
             $toRename[] = [
                 'oldName' => $tableName,
-                'newName' => $temporaryOriginalName
+                'newName' => $temporaryOriginalName,
             ];
             $toRename[] = [
                 'oldName' => $temporaryTableName,
-                'newName' => $tableName
+                'newName' => $tableName,
             ];
             $toDrop[] = $temporaryOriginalName;
             $temporaryTablesRenamed[] = $tableName;
@@ -120,6 +121,51 @@ class IndexerTableSwapper implements IndexerTableSwapperInterface
         }
         //Removing old ones.
         foreach ($toDrop as $tableName) {
+            $this->resourceConnection->getConnection()->dropTable($tableName);
+        }
+
+        //Restoring triggers
+        $restoreTriggerQueries = array_merge([], ...$restoreTriggerQueries);
+        foreach ($restoreTriggerQueries as $restoreTriggerQuery) {
+            $this->resourceConnection->getConnection()->multiQuery($restoreTriggerQuery);
+        }
+    }
+
+    /**
+     * Get queries for table triggers restoring.
+     *
+     * @param string $tableName
+     * @return array
+     */
+    private function getRestoreTriggerQueries(string $tableName): array
+    {
+        $triggers = $this->resourceConnection->getConnection()
+            ->query('SHOW TRIGGERS LIKE \''. $tableName . '\'')
+            ->fetchAll();
+
+        if (!$triggers) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($triggers as $trigger) {
+            // phpcs:ignore Magento2.SQL.RawQuery.FoundRawSql
+            $result[] = 'DROP TRIGGER IF EXISTS ' . $trigger['Trigger'];
+            $triggerData = $this->resourceConnection->getConnection()
+                ->query('SHOW CREATE TRIGGER '. $trigger['Trigger'])
+                ->fetch();
+            $result[]  = preg_replace('/DEFINER=[^\s]*/', '', $triggerData['SQL Original Statement']);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Cleanup leftover temporary tables
+     */
+    public function __destruct()
+    {
+        foreach ($this->temporaryTables as $tableName) {
             $this->resourceConnection->getConnection()->dropTable($tableName);
         }
     }

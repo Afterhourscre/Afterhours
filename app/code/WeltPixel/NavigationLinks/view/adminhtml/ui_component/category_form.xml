@@ -4,7 +4,7 @@
     <fieldset name="weltpixel_options">
         <argument name="data" xsi:type="array">
             <item name="config" xsi:type="array">
-                <item name="label" xsi:type="string" translate="true">WeltPixel Options</item>
+                <item name="label" xsi:type="string" translate="true">WeltPixel Options ==</item>
                 <item name="collapsible" xsi:type="boolean">true</item>
                 <item name="sortOrder" xsi:type="number">15</item>
             </item>
@@ -21,7 +21,7 @@
                         <item name="sortOrder" xsi:type="number">10</item>
                         <item name="dataType" xsi:type="string">string</item>
                         <item name="formElement" xsi:type="string">input</item>
-                        <item name="scopeLabel" xsi:type="string">[STORE VIEW]</item>
+                        <!-- <item name="scopeLabel" xsi:type="string">[STORE VIEW]</item> -->
                         <item name="label" xsi:type="string" translate="true">Custom Link</item>
                         <item name="description" xsi:type="string" translate="true"><![CDATA[1. Use 'http://' or 'https://' to create external link <br/>2. Use '/' to create link to home page <br/>3. Use '#' to disable link]]></item>
                     </item>

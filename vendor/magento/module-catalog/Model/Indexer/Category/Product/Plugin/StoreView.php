@@ -5,18 +5,18 @@
  */
 namespace Magento\Catalog\Model\Indexer\Category\Product\Plugin;
 
-use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Magento\Framework\Model\AbstractModel;
+use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 
 class StoreView extends StoreGroup
 {
     /**
      * Validate changes for invalidating indexer
      *
-     * @param \Magento\Framework\Model\AbstractModel $store
+     * @param AbstractModel $store
      * @return bool
      */
-    protected function validate(\Magento\Framework\Model\AbstractModel $store)
+    protected function validate(AbstractModel $store)
     {
         return $store->isObjectNew() || $store->dataHasChangedFor('group_id');
     }
@@ -36,7 +36,7 @@ class StoreView extends StoreGroup
             $this->tableMaintainer->createTablesForStore($store->getId());
         }
 
-        return parent::afterSave($subject, $objectResource);
+        return parent::afterSave($subject, $objectResource, $store);
     }
 
     /**
@@ -51,7 +51,7 @@ class StoreView extends StoreGroup
      */
     public function afterDelete(AbstractDb $subject, AbstractDb $objectResource, AbstractModel $store)
     {
-        $this->tableMaintainer->dropTablesForStore($store->getId());
+        $this->tableMaintainer->dropTablesForStore((int)$store->getId());
         return $objectResource;
     }
 }

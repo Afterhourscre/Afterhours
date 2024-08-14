@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\MySource\Tests\Objects;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class CreateWidgetTypeCallbackUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the CreateWidgetTypeCallback sniff.
+ *
+ * @covers PHP_CodeSniffer\Standards\MySource\Sniffs\Objects\CreateWidgetTypeCallbackSniff
+ */
+final class CreateWidgetTypeCallbackUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -21,22 +26,20 @@ class CreateWidgetTypeCallbackUnitTest extends AbstractSniffUnitTest
      * The key of the array should represent the line number and the value
      * should represent the number of errors that should occur on that line.
      *
-     * @param string $testFile The name of the file being tested.
-     *
      * @return array<int, int>
      */
-    public function getErrorList($testFile='CreateWidgetTypeCallbackUnitTest.js')
+    public function getErrorList()
     {
-        return array(
-                18  => 1,
-                23  => 2,
-                26  => 1,
-                30  => 1,
-                34  => 1,
-                43  => 2,
-                91  => 1,
-                123 => 1,
-               );
+        return [
+            18  => 1,
+            23  => 2,
+            26  => 1,
+            30  => 1,
+            34  => 1,
+            43  => 2,
+            91  => 1,
+            123 => 1,
+        ];
 
     }//end getErrorList()
 
@@ -51,7 +54,7 @@ class CreateWidgetTypeCallbackUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

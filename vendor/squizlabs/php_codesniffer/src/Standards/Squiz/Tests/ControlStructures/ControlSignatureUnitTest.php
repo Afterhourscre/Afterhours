@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Tests\ControlStructures;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class ControlSignatureUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the ControlSignature sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Squiz\Sniffs\ControlStructures\ControlSignatureSniff
+ */
+final class ControlSignatureUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,30 +30,30 @@ class ControlSignatureUnitTest extends AbstractSniffUnitTest
      *
      * @return array<int, int>
      */
-    public function getErrorList($testFile='ControlSignatureUnitTest.inc')
+    public function getErrorList($testFile='')
     {
-        $errors = array(
-                   7   => 1,
-                   12  => 1,
-                   15  => 1,
-                   18  => 1,
-                   20  => 1,
-                   22  => 2,
-                   28  => 2,
-                   32  => 1,
-                   38  => 2,
-                   42  => 1,
-                   48  => 2,
-                   52  => 1,
-                   62  => 2,
-                   66  => 2,
-                   76  => 4,
-                   80  => 2,
-                   94  => 1,
-                   99  => 1,
-                   108 => 1,
-                   112 => 1,
-                  );
+        $errors = [
+            7   => 1,
+            12  => 1,
+            15  => 1,
+            18  => 1,
+            20  => 1,
+            22  => 2,
+            28  => 2,
+            32  => 1,
+            38  => 2,
+            42  => 1,
+            48  => 2,
+            52  => 1,
+            62  => 2,
+            66  => 2,
+            76  => 4,
+            80  => 2,
+            94  => 1,
+            99  => 1,
+            108 => 1,
+            112 => 1,
+        ];
 
         if ($testFile === 'ControlSignatureUnitTest.inc') {
             $errors[122] = 1;
@@ -63,7 +68,23 @@ class ControlSignatureUnitTest extends AbstractSniffUnitTest
             $errors[190] = 2;
             $errors[191] = 2;
             $errors[195] = 1;
-        }
+            $errors[227] = 1;
+            $errors[234] = 1;
+            $errors[239] = 2;
+            $errors[243] = 2;
+            $errors[244] = 2;
+            $errors[248] = 1;
+            $errors[259] = 1;
+            $errors[262] = 1;
+            $errors[267] = 1;
+            $errors[269] = 1;
+            $errors[276] = 1;
+            $errors[279] = 1;
+            $errors[283] = 1;
+            $errors[306] = 3;
+            $errors[309] = 1;
+            $errors[315] = 1;
+        }//end if
 
         return $errors;
 
@@ -80,7 +101,7 @@ class ControlSignatureUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

@@ -1,12 +1,14 @@
 <?php
+use Magento\Framework\ObjectManager\ContextInterface;
+
 /**
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
 /**
- * @codingStandardsIgnoreFile
  * Coding Standards have to be ignored in this file, as it is just a data source for tests.
+ * @codingStandardsIgnoreStart
  */
 
 class ClassA
@@ -30,7 +32,7 @@ interface SecondInterface
 class ImplementationOfSecondInterface implements SecondInterface
 {
 }
-class Context implements \Magento\Framework\ObjectManager\ContextInterface
+class Context implements ContextInterface
 {
     /**
      * @var ClassA
@@ -59,7 +61,6 @@ class Context implements \Magento\Framework\ObjectManager\ContextInterface
 
     /**
      * Context constructor.
-     *
      * @param ClassA $exA
      * @param ClassB $exB
      * @param ClassC $exC

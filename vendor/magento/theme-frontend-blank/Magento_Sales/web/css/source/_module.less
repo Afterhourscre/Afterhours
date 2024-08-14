@@ -262,7 +262,7 @@
         }
 
         .toolbar {
-            &:extend(.abs-add-clearfix-desktop all);
+            &:extend(.abs-add-clearfix-mobile all);
 
             .pages {
                 float: right;
@@ -370,7 +370,7 @@
 
     .page-title-wrapper {
         .order-date {
-            @order-status-indent: ceil(@h1__margin-bottom__desktop/2);
+            @order-status-indent: ceil((@h1__margin-bottom__desktop/2));
             .lib-css(margin-top, -@order-status-indent);
         }
     }

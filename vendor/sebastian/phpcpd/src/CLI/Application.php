@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /*
  * This file is part of PHP Copy/Paste Detector (PHPCPD).
  *
@@ -7,99 +7,115 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace SebastianBergmann\PHPCPD;
 
-namespace SebastianBergmann\PHPCPD\CLI;
-
+use const PHP_EOL;
+use function count;
+use function printf;
+use SebastianBergmann\FileIterator\Facade;
+use SebastianBergmann\PHPCPD\Detector\Detector;
+use SebastianBergmann\PHPCPD\Detector\Strategy\DefaultStrategy;
+use SebastianBergmann\PHPCPD\Log\PMD;
+use SebastianBergmann\PHPCPD\Log\Text;
+use SebastianBergmann\Timer\ResourceUsageFormatter;
+use SebastianBergmann\Timer\Timer;
 use SebastianBergmann\Version;
-use Symfony\Component\Console\Application as AbstractApplication;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\ArgvInput;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Input\ArrayInput;
 
-/**
- * TextUI frontend for PHPCPD.
- *
- * @author    Sebastian Bergmann <sebastian@phpunit.de>
- * @copyright Sebastian Bergmann <sebastian@phpunit.de>
- * @license   http://www.opensource.org/licenses/BSD-3-Clause  The BSD 3-Clause License
- * @link      http://github.com/sebastianbergmann/phpcpd/tree
- * @since     Class available since Release 2.0.0
- */
-class Application extends AbstractApplication
+final class Application
 {
-    public function __construct()
+    private const VERSION = '6.0.3';
+
+    public function run(array $argv): int
     {
-        $version = new Version('2.0.4', dirname(dirname(__DIR__)));
-        parent::__construct('phpcpd', $version->getVersion());
-    }
+        $this->printVersion();
 
-    /**
-     * Gets the name of the command based on input.
-     *
-     * @param InputInterface $input The input interface
-     *
-     * @return string The command name
-     */
-    protected function getCommandName(InputInterface $input)
-    {
-        return 'phpcpd';
-    }
+        try {
+            $arguments = (new ArgumentsBuilder)->build($argv);
+        } catch (Exception $e) {
+            print PHP_EOL . $e->getMessage() . PHP_EOL;
 
-    /**
-     * Gets the default commands that should always be available.
-     *
-     * @return array An array of default Command instances
-     */
-    protected function getDefaultCommands()
-    {
-        $defaultCommands = parent::getDefaultCommands();
-
-        $defaultCommands[] = new Command;
-
-        return $defaultCommands;
-    }
-
-    /**
-     * Overridden so that the application doesn't expect the command
-     * name to be the first argument.
-     */
-    public function getDefinition()
-    {
-        $inputDefinition = parent::getDefinition();
-        $inputDefinition->setArguments();
-
-        return $inputDefinition;
-    }
-
-    /**
-     * Runs the current application.
-     *
-     * @param InputInterface  $input  An Input instance
-     * @param OutputInterface $output An Output instance
-     *
-     * @return integer 0 if everything went fine, or an error code
-     */
-    public function doRun(InputInterface $input, OutputInterface $output)
-    {
-        if (!$input->hasParameterOption('--quiet')) {
-            $output->write(
-                sprintf(
-                    "phpcpd %s by Sebastian Bergmann.\n\n",
-                    $this->getVersion()
-                )
-            );
+            return 1;
         }
 
-        if ($input->hasParameterOption('--version') ||
-            $input->hasParameterOption('-V')) {
-            exit;
+        if ($arguments->version()) {
+            return 0;
         }
 
-        if (!$input->getFirstArgument()) {
-            $input = new ArrayInput(array('--help'));
+        print PHP_EOL;
+
+        if ($arguments->help()) {
+            $this->help();
+
+            return 0;
         }
 
-        parent::doRun($input, $output);
+        $files = (new Facade)->getFilesAsArray(
+            $arguments->directories(),
+            $arguments->suffixes(),
+            '',
+            $arguments->exclude()
+        );
+
+        if (empty($files)) {
+            print 'No files found to scan' . PHP_EOL;
+
+            return 1;
+        }
+
+        $strategy = new DefaultStrategy;
+
+        $timer = new Timer;
+        $timer->start();
+
+        $clones = (new Detector($strategy))->copyPasteDetection(
+            $files,
+            $arguments->linesThreshold(),
+            $arguments->tokensThreshold(),
+            $arguments->fuzzy()
+        );
+
+        (new Text)->printResult($clones, $arguments->verbose());
+
+        if ($arguments->pmdCpdXmlLogfile()) {
+            (new PMD($arguments->pmdCpdXmlLogfile()))->processClones($clones);
+        }
+
+        print (new ResourceUsageFormatter)->resourceUsage($timer->stop()) . PHP_EOL;
+
+        return count($clones) > 0 ? 1 : 0;
+    }
+
+    private function printVersion(): void
+    {
+        printf(
+            'phpcpd %s by Sebastian Bergmann.' . PHP_EOL,
+            (new Version(self::VERSION, dirname(__DIR__)))->getVersion()
+        );
+    }
+
+    private function help(): void
+    {
+        print <<<'EOT'
+Usage:
+  phpcpd [options] <directory>
+
+Options for selecting files:
+
+  --suffix <suffix> Include files with names ending in <suffix> in the analysis
+                    (default: .php; can be given multiple times)
+  --exclude <path>  Exclude files with <path> in their path from the analysis
+                    (can be given multiple times)
+
+Options for analysing files:
+
+  --fuzzy           Fuzz variable names
+  --min-lines <N>   Minimum number of identical lines (default: 5)
+  --min-tokens <N>  Minimum number of identical tokens (default: 70)
+
+Options for report generation:
+
+  --log-pmd <file>  Write log in PMD-CPD XML format to <file>
+
+EOT;
     }
 }

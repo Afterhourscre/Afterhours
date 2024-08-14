@@ -4,12 +4,11 @@
  * See COPYING.txt for license details.
  */
 
+namespace Magento\Review\Block\Adminhtml\Edit;
 
 /**
  * Adminhtml Review Edit Form
  */
-namespace Magento\Review\Block\Adminhtml\Edit;
-
 class Form extends \Magento\Backend\Block\Widget\Form\Generic
 {
     /**
@@ -70,14 +69,13 @@ class Form extends \Magento\Backend\Block\Widget\Form\Generic
      *
      * @return $this
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-     * @SuppressWarnings(PHPMD.RequestAwareBlockMethod)
      */
     protected function _prepareForm()
     {
         $review = $this->_coreRegistry->registry('review_data');
         $product = $this->_productFactory->create()->load($review->getEntityPkValue());
 
-        $formActionParams =[
+        $formActionParams = [
             'id' => $this->getRequest()->getParam('id'),
             'ret' => $this->_coreRegistry->registry('ret')
         ];
@@ -189,15 +187,14 @@ class Form extends \Magento\Backend\Block\Widget\Form\Generic
                 \Magento\Backend\Block\Store\Switcher\Form\Renderer\Fieldset\Element::class
             );
             $field->setRenderer($renderer);
-            $review->setSelectStores($review->getStores());
         } else {
             $fieldset->addField(
                 'select_stores',
                 'hidden',
-                ['name' => 'stores[]', 'value' => $this->_storeManager->getStore(true)->getId()]
+                ['name' => 'stores[]', 'value' => $review->getStores()]
             );
-            $review->setSelectStores($this->_storeManager->getStore(true)->getId());
         }
+        $review->setSelectStores($review->getStores());
 
         $fieldset->addField(
             'nickname',

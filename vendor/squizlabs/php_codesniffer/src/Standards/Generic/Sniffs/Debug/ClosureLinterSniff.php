@@ -4,14 +4,17 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ *
+ * @deprecated 3.9.0
  */
 
 namespace PHP_CodeSniffer\Standards\Generic\Sniffs\Debug;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
-use PHP_CodeSniffer\Files\File;
 use PHP_CodeSniffer\Config;
+use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
+use PHP_CodeSniffer\Util\Common;
 
 class ClosureLinterSniff implements Sniff
 {
@@ -21,33 +24,33 @@ class ClosureLinterSniff implements Sniff
      *
      * All other error codes will show warnings.
      *
-     * @var integer
+     * @var array
      */
-    public $errorCodes = array();
+    public $errorCodes = [];
 
     /**
      * A list of error codes to ignore.
      *
-     * @var integer
+     * @var array
      */
-    public $ignoreCodes = array();
+    public $ignoreCodes = [];
 
     /**
      * A list of tokenizers this sniff supports.
      *
      * @var array
      */
-    public $supportedTokenizers = array('JS');
+    public $supportedTokenizers = ['JS'];
 
 
     /**
      * Returns the token types that this sniff is interested in.
      *
-     * @return int[]
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(T_OPEN_TAG);
+        return [T_OPEN_TAG];
 
     }//end register()
 
@@ -59,28 +62,28 @@ class ClosureLinterSniff implements Sniff
      * @param int                         $stackPtr  The position in the stack where
      *                                               the token was found.
      *
-     * @return void
-     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If jslint.js could not be run
+     * @return int
+     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If jslint.js could not be run.
      */
     public function process(File $phpcsFile, $stackPtr)
     {
         $lintPath = Config::getExecutablePath('gjslint');
         if ($lintPath === null) {
-            return;
+            return $phpcsFile->numTokens;
         }
 
         $fileName = $phpcsFile->getFilename();
 
-        $lintPath = escapeshellcmd($lintPath);
-        $cmd      = '$lintPath --nosummary --notime --unix_mode '.escapeshellarg($fileName);
-        $msg      = exec($cmd, $output, $retval);
+        $lintPath = Common::escapeshellcmd($lintPath);
+        $cmd      = $lintPath.' --nosummary --notime --unix_mode '.escapeshellarg($fileName);
+        exec($cmd, $output, $retval);
 
         if (is_array($output) === false) {
-            return;
+            return $phpcsFile->numTokens;
         }
 
         foreach ($output as $finding) {
-            $matches    = array();
+            $matches    = [];
             $numMatches = preg_match('/^(.*):([0-9]+):\(.*?([0-9]+)\)(.*)$/', $finding, $matches);
             if ($numMatches === 0) {
                 continue;
@@ -96,10 +99,10 @@ class ClosureLinterSniff implements Sniff
             $error = trim($matches[4]);
 
             $message = 'gjslint says: (%s) %s';
-            $data    = array(
-                        $code,
-                        $error,
-                       );
+            $data    = [
+                $code,
+                $error,
+            ];
             if (in_array($code, $this->errorCodes) === true) {
                 $phpcsFile->addErrorOnLine($message, $line, 'ExternalToolError', $data);
             } else {
@@ -108,7 +111,7 @@ class ClosureLinterSniff implements Sniff
         }//end foreach
 
         // Ignore the rest of the file.
-        return ($phpcsFile->numTokens + 1);
+        return $phpcsFile->numTokens;
 
     }//end process()
 

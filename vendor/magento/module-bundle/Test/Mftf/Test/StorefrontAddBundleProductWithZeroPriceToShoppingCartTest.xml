@@ -7,7 +7,7 @@
 -->
 
 <tests xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:noNamespaceSchemaLocation="../../../../../../../dev/tests/acceptance/vendor/magento/magento2-functional-testing-framework/src/Magento/FunctionalTestingFramework/Test/etc/testSchema.xsd">
+        xsi:noNamespaceSchemaLocation="urn:magento:mftf:Test/etc/testSchema.xsd">
     <test name="StorefrontAddBundleProductWithZeroPriceToShoppingCartTest">
         <annotations>
             <features value="Bundle"/>
@@ -15,7 +15,7 @@
             <title value="Add Bundle product with zero price to shopping cart"/>
             <description value="Add Bundle product with zero price to shopping cart"/>
             <severity value="CRITICAL"/>
-            <testCaseId value="MAGETWO-83535"/>
+            <testCaseId value="MAGETWO-95167"/>
             <group value="bundle"/>
         </annotations>
         <before>
@@ -40,7 +40,9 @@
                 <requiredEntity createDataKey="bundleOption"/>
                 <requiredEntity createDataKey="apiSimple"/>
             </createData>
-            <magentoCLI command="indexer:reindex" stepKey="reindex"/>
+            <actionGroup ref="CliIndexerReindexActionGroup" stepKey="reindex">
+                <argument name="indices" value="cataloginventory_stock catalog_product_price"/>
+            </actionGroup>
         </before>
         <after>
             <createData entity="FreeShippinMethodDefault" stepKey="disableFreeShipping"/>
@@ -48,14 +50,13 @@
             <deleteData createDataKey="apiBundleProduct" stepKey="deleteBundleProduct"/>
             <deleteData createDataKey="createSubCategory" stepKey="deleteCategory"/>
             <actionGroup ref="AdminOrdersGridClearFiltersActionGroup" stepKey="clearFilters"/>
-            <actionGroup ref="logout" stepKey="logout"/>
+            <actionGroup ref="AdminLogoutActionGroup" stepKey="logout"/>
         </after>
         <!--Open category page-->
         <amOnPage url="{{StorefrontCategoryPage.url($$createSubCategory.custom_attributes[url_key]$$)}}" stepKey="amOnCategoryPage"/>
-        <waitForPageLoad stepKey="waitForCategoryPageLoad"/>
         <!--Add bundle product to cart-->
-        <actionGroup ref="StorefrontAddCategoryBundleProductToCartActionGroup" stepKey="addBundleProductToCart">
-            <argument name="product" value="$$apiBundleProduct$$"/>
+        <actionGroup ref="StorefrontAddBundleProductFromCategoryToCartActionGroup" stepKey="addBundleProductToCart">
+            <argument name="productName" value="$$apiBundleProduct.name$$"/>
         </actionGroup>
         <actionGroup ref="GoToCheckoutFromMinicartActionGroup" stepKey="goToCheckoutFromMinicart"/>
 
@@ -67,11 +68,12 @@
         <grabTextFrom selector="{{CheckoutSuccessMainSection.orderNumber}}" stepKey="grabOrderNumber"/>
 
         <!--Check subtotal in created order-->
-        <actionGroup ref="LoginAsAdmin" stepKey="loginAsAdmin"/>
-        <actionGroup ref="filterOrderGridById" stepKey="filterOrderById">
+        <actionGroup ref="AdminLoginActionGroup" stepKey="loginAsAdmin"/>
+        <actionGroup ref="FilterOrderGridByIdActionGroup" stepKey="filterOrderById">
             <argument name="orderId" value="$grabOrderNumber"/>
         </actionGroup>
-        <click selector="{{AdminOrdersGridSection.firstRow}}" stepKey="clickOrderRow"/>
+
+        <actionGroup ref="AdminOrderGridClickFirstRowActionGroup" stepKey="clickOrderRow"/>
         <scrollTo selector="{{AdminOrderTotalSection.subTotal}}" stepKey="scrollToOrderTotalSection"/>
         <see selector="{{AdminOrderTotalSection.subTotal}}"  userInput="$0.00" stepKey="checkSubtotal"/>
     </test>

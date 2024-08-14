@@ -3,19 +3,22 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Eav\Test\Unit\Model\Entity\Attribute\Frontend;
 
-use Magento\Eav\Model\Entity\Attribute\Frontend\DefaultFrontend;
-use Magento\Eav\Model\Entity\Attribute\Source\BooleanFactory;
-use Magento\Framework\Serialize\Serializer\Json as Serializer;
-use Magento\Store\Model\StoreManagerInterface;
-use Magento\Store\Api\Data\StoreInterface;
-use Magento\Framework\App\CacheInterface;
 use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
+use Magento\Eav\Model\Entity\Attribute\Frontend\DefaultFrontend;
 use Magento\Eav\Model\Entity\Attribute\Source\AbstractSource;
+use Magento\Eav\Model\Entity\Attribute\Source\BooleanFactory;
+use Magento\Framework\App\CacheInterface;
+use Magento\Framework\Serialize\Serializer\Json as Serializer;
+use Magento\Store\Api\Data\StoreInterface;
+use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class DefaultFrontendTest extends \PHPUnit\Framework\TestCase
+class DefaultFrontendTest extends TestCase
 {
     /**
      * @var DefaultFrontend
@@ -23,34 +26,34 @@ class DefaultFrontendTest extends \PHPUnit\Framework\TestCase
     private $model;
 
     /**
-     * @var BooleanFactory|MockObject
+     * @var BooleanFactory | MockObject
      */
     private $booleanFactory;
 
     /**
-     * @var Serializer|MockObject
+     * @var Serializer| MockObject
      */
-    private $serializerMock;
+    private $serializer;
 
     /**
-     * @var StoreManagerInterface|MockObject
+     * @var StoreManagerInterface | MockObject
      */
-    private $storeManagerMock;
+    private $storeManager;
 
     /**
-     * @var StoreInterface|MockObject
+     * @var StoreInterface | MockObject
      */
-    private $storeMock;
+    private $store;
 
     /**
-     * @var CacheInterface|MockObject
+     * @var CacheInterface | MockObject
      */
-    private $cacheMock;
+    private $cache;
 
     /**
-     * @var AbstractAttribute|MockObject
+     * @var AbstractAttribute | MockObject
      */
-    private $attributeMock;
+    private $attribute;
 
     /**
      * @var array
@@ -58,76 +61,80 @@ class DefaultFrontendTest extends \PHPUnit\Framework\TestCase
     private $cacheTags;
 
     /**
-     * @var AbstractSource|MockObject
+     * @var AbstractSource | MockObject
      */
-    private $sourceMock;
+    private $source;
 
-    protected function setUp()
+    /**
+     * @inheritdoc
+     */
+    protected function setUp(): void
     {
         $this->cacheTags = ['tag1', 'tag2'];
 
         $this->booleanFactory = $this->getMockBuilder(BooleanFactory::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->serializerMock = $this->getMockBuilder(Serializer::class)
+        $this->serializer = $this->getMockBuilder(Serializer::class)
             ->getMock();
-        $this->storeManagerMock = $this->getMockBuilder(StoreManagerInterface::class)
+        $this->storeManager = $this->getMockBuilder(StoreManagerInterface::class)
             ->getMockForAbstractClass();
-        $this->storeMock = $this->getMockBuilder(StoreInterface::class)
+        $this->store = $this->getMockBuilder(StoreInterface::class)
             ->getMockForAbstractClass();
-        $this->cacheMock = $this->getMockBuilder(CacheInterface::class)
+        $this->cache = $this->getMockBuilder(CacheInterface::class)
             ->getMockForAbstractClass();
-        $this->attributeMock = $this->createAttributeMock();
-        $this->sourceMock = $this->getMockBuilder(AbstractSource::class)
+        $this->attribute = $this->createAttribute();
+        $this->source = $this->getMockBuilder(AbstractSource::class)
             ->disableOriginalConstructor()
             ->setMethods(['getAllOptions'])
             ->getMockForAbstractClass();
 
         $this->model = new DefaultFrontend(
             $this->booleanFactory,
-            $this->cacheMock,
+            $this->cache,
             null,
             $this->cacheTags,
-            $this->storeManagerMock,
-            $this->serializerMock
+            $this->storeManager,
+            $this->serializer
         );
 
-        $this->model->setAttribute($this->attributeMock);
+        $this->model->setAttribute($this->attribute);
     }
 
     public function testGetClassEmpty()
     {
-        /** @var AbstractAttribute|MockObject $attributeMock */
-        $attributeMock = $this->createAttributeMock();
-        $attributeMock->method('getIsRequired')
+        /** @var AbstractAttribute | MockObject $attribute */
+        $attribute = $this->createAttribute();
+        $attribute->method('getIsRequired')
             ->willReturn(false);
-        $attributeMock->method('getFrontendClass')
+        $attribute->method('getFrontendClass')
             ->willReturn('');
-        $attributeMock->expects($this->exactly(2))
+        $attribute->expects($this->exactly(2))
             ->method('getValidateRules')
             ->willReturn('');
 
-        $this->model->setAttribute($attributeMock);
-        $this->assertEmpty($this->model->getClass());
+        $this->model->setAttribute($attribute);
+
+        self::assertEmpty($this->model->getClass());
     }
 
     /**
      * Validates generated html classes.
      *
-     * @param string $validationRule
-     * @param string $expectedClass
+     * @param String $validationRule
+     * @param String $expectedClass
      * @return void
      * @dataProvider validationRulesDataProvider
      */
-    public function testGetClass(string $validationRule, string $expectedClass)
+    public function testGetClass(String $validationRule, String $expectedClass): void
     {
-        /** @var AbstractAttribute|MockObject $attributeMock */
-        $attributeMock = $this->createAttributeMock();
-        $attributeMock->method('getIsRequired')
+        /** @var AbstractAttribute | MockObject $attribute */
+        $attribute = $this->createAttribute();
+        $attribute->method('getIsRequired')
             ->willReturn(true);
-        $attributeMock->method('getFrontendClass')
+        $attribute->method('getFrontendClass')
             ->willReturn('');
-        $attributeMock->expects($this->exactly(3))
+        $attribute->expects($this->exactly(3))
             ->method('getValidateRules')
             ->willReturn([
                 'input_validation' => $validationRule,
@@ -135,67 +142,13 @@ class DefaultFrontendTest extends \PHPUnit\Framework\TestCase
                 'max_text_length' => 2,
             ]);
 
-        $this->model->setAttribute($attributeMock);
+        $this->model->setAttribute($attribute);
         $result = $this->model->getClass();
 
-        $this->assertContains($expectedClass, $result);
-        $this->assertContains('minimum-length-1', $result);
-        $this->assertContains('maximum-length-2', $result);
-        $this->assertContains('validate-length', $result);
-    }
-
-    public function testGetClassLength()
-    {
-        /** @var AbstractAttribute|MockObject $attributeMock */
-        $attributeMock = $this->createAttributeMock();
-        $attributeMock->method('getIsRequired')
-            ->willReturn(true);
-        $attributeMock->method('getFrontendClass')
-            ->willReturn('');
-        $attributeMock->expects($this->exactly(3))
-            ->method('getValidateRules')
-            ->willReturn([
-                'input_validation' => 'length',
-                'min_text_length' => 1,
-                'max_text_length' => 2,
-            ]);
-
-        $this->model->setAttribute($attributeMock);
-        $result = $this->model->getClass();
-
-        $this->assertContains('minimum-length-1', $result);
-        $this->assertContains('maximum-length-2', $result);
-        $this->assertContains('validate-length', $result);
-    }
-
-    public function testGetSelectOptions()
-    {
-        $storeId = 1;
-        $attributeCode = 'attr1';
-        $cacheKey = 'attribute-navigation-option-' . $attributeCode . '-' . $storeId;
-        $options = ['option1', 'option2'];
-        $serializedOptions = "{['option1', 'option2']}";
-
-        $this->storeManagerMock->method('getStore')
-            ->willReturn($this->storeMock);
-        $this->storeMock->method('getId')
-            ->willReturn($storeId);
-        $this->attributeMock->method('getAttributeCode')
-            ->willReturn($attributeCode);
-        $this->cacheMock->method('load')
-            ->with($cacheKey)
-            ->willReturn(false);
-        $this->attributeMock->method('getSource')
-            ->willReturn($this->sourceMock);
-        $this->sourceMock->method('getAllOptions')
-            ->willReturn($options);
-        $this->serializerMock->method('serialize')
-            ->with($options)
-            ->willReturn($serializedOptions);
-        $this->cacheMock->method('save')
-            ->with($serializedOptions, $cacheKey, $this->cacheTags);
-
-        $this->assertSame($options, $this->model->getSelectOptions());
+        self::assertStringContainsString($expectedClass, $result);
+        self::assertStringContainsString('minimum-length-1', $result);
+        self::assertStringContainsString('maximum-length-2', $result);
+        self::assertStringContainsString('validate-length', $result);
     }
 
     /**
@@ -212,16 +165,39 @@ class DefaultFrontendTest extends \PHPUnit\Framework\TestCase
             ['numeric', 'validate-digits'],
             ['url', 'validate-url'],
             ['email', 'validate-email'],
-            ['length', 'validate-length'],
+            ['length', 'validate-length']
         ];
+    }
+
+    public function testGetClassLength()
+    {
+        $attribute = $this->createAttribute();
+        $attribute->method('getIsRequired')
+            ->willReturn(true);
+        $attribute->method('getFrontendClass')
+            ->willReturn('');
+        $attribute->expects($this->exactly(3))
+            ->method('getValidateRules')
+            ->willReturn([
+                'input_validation' => 'length',
+                'min_text_length' => 1,
+                'max_text_length' => 2,
+            ]);
+
+        $this->model->setAttribute($attribute);
+        $result = $this->model->getClass();
+
+        self::assertStringContainsString('minimum-length-1', $result);
+        self::assertStringContainsString('maximum-length-2', $result);
+        self::assertStringContainsString('validate-length', $result);
     }
 
     /**
      * Entity attribute factory.
      *
-     * @return AbstractAttribute|MockObject
+     * @return AbstractAttribute | MockObject
      */
-    private function createAttributeMock()
+    private function createAttribute()
     {
         return $this->getMockBuilder(AbstractAttribute::class)
             ->disableOriginalConstructor()
@@ -233,5 +209,35 @@ class DefaultFrontendTest extends \PHPUnit\Framework\TestCase
                 'getSource'
             ])
             ->getMockForAbstractClass();
+    }
+
+    public function testGetSelectOptions()
+    {
+        $storeId = 1;
+        $attributeCode = 'attr1';
+        $cacheKey = 'attribute-navigation-option-' . $attributeCode . '-' . $storeId;
+        $options = ['option1', 'option2'];
+        $serializedOptions = "{['option1', 'option2']}";
+
+        $this->storeManager->method('getStore')
+            ->willReturn($this->store);
+        $this->store->method('getId')
+            ->willReturn($storeId);
+        $this->attribute->method('getAttributeCode')
+            ->willReturn($attributeCode);
+        $this->cache->method('load')
+            ->with($cacheKey)
+            ->willReturn(false);
+        $this->attribute->method('getSource')
+            ->willReturn($this->source);
+        $this->source->method('getAllOptions')
+            ->willReturn($options);
+        $this->serializer->method('serialize')
+            ->with($options)
+            ->willReturn($serializedOptions);
+        $this->cache->method('save')
+            ->with($serializedOptions, $cacheKey, $this->cacheTags);
+
+        self::assertSame($options, $this->model->getSelectOptions());
     }
 }

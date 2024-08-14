@@ -9,13 +9,10 @@ use Magento\Ui\Component\Control\Container;
 use Magento\Catalog\Block\Adminhtml\Product\Edit\Button\Generic;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable as ConfigurableType;
 
-/**
- * Class Save
- */
 class Save extends Generic
 {
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getButtonData()
     {
@@ -43,6 +40,7 @@ class Save extends Generic
             ],
             'class_name' => Container::SPLIT_BUTTON,
             'options' => $this->getOptions(),
+            'dropdown_button_aria_label' => __('Save options'),
         ];
     }
 
@@ -125,7 +123,8 @@ class Save extends Generic
     }
 
     /**
-     * Retrieve target for button
+     * Retrieve target for button.
+     *
      * @return string
      */
     protected function getSaveTarget()
@@ -138,7 +137,8 @@ class Save extends Generic
     }
 
     /**
-     * Retrieve action for button
+     * Retrieve action for button.
+     *
      * @return string
      */
     protected function getSaveAction()
@@ -151,6 +151,8 @@ class Save extends Generic
     }
 
     /**
+     * Is configurable product.
+     *
      * @return boolean
      */
     protected function isConfigurableProduct()

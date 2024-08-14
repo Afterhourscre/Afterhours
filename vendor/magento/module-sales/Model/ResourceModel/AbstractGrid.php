@@ -90,7 +90,7 @@ abstract class AbstractGrid extends AbstractDb implements GridInterface
      *
      * @param string $default
      * @return string
-     * @deprecated 100.2.0 this method is not used in abstract model but only in single child so
+     * @deprecated 101.0.0 this method is not used in abstract model but only in single child so
      * this deprecation is a part of cleaning abstract classes.
      * @see \Magento\Sales\Model\ResourceModel\Provider\UpdatedIdListProvider
      */
@@ -103,6 +103,6 @@ abstract class AbstractGrid extends AbstractDb implements GridInterface
 
         $row = $this->getConnection()->fetchRow($select);
 
-        return isset($row['updated_at']) ? $row['updated_at'] : $default;
+        return $row['updated_at'] ?? $default;
     }
 }

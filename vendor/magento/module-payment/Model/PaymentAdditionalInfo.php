@@ -46,7 +46,7 @@ class PaymentAdditionalInfo implements PaymentAdditionalInfoInterface
     public function setKey($key)
     {
         $this->key = $key;
-        return $this;
+        return $key;
     }
 
     /**
@@ -55,6 +55,6 @@ class PaymentAdditionalInfo implements PaymentAdditionalInfoInterface
     public function setValue($value)
     {
         $this->value = $value;
-        return $this;
+        return $value;
     }
 }

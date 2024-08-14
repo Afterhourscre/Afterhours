@@ -6,10 +6,12 @@
 
 namespace Magento\Search\Controller\Adminhtml\Synonyms;
 
+use Magento\Framework\App\Action\HttpPostActionInterface;
+
 /**
  * Delete Controller
  */
-class Delete extends \Magento\Backend\App\Action
+class Delete extends \Magento\Backend\App\Action implements HttpPostActionInterface
 {
     /**
      * Authorization level of a basic admin session
@@ -55,7 +57,7 @@ class Delete extends \Magento\Backend\App\Action
         $id = $this->getRequest()->getParam('group_id');
         /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
         $resultRedirect = $this->resultRedirectFactory->create();
-        if ($this->getRequest()->isPost() && $id) {
+        if ($id) {
             try {
                 /** @var \Magento\Search\Model\SynonymGroup $synGroupModel */
                 $synGroupModel = $this->synGroupRepository->get($id);

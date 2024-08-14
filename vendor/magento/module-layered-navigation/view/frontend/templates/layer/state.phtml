@@ -17,7 +17,7 @@
     <strong class="block-subtitle filter-current-subtitle"
             role="heading"
             aria-level="2"
-            data-count="<?= count($_filters) ?>"><?= $block->escapeHtmlAttr(__('Now Shopping by')) ?></strong>
+            data-count="<?= /* @noEscape */ count($_filters) ?>"><?= $block->escapeHtml(__('Now Shopping by')) ?></strong>
     <ol class="items">
         <?php foreach ($_filters as $_filter) : ?>
             <li class="item">
@@ -25,7 +25,7 @@
                 <span class="filter-value"><?= $block->escapeHtml($block->stripTags($_filter->getLabel())) ?></span>
                 <?php
                 $clearLinkUrl = $_filter->getClearLinkUrl();
-                $currentFilterName = $block->escapeHtml(__($_filter->getName()) . " " . $block->stripTags($_filter->getLabel()));
+                $currentFilterName = $block->escapeHtmlAttr(__($_filter->getName()) . " " . $block->stripTags($_filter->getLabel()));
                 if ($clearLinkUrl) :
                     ?>
                     <a class="action previous" href="<?= $block->escapeUrl($_filter->getRemoveUrl()) ?>"

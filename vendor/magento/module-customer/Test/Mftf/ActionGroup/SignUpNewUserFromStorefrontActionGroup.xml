@@ -5,23 +5,30 @@
   * See COPYING.txt for license details.
   */
 -->
+
 <actionGroups xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-              xsi:noNamespaceSchemaLocation="../../../../../../../dev/tests/acceptance/vendor/magento/magento2-functional-testing-framework/src/Magento/FunctionalTestingFramework/Test/etc/actionGroupSchema.xsd">
+              xsi:noNamespaceSchemaLocation="urn:magento:mftf:Test/etc/actionGroupSchema.xsd">
     <actionGroup name="SignUpNewUserFromStorefrontActionGroup">
+        <annotations>
+            <description>Goes to the Storefront. Clicks on 'Create Account'. Fills in the provided Customer details, excluding Newsletter Sign-Up. Clicks on 'Create Account' button. Validate that the Customer details are present and correct.</description>
+        </annotations>
         <arguments>
             <argument name="Customer" defaultValue="CustomerEntityOne"/>
         </arguments>
+
         <amOnPage url="{{StorefrontHomePage.url}}" stepKey="amOnStorefrontPage"/>
-        <click selector="{{StorefrontPanelHeaderSection.createAnAccountLink}}" stepKey="clickOnCreateAccountLink"/>
-        <fillField userInput="{{Customer.firstname}}" selector="{{StorefrontCustomerCreateFormSection.firstnameField}}" stepKey="fillFirstName"/>
-        <fillField userInput="{{Customer.lastname}}" selector="{{StorefrontCustomerCreateFormSection.lastnameField}}" stepKey="fillLastName"/>
-        <fillField userInput="{{Customer.email}}" selector="{{StorefrontCustomerCreateFormSection.emailField}}" stepKey="fillEmail"/>
-        <fillField userInput="{{Customer.password}}" selector="{{StorefrontCustomerCreateFormSection.passwordField}}" stepKey="fillPassword"/>
-        <fillField userInput="{{Customer.password}}" selector="{{StorefrontCustomerCreateFormSection.confirmPasswordField}}" stepKey="fillConfirmPassword"/>
-        <click selector="{{StorefrontCustomerCreateFormSection.createAccountButton}}" stepKey="clickCreateAccountButton"/>
-        <see userInput="Thank you for registering with Main Website Store." stepKey="seeThankYouMessage"/>
-        <see userInput="{{Customer.firstname}}" selector="{{StorefrontCustomerDashboardAccountInformationSection.ContactInformation}}" stepKey="seeFirstName"/>
-        <see userInput="{{Customer.lastname}}" selector="{{StorefrontCustomerDashboardAccountInformationSection.ContactInformation}}" stepKey="seeLastName"/>
-        <see userInput="{{Customer.email}}" selector="{{StorefrontCustomerDashboardAccountInformationSection.ContactInformation}}" stepKey="seeEmail"/>
+        <waitForElementVisible selector="{{StorefrontPanelHeaderSection.createAnAccountLink}}" stepKey="waitForCreateAccountLink"/>
+        <click stepKey="clickOnCreateAccountLink" selector="{{StorefrontPanelHeaderSection.createAnAccountLink}}"/>
+        <fillField  stepKey="fillFirstName" userInput="{{Customer.firstname}}" selector="{{StorefrontCustomerCreateFormSection.firstnameField}}"/>
+        <fillField  stepKey="fillLastName" userInput="{{Customer.lastname}}" selector="{{StorefrontCustomerCreateFormSection.lastnameField}}"/>
+        <fillField  stepKey="fillEmail" userInput="{{Customer.email}}" selector="{{StorefrontCustomerCreateFormSection.emailField}}"/>
+        <fillField  stepKey="fillPassword" userInput="{{Customer.password}}" selector="{{StorefrontCustomerCreateFormSection.passwordField}}"/>
+        <fillField  stepKey="fillConfirmPassword" userInput="{{Customer.password}}" selector="{{StorefrontCustomerCreateFormSection.confirmPasswordField}}"/>
+        <waitForPageLoad stepKey="waitForCreateAccountButtonIsActive"/>
+        <click stepKey="clickCreateAccountButton" selector="{{StorefrontCustomerCreateFormSection.createAccountButton}}"/>
+        <see stepKey="seeThankYouMessage" userInput="Thank you for registering with Main Website Store."/>
+        <see stepKey="seeFirstName" userInput="{{Customer.firstname}}" selector="{{StorefrontCustomerDashboardAccountInformationSection.ContactInformation}}"/>
+        <see stepKey="seeLastName" userInput="{{Customer.lastname}}" selector="{{StorefrontCustomerDashboardAccountInformationSection.ContactInformation}}"/>
+        <see stepKey="seeEmail" userInput="{{Customer.email}}" selector="{{StorefrontCustomerDashboardAccountInformationSection.ContactInformation}}"/>
     </actionGroup>
 </actionGroups>

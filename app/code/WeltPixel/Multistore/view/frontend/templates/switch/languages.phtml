@@ -6,9 +6,14 @@
 <?php if (count($block->getStores())>1): ?>
     <?php $id = $block->getIdModifier() ? '-' . $block->getIdModifier() : ''?>
 <?php $bgColorStyle = $_helper->getBarBgColor() ? "style='background-color: ".$_helper->getBarBgColor() ."'" : ''?>
-<div class="multistore-switcher switcher language switcher-language" id="switcher-language<?php /* @escapeNotVerified */ echo $id?>" <?=$bgColorStyle?>>
+<div class="== multistore-switcher switcher language switcher-language magento__dropdown-widget" id="switcher-language<?php /* @escapeNotVerified */ echo $id?>" <?=$bgColorStyle?>>
+   <span class="action toggle" data-toggle="dropdown" aria-haspopup="true">
+        <span>Dropdown Opener Button</span>
+     </span>
+
+
     <div class="actions dropdown options switcher-options">
-        <ul class="weltpixel_multistore">
+        <ul class="weltpixel_multistore dropdown-options" data-target="dropdown">
             <?php foreach ($block->getStores() as $_lang): ?>
                 <?php if (!$_helper->canStoreBeDisplayed($_lang->getId(), $_lang->getCode())) continue; ?>
                 <?php $image = $_helper->getImageUrl($_lang->getId()); ?>

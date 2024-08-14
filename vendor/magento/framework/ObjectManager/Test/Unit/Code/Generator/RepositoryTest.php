@@ -3,17 +3,17 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Framework\ObjectManager\Test\Unit\Code\Generator;
 
 use Magento\Framework\Api\Test\Unit\Code\Generator\EntityChildTestAbstract;
+use Magento\Framework\ObjectManager\Code\Generator\Repository;
 
-/**
- * Class RepositoryTest
- */
 class RepositoryTest extends EntityChildTestAbstract
 {
     /**
-     * @return mixed|string
+     * @return string
      */
     protected function getSourceClassName()
     {
@@ -21,7 +21,7 @@ class RepositoryTest extends EntityChildTestAbstract
     }
 
     /**
-     * @return mixed|string
+     * @return string
      */
     protected function getResultClassName()
     {
@@ -29,15 +29,15 @@ class RepositoryTest extends EntityChildTestAbstract
     }
 
     /**
-     * @return mixed|string
+     * @return string
      */
     protected function getGeneratorClassName()
     {
-        return '\\' . \Magento\Framework\ObjectManager\Code\Generator\Repository::class;
+        return '\\' . Repository::class;
     }
 
     /**
-     * @return mixed|string
+     * @return string
      */
     protected function getOutputFileName()
     {
@@ -46,7 +46,7 @@ class RepositoryTest extends EntityChildTestAbstract
 
     protected function mockDefinedClassesCall()
     {
-        $this->definedClassesMock->expects($this->at(0))
+        $this->definedClassesMock
             ->method('isClassLoadable')
             ->with($this->getSourceClassName() . 'Interface')
             ->willReturn(true);

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of PHP CS Fixer.
  *
@@ -14,46 +16,49 @@ namespace PhpCsFixer\Fixer\Phpdoc;
 
 use PhpCsFixer\AbstractFixer;
 use PhpCsFixer\DocBlock\DocBlock;
-use PhpCsFixer\DocBlock\Line;
+use PhpCsFixer\DocBlock\ShortDescription;
 use PhpCsFixer\Fixer\WhitespacesAwareFixerInterface;
 use PhpCsFixer\FixerDefinition\CodeSample;
 use PhpCsFixer\FixerDefinition\FixerDefinition;
+use PhpCsFixer\FixerDefinition\FixerDefinitionInterface;
 use PhpCsFixer\Tokenizer\Token;
 use PhpCsFixer\Tokenizer\Tokens;
 
 /**
- * @author Graham Campbell <graham@alt-three.com>
+ * @author Graham Campbell <hello@gjcampbell.co.uk>
  */
 final class PhpdocSummaryFixer extends AbstractFixer implements WhitespacesAwareFixerInterface
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function getDefinition()
+    public function getDefinition(): FixerDefinitionInterface
     {
         return new FixerDefinition(
             'PHPDoc summary should end in either a full stop, exclamation mark, or question mark.',
-            array(new CodeSample('<?php
+            [new CodeSample('<?php
 /**
  * Foo function is great
  */
 function foo () {}
-'))
+')]
         );
     }
 
     /**
      * {@inheritdoc}
+     *
+     * Must run before PhpdocAlignFixer.
+     * Must run after AlignMultilineCommentFixer, CommentToPhpdocFixer, PhpdocIndentFixer, PhpdocScalarFixer, PhpdocToCommentFixer, PhpdocTypesFixer.
      */
-    public function isCandidate(Tokens $tokens)
+    public function getPriority(): int
+    {
+        return 0;
+    }
+
+    public function isCandidate(Tokens $tokens): bool
     {
         return $tokens->isTokenKindFound(T_DOC_COMMENT);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function applyFix(\SplFileInfo $file, Tokens $tokens)
+    protected function applyFix(\SplFileInfo $file, Tokens $tokens): void
     {
         foreach ($tokens as $index => $token) {
             if (!$token->isGivenKind(T_DOC_COMMENT)) {
@@ -61,65 +66,34 @@ function foo () {}
             }
 
             $doc = new DocBlock($token->getContent());
-            $end = $this->findShortDescriptionEnd($doc->getLines());
+            $end = (new ShortDescription($doc))->getEnd();
 
             if (null !== $end) {
                 $line = $doc->getLine($end);
                 $content = rtrim($line->getContent());
 
-                if (!$this->isCorrectlyFormatted($content)) {
+                if (
+                    // final line of Description is NOT properly formatted
+                    !$this->isCorrectlyFormatted($content)
+                    // and first line  of Description, if different than final line, does NOT indicate a list
+                    && (1 === $end || ($doc->isMultiLine() && ':' !== substr(rtrim($doc->getLine(1)->getContent()), -1)))
+                ) {
                     $line->setContent($content.'.'.$this->whitespacesConfig->getLineEnding());
-                    $tokens[$index] = new Token(array(T_DOC_COMMENT, $doc->getContent()));
+                    $tokens[$index] = new Token([T_DOC_COMMENT, $doc->getContent()]);
                 }
             }
         }
     }
 
     /**
-     * Find the line number of the line containing the end of the short
-     * description, if present.
-     *
-     * @param Line[] $lines
-     *
-     * @return null|int
-     */
-    private function findShortDescriptionEnd(array $lines)
-    {
-        $reachedContent = false;
-
-        foreach ($lines as $index => $line) {
-            // we went past a description, then hit a tag or blank line, so
-            // the last line of the description must be the one before this one
-            if ($reachedContent && ($line->containsATag() || !$line->containsUsefulContent())) {
-                return $index - 1;
-            }
-
-            // no short description was found
-            if ($line->containsATag()) {
-                return null;
-            }
-
-            // we've reached content, but need to check the next lines too
-            // in case the short description is multi-line
-            if ($line->containsUsefulContent()) {
-                $reachedContent = true;
-            }
-        }
-    }
-
-    /**
      * Is the last line of the short description correctly formatted?
-     *
-     * @param string $content
-     *
-     * @return bool
      */
-    private function isCorrectlyFormatted($content)
+    private function isCorrectlyFormatted(string $content): bool
     {
         if (false !== stripos($content, '{@inheritdoc}')) {
             return true;
         }
 
-        return $content !== rtrim($content, '.。!?¡¿！？');
+        return $content !== rtrim($content, '.:。!?¡¿！？');
     }
 }

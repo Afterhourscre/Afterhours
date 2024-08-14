@@ -5,7 +5,7 @@
 
 define([
     'jquery',
-    'jquery/ui'
+    'jquery-ui-modules/widget'
 ], function ($) {
     'use strict';
 
@@ -42,7 +42,6 @@ define([
             $.ajax({
                 url: this.options.url,
                 type: 'post',
-                async: false,
                 dataType: 'json',
                 context: this,
                 data: {

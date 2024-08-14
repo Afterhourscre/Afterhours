@@ -8,19 +8,20 @@ declare(strict_types=1);
 
 namespace Magento\CatalogUrlRewrite\Test\Unit\Plugin\Webapi\Controller\Rest;
 
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\Webapi\Controller\Rest\InputParamsResolver;
-use Magento\CatalogUrlRewrite\Plugin\Webapi\Controller\Rest\InputParamsResolver as InputParamsResolverPlugin;
-use Magento\Framework\Webapi\Rest\Request as RestRequest;
-use Magento\Catalog\Model\Product;
-use Magento\Webapi\Controller\Rest\Router\Route;
 use Magento\Catalog\Api\ProductRepositoryInterface;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use Magento\Catalog\Model\Product;
+use Magento\CatalogUrlRewrite\Plugin\Webapi\Controller\Rest\InputParamsResolver as InputParamsResolverPlugin;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Framework\Webapi\Rest\Request as RestRequest;
+use Magento\Webapi\Controller\Rest\InputParamsResolver;
+use Magento\Webapi\Controller\Rest\Router\Route;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Unit test for InputParamsResolver plugin
  */
-class InputParamsResolverTest extends \PHPUnit\Framework\TestCase
+class InputParamsResolverTest extends TestCase
 {
     /**
      * @var string
@@ -70,28 +71,23 @@ class InputParamsResolverTest extends \PHPUnit\Framework\TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->saveRewritesHistory = 'save_rewrites_history';
         $this->requestBodyParams = [
             'product' => [
                 'sku' => 'test',
                 'custom_attributes' => [
-                    [
-                        'attribute_code' => $this->saveRewritesHistory,
-                        'value' => 1
-                    ]
+                    ['attribute_code' => $this->saveRewritesHistory, 'value' => 1]
                 ]
             ]
         ];
 
         $this->route = $this->createPartialMock(Route::class, ['getServiceMethod', 'getServiceClass']);
         $this->request = $this->createPartialMock(RestRequest::class, ['getBodyParams']);
-        $this->request->method('getBodyParams')
-            ->willReturn($this->requestBodyParams);
+        $this->request->expects($this->any())->method('getBodyParams')->willReturn($this->requestBodyParams);
         $this->subject = $this->createPartialMock(InputParamsResolver::class, ['getRoute']);
-        $this->subject->method('getRoute')
-            ->willReturn($this->route);
+        $this->subject->expects($this->any())->method('getRoute')->willReturn($this->route);
         $this->product = $this->createPartialMock(Product::class, ['setData']);
 
         $this->result = [false, $this->product, 'test'];
@@ -107,9 +103,11 @@ class InputParamsResolverTest extends \PHPUnit\Framework\TestCase
 
     public function testAfterResolve()
     {
-        $this->route->method('getServiceClass')
+        $this->route->expects($this->once())
+            ->method('getServiceClass')
             ->willReturn(ProductRepositoryInterface::class);
-        $this->route->method('getServiceMethod')
+        $this->route->expects($this->once())
+            ->method('getServiceMethod')
             ->willReturn('save');
         $this->product->expects($this->once())
             ->method('setData')

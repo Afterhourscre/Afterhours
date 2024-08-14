@@ -39,7 +39,7 @@ class AddressRepositoryTest extends TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->objectManager = Bootstrap::getObjectManager();
         $this->repository = $this->objectManager->get(AddressRepository::class);
@@ -54,7 +54,7 @@ class AddressRepositoryTest extends TestCase
      * @return void
      * @magentoDataFixture Magento/Sales/_files/address_list.php
      */
-    public function testGetListWithMultipleFiltersAndSorting()
+    public function testGetListWithMultipleFiltersAndSorting(): void
     {
         $filter1 = $this->filterBuilder
             ->setField('postcode')
@@ -92,16 +92,16 @@ class AddressRepositoryTest extends TestCase
      * @return void
      * @magentoDataFixture Magento/Sales/_files/order_address_with_multi_attribute.php
      */
-    public function testFormatSalesAddressCustomMultiAttribute()
+    public function testFormatSalesAddressCustomMultiAttribute(): void
     {
         $address = $this->objectManager->get(OrderAddressInterface::class)
             ->load('multiattribute@example.com', 'email');
-        $address->setData('address_multiselect_attribute', ['dog', 'cat']);
-        $address->setData('address_multiline_attribute', ['dog', 'cat']);
+        $address->setData('fixture_address_multiselect_attribute', ['dog', 'cat']);
+        $address->setData('fixture_address_multiline_attribute', ['dog', 'cat']);
 
         $this->objectManager->get(OrderAddressRepositoryInterface::class)
             ->save($address);
-        $this->assertEquals('dog,cat', $address->getData('address_multiselect_attribute'));
-        $this->assertEquals('dog'.PHP_EOL.'cat', $address->getData('address_multiline_attribute'));
+        $this->assertEquals('dog,cat', $address->getData('fixture_address_multiselect_attribute'));
+        $this->assertEquals('dog'.PHP_EOL.'cat', $address->getData('fixture_address_multiline_attribute'));
     }
 }

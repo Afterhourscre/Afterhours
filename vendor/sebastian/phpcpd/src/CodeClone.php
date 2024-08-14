@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /*
  * This file is part of PHP Copy/Paste Detector (PHPCPD).
  *
@@ -7,73 +7,55 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
 namespace SebastianBergmann\PHPCPD;
 
-use SebastianBergmann\PHPCPD\CodeCloneFile;
+use function array_map;
+use function array_slice;
+use function current;
+use function file;
+use function implode;
+use function md5;
 
-/**
- * Represents an exact code clone.
- *
- * @author    Sebastian Bergmann <sebastian@phpunit.de>
- * @copyright Sebastian Bergmann <sebastian@phpunit.de>
- * @license   http://www.opensource.org/licenses/BSD-3-Clause  The BSD 3-Clause License
- * @link      http://github.com/sebastianbergmann/phpcpd/tree
- * @since     Class available since Release 1.1.0
- */
-class CodeClone
+final class CodeClone
 {
     /**
-     * @var integer Size of the clone (lines)
+     * @var int
      */
-    private $size;
+    private $numberOfLines;
 
     /**
-     * @var integer Size of the clone (tokens)
+     * @var int
      */
-    private $tokens;
+    private $numberOfTokens;
 
     /**
-     * @var CodeCloneFile[] Files with this code clone
+     * @var CodeCloneFile[]
      */
-    private $files = array();
+    private $files = [];
 
     /**
-     * @var string Unique ID of Code Duplicate Fragment
+     * @var string
      */
     private $id;
 
     /**
-     * @var Lines of the clone
+     * @var string
      */
     private $lines = '';
 
-    /**
-     * Constructor.
-     *
-     * @param CodeCloneFile $fileA
-     * @param CodeCloneFile $fileB
-     * @param integer       $size
-     * @param integer       $tokens
-     */
-    public function __construct(CodeCloneFile $fileA, CodeCloneFile $fileB, $size, $tokens)
+    public function __construct(CodeCloneFile $fileA, CodeCloneFile $fileB, int $numberOfLines, int $numberOfTokens)
     {
-        $this->addFile($fileA);
-        $this->addFile($fileB);
+        $this->add($fileA);
+        $this->add($fileB);
 
-        $this->size   = $size;
-        $this->tokens = $tokens;
-        $this->id     = md5($this->getLines());
+        $this->numberOfLines  = $numberOfLines;
+        $this->numberOfTokens = $numberOfTokens;
+        $this->id             = md5($this->lines());
     }
 
-    /**
-     * Add file with clone
-     *
-     * @param CodeCloneFile $file
-     */
-    public function addFile(CodeCloneFile $file)
+    public function add(CodeCloneFile $file): void
     {
-        $id = $file->getId();
+        $id = $file->id();
 
         if (!isset($this->files[$id])) {
             $this->files[$id] = $file;
@@ -81,81 +63,48 @@ class CodeClone
     }
 
     /**
-     * Get files with clone
-     *
      * @return CodeCloneFile[]
      */
-    public function getFiles()
+    public function files(): array
     {
         return $this->files;
     }
 
-    /**
-     * Returns the lines of the clone.
-     *
-     * @param  string $prefix
-     * @return string The lines of the clone
-     */
-    public function getLines($prefix = '')
+    public function lines($indent = ''): string
     {
-        $file = current($this->files);
-
         if (empty($this->lines)) {
-            $lines = array_slice(
-                file($file->getName()),
-                $file->getStartLine() - 1,
-                $this->size
+            $file = current($this->files);
+
+            $this->lines = implode(
+                '',
+                array_map(
+                    function ($line) use ($indent) {
+                        return $indent . $line;
+                    },
+                    array_slice(
+                        file($file->name()),
+                        $file->startLine() - 1,
+                        $this->numberOfLines
+                    )
+                )
             );
-
-            $indent = array();
-
-            foreach ($lines as &$line) {
-                $line    = rtrim($line, " \t\0\x0B");
-                $line    = str_replace("\t", "    ", $line);
-                $_indent = strlen($line) - strlen(ltrim($line));
-
-                if ($_indent > 1) {
-                    $indent[] = $_indent;
-                }
-            }
-
-            $indent = empty($indent) ? 0 : min($indent);
-
-            if ($indent > 0) {
-                foreach ($lines as &$line) {
-                    if (strlen($line > 1)) {
-                        $line = $prefix . substr($line, $indent);
-                    }
-                }
-            }
-
-            $this->lines = join('', $lines);
         }
 
         return $this->lines;
     }
 
-    /**
-     * @return string
-     */
-    public function getId()
+    public function id(): string
     {
         return $this->id;
     }
 
-    /**
-     * @return integer
-     */
-    public function getSize()
+    public function numberOfLines(): int
     {
-        return $this->size;
+        return $this->numberOfLines;
     }
 
-    /**
-     * @return integer
-     */
-    public function getTokens()
+    public function numberOfTokens(): int
     {
-        return $this->tokens;
+        return $this->numberOfTokens;
     }
 }

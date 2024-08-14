@@ -10,13 +10,25 @@
 namespace Magento\Checkout\Controller;
 
 use Magento\Catalog\Api\ProductRepositoryInterface;
-use Magento\Checkout\Model\Session;
+use Magento\Catalog\Model\Product;
+use Magento\Catalog\Test\Fixture\Product as ProductFixture;
+use Magento\CatalogInventory\Api\StockItemRepositoryInterface;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Customer\Model\ResourceModel\CustomerRepository;
 use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Quote\Api\Data\CartInterface;
+use Magento\Quote\Api\Data\CartItemInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Quote\Model\QuoteRepository;
+use Magento\Quote\Test\Fixture\AddProductToCart;
+use Magento\Quote\Test\Fixture\GuestCart;
+use Magento\TestFramework\Fixture\DataFixture;
+use Magento\TestFramework\Fixture\DataFixtureStorage;
+use Magento\TestFramework\Fixture\DataFixtureStorageManager;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\TestFramework\Request;
 use Magento\Customer\Model\Session as CustomerSession;
@@ -34,19 +46,31 @@ class CartTest extends \Magento\TestFramework\TestCase\AbstractController
     private $checkoutSession;
 
     /**
+     * @var ProductRepositoryInterface
+     */
+    private $productRepository;
+
+    /**
+     * @var DataFixtureStorage
+     */
+    private $fixtures;
+
+    /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->checkoutSession = $this->_objectManager->get(CheckoutSession::class);
         $this->_objectManager->addSharedInstance($this->checkoutSession, CheckoutSession::class);
+        $this->productRepository = $this->_objectManager->create(ProductRepositoryInterface::class);
+        $this->fixtures = DataFixtureStorageManager::getStorage();
     }
 
     /**
      * @inheritdoc
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
         $this->_objectManager->removeSharedInstance(CheckoutSession::class);
         parent::tearDown();
@@ -240,6 +264,7 @@ class CartTest extends \Magento\TestFramework\TestCase\AbstractController
             'update_cart_action' => 'update_qty',
             'form_key' => $formKey->getFormKey(),
         ];
+        $this->getRequest()->setMethod(HttpRequest::METHOD_POST);
         $this->getRequest()->setPostValue($postData);
         /** @var $customerSession \Magento\Customer\Model\Session */
         $customerSession = $this->_objectManager->create(\Magento\Customer\Model\Session::class);
@@ -331,9 +356,9 @@ class CartTest extends \Magento\TestFramework\TestCase\AbstractController
         $controller = $this->_objectManager->create(\Magento\Checkout\Controller\Cart\Add::class, [$quote]);
         $controller->execute();
 
-        $this->assertContains(json_encode([]), $this->getResponse()->getBody());
+        $this->assertStringContainsString(json_encode([]), $this->getResponse()->getBody());
         $items = $quote->getItems()->getItems();
-        $this->assertTrue(is_array($items), 'Quote doesn\'t have any items');
+        $this->assertIsArray($items, 'Quote doesn\'t have any items');
         $this->assertCount(1, $items, 'Expected quote items not equal to 1');
         $item = reset($items);
         $this->assertEquals(1, $item->getProductId(), 'Quote has more than one product');
@@ -349,77 +374,6 @@ class CartTest extends \Magento\TestFramework\TestCase\AbstractController
             'frontend' => ['frontend', 'expected_price' => 10],
             'adminhtml' => ['adminhtml', 'expected_price' => 1]
         ];
-    }
-
-    /**
-     * Test for \Magento\Checkout\Controller\Cart\Add::execute() with simple product and activated redirect to cart
-     *
-     * @magentoDataFixture Magento/Catalog/_files/products.php
-     * @magentoConfigFixture current_store checkout/cart/redirect_to_cart 1
-     * @magentoAppIsolation enabled
-     */
-    public function testMessageAtAddToCartWithRedirect()
-    {
-        $formKey = $this->_objectManager->get(FormKey::class);
-        $postData = [
-            'qty' => '1',
-            'product' => '1',
-            'custom_price' => 1,
-            'form_key' => $formKey->getFormKey(),
-            'isAjax' => 1
-        ];
-        \Magento\TestFramework\Helper\Bootstrap::getInstance()->loadArea('frontend');
-        $this->getRequest()->setPostValue($postData);
-        $this->getRequest()->setMethod(HttpRequest::METHOD_POST);
-
-        $this->dispatch('checkout/cart/add');
-
-        $this->assertEquals(
-            '{"backUrl":"http:\/\/localhost\/index.php\/checkout\/cart\/"}',
-            $this->getResponse()->getBody()
-        );
-
-        $this->assertSessionMessages(
-            $this->contains(
-                'You added Simple Product to your shopping cart.'
-            ),
-            \Magento\Framework\Message\MessageInterface::TYPE_SUCCESS
-        );
-    }
-
-    /**
-     * Test for \Magento\Checkout\Controller\Cart\Add::execute() with simple product and deactivated redirect to cart
-     *
-     * @magentoDataFixture Magento/Catalog/_files/products.php
-     * @magentoConfigFixture current_store checkout/cart/redirect_to_cart 0
-     * @magentoAppIsolation enabled
-     */
-    public function testMessageAtAddToCartWithoutRedirect()
-    {
-        $formKey = $this->_objectManager->get(FormKey::class);
-        $postData = [
-            'qty' => '1',
-            'product' => '1',
-            'custom_price' => 1,
-            'form_key' => $formKey->getFormKey(),
-            'isAjax' => 1
-        ];
-        \Magento\TestFramework\Helper\Bootstrap::getInstance()->loadArea('frontend');
-        $this->getRequest()->setPostValue($postData);
-        $this->getRequest()->setMethod(HttpRequest::METHOD_POST);
-
-        $this->dispatch('checkout/cart/add');
-
-        $this->assertFalse($this->getResponse()->isRedirect());
-        $this->assertEquals('[]', $this->getResponse()->getBody());
-
-        $this->assertSessionMessages(
-            $this->contains(
-                "\n" . 'You added Simple Product to your ' .
-                '<a href="http://localhost/index.php/checkout/cart/">shopping cart</a>.'
-            ),
-            \Magento\Framework\Message\MessageInterface::TYPE_SUCCESS
-        );
     }
 
     /**
@@ -440,7 +394,7 @@ class CartTest extends \Magento\TestFramework\TestCase\AbstractController
         $customerSession = $this->_objectManager->get(CustomerSession::class);
         $customerSession->logout();
 
-        $checkoutSession = Bootstrap::getObjectManager()->get(Session::class);
+        $checkoutSession = Bootstrap::getObjectManager()->get(CheckoutSession::class);
         $expected = [];
         if ($loggedIn && $request == Request::METHOD_POST) {
             $customer = $this->_objectManager->create(CustomerRepository::class)->get('customer2@example.com');
@@ -516,5 +470,134 @@ class CartTest extends \Magento\TestFramework\TestCase\AbstractController
                 $this->getRequest()->setParams($data);
                 break;
         }
+    }
+
+    /**
+     * @throws NoSuchEntityException
+     * @throws LocalizedException
+     */
+    #[
+        DataFixture(ProductFixture::class, ['sku' => 's1', 'stock_item' => ['is_in_stock' => true]], 'p1'),
+        DataFixture(ProductFixture::class, ['sku' => 's2','stock_item' => ['is_in_stock' => true]], 'p2'),
+        DataFixture(GuestCart::class, as: 'cart'),
+        DataFixture(
+            AddProductToCart::class,
+            ['cart_id' => '$cart.id$', 'product_id' => '$p1.id$', 'qty' => 1],
+            'item1'
+        ),
+        DataFixture(
+            AddProductToCart::class,
+            ['cart_id' => '$cart.id$', 'product_id' => '$p2.id$', 'qty' => 1],
+            'item2'
+        )
+    ]
+    public function testUpdatePostActionWithMultipleProducts()
+    {
+        $cartId = (int)$this->fixtures->get('cart')->getId();
+        if (!$cartId) {
+            $this->fail('quote fixture failed');
+        }
+        /** @var QuoteRepository $quoteRepository */
+        $quoteRepository = Bootstrap::getObjectManager()->get(QuoteRepository::class);
+        $quote = $quoteRepository->get($cartId);
+
+        $checkoutSession = Bootstrap::getObjectManager()->get(CheckoutSession::class);
+        $checkoutSession->setQuoteId($quote->getId());
+
+        /** @var \Magento\Quote\Model\Quote\Item $item1 */
+        $item1 = $this->fixtures->get('item1');
+        /** @var \Magento\Quote\Model\Quote\Item $item2 */
+        $item2 = $this->fixtures->get('item2');
+
+        $p1 = $this->fixtures->get('p1');
+        /** @var $p1 Product */
+        $product1 = $this->productRepository->get($p1->getSku(), true);
+        $stockItem = $product1->getExtensionAttributes()->getStockItem();
+        $stockItem->setQty(0);
+        $stockItem->setIsInStock(false);
+        $stockItemRepository = Bootstrap::getObjectManager()->get(StockItemRepositoryInterface::class);
+        $stockItemRepository->save($stockItem);
+
+        $originalQuantity = 1;
+        $updatedQuantity = 2;
+
+        $this->assertEquals(
+            $originalQuantity + $originalQuantity,
+            $quote->getItemsQty(),
+            "Precondition failed:  quote totals does not match."
+        );
+
+        $response = $this->updatePostRequest($quote, $item1, $item2, $updatedQuantity, $updatedQuantity, true);
+
+        $this->assertStringContainsString(
+            '"itemId":'.$item1->getId().'}]',
+            $response['error_message']
+        );
+
+        $response = $this->updatePostRequest($quote, $item1, $item2, $originalQuantity, $updatedQuantity, false);
+
+        $this->assertStringContainsString(
+            '"itemId":'.$item1->getId().'}]',
+            $response['error_message']
+        );
+        $this->assertEquals(
+            $originalQuantity + $updatedQuantity,
+            $quote->getItemsQty(),
+            "Precondition failed: quote totals does not match."
+        );
+
+        $response = $this->updatePostRequest($quote, $item1, $item2, $updatedQuantity, $updatedQuantity, false);
+
+        $this->assertStringContainsString(
+            '"itemId":'.$item1->getId().'}]',
+            $response['error_message']
+        );
+        $this->assertEquals(
+            $originalQuantity + $updatedQuantity,
+            $quote->getItemsQty(),
+            "Precondition failed: quote totals does not match."
+        );
+    }
+
+    /**
+     * @param CartInterface $quote
+     * @param CartItemInterface $item1
+     * @param CartItemInterface $item2
+     * @param float $qty1
+     * @param float $qty2
+     * @param bool $updateQty
+     * @return mixed
+     * @throws LocalizedException
+     */
+    private function updatePostRequest(
+        CartInterface $quote,
+        CartItemInterface $item1,
+        CartItemInterface $item2,
+        float $qty1,
+        float $qty2,
+        bool $updateQty = true
+    ): array {
+        /** @var FormKey $formKey */
+        $formKey = Bootstrap::getObjectManager()->get(FormKey::class);
+
+        $request = [
+            'cart' => [
+                $item1->getId() => ['qty' => $qty1],
+                $item2->getId() => ['qty' => $qty2]
+            ],
+            'update_cart_action' => 'update_qty',
+            'form_key' => $formKey->getFormKey(),
+        ];
+        $this->getRequest()->setMethod(HttpRequest::METHOD_POST);
+        $this->getRequest()->setPostValue($request);
+        if ($updateQty) {
+            $this->dispatch('checkout/cart/updateItemQty');
+        } else {
+            $this->dispatch('checkout/cart/updatePost');
+            $quote->collectTotals();
+        }
+        $response = $this->getResponse()->getBody();
+        $response = json_decode($response, true);
+        return $response;
     }
 }

@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Tests\WhiteSpace;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class SuperfluousWhitespaceUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the SuperfluousWhitespace sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\SuperfluousWhitespaceSniff
+ */
+final class SuperfluousWhitespaceUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,49 +30,70 @@ class SuperfluousWhitespaceUnitTest extends AbstractSniffUnitTest
      *
      * @return array<int, int>
      */
-    public function getErrorList($testFile='SuperfluousWhitespaceUnitTest.inc')
+    public function getErrorList($testFile='')
     {
         switch ($testFile) {
-        case 'SuperfluousWhitespaceUnitTest.inc':
-            return array(
-                    2  => 1,
-                    4  => 1,
-                    5  => 1,
-                    6  => 1,
-                    7  => 1,
-                    16 => 1,
-                    23 => 1,
-                    28 => 1,
-                    33 => 1,
-                    53 => 1,
-                   );
-            break;
+        case 'SuperfluousWhitespaceUnitTest.1.inc':
+            return [
+                2  => 1,
+                4  => 1,
+                5  => 1,
+                6  => 1,
+                7  => 1,
+                16 => 1,
+                23 => 1,
+                28 => 1,
+                33 => 1,
+                49 => 1,
+                62 => 1,
+                65 => 1,
+                73 => 1,
+            ];
+
+        case 'SuperfluousWhitespaceUnitTest.2.inc':
+            return [
+                2 => 1,
+                8 => 1,
+            ];
+
+        case 'SuperfluousWhitespaceUnitTest.3.inc':
+            return [
+                6  => 1,
+                10 => 1,
+            ];
+
+        case 'SuperfluousWhitespaceUnitTest.4.inc':
+        case 'SuperfluousWhitespaceUnitTest.5.inc':
+            return [
+                1 => 1,
+                4 => 1,
+            ];
+
         case 'SuperfluousWhitespaceUnitTest.1.js':
-            return array(
-                    1  => 1,
-                    3  => 1,
-                    4  => 1,
-                    5  => 1,
-                    6  => 1,
-                    15 => 1,
-                    22 => 1,
-                    29 => 1,
-                    38 => 1,
-                    56 => 1,
-                   );
-            break;
+            return [
+                1  => 1,
+                3  => 1,
+                4  => 1,
+                5  => 1,
+                6  => 1,
+                15 => 1,
+                22 => 1,
+                29 => 1,
+                38 => 1,
+                56 => 1,
+            ];
+
         case 'SuperfluousWhitespaceUnitTest.1.css':
-            return array(
-                    1  => 1,
-                    8  => 1,
-                    9  => 1,
-                    11 => 1,
-                    25 => 1,
-                   );
-            break;
+            return [
+                1  => 1,
+                8  => 1,
+                9  => 1,
+                11 => 1,
+                32 => 1,
+            ];
+
         default:
-            return array();
-            break;
+            return [];
         }//end switch
 
     }//end getErrorList()
@@ -83,7 +109,7 @@ class SuperfluousWhitespaceUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

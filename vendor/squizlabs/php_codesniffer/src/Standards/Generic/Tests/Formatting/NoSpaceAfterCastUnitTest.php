@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Generic\Tests\Formatting;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class NoSpaceAfterCastUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the NoSpaceAfterCast sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Generic\Sniffs\Formatting\NoSpaceAfterCastSniff
+ */
+final class NoSpaceAfterCastUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,30 +30,31 @@ class NoSpaceAfterCastUnitTest extends AbstractSniffUnitTest
      */
     public function getErrorList()
     {
-        return array(
-                3  => 1,
-                5  => 1,
-                7  => 1,
-                9  => 1,
-                11 => 1,
-                13 => 1,
-                15 => 1,
-                17 => 1,
-                19 => 1,
-                21 => 1,
-                23 => 1,
-                25 => 1,
-                27 => 1,
-                29 => 1,
-                31 => 1,
-                33 => 1,
-                35 => 1,
-                37 => 1,
-                39 => 1,
-                41 => 1,
-                43 => 1,
-                45 => 1,
-               );
+        return [
+            3  => 1,
+            5  => 1,
+            7  => 1,
+            9  => 1,
+            11 => 1,
+            13 => 1,
+            15 => 1,
+            17 => 1,
+            19 => 1,
+            21 => 1,
+            23 => 1,
+            25 => 1,
+            27 => 1,
+            29 => 1,
+            31 => 1,
+            33 => 1,
+            35 => 1,
+            37 => 1,
+            39 => 1,
+            41 => 1,
+            43 => 1,
+            45 => 1,
+            50 => 1,
+        ];
 
     }//end getErrorList()
 
@@ -63,7 +69,7 @@ class NoSpaceAfterCastUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

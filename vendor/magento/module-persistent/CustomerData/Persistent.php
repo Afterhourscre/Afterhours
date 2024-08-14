@@ -3,6 +3,7 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\Persistent\CustomerData;
 
@@ -47,11 +48,11 @@ class Persistent implements SectionSourceInterface
     }
 
     /**
-     * Get data
+     * Get data.
      *
      * @return array
      */
-    public function getSectionData()
+    public function getSectionData(): array
     {
         if (!$this->persistentSession->isPersistent()) {
             return [];

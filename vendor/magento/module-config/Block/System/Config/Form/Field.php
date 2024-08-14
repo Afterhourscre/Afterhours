@@ -6,8 +6,9 @@
 
 namespace Magento\Config\Block\System\Config\Form;
 
-use Magento\Backend\Block\Template;
-use Magento\Framework\Data\Form\Element\Renderer\RendererInterface;
+use Magento\Framework\App\ObjectManager;
+use Magento\Backend\Block\Template\Context;
+use Magento\Framework\View\Helper\SecureHtmlRenderer;
 
 /**
  * Render field html element in Stores Configuration
@@ -17,8 +18,28 @@ use Magento\Framework\Data\Form\Element\Renderer\RendererInterface;
  * @SuppressWarnings(PHPMD.NumberOfChildren)
  * @since 100.0.2
  */
-class Field extends Template implements RendererInterface
+class Field extends \Magento\Backend\Block\Template implements
+    \Magento\Framework\Data\Form\Element\Renderer\RendererInterface
 {
+    /**
+     * @var SecureHtmlRenderer
+     */
+    private $secureRenderer;
+
+    /**
+     * @param Context $context
+     * @param array $data
+     * @param SecureHtmlRenderer|null $secureRenderer
+     */
+    public function __construct(
+        Context $context,
+        array $data = [],
+        ?SecureHtmlRenderer $secureRenderer = null
+    ) {
+        parent::__construct($context, $data);
+        $this->secureRenderer = $secureRenderer ?? ObjectManager::getInstance()->get(SecureHtmlRenderer::class);
+    }
+
     /**
      * Retrieve element HTML markup
      *
@@ -43,6 +64,10 @@ class Field extends Template implements RendererInterface
         // Disable element if value is inherited from other scope. Flag has to be set before the value is rendered.
         if ($element->getInherit() == 1 && $isCheckboxRequired) {
             $element->setDisabled(true);
+        }
+
+        if ($element->getIsDisableInheritance()) {
+            $element->setReadonly(true);
         }
 
         $html = '<td class="label"><label for="' .
@@ -96,7 +121,7 @@ class Field extends Template implements RendererInterface
         $htmlId = $element->getHtmlId();
         $namePrefix = preg_replace('#\[value\](\[\])?$#', '', $element->getName());
         $checkedHtml = $element->getInherit() == 1 ? 'checked="checked"' : '';
-        $disabled = $element->getIsDisableInheritance() == true ? ' disabled="disabled"' : '';
+        $disabled = $element->getIsDisableInheritance() == true ? ' disabled="disabled" readonly="1"' : '';
 
         $html = '<td class="use-default">';
         $html .= '<input id="' .
@@ -106,7 +131,12 @@ class Field extends Template implements RendererInterface
             '[inherit]" type="checkbox" value="1"' .
             ' class="checkbox config-inherit" ' .
             $checkedHtml . $disabled .
-            ' onclick="toggleValueElements(this, Element.previous(this.parentNode))" /> ';
+            ' />';
+        $html .= /* @noEscape */ $this->secureRenderer->renderEventListenerAsTag(
+            'onclick',
+            "toggleValueElements(this, Element.previous(this.parentNode))",
+            'input#' . $htmlId . '_inherit'
+        );
         $html .= '<label for="' . $htmlId . '_inherit" class="inherit">' . $this->_getInheritCheckboxLabel(
             $element
         ) . '</label>';
@@ -172,7 +202,12 @@ class Field extends Template implements RendererInterface
     {
         $html = '<td class="">';
         if ($element->getHint()) {
-            $html .= '<div class="hint"><div style="display: none;">' . $element->getHint() . '</div></div>';
+            $html .= '<div class="hint"><div id="hint_' . $element->getHtmlId() . '">' .
+                $element->getHint() . '</div></div>';
+            $html .= /* @noEscape */ $this->secureRenderer->renderStyleAsTag(
+                "display: none;",
+                'div#hint_' . $element->getHtmlId()
+            );
         }
         $html .= '</td>';
         return $html;

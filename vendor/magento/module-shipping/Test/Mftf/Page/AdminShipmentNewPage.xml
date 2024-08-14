@@ -7,11 +7,13 @@
 -->
 
 <pages xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:noNamespaceSchemaLocation="../../../../../../../dev/tests/acceptance/vendor/magento/magento2-functional-testing-framework/src/Magento/FunctionalTestingFramework/Page/etc/PageObject.xsd">
-    <page name="AdminShipmentNewPage" url="order_shipment/new/order_id/" area="admin" module="Magento_Shipping">
+        xsi:noNamespaceSchemaLocation="urn:magento:mftf:Page/etc/PageObject.xsd">
+    <page name="AdminShipmentNewPage" url="admin/order_shipment/new/order_id/" area="admin" module="Shipping">
         <section name="AdminShipmentMainActionsSection"/>
-        <section name="AdminShipmentOrderAndAccountInformationSection"/>
+        <section name="AdminShipmentOrderInformationSection"/>
         <section name="AdminShipmentAddressInformationSection"/>
+        <section name="AdminShipmentPaymentShippingSection"/>
         <section name="AdminShipmentItemsSection"/>
+        <section name="AdminShipmentTotalSection"/>
     </page>
 </pages>

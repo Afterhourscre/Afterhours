@@ -3,7 +3,6 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-
 namespace Magento\Catalog\Block\Product\View;
 
 use Magento\Framework\View\Element\Block\ArgumentInterface;
@@ -11,6 +10,9 @@ use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Catalog\Block\Product\Context;
 use Magento\Framework\Stdlib\ArrayUtils;
 
+/**
+ * Gallery options block.
+ */
 class GalleryOptions extends AbstractView implements ArgumentInterface
 {
     /**
@@ -77,7 +79,7 @@ class GalleryOptions extends AbstractView implements ArgumentInterface
             $this->gallery->getImageAttribute('product_page_image_small', 'width')) {
             $optionItems['thumbheight'] = (int)$this->escapeHtml(
                 $this->gallery->getImageAttribute('product_page_image_small', 'height') ?:
-                $this->gallery->getImageAttribute('product_page_image_small', 'width')
+                    $this->gallery->getImageAttribute('product_page_image_small', 'width')
             );
         }
 
@@ -85,7 +87,7 @@ class GalleryOptions extends AbstractView implements ArgumentInterface
             $this->gallery->getImageAttribute('product_page_image_medium', 'width')) {
             $optionItems['height'] = (int)$this->escapeHtml(
                 $this->gallery->getImageAttribute('product_page_image_medium', 'height') ?:
-                $this->gallery->getImageAttribute('product_page_image_medium', 'width')
+                    $this->gallery->getImageAttribute('product_page_image_medium', 'width')
             );
         }
 
@@ -101,6 +103,11 @@ class GalleryOptions extends AbstractView implements ArgumentInterface
 
         if ($this->getVar("gallery/thumbmargin")) {
             $optionItems['thumbmargin'] = (int)$this->escapeHtml($this->getVar("gallery/thumbmargin"));
+        }
+
+        if ($this->getVar("product_image_white_borders")) {
+            $optionItems['whiteBorders'] =
+                (int)$this->escapeHtml($this->getVar("product_image_white_borders"));
         }
 
         return $this->jsonSerializer->serialize($optionItems);
@@ -147,6 +154,11 @@ class GalleryOptions extends AbstractView implements ArgumentInterface
         if ($this->getVar("gallery/fullscreen/thumbmargin")) {
             $fsOptionItems['thumbmargin'] =
                 (int)$this->escapeHtml($this->getVar("gallery/fullscreen/thumbmargin"));
+        }
+
+        if ($this->getVar("product_image_white_borders")) {
+            $fsOptionItems['whiteBorders'] =
+                (int)$this->escapeHtml($this->getVar("product_image_white_borders"));
         }
 
         return $this->jsonSerializer->serialize($fsOptionItems);

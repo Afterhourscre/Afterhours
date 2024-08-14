@@ -9,8 +9,6 @@ use Magento\Catalog\Pricing\Price\TierPrice;
 
 /**
  * Responsible for displaying tier price box on configurable product page.
- *
- * @package Magento\ConfigurableProduct\Pricing\Render
  */
 class TierPriceBox extends FinalPriceBox
 {
@@ -23,6 +21,7 @@ class TierPriceBox extends FinalPriceBox
         if (!$this->isMsrpPriceApplicable() && $this->isTierPriceApplicable()) {
             return parent::toHtml();
         }
+        return '';
     }
 
     /**
@@ -30,17 +29,16 @@ class TierPriceBox extends FinalPriceBox
      *
      * @return bool
      */
-    private function isTierPriceApplicable(): bool
+    private function isTierPriceApplicable()
     {
         $product = $this->getSaleableItem();
         foreach ($product->getTypeInstance()->getUsedProducts($product) as $simpleProduct) {
-            if ($simpleProduct->isSalable()
-                && !empty($simpleProduct->getPriceInfo()->getPrice(TierPrice::PRICE_CODE)->getTierPriceList())
+            if ($simpleProduct->isSalable() &&
+                !empty($simpleProduct->getPriceInfo()->getPrice(TierPrice::PRICE_CODE)->getTierPriceList())
             ) {
                 return true;
             }
         }
-
         return false;
     }
 }

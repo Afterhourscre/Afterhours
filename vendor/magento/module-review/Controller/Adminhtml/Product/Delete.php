@@ -5,14 +5,15 @@
  */
 namespace Magento\Review\Controller\Adminhtml\Product;
 
+use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Review\Controller\Adminhtml\Product as ProductController;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Review\Model\Review;
 
 /**
- * Delete action.
+ * Delete review action.
  */
-class Delete extends ProductController
+class Delete extends ProductController implements HttpPostActionInterface
 {
     /**
      * @var Review
@@ -29,23 +30,20 @@ class Delete extends ProductController
         /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
         $reviewId = $this->getRequest()->getParam('id', false);
-        if ($this->getRequest()->isPost()) {
-            try {
-                $this->getModel()->aggregate()->delete();
+        try {
+            $this->getModel()->aggregate()->delete();
 
-                $this->messageManager->addSuccess(__('The review has been deleted.'));
-                if ($this->getRequest()->getParam('ret') == 'pending') {
-                    $resultRedirect->setPath('review/*/pending');
-                } else {
-                    $resultRedirect->setPath('review/*/');
-                }
-
-                return $resultRedirect;
-            } catch (\Magento\Framework\Exception\LocalizedException $e) {
-                $this->messageManager->addError($e->getMessage());
-            } catch (\Exception $e) {
-                $this->messageManager->addException($e, __('Something went wrong  deleting this review.'));
+            $this->messageManager->addSuccessMessage(__('The review has been deleted.'));
+            if ($this->getRequest()->getParam('ret') == 'pending') {
+                $resultRedirect->setPath('review/*/pending');
+            } else {
+                $resultRedirect->setPath('review/*/');
             }
+            return $resultRedirect;
+        } catch (\Magento\Framework\Exception\LocalizedException $e) {
+            $this->messageManager->addErrorMessage($e->getMessage());
+        } catch (\Exception $e) {
+            $this->messageManager->addExceptionMessage($e, __('Something went wrong  deleting this review.'));
         }
 
         return $resultRedirect->setPath('review/*/edit/', ['id' => $reviewId]);

@@ -8,14 +8,14 @@
 
 <tests xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:noNamespaceSchemaLocation="urn:magento:mftf:Test/etc/testSchema.xsd">
-    <test name="StorefrontVerifySecureURLRedirectNewsletter">
+    <test name="StorefrontVerifySecureURLRedirectNewsletterTest">
         <annotations>
             <features value="Newsletter"/>
             <stories value="Storefront Secure URLs"/>
             <title value="Verify Secure URLs For Storefront Newsletter Pages"/>
             <description value="Verify that the Secure URL configuration applies to the Newsletter pages on the Storefront"/>
             <severity value="MAJOR"/>
-            <testCaseId value="MC-15706"/>
+            <testCaseId value="MC-15584"/>
             <group value="newsletter"/>
             <group value="configuration"/>
             <group value="secure_storefront_url"/>
@@ -28,11 +28,12 @@
             <executeJS function="return window.location.host" stepKey="hostname"/>
             <magentoCLI command="config:set web/secure/base_url https://{$hostname}/" stepKey="setSecureBaseURL"/>
             <magentoCLI command="config:set web/secure/use_in_frontend 1" stepKey="useSecureURLsOnStorefront"/>
-            <magentoCLI command="cache:flush" stepKey="flushCache"/>
+            <comment userInput="Adding the comment to replace CliCacheFlushActionGroup action group ('cache:flush' command) for preserving Backward Compatibility" stepKey="flushCache"/>
         </before>
         <after>
             <magentoCLI command="config:set web/secure/use_in_frontend 0" stepKey="dontUseSecureURLsOnStorefront"/>
-            <magentoCLI command="cache:flush" stepKey="flushCache"/>
+            <comment userInput="Adding the comment to replace CliCacheFlushActionGroup action group ('cache:flush' command) for preserving Backward Compatibility" stepKey="flushCache"/>
+            <actionGroup ref="StorefrontCustomerLogoutActionGroup" stepKey="logoutCustomer" />
             <deleteData createDataKey="customer" stepKey="deleteCustomer"/>
         </after>
         <executeJS function="return window.location.host" stepKey="hostname"/>

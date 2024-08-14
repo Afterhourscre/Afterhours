@@ -8,8 +8,6 @@ namespace Magento\Catalog\Block;
 
 use Magento\Catalog\Model\Category;
 use Magento\Customer\Model\Context;
-use Magento\Framework\DataObject\IdentityInterface;
-use Magento\Framework\View\Element\Template;
 
 /**
  * Catalog navigation
@@ -19,7 +17,8 @@ use Magento\Framework\View\Element\Template;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @since 100.0.2
  */
-class Navigation extends Template implements IdentityInterface
+class Navigation extends \Magento\Framework\View\Element\Template implements
+    \Magento\Framework\DataObject\IdentityInterface
 {
     /**
      * @var Category
@@ -153,6 +152,8 @@ class Navigation extends Template implements IdentityInterface
 
         $shortCacheId = array_values($shortCacheId);
         $shortCacheId = implode('|', $shortCacheId);
+        // md5() here is not for cryptographic use.
+        // phpcs:ignore Magento2.Security.InsecureFunction
         $shortCacheId = md5($shortCacheId);
 
         $cacheId['category_path'] = $this->getCurrentCategoryKey();
@@ -196,7 +197,7 @@ class Navigation extends Template implements IdentityInterface
     }
 
     /**
-     * Checkin activity of category
+     * Check activity of category
      *
      * @param   \Magento\Framework\DataObject $category
      * @return  bool

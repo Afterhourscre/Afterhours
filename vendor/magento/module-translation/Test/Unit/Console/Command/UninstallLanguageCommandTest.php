@@ -3,41 +3,45 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\Translation\Test\Unit\Console\Command;
 
+use Magento\Framework\App\Cache;
+use Magento\Framework\Composer\ComposerInformation;
 use Magento\Framework\Composer\DependencyChecker;
 use Magento\Framework\Composer\Remove;
-use Magento\Framework\Composer\ComposerInformation;
-use Magento\Framework\App\Cache;
-use Symfony\Component\Console\Tester\CommandTester;
-use Magento\Translation\Console\Command\UninstallLanguageCommand;
+use Magento\Framework\Setup\BackupRollback;
 use Magento\Framework\Setup\BackupRollbackFactory;
+use Magento\Translation\Console\Command\UninstallLanguageCommand;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Symfony\Component\Console\Tester\CommandTester;
 
-class UninstallLanguageCommandTest extends \PHPUnit\Framework\TestCase
+class UninstallLanguageCommandTest extends TestCase
 {
     /**
-     * @var DependencyChecker|\PHPUnit_Framework_MockObject_MockObject
+     * @var DependencyChecker|MockObject
      */
     private $dependencyChecker;
 
     /**
-     * @var Remove|\PHPUnit_Framework_MockObject_MockObject
+     * @var Remove|MockObject
      */
     private $remove;
 
     /**
-     * @var ComposerInformation|\PHPUnit_Framework_MockObject_MockObject
+     * @var ComposerInformation|MockObject
      */
     private $composerInfo;
 
     /**
-     * @var Cache|\PHPUnit_Framework_MockObject_MockObject
+     * @var Cache|MockObject
      */
     private $cache;
 
     /**
-     * @var BackupRollbackFactory|\PHPUnit_Framework_MockObject_MockObject
+     * @var BackupRollbackFactory|MockObject
      */
     private $backupRollbackFactory;
 
@@ -51,13 +55,13 @@ class UninstallLanguageCommandTest extends \PHPUnit\Framework\TestCase
      */
     private $tester;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->dependencyChecker = $this->createMock(\Magento\Framework\Composer\DependencyChecker::class);
-        $this->remove = $this->createMock(\Magento\Framework\Composer\Remove::class);
-        $this->composerInfo = $this->createMock(\Magento\Framework\Composer\ComposerInformation::class);
-        $this->cache = $this->createMock(\Magento\Framework\App\Cache::class);
-        $this->backupRollbackFactory = $this->createMock(\Magento\Framework\Setup\BackupRollbackFactory::class);
+        $this->dependencyChecker = $this->createMock(DependencyChecker::class);
+        $this->remove = $this->createMock(Remove::class);
+        $this->composerInfo = $this->createMock(ComposerInformation::class);
+        $this->cache = $this->createMock(Cache::class);
+        $this->backupRollbackFactory = $this->createMock(BackupRollbackFactory::class);
 
         $this->command = new UninstallLanguageCommand(
             $this->dependencyChecker,
@@ -87,14 +91,15 @@ class UninstallLanguageCommandTest extends \PHPUnit\Framework\TestCase
                 ]
             );
 
-        $backupRollback = $this->createMock(\Magento\Framework\Setup\BackupRollback::class);
+        $backupRollback = $this->createMock(BackupRollback::class);
         $backupRollback->expects($this->once())->method('codeBackup');
 
         $this->backupRollbackFactory->expects($this->once())
             ->method('create')
             ->willReturn($backupRollback);
 
-        $this->remove->expects($this->once())->method('remove');
+        $this->remove->expects($this->once())->method('remove')
+            ->willReturn('vendor/language-ua_ua');
         $this->cache->expects($this->once())->method('clean');
 
         $this->tester->execute(['package' => ['vendor/language-ua_ua'], '--backup-code' => true]);
@@ -118,11 +123,15 @@ class UninstallLanguageCommandTest extends \PHPUnit\Framework\TestCase
             );
 
         $this->backupRollbackFactory->expects($this->never())->method('create');
-        $this->remove->expects($this->once())->method('remove');
+        $this->remove->expects($this->once())->method('remove')
+            ->willReturn('vendor/language-ua_ua');
         $this->cache->expects($this->once())->method('clean');
 
         $this->tester->execute(['package' => ['vendor/language-ua_ua']]);
-        $this->assertContains('You are removing language package without a code backup.', $this->tester->getDisplay());
+        $this->assertStringContainsString(
+            'You are removing language package without a code backup.',
+            $this->tester->getDisplay()
+        );
     }
 
     public function testExecutePackageHasDependency()
@@ -146,11 +155,11 @@ class UninstallLanguageCommandTest extends \PHPUnit\Framework\TestCase
         $this->cache->expects($this->never())->method('clean');
 
         $this->tester->execute(['package' => ['vendor/language-ua_ua']]);
-        $this->assertContains(
+        $this->assertStringContainsString(
             'Package vendor/language-ua_ua has dependencies and will be skipped',
             $this->tester->getDisplay()
         );
-        $this->assertContains('Nothing is removed.', $this->tester->getDisplay());
+        $this->assertStringContainsString('Nothing is removed.', $this->tester->getDisplay());
     }
 
     public function testExecutePackageNoLanguage()
@@ -174,10 +183,10 @@ class UninstallLanguageCommandTest extends \PHPUnit\Framework\TestCase
         $this->cache->expects($this->never())->method('clean');
 
         $this->tester->execute(['package' => ['vendor/language-ua_ua']]);
-        $this->assertContains(
+        $this->assertStringContainsString(
             'Package vendor/language-ua_ua is not a Magento language and will be skipped',
             $this->tester->getDisplay()
         );
-        $this->assertContains('Nothing is removed.', $this->tester->getDisplay());
+        $this->assertStringContainsString('Nothing is removed.', $this->tester->getDisplay());
     }
 }

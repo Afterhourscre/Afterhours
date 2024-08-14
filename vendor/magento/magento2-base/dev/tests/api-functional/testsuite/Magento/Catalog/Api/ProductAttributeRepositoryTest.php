@@ -24,18 +24,22 @@ class ProductAttributeRepositoryTest extends \Magento\TestFramework\TestCase\Web
 
     /**
      * @magentoApiDataFixture Magento/Catalog/_files/product_attribute.php
+     * @return void
      */
     public function testGet()
     {
         $attributeCode = 'test_attribute_code_333';
         $attribute = $this->getAttribute($attributeCode);
 
-        $this->assertTrue(is_array($attribute));
+        $this->assertIsArray($attribute);
         $this->assertArrayHasKey('attribute_id', $attribute);
         $this->assertArrayHasKey('attribute_code', $attribute);
         $this->assertEquals($attributeCode, $attribute['attribute_code']);
     }
 
+    /**
+     * @return void
+     */
     public function testGetList()
     {
         $searchCriteria = [
@@ -83,11 +87,15 @@ class ProductAttributeRepositoryTest extends \Magento\TestFramework\TestCase\Web
     }
 
     /**
+     * Test create attribute
+     *
+     * @dataProvider attributeCodeDataProvider
      * @magentoApiDataFixture Magento/Catalog/Model/Product/Attribute/_files/create_attribute_service.php
+     * @param string $attributeCode
+     * @return void
      */
-    public function testCreate()
+    public function testCreate(string $attributeCode): void
     {
-        $attributeCode = uniqid('label_attr_code');
         $attribute = $this->createAttribute($attributeCode);
 
         $expectedData = [
@@ -117,7 +125,19 @@ class ProductAttributeRepositoryTest extends \Magento\TestFramework\TestCase\Web
     }
 
     /**
+     * @return array
+     */
+    public function attributeCodeDataProvider(): array
+    {
+        return [
+            [str_repeat('az_7', 15)],
+            [uniqid('label_attr_code')],
+        ];
+    }
+
+    /**
      * @magentoApiDataFixture Magento/Catalog/_files/product_attribute.php
+     * @return void
      */
     public function testCreateWithExceptionIfAttributeAlreadyExists()
     {
@@ -125,6 +145,7 @@ class ProductAttributeRepositoryTest extends \Magento\TestFramework\TestCase\Web
         try {
             $this->createAttribute($attributeCode);
             $this->fail("Expected exception");
+            // phpcs:ignore Magento2.CodeAnalysis.EmptyBlock.DetectedCatch
         } catch (\SoapFault $e) {
             //Expects soap exception
         } catch (\Exception $e) {
@@ -134,6 +155,7 @@ class ProductAttributeRepositoryTest extends \Magento\TestFramework\TestCase\Web
 
     /**
      * @magentoApiDataFixture Magento/Catalog/Model/Product/Attribute/_files/create_attribute_service.php
+     * @return void
      */
     public function testUpdate()
     {
@@ -192,7 +214,7 @@ class ProductAttributeRepositoryTest extends \Magento\TestFramework\TestCase\Web
         $result = $this->updateAttribute($attributeCode, $attributeData);
 
         $this->assertEquals($attribute['attribute_id'], $result['attribute_id']);
-        $this->assertEquals(true, $result['is_used_in_grid']);
+        $this->assertTrue($result['is_used_in_grid']);
         $this->assertEquals($attributeCode, $result['attribute_code']);
         $this->assertEquals('default_label_new', $result['default_frontend_label']);
         $this->assertEquals('front_lbl_store1_new', $result['frontend_labels'][0]['label']);
@@ -203,6 +225,7 @@ class ProductAttributeRepositoryTest extends \Magento\TestFramework\TestCase\Web
 
     /**
      * @magentoApiDataFixture Magento/Catalog/Model/Product/Attribute/_files/create_attribute_service.php
+     * @return void
      */
     public function testUpdateWithNoDefaultLabelAndAdminStorelabel()
     {
@@ -227,7 +250,7 @@ class ProductAttributeRepositoryTest extends \Magento\TestFramework\TestCase\Web
         $result = $this->updateAttribute($attributeCode, $attributeData);
 
         $this->assertEquals($attribute['attribute_id'], $result['attribute_id']);
-        $this->assertEquals(true, $result['is_used_in_grid']);
+        $this->assertTrue($result['is_used_in_grid']);
         $this->assertEquals($attributeCode, $result['attribute_code']);
         $this->assertEquals('front_lbl_store0_new', $result['default_frontend_label']);
         $this->assertEquals('front_lbl_store1_new', $result['frontend_labels'][0]['label']);
@@ -235,6 +258,7 @@ class ProductAttributeRepositoryTest extends \Magento\TestFramework\TestCase\Web
 
     /**
      * @magentoApiDataFixture Magento/Catalog/Model/Product/Attribute/_files/create_attribute_service.php
+     * @return void
      */
     public function testUpdateWithNoDefaultLabelAndNoAdminStoreLabel()
     {
@@ -258,44 +282,15 @@ class ProductAttributeRepositoryTest extends \Magento\TestFramework\TestCase\Web
         $result = $this->updateAttribute($attributeCode, $attributeData);
 
         $this->assertEquals($attribute['attribute_id'], $result['attribute_id']);
-        $this->assertEquals(true, $result['is_used_in_grid']);
+        $this->assertTrue($result['is_used_in_grid']);
         $this->assertEquals($attributeCode, $result['attribute_code']);
         $this->assertEquals('default_label', $result['default_frontend_label']);
         $this->assertEquals('front_lbl_store1_new', $result['frontend_labels'][0]['label']);
     }
 
     /**
-     * Test source model and backend type can not be changed to custom, as they depends on attribute frontend type.
-     *
      * @magentoApiDataFixture Magento/Catalog/Model/Product/Attribute/_files/create_attribute_service.php
      * @return void
-     */
-    public function testUpdateAttributeSourceAndType()
-    {
-        $attributeCode = uniqid('label_attr_code');
-        $attribute = $this->createAttribute($attributeCode);
-        $attributeData = [
-            'attribute' => [
-                'attribute_id' => $attribute['attribute_id'],
-                'attribute_code' => $attributeCode,
-                'entity_type_id' => 4,
-                'is_required' => false,
-                'frontend_input' => 'select',
-                'source_model' => "Some/Custom/Source/Model",
-                'backend_type' => 'varchar',
-                'frontend_labels' => [
-                    ['store_id' => 1, 'label' => 'front_lbl_new'],
-                ],
-            ],
-        ];
-
-        $result = $this->updateAttribute($attributeCode, $attributeData);
-        $this->assertEquals(\Magento\Eav\Model\Entity\Attribute\Source\Table::class, $result['source_model']);
-        $this->assertEquals('int', $result['backend_type']);
-    }
-
-    /**
-     * @magentoApiDataFixture Magento/Catalog/Model/Product/Attribute/_files/create_attribute_service.php
      */
     public function testUpdateWithNewOption()
     {
@@ -328,25 +323,12 @@ class ProductAttributeRepositoryTest extends \Magento\TestFramework\TestCase\Web
         ];
 
         $output = $this->updateAttribute($attributeCode, $attributeData);
-        $this->assertEquals(4, count($output['options']));
-    }
-
-    /**
-     * Trying to delete system attribute.
-     *
-     * @magentoApiDataFixture Magento/Catalog/_files/product_system_attribute.php
-     * @expectedException \Exception
-     * @expectedExceptionMessage The system attribute can't be deleted.
-     * @return void
-     */
-    public function testDeleteSystemAttributeById()
-    {
-        $attributeCode = 'test_attribute_code_333';
-        $this->deleteAttribute($attributeCode);
+        $this->assertCount(4, $output['options']);
     }
 
     /**
      * @magentoApiDataFixture Magento/Catalog/_files/product_attribute.php
+     * @return void
      */
     public function testDeleteById()
     {
@@ -354,10 +336,29 @@ class ProductAttributeRepositoryTest extends \Magento\TestFramework\TestCase\Web
         $this->assertTrue($this->deleteAttribute($attributeCode));
     }
 
+    /**
+     * Trying to delete system attribute.
+     *
+     * @magentoApiDataFixture Magento/Catalog/_files/product_system_attribute.php
+     * @return void
+     */
+    public function testDeleteSystemAttributeById(): void
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('The system attribute can\'t be deleted.');
+
+        $attributeCode = 'test_attribute_code_333';
+        $this->deleteAttribute($attributeCode);
+    }
+
+    /**
+     * @return void
+     */
     public function testDeleteNoSuchEntityException()
     {
         $attributeCode = 'some_test_code';
-        $expectedMessage = 'Attribute with attributeCode "%1" does not exist.';
+        $expectedMessage =
+            'The attribute with a "%1" attributeCode doesn\'t exist. Verify the attribute and try again.';
 
         $serviceInfo = [
             'rest' => [
@@ -375,7 +376,7 @@ class ProductAttributeRepositoryTest extends \Magento\TestFramework\TestCase\Web
             $this->_webApiCall($serviceInfo, ['attributeCode' => $attributeCode]);
             $this->fail("Expected exception");
         } catch (\SoapFault $e) {
-            $this->assertContains(
+            $this->assertStringContainsString(
                 $expectedMessage,
                 $e->getMessage(),
                 "SoapFault does not contain expected message."
@@ -534,7 +535,10 @@ class ProductAttributeRepositoryTest extends \Magento\TestFramework\TestCase\Web
         return $this->_webApiCall($serviceInfo, $attributeData);
     }
 
-    protected function tearDown()
+    /**
+     * @inheritdoc
+     */
+    protected function tearDown(): void
     {
         foreach ($this->createdAttributes as $attributeCode) {
             $this->deleteAttribute($attributeCode);

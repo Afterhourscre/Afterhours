@@ -4,13 +4,13 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 
 class FunctionOpeningBraceSpaceSniff implements Sniff
 {
@@ -20,23 +20,23 @@ class FunctionOpeningBraceSpaceSniff implements Sniff
      *
      * @var array
      */
-    public $supportedTokenizers = array(
-                                   'PHP',
-                                   'JS',
-                                  );
+    public $supportedTokenizers = [
+        'PHP',
+        'JS',
+    ];
 
 
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(
-                T_FUNCTION,
-                T_CLOSURE,
-               );
+        return [
+            T_FUNCTION,
+            T_CLOSURE,
+        ];
 
     }//end register()
 
@@ -55,7 +55,7 @@ class FunctionOpeningBraceSpaceSniff implements Sniff
         $tokens = $phpcsFile->getTokens();
 
         if (isset($tokens[$stackPtr]['scope_opener']) === false) {
-            // Probably an interface method.
+            // Probably an interface or abstract method.
             return;
         }
 
@@ -75,7 +75,7 @@ class FunctionOpeningBraceSpaceSniff implements Sniff
         $found = ($nextLine - $braceLine - 1);
         if ($found > 0) {
             $error = 'Expected 0 blank lines after opening function brace; %s found';
-            $data  = array($found);
+            $data  = [$found];
             $fix   = $phpcsFile->addFixableError($error, $openBrace, 'SpacingAfter', $data);
             if ($fix === true) {
                 $phpcsFile->fixer->beginChangeset();

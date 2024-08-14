@@ -3,8 +3,12 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Catalog\Model;
 
+use Magento\TestFramework\Fixture\DbIsolation;
+use Magento\TestFramework\Fixture\IndexerDimensionMode;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\ResourceModel\Product\Collection;
@@ -14,11 +18,13 @@ use Magento\CatalogInventory\Api\StockRegistryInterface;
  * Tests product model:
  * - pricing behaviour is tested
  * @group indexer_dimension
- * @magentoDbIsolation disabled
- * @--magentoIndexerDimensionMode catalog_product_price website_and_customer_group
  * @see \Magento\Catalog\Model\ProductTest
  * @see \Magento\Catalog\Model\ProductExternalTest
  */
+#[
+    DbIsolation(false),
+    IndexerDimensionMode('catalog_product_price', 'website_and_customer_group')
+]
 class ProductPriceWithDimensionTest extends \PHPUnit\Framework\TestCase
 {
     /**
@@ -31,27 +37,30 @@ class ProductPriceWithDimensionTest extends \PHPUnit\Framework\TestCase
      */
     private $productRepository;
 
-    protected function setUp()
+    /**
+     * Set up
+     */
+    protected function setUp(): void
     {
         $this->_model = Bootstrap::getObjectManager()->create(Product::class);
         $this->productRepository = Bootstrap::getObjectManager()->create(ProductRepositoryInterface::class);
     }
 
+    /**
+     * Get price
+     */
     public function testGetPrice()
     {
-        $this->markTestSkipped(
-            'Skipped because of MAGETWO-99136'
-        );
         $this->assertEmpty($this->_model->getPrice());
         $this->_model->setPrice(10.0);
         $this->assertEquals(10.0, $this->_model->getPrice());
     }
 
+    /**
+     * Get price model
+     */
     public function testGetPriceModel()
     {
-        $this->markTestSkipped(
-            'Skipped because of MAGETWO-99136'
-        );
         $default = $this->_model->getPriceModel();
         $this->assertInstanceOf(\Magento\Catalog\Model\Product\Type\Price::class, $default);
         $this->assertSame($default, $this->_model->getPriceModel());
@@ -62,9 +71,6 @@ class ProductPriceWithDimensionTest extends \PHPUnit\Framework\TestCase
      */
     public function testGetTierPrice()
     {
-        $this->markTestSkipped(
-            'Skipped because of MAGETWO-99136'
-        );
         $this->assertEquals([], $this->_model->getTierPrice());
     }
 
@@ -73,9 +79,6 @@ class ProductPriceWithDimensionTest extends \PHPUnit\Framework\TestCase
      */
     public function testGetTierPriceCount()
     {
-        $this->markTestSkipped(
-            'Skipped because of MAGETWO-99136'
-        );
         $this->assertEquals(0, $this->_model->getTierPriceCount());
     }
 
@@ -84,17 +87,14 @@ class ProductPriceWithDimensionTest extends \PHPUnit\Framework\TestCase
      */
     public function testGetFormatedPrice()
     {
-        $this->markTestSkipped(
-            'Skipped because of MAGETWO-99136'
-        );
         $this->assertEquals('<span class="price">$0.00</span>', $this->_model->getFormatedPrice());
     }
 
+    /**
+     * Set get final price
+     */
     public function testSetGetFinalPrice()
     {
-        $this->markTestSkipped(
-            'Skipped because of MAGETWO-99136'
-        );
         $this->assertEquals(0, $this->_model->getFinalPrice());
         $this->_model->setPrice(10);
         $this->_model->setFinalPrice(10);
@@ -103,12 +103,10 @@ class ProductPriceWithDimensionTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @magentoDataFixture Magento/Catalog/_files/product_with_options.php
+     * @return void
      */
-    public function testGetMinPrice()
+    public function testGetMinPrice(): void
     {
-        $this->markTestSkipped(
-            'Skipped because of MAGETWO-99136'
-        );
         $product = $this->productRepository->get('simple');
         $collection = Bootstrap::getObjectManager()->create(Collection::class);
         $collection->addIdFilter($product->getId());
@@ -124,9 +122,6 @@ class ProductPriceWithDimensionTest extends \PHPUnit\Framework\TestCase
      */
     public function testGetMinPriceForComposite()
     {
-        $this->markTestSkipped(
-            'Skipped because of MAGETWO-99136'
-        );
         $confProduct = $this->productRepository->get('configurable');
         $collection = Bootstrap::getObjectManager()->create(Collection::class);
         $collection->addIdFilter($confProduct->getId());

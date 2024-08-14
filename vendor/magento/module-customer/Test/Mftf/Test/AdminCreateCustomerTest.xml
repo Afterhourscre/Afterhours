@@ -7,41 +7,53 @@
 -->
 
 <tests xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:noNamespaceSchemaLocation="urn:magento:mftf:Test/etc/testSchema.xsd">
+        xsi:noNamespaceSchemaLocation="urn:magento:mftf:Test/etc/testSchema.xsd">
     <test name="AdminCreateCustomerTest">
         <annotations>
-            <features value="Customer Creation"/>
+            <features value="Customer"/>
             <stories value="Create a Customer via the Admin"/>
-            <title value="You should be able to create a customer in the Admin back-end."/>
-            <description value="You should be able to create a customer in the Admin back-end."/>
-            <severity value="CRITICAL"/>
-            <testCaseId value="MAGETWO-72095"/>
+            <title value="Admin should be able to create a customer"/>
+            <description value="Admin should be able to create a customer"/>
+            <severity value="BLOCKER"/>
+            <testCaseId value="MC-28500"/>
             <group value="customer"/>
             <group value="create"/>
+            <group value="cloud_smoke"/>
+            <group value="cloud"/>
         </annotations>
+
         <before>
-            <magentoCLI command="indexer:reindex customer_grid" stepKey="reindexCustomerGrid"/>
+            <comment userInput="Adding the comment to replace CliIndexerReindexActionGroup action group ('indexer:reindex' commands) for preserving Backward Compatibility" stepKey="reindexCustomerGrid"/>
         </before>
+
         <after>
-            <amOnPage url="{{AdminCustomerPage.url}}" stepKey="openCustomersGridPage"/>
-            <actionGroup ref="clearFiltersAdminDataGrid" stepKey="clearCustomerGridFilter"/>
-            <actionGroup ref="logout" stepKey="logout"/>
+            <actionGroup ref="AdminClearCustomersFiltersActionGroup" stepKey="clearCustomersFilter"/>
+            <actionGroup ref="StorefrontCustomerLogoutActionGroup" stepKey="logoutCustomer" />
+            <actionGroup ref="DeleteCustomerByEmailActionGroup" stepKey="deleteCustomer">
+                <argument name="email" value="{{CustomerEntityOne.email}}"/>
+            </actionGroup>
+            <actionGroup ref="ResetAdminDataGridToDefaultViewActionGroup" stepKey="resetGrid"/>
+            <actionGroup ref="AdminLogoutActionGroup" stepKey="adminLogout"/>
         </after>
 
-        <actionGroup ref="LoginAsAdmin" stepKey="loginAsAdmin1"/>
-        <amOnPage url="{{AdminNewCustomerPage.url}}" stepKey="navigateToCreateCustomer"/>
-        <waitForPageLoad time="30" stepKey="waitForPageLoad"/>
-        <fillField userInput="{{CustomerEntityOne.firstname}}" selector="{{AdminNewCustomerAccountInformationSection.firstName}}" stepKey="fillFirstName"/>
-        <fillField userInput="{{CustomerEntityOne.lastname}}" selector="{{AdminNewCustomerAccountInformationSection.lastName}}" stepKey="fillLastName"/>
-        <fillField userInput="{{CustomerEntityOne.email}}" selector="{{AdminNewCustomerAccountInformationSection.email}}" stepKey="fillEmail"/>
-        <click selector="{{AdminNewCustomerMainActionsSection.saveButton}}" stepKey="saveCustomer"/>
-        <waitForElementNotVisible selector="div [data-role='spinner']" time="10" stepKey="waitForSpinner1"/>
+        <actionGroup ref="AdminLoginActionGroup" stepKey="loginAsAdmin1"/>
+        <actionGroup ref="AdminClearCustomersFiltersActionGroup" stepKey="navigateToCustomers"/>
+        <waitForPageLoad stepKey="waitForLoad1"/>
+        <conditionalClick selector="{{AdminCustomerFiltersSection.clearAll}}" dependentSelector="{{AdminCustomerFiltersSection.clearAll}}" visible="true" stepKey="clickClearFilters"/>
+        <waitForPageLoad stepKey="waitForFiltersClear"/>
+        <click selector="{{AdminCustomerGridMainActionsSection.addNewCustomer}}" stepKey="clickCreateCustomer"/>
+        <fillField userInput="{{CustomerEntityOne.firstname}}" selector="{{AdminCustomerAccountInformationSection.firstName}}" stepKey="fillFirstName"/>
+        <fillField userInput="{{CustomerEntityOne.lastname}}" selector="{{AdminCustomerAccountInformationSection.lastName}}" stepKey="fillLastName"/>
+        <fillField userInput="{{CustomerEntityOne.email}}" selector="{{AdminCustomerAccountInformationSection.email}}" stepKey="fillEmail"/>
+        <click selector="{{AdminCustomerMainActionsSection.saveButton}}" stepKey="saveCustomer"/>
         <seeElement selector="{{AdminCustomerMessagesSection.successMessage}}" stepKey="assertSuccessMessage"/>
-        <actionGroup ref="clearFiltersAdminDataGrid" stepKey="clearCustomerGridFilter"/>
+        <comment userInput="Adding the comment to replace CliIndexerReindexActionGroup action group ('indexer:reindex' commands) for preserving Backward Compatibility" stepKey="reindex"/>
+        <actionGroup ref="ReloadPageActionGroup" stepKey="reloadPage"/>
+        <comment userInput="Replacing reload action and preserve Backward Compatibility" stepKey="waitForLoad2"/>
+
         <click selector="{{AdminCustomerFiltersSection.filtersButton}}" stepKey="openFilter"/>
         <fillField userInput="{{CustomerEntityOne.email}}" selector="{{AdminCustomerFiltersSection.emailInput}}" stepKey="filterEmail"/>
         <click selector="{{AdminCustomerFiltersSection.apply}}" stepKey="applyFilter"/>
-        <waitForElementNotVisible selector="div [data-role='spinner']" time="10" stepKey="waitForSpinner2"/>
         <see userInput="{{CustomerEntityOne.firstname}}" selector="{{AdminCustomerGridSection.customerGrid}}" stepKey="assertFirstName"/>
         <see userInput="{{CustomerEntityOne.lastname}}" selector="{{AdminCustomerGridSection.customerGrid}}" stepKey="assertLastName"/>
         <see userInput="{{CustomerEntityOne.email}}" selector="{{AdminCustomerGridSection.customerGrid}}" stepKey="assertEmail"/>

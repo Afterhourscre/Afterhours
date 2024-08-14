@@ -42,8 +42,6 @@
 
 namespace PDepend\Source\AST;
 
-use PDepend\Source\ASTVisitor\ASTVisitor;
-
 /**
  * This class represents a single constant declarator within a constant
  * definition.
@@ -82,16 +80,43 @@ use PDepend\Source\ASTVisitor\ASTVisitor;
 class ASTConstantDeclarator extends AbstractASTNode
 {
     /**
+     * The type of the constant if explicitly specified, <b>null</b> else.
+     *
+     * @var ASTType|null
+     */
+    protected $type = null;
+
+    /**
      * The initial declaration value for this node or <b>null</b>.
      *
-     * @var \PDepend\Source\AST\ASTValue
+     * @var ASTValue|null
      */
     protected $value = null;
 
     /**
+     * Returns the explicitly specified type of the constant.
+     *
+     * @return ASTType|null
+     */
+    public function getType()
+    {
+        return $this->type;
+    }
+
+    /**
+     * Set the explicitly specified type of the constant.
+     *
+     * @return void
+     */
+    public function setType(ASTType $type = null)
+    {
+        $this->type = $type;
+    }
+
+    /**
      * Returns the initial declaration value for this node.
      *
-     * @return \PDepend\Source\AST\ASTValue
+     * @return ASTValue|null
      */
     public function getValue()
     {
@@ -101,33 +126,18 @@ class ASTConstantDeclarator extends AbstractASTNode
     /**
      * Sets the declared default value for this constant node.
      *
-     * @param  \PDepend\Source\AST\ASTValue $value
      * @return void
      */
-    public function setValue(ASTValue $value)
+    public function setValue(ASTValue $value = null)
     {
         $this->value = $value;
-    }
-
-    /**
-     * Accept method of the visitor design pattern. This method will be called
-     * by a visitor during tree traversal.
-     *
-     * @param \PDepend\Source\ASTVisitor\ASTVisitor $visitor
-     * @param mixed $data
-     * @return mixed
-     * @since  0.9.12
-     */
-    public function accept(ASTVisitor $visitor, $data = null)
-    {
-        return $visitor->visitConstantDeclarator($this, $data);
     }
 
     /**
      * Magic sleep method that returns an array with those property names that
      * should be cached for this node instance.
      *
-     * @return array(string)
+     * @return array<string>
      */
     public function __sleep()
     {

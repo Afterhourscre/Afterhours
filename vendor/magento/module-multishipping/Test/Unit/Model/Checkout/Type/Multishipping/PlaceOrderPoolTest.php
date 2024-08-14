@@ -3,24 +3,32 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Multishipping\Test\Unit\Model\Checkout\Type\Multishipping;
 
 use Magento\Framework\ObjectManager\TMapFactory;
 use Magento\Multishipping\Model\Checkout\Type\Multishipping\PlaceOrderInterface;
 use Magento\Multishipping\Model\Checkout\Type\Multishipping\PlaceOrderPool;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class PlaceOrderPoolTest extends \PHPUnit\Framework\TestCase
+/**
+ * Tests Magento\Multishipping\Model\Checkout\Type\Multishipping\PlaceOrderPool.
+ */
+class PlaceOrderPoolTest extends TestCase
 {
     /**
      * @param string $paymentProviderCode
      * @param PlaceOrderInterface[] $placeOrderList
      * @param PlaceOrderInterface|null $expectedResult
+     * @return void
      *
      * @dataProvider getDataProvider
      */
     public function testGet(string $paymentProviderCode, array $placeOrderList, $expectedResult)
     {
-        /** @var TMapFactory|\PHPUnit_Framework_MockObject_MockObject $tMapFactory */
+        /** @var TMapFactory|MockObject $tMapFactory */
         $tMapFactory = $this->getMockBuilder(TMapFactory::class)
             ->disableOriginalConstructor()
             ->getMock();

@@ -4,13 +4,13 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\PEAR\Sniffs\Classes;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 
 class ClassDeclarationSniff implements Sniff
 {
@@ -19,15 +19,16 @@ class ClassDeclarationSniff implements Sniff
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(
-                T_CLASS,
-                T_INTERFACE,
-                T_TRAIT,
-               );
+        return [
+            T_CLASS,
+            T_INTERFACE,
+            T_TRAIT,
+            T_ENUM,
+        ];
 
     }//end register()
 
@@ -44,7 +45,7 @@ class ClassDeclarationSniff implements Sniff
     public function process(File $phpcsFile, $stackPtr)
     {
         $tokens    = $phpcsFile->getTokens();
-        $errorData = array(strtolower($tokens[$stackPtr]['content']));
+        $errorData = [strtolower($tokens[$stackPtr]['content'])];
 
         if (isset($tokens[$stackPtr]['scope_opener']) === false) {
             $error = 'Possible parse error: %s missing opening or closing brace';
@@ -76,11 +77,11 @@ class ClassDeclarationSniff implements Sniff
 
             if ($braceLine > ($classLine + 1)) {
                 $error = 'Opening brace of a %s must be on the line following the %s declaration; found %s line(s)';
-                $data  = array(
-                          $tokens[$stackPtr]['content'],
-                          $tokens[$stackPtr]['content'],
-                          ($braceLine - $classLine - 1),
-                         );
+                $data  = [
+                    $tokens[$stackPtr]['content'],
+                    $tokens[$stackPtr]['content'],
+                    ($braceLine - $classLine - 1),
+                ];
                 $fix   = $phpcsFile->addFixableError($error, $curlyBrace, 'OpenBraceWrongLine', $data);
                 if ($fix === true) {
                     $phpcsFile->fixer->beginChangeset();
@@ -101,9 +102,16 @@ class ClassDeclarationSniff implements Sniff
 
         if ($tokens[($curlyBrace + 1)]['content'] !== $phpcsFile->eolChar) {
             $error = 'Opening %s brace must be on a line by itself';
-            $fix   = $phpcsFile->addFixableError($error, $curlyBrace, 'OpenBraceNotAlone', $errorData);
-            if ($fix === true) {
-                $phpcsFile->fixer->addNewline($curlyBrace);
+
+            $nextNonWhitespace = $phpcsFile->findNext(T_WHITESPACE, ($curlyBrace + 1), null, true);
+            if ($tokens[$nextNonWhitespace]['code'] === T_PHPCS_IGNORE) {
+                // Don't auto-fix if the next thing is a PHPCS ignore annotation.
+                $phpcsFile->addError($error, $curlyBrace, 'OpenBraceNotAlone', $errorData);
+            } else {
+                $fix = $phpcsFile->addFixableError($error, $curlyBrace, 'OpenBraceNotAlone', $errorData);
+                if ($fix === true) {
+                    $phpcsFile->fixer->addNewline($curlyBrace);
+                }
             }
         }
 
@@ -112,18 +120,17 @@ class ClassDeclarationSniff implements Sniff
             if ($prevContent === $phpcsFile->eolChar) {
                 $spaces = 0;
             } else {
-                $blankSpace = substr($prevContent, strpos($prevContent, $phpcsFile->eolChar));
-                $spaces     = strlen($blankSpace);
+                $spaces = $tokens[($curlyBrace - 1)]['length'];
             }
 
             $first    = $phpcsFile->findFirstOnLine(T_WHITESPACE, $stackPtr, true);
             $expected = ($tokens[$first]['column'] - 1);
             if ($spaces !== $expected) {
                 $error = 'Expected %s spaces before opening brace; %s found';
-                $data  = array(
-                          $expected,
-                          $spaces,
-                         );
+                $data  = [
+                    $expected,
+                    $spaces,
+                ];
 
                 $fix = $phpcsFile->addFixableError($error, $curlyBrace, 'SpaceBeforeBrace', $data);
                 if ($fix === true) {

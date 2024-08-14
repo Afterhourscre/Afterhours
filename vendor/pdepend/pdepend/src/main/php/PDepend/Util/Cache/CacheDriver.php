@@ -38,6 +38,7 @@
  *
  * @copyright 2008-2017 Manuel Pichler. All rights reserved.
  * @license http://www.opensource.org/licenses/bsd-license.php BSD License
+ *
  * @since 0.10.0
  */
 
@@ -48,6 +49,7 @@ namespace PDepend\Util\Cache;
  *
  * @copyright 2008-2017 Manuel Pichler. All rights reserved.
  * @license http://www.opensource.org/licenses/bsd-license.php BSD License
+ *
  * @since 0.10.0
  */
 interface CacheDriver
@@ -55,7 +57,7 @@ interface CacheDriver
     /**
      * The current cache version.
      */
-    const VERSION = '@version:0cccd352eaa5723147a994a742e6670a:@';
+    const VERSION = '@version:a31e9e344aac643e20751f6d915114eb:@';
 
     /**
      * Sets the type for the next <em>store()</em> or <em>restore()</em> method
@@ -65,8 +67,9 @@ interface CacheDriver
      * you must invoke right before every call to <em>restore()</em> or
      * <em>store()</em>.
      *
-     * @param  string $type
-     * @return \PDepend\Util\Cache\CacheDriver
+     * @param string $type
+     *
+     * @return CacheDriver
      */
     public function type($type);
 
@@ -77,9 +80,10 @@ interface CacheDriver
      * hash and the supplied hash are not identical, that cache entry will be
      * removed and not returned.
      *
-     * @param  string $key  The cache key for the given data.
-     * @param  mixed  $data Any data that should be cached.
-     * @param  string $hash Optional hash that will be used for verification.
+     * @param string $key  The cache key for the given data.
+     * @param mixed  $data Any data that should be cached.
+     * @param string $hash Optional hash that will be used for verification.
+     *
      * @return void
      */
     public function store($key, $data, $hash = null);
@@ -91,8 +95,9 @@ interface CacheDriver
      * Then it returns the cached entry. Otherwise this method will return
      * <b>NULL</b>.
      *
-     * @param  string $key  The cache key for the given data.
-     * @param  string $hash Optional hash that will be used for verification.
+     * @param string $key  The cache key for the given data.
+     * @param string $hash Optional hash that will be used for verification.
+     *
      * @return mixed
      */
     public function restore($key, $hash = null);
@@ -103,7 +108,8 @@ interface CacheDriver
      * <b>$pattern</b>. If no matching entry exists, this method simply does
      * nothing.
      *
-     * @param  string $pattern The cache key pattern.
+     * @param string $pattern The cache key pattern.
+     *
      * @return void
      */
     public function remove($pattern);

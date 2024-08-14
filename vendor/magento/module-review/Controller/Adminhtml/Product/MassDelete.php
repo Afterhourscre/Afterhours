@@ -15,11 +15,12 @@ use Magento\Review\Model\Review;
 use Magento\Review\Model\ResourceModel\Review\Collection;
 use Magento\Review\Model\ResourceModel\Review\CollectionFactory;
 use Magento\Review\Model\ReviewFactory;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 
 /**
  * Mass Delete action.
  */
-class MassDelete extends ProductController
+class MassDelete extends ProductController implements HttpPostActionInterface
 {
     /**
      * @var Collection
@@ -53,29 +54,27 @@ class MassDelete extends ProductController
      * Execute action.
      *
      * @return \Magento\Backend\Model\View\Result\Redirect
-     * @throws \Magento\Framework\Exception\NotFoundException
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new \Magento\Framework\Exception\NotFoundException(__('Page not found.'));
-        }
-
         $reviewsIds = $this->getRequest()->getParam('reviews');
         if (!is_array($reviewsIds)) {
-            $this->messageManager->addError(__('Please select review(s).'));
+            $this->messageManager->addErrorMessage(__('Please select review(s).'));
         } else {
             try {
                 foreach ($this->getCollection() as $model) {
                     $model->delete();
                 }
-                $this->messageManager->addSuccess(
+                $this->messageManager->addSuccessMessage(
                     __('A total of %1 record(s) have been deleted.', count($reviewsIds))
                 );
             } catch (LocalizedException $e) {
-                $this->messageManager->addError($e->getMessage());
+                $this->messageManager->addErrorMessage($e->getMessage());
             } catch (\Exception $e) {
-                $this->messageManager->addException($e, __('Something went wrong while deleting these records.'));
+                $this->messageManager->addExceptionMessage(
+                    $e,
+                    __('Something went wrong while deleting these records.')
+                );
             }
         }
         /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
@@ -127,6 +126,7 @@ class MassDelete extends ProductController
                     ->getIdFieldName(),
                 $this->getRequest()->getParam('reviews')
             );
+            $collection->addStoreData();
 
             $this->collection = $collection;
         }

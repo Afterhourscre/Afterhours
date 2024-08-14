@@ -9,6 +9,8 @@ namespace Magento\Catalog\Model\ResourceModel\Product\Indexer\Price;
 
 /**
  * Interface for modifying price data in price index table.
+ *
+ * @api
  */
 interface PriceModifierInterface
 {
@@ -19,5 +21,5 @@ interface PriceModifierInterface
      * @param array $entityIds
      * @return void
      */
-    public function modifyPrice(IndexTableStructure $priceTable, array $entityIds = []);
+    public function modifyPrice(IndexTableStructure $priceTable, array $entityIds = []) : void;
 }

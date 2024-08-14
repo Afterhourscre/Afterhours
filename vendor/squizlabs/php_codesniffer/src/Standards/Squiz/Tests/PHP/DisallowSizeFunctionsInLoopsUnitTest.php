@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Tests\PHP;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class DisallowSizeFunctionsInLoopsUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the DisallowSizeFunctionsInLoops sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\DisallowSizeFunctionsInLoopsSniff
+ */
+final class DisallowSizeFunctionsInLoopsUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,31 +30,30 @@ class DisallowSizeFunctionsInLoopsUnitTest extends AbstractSniffUnitTest
      *
      * @return array<int, int>
      */
-    public function getErrorList($testFile='DisallowSizeFunctionsInLoopsUnitTest.inc')
+    public function getErrorList($testFile='')
     {
         switch ($testFile) {
         case 'DisallowSizeFunctionsInLoopsUnitTest.inc':
-            return array(
-                    2  => 1,
-                    7  => 1,
-                    11 => 1,
-                    13 => 1,
-                    18 => 1,
-                    23 => 1,
-                    27 => 1,
-                    29 => 1,
-                    35 => 1,
-                    40 => 1,
-                    44 => 1,
-                    46 => 1,
-                   );
-            break;
+            return [
+                2  => 1,
+                7  => 1,
+                11 => 1,
+                13 => 1,
+                18 => 1,
+                23 => 1,
+                27 => 1,
+                29 => 1,
+                35 => 1,
+                40 => 1,
+                44 => 1,
+                46 => 1,
+            ];
+
         case 'DisallowSizeFunctionsInLoopsUnitTest.js':
-            return array(1 => 1);
-            break;
+            return [1 => 1];
+
         default:
-            return array();
-            break;
+            return [];
         }//end switch
 
     }//end getErrorList()
@@ -65,7 +69,7 @@ class DisallowSizeFunctionsInLoopsUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

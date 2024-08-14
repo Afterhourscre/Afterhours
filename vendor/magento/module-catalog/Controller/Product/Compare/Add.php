@@ -6,10 +6,11 @@
  */
 namespace Magento\Catalog\Controller\Product\Compare;
 
-use Magento\Catalog\ViewModel\Product\Checker\AddToCompareAvailability;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\ViewModel\Product\Checker\AddToCompareAvailability;
+use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
 use Magento\Framework\Data\Form\FormKey\Validator;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\View\Result\PageFactory;
 
 /**
@@ -17,7 +18,7 @@ use Magento\Framework\View\Result\PageFactory;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class Add extends \Magento\Catalog\Controller\Product\Compare
+class Add extends \Magento\Catalog\Controller\Product\Compare implements HttpPostActionInterface
 {
     /**
      * @var AddToCompareAvailability
@@ -79,7 +80,7 @@ class Add extends \Magento\Catalog\Controller\Product\Compare
     public function execute()
     {
         $resultRedirect = $this->resultRedirectFactory->create();
-        if (!$this->isActionAllowed()) {
+        if (!$this->_formKeyValidator->validate($this->getRequest())) {
             return $resultRedirect->setRefererUrl();
         }
 
@@ -113,13 +114,5 @@ class Add extends \Magento\Catalog\Controller\Product\Compare
         }
 
         return $resultRedirect->setRefererOrBaseUrl();
-    }
-
-    /**
-     * @return bool
-     */
-    private function isActionAllowed(): bool
-    {
-        return $this->getRequest()->isPost() && $this->_formKeyValidator->validate($this->getRequest());
     }
 }

@@ -1,19 +1,14 @@
 <?php
+
 namespace Braintree\Dispute;
 
 use Braintree\Instance;
 
 /**
- * Evidence details for a dispute
+ * Status History for a dispute
  *
- * @package    Braintree
- *
- * @property-read string $effective_date
- * @property-read string $status
- * @property-read date   $timestamp
+ * See our {@link https://developer.paypal.com/braintree/docs/reference/response/dispute#status_history developer docs} for information on attributes
  */
 class StatusHistoryDetails extends Instance
 {
 }
-
-class_alias('Braintree\Dispute\StatusHistoryDetails', 'Braintree_Dispute_StatusHistoryDetails');

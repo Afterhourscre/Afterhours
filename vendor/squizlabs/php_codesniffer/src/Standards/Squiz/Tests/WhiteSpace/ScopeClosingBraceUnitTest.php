@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Tests\WhiteSpace;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class ScopeClosingBraceUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the ScopeClosingBrace sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\ScopeClosingBraceSniff
+ */
+final class ScopeClosingBraceUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,13 +30,18 @@ class ScopeClosingBraceUnitTest extends AbstractSniffUnitTest
      */
     public function getErrorList()
     {
-        return array(
-                11  => 1,
-                13  => 1,
-                24  => 1,
-                80  => 1,
-                102 => 1,
-               );
+        return [
+            11  => 1,
+            13  => 1,
+            24  => 1,
+            80  => 1,
+            102 => 1,
+            111 => 1,
+            116 => 1,
+            122 => 1,
+            130 => 1,
+            134 => 1,
+        ];
 
     }//end getErrorList()
 
@@ -46,7 +56,7 @@ class ScopeClosingBraceUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

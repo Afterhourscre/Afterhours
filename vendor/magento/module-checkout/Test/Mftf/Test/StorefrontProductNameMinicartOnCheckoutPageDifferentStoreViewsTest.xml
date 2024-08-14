@@ -11,81 +11,108 @@
     <test name="StorefrontProductNameMinicartOnCheckoutPageDifferentStoreViewsTest">
         <annotations>
             <features value="Checkout"/>
-            <title value="Checking Product name with custom store views"/>
-            <description value="Checking Product name in Minicart and on Checkout page with custom store views"/>
-            <stories value="Checkout via Guest Checkout"/>
+            <stories value="Minicart"/>
+            <title value="Checking Product name in Minicart and on Checkout page with different store views"/>
+            <description value="Checking Product name in Minicart and on Checkout page with different store views"/>
             <severity value="MAJOR"/>
-            <testCaseId value="MC-14944"/>
-            <useCaseId value="MAGETWO-95904"/>
+            <testCaseId value="MC-28566"/>
+            <useCaseId value="MAGETWO-96421"/>
             <group value="checkout"/>
         </annotations>
         <before>
+            <actionGroup ref="AdminLoginActionGroup" stepKey="loginAsAdmin"/>
+
             <!--Create a product-->
-            <createData entity="SimpleSubCategory" stepKey="createCategory"/>
-            <createData entity="SimpleProduct" stepKey="createProduct">
-                <requiredEntity createDataKey="createCategory"/>
-            </createData>
-            <!--Login as Admin-->
-            <actionGroup ref="LoginAsAdmin" stepKey="loginAsAdmin"/>
-            <!-- Create store view -->
-            <actionGroup ref="AdminCreateStoreViewActionGroup" stepKey="createStoreView">
-                <argument name="customStore" value="customStore"/>
-            </actionGroup>
+            <createData entity="SimpleProduct2" stepKey="createProduct"/>
         </before>
         <after>
-            <!--Delete product-->
-            <deleteData createDataKey="createCategory" stepKey="deleteCategory"/>
+            <!--Delete created data-->
             <deleteData createDataKey="createProduct" stepKey="deleteProduct"/>
-            <!--Delete store view-->
             <actionGroup ref="AdminDeleteStoreViewActionGroup" stepKey="deleteStoreView">
                 <argument name="customStore" value="customStore"/>
             </actionGroup>
-            <actionGroup ref="clearFiltersAdminDataGrid" stepKey="clearGridFilter"/>
-            <!--Logout from admin-->
-            <actionGroup ref="logout" stepKey="logout"/>
+            <actionGroup ref="ClearFiltersAdminDataGridActionGroup" stepKey="clearGridFilter"/>
+            <actionGroup ref="CliIndexerReindexActionGroup" stepKey="reindex">
+                <argument name="indices" value=""/>
+            </actionGroup>
+
+            <actionGroup ref="AdminLogoutActionGroup" stepKey="logout"/>
         </after>
 
+        <!-- Create store view -->
+        <actionGroup ref="AdminCreateStoreViewActionGroup" stepKey="createStoreView">
+            <argument name="customStore" value="customStore"/>
+        </actionGroup>
+        <actionGroup ref="CliIndexerReindexActionGroup" stepKey="reindex">
+            <argument name="indices" value=""/>
+        </actionGroup>
+
         <!--Go to created product page-->
-        <amOnPage url="{{AdminProductEditPage.url($$createProduct.id$$)}}" stepKey="goToEditPage"/>
+        <actionGroup ref="AdminProductPageOpenByIdActionGroup" stepKey="goToEditPage">
+            <argument name="productId" value="$$createProduct.id$$"/>
+        </actionGroup>
+        <waitForPageLoad stepKey="waitForProductPage"/>
 
         <!--Switch to second store view and change the product name-->
-        <actionGroup ref="SwitchToTheNewStoreView" stepKey="switchToCustomStoreView">
-            <argument name="storeViewName" value="customStore"/>
+        <actionGroup ref="SwitchToTheNewStoreViewActionGroup" stepKey="switchToCustomStoreView">
+            <argument name="storeViewName" value="{{customStore.name}}"/>
         </actionGroup>
-        <scrollToTopOfPage stepKey="scrolToShowNameField"/>
+        <waitForPageLoad stepKey="waitForPageLoad"/>
         <click selector="{{AdminProductFormSection.productNameUseDefault}}" stepKey="uncheckUseDefault"/>
         <fillField selector="{{AdminProductFormSection.productName}}" userInput="$$createProduct.name$$-new" stepKey="fillProductName"/>
-        <click selector="{{AdminProductFormActionSection.saveButton}}" stepKey="saveProduct"/>
+        <actionGroup ref="AdminProductFormSaveActionGroup" stepKey="saveProduct"/>
 
         <!--Add product to cart-->
-        <amOnPage url="{{StorefrontProductPage.url($$createProduct.custom_attributes[url_key]$$)}}" stepKey="amOnProductPage"/>
-        <actionGroup ref="addToCartFromStorefrontProductPage" stepKey="addToCartFromStorefrontProductPage">
+        <amOnPage url="{{StorefrontProductPage.url($$createProduct.custom_attributes[url_key]$$)}}" stepKey="amOnSimpleProductPage"/>
+        <waitForPageLoad stepKey="waitForProductPageLoad"/>
+        <actionGroup ref="AddToCartFromStorefrontProductPageActionGroup" stepKey="addToCartFromStorefrontProductPage">
             <argument name="productName" value="$createProduct.name$$"/>
-        </actionGroup>
-
-        <!--Check simple product in minicart-->
-        <actionGroup ref="assertOneProductNameInMiniCart" stepKey="assertProductNameInMiniCart1">
-            <argument name="productName" value="$$createProduct.name$$"/>
         </actionGroup>
 
         <!--Switch to second store view-->
         <actionGroup ref="StorefrontSwitchStoreViewActionGroup" stepKey="switchStoreView">
             <argument name="storeView" value="customStore"/>
         </actionGroup>
+        <waitForPageLoad stepKey="waitForStoreView"/>
 
-        <!--Check simple product in minicart-->
-        <actionGroup ref="assertOneProductNameInMiniCart" stepKey="assertProductNameInMiniCart2">
-            <argument name="productName" value="$$createProduct.name$$-new"/>
-        </actionGroup>
+        <!--Check product name in Minicart-->
+        <actionGroup ref="StorefrontClickOnMiniCartActionGroup" stepKey="clickCart"/>
+        <grabTextFrom selector="{{StorefrontMinicartSection.productName}}" stepKey="grabProductNameMinicart"/>
+        <assertStringContainsString stepKey="assertProductNameMinicart">
+			<actualResult type="const">$grabProductNameMinicart</actualResult>
+			<expectedResult type="const">$$createProduct.name$$</expectedResult>
+        </assertStringContainsString>
+        <assertStringContainsString stepKey="assertProductNameMinicart1">
+			<actualResult type="const">$grabProductNameMinicart</actualResult>
+			<expectedResult type="string">-new</expectedResult>
+        </assertStringContainsString>
 
-        <!--Go to Shopping Cart-->
-        <actionGroup ref="clickViewAndEditCartFromMiniCart" stepKey="goToShoppingCartFromMinicart"/>
-        <seeElement selector="{{CheckoutCartProductSection.productLinkByName($$createProduct.name$$-new)}}" stepKey="assertProductName"/>
+        <!--Check product name in Shopping Cart page-->
+        <comment userInput="BIC workaround" stepKey="clickViewAndEdit"/>
+        <actionGroup ref="StorefrontCartPageOpenActionGroup" stepKey="openCart"/>
+        <waitForPageLoad stepKey="waitForShoppingCartPageLoad"/>
+        <grabTextFrom selector="{{CheckoutCartProductSection.productName}}" stepKey="grabProductNameCart"/>
+        <assertStringContainsString stepKey="assertProductNameCart">
+			<actualResult type="const">$grabProductNameCart</actualResult>
+			<expectedResult type="const">$$createProduct.name$$</expectedResult>
+        </assertStringContainsString>
+        <assertStringContainsString stepKey="assertProductNameCart1">
+			<actualResult type="const">$grabProductNameCart</actualResult>
+			<expectedResult type="string">-new</expectedResult>
+        </assertStringContainsString>
 
-        <!--Proceed to checkout-->
-        <actionGroup ref="GoToCheckoutFromMinicartActionGroup" stepKey="goToCheckoutPage"/>
-        <conditionalClick selector="{{CheckoutOrderSummarySection.miniCartTab}}" dependentSelector="{{CheckoutOrderSummarySection.miniCartTab}}" visible="true" stepKey="clickItemsInCart"/>
-        <waitForElementVisible selector="{{CheckoutOrderSummarySection.productItemName}}" stepKey="waitForProduct"/>
-        <see selector="{{CheckoutOrderSummarySection.productItemName}}" userInput="$$createProduct.name$$-new" stepKey="seeProductNameAtCheckout"/>
+        <!--Proceed to checkout and check product name in Order Summary area-->
+        <actionGroup ref="StorefrontClickProceedToCheckoutActionGroup" stepKey="proceedToCheckout"/>
+        <waitForElementVisible selector="{{CheckoutShippingSection.emailAddress}}" stepKey="waitForShippingPageLoad"/>
+        <conditionalClick selector="{{CheckoutShippingGuestInfoSection.itemInCart}}" dependentSelector="{{CheckoutShippingGuestInfoSection.itemInCartActive}}" visible="false" stepKey="clickItemInCart"/>
+        <grabTextFrom selector="{{CheckoutShippingGuestInfoSection.productName}}" stepKey="grabProductNameShipping"/>
+        <assertStringContainsString stepKey="assertProductNameShipping">
+			<actualResult type="const">$grabProductNameShipping</actualResult>
+			<expectedResult type="const">$$createProduct.name$$</expectedResult>
+        </assertStringContainsString>
+        <assertStringContainsString stepKey="assertProductNameShipping1">
+			<actualResult type="const">$grabProductNameShipping</actualResult>
+			<expectedResult type="string">-new</expectedResult>
+        </assertStringContainsString>
     </test>
 </tests>

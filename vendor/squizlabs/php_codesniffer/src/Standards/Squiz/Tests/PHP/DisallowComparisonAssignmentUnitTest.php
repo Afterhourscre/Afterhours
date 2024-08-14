@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Tests\PHP;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class DisallowComparisonAssignmentUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the DisallowComparisonAssignment sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP\DisallowComparisonAssignmentSniff
+ */
+final class DisallowComparisonAssignmentUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,16 +30,18 @@ class DisallowComparisonAssignmentUnitTest extends AbstractSniffUnitTest
      */
     public function getErrorList()
     {
-        return array(
-                3  => 1,
-                5  => 1,
-                6  => 1,
-                7  => 1,
-                8  => 1,
-                10 => 1,
-                52 => 1,
-                53 => 1,
-               );
+        return [
+            3  => 1,
+            5  => 1,
+            6  => 1,
+            7  => 1,
+            8  => 1,
+            10 => 1,
+            52 => 1,
+            53 => 1,
+            58 => 1,
+            62 => 1,
+        ];
 
     }//end getErrorList()
 
@@ -49,7 +56,7 @@ class DisallowComparisonAssignmentUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

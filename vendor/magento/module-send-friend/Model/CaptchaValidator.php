@@ -4,6 +4,8 @@
  * See COPYING.txt for license details.
  */
 
+declare(strict_types=1);
+
 namespace Magento\SendFriend\Model;
 
 use Magento\Framework\App\RequestInterface;
@@ -66,7 +68,7 @@ class CaptchaValidator
      * @throws LocalizedException
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function validateSending(RequestInterface $request)
+    public function validateSending(RequestInterface $request): void
     {
         $this->validateCaptcha($request);
     }
@@ -78,7 +80,7 @@ class CaptchaValidator
      * @throws LocalizedException
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    private function validateCaptcha(RequestInterface $request)
+    private function validateCaptcha(RequestInterface $request): void
     {
         $captchaTargetFormName = 'product_sendtofriend_form';
         /** @var DefaultModel $captchaModel */
@@ -108,7 +110,7 @@ class CaptchaValidator
      * @throws LocalizedException
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    private function logCaptchaAttempt(DefaultModel $captchaModel)
+    private function logCaptchaAttempt(DefaultModel $captchaModel): void
     {
         $email = '';
 

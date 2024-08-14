@@ -5,13 +5,14 @@
  */
 
 /**
- * @codingStandardsIgnoreFile
  * Coding Standards have to be ignored in this file, as it is just a data source for tests.
+ * @codingStandardsIgnoreStart
  */
 
 namespace ArgumentSequence;
 
-class ContextObject implements \Magento\Framework\ObjectManager\ContextInterface
+use Magento\Framework\ObjectManager\ContextInterface;
+class ContextObject implements ContextInterface
 {
 }
 class ParentRequiredObject
@@ -42,7 +43,6 @@ class ParentClass
 
     /**
      * ParentClass constructor.
-     *
      * @param ContextObject $contextObject
      * @param ParentRequiredObject $parentRequiredObject
      * @param array $parentRequiredScalar

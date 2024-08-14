@@ -3,6 +3,9 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
+declare(strict_types=1);
+
 namespace Magento\Sales\Block\Adminhtml\Order\Create\Sidebar;
 
 use Magento\Framework\Pricing\PriceCurrencyInterface;
@@ -196,7 +199,7 @@ class AbstractSidebar extends \Magento\Sales\Block\Adminhtml\Order\Create\Abstra
     }
 
     /**
-     * Retrieve disply price availablity
+     * Retrieve display price availability
      *
      * @return true
      */

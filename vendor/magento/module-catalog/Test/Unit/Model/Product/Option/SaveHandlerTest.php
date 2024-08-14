@@ -3,37 +3,52 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\Catalog\Test\Unit\Model\Product\Option;
 
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Option;
-use \Magento\Catalog\Model\Product\Option\Repository;
-use \Magento\Catalog\Model\Product\Option\SaveHandler;
+use Magento\Catalog\Model\Product\Option\Repository;
+use Magento\Catalog\Model\Product\Option\SaveHandler;
+use Magento\Catalog\Model\ResourceModel\Product\Relation;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class SaveHandlerTest extends \PHPUnit\Framework\TestCase
+/**
+ * Test for \Magento\Catalog\Model\Product\Option\SaveHandler.
+ */
+class SaveHandlerTest extends TestCase
 {
     /**
-     * @var SaveHandler|\PHPUnit_Framework_MockObject_MockObject
+     * @var SaveHandler|MockObject
      */
     protected $model;
 
     /**
-     * @var Product|\PHPUnit_Framework_MockObject_MockObject
+     * @var Product|MockObject
      */
     protected $entity;
 
     /**
-     * @var Option|\PHPUnit_Framework_MockObject_MockObject
+     * @var Option|MockObject
      */
     protected $optionMock;
 
     /**
-     * @var Repository|\PHPUnit_Framework_MockObject_MockObject
+     * @var Repository|MockObject
      */
     protected $optionRepository;
 
-    public function setUp()
+    /**
+     * @var Relation|MockObject
+     */
+    private $relationMock;
+
+    /**
+     * @inheridoc
+     */
+    protected function setUp(): void
     {
         $this->entity = $this->getMockBuilder(Product::class)
             ->disableOriginalConstructor()
@@ -44,16 +59,19 @@ class SaveHandlerTest extends \PHPUnit\Framework\TestCase
         $this->optionRepository = $this->getMockBuilder(Repository::class)
             ->disableOriginalConstructor()
             ->getMock();
+        $this->relationMock = $this->getMockBuilder(Relation::class)
+            ->disableOriginalConstructor()
+            ->getMock();
 
-        $this->model = new SaveHandler($this->optionRepository);
+        $this->model = new SaveHandler($this->optionRepository, $this->relationMock);
     }
 
     /**
-     * @dataProvider testExecuteDataProvider
-     * @param bool $dataHasChangedFor
+     * Test for execute
+     *
      * @return void
      */
-    public function testExecute(bool $dataHasChangedFor)
+    public function testExecute(): void
     {
         $this->optionMock->expects($this->any())->method('getOptionId')->willReturn(5);
         $this->entity->expects($this->once())->method('getOptions')->willReturn([$this->optionMock]);
@@ -68,27 +86,10 @@ class SaveHandlerTest extends \PHPUnit\Framework\TestCase
             ->method('getProductOptions')
             ->with($this->entity)
             ->willReturn([$this->optionMock, $secondOptionMock]);
-        $this->entity->expects($this->once())
-            ->method('dataHasChangedFor')
-            ->with('sku')
-            ->willReturn($dataHasChangedFor);
-        $this->entity->expects($this->once())
-            ->method('getSku')
-            ->willReturn('product_sku');
+
         $this->optionRepository->expects($this->once())->method('delete');
         $this->optionRepository->expects($this->once())->method('save')->with($this->optionMock);
 
         $this->assertEquals($this->entity, $this->model->execute($this->entity));
-    }
-
-    /**
-     * @return array
-     */
-    public function testExecuteDataProvider(): array
-    {
-        return [
-            [true],
-            [false],
-        ];
     }
 }

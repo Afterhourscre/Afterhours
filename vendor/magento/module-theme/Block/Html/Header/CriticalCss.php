@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace Magento\Theme\Block\Html\Header;
 
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Framework\View\Asset\File\NotFoundException;
@@ -23,7 +24,7 @@ class CriticalCss implements ArgumentInterface
     private $assetRepo;
 
     /**
-     * @var string
+     * @var $filePath
      */
     private $filePath;
 
@@ -49,7 +50,7 @@ class CriticalCss implements ArgumentInterface
         try {
             $asset = $this->assetRepo->createAsset($this->filePath, ['_secure' => 'false']);
             $content = $asset->getContent();
-        } catch (NotFoundException $e) {
+        } catch (LocalizedException | NotFoundException $e) {
             $content = '';
         }
 

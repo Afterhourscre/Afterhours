@@ -6,8 +6,9 @@
 
 use Magento\Composer\MagentoComposerApplication;
 use Magento\Composer\InfoCommand;
+use PHPUnit\Framework\MockObject\MockObject;
 
-class InfoCommandTest extends PHPUnit_Framework_TestCase
+class InfoCommandTest extends \PHPUnit\Framework\TestCase
 {
 
     private $installedOutput = 'name     : 3rdp/a
@@ -22,7 +23,7 @@ php >=5.4.11
 3rdp/c 1.1.0';
 
     /**
-     * @var MagentoComposerApplication|\PHPUnit_Framework_MockObject_MockObject
+     * @var MagentoComposerApplication|MockObject
      */
     protected $application;
 
@@ -31,9 +32,9 @@ php >=5.4.11
      */
     protected $infoCommand;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->application = $this->getMock('Magento\Composer\MagentoComposerApplication', [], [], '', false, false);
+        $this->application = $this->createMock(\Magento\Composer\MagentoComposerApplication::class);
 
         $this->infoCommand = new InfoCommand($this->application);
     }

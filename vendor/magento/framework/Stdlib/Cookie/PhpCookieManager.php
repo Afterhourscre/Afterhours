@@ -3,6 +3,7 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\Framework\Stdlib\Cookie;
 
@@ -21,6 +22,7 @@ use Psr\Log\LoggerInterface;
  * stores the cookie.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.CookieAndSessionMisuse)
  */
 class PhpCookieManager implements CookieManagerInterface
 {
@@ -98,7 +100,7 @@ class PhpCookieManager implements CookieManagerInterface
     public function setSensitiveCookie($name, $value, SensitiveCookieMetadata $metadata = null)
     {
         $metadataArray = $this->scope->getSensitiveCookieMetadata($metadata)->__toArray();
-        $this->setCookie($name, $value, $metadataArray);
+        $this->setCookie((string)$name, (string)$value, $metadataArray);
     }
 
     /**
@@ -118,7 +120,7 @@ class PhpCookieManager implements CookieManagerInterface
     public function setPublicCookie($name, $value, PublicCookieMetadata $metadata = null)
     {
         $metadataArray = $this->scope->getPublicCookieMetadata($metadata)->__toArray();
-        $this->setCookie($name, $value, $metadataArray);
+        $this->setCookie((string)$name, (string)$value, $metadataArray);
     }
 
     /**
@@ -141,22 +143,25 @@ class PhpCookieManager implements CookieManagerInterface
         $phpSetcookieSuccess = setcookie(
             $name,
             $value,
-            $expire,
-            $this->extractValue(CookieMetadata::KEY_PATH, $metadataArray, ''). ';samesite=None; Secure',
-            $this->extractValue(CookieMetadata::KEY_DOMAIN, $metadataArray, ''),
-            $this->extractValue(CookieMetadata::KEY_SECURE, $metadataArray, false),
-            $this->extractValue(CookieMetadata::KEY_HTTP_ONLY, $metadataArray, false)
+            [
+                'expires' => $expire,
+                'path' => $this->extractValue(CookieMetadata::KEY_PATH, $metadataArray, ''),
+                'domain' => $this->extractValue(CookieMetadata::KEY_DOMAIN, $metadataArray, ''),
+                'secure' => $this->extractValue(CookieMetadata::KEY_SECURE, $metadataArray, false),
+                'httponly' => $this->extractValue(CookieMetadata::KEY_HTTP_ONLY, $metadataArray, false),
+                'samesite' => $this->extractValue(CookieMetadata::KEY_SAME_SITE, $metadataArray, 'Lax')
+            ]
         );
 
         if (!$phpSetcookieSuccess) {
             $params['name'] = $name;
             if ($value == '') {
                 throw new FailureToSendException(
-                    new Phrase('Unable to delete the cookie with cookieName = %name', $params)
+                    new Phrase('The cookie with "%name" cookieName couldn\'t be deleted.', $params)
                 );
             } else {
                 throw new FailureToSendException(
-                    new Phrase('Unable to send the cookie with cookieName = %name', $params)
+                    new Phrase('The cookie with "%name" cookieName couldn\'t be sent. Please try again later.', $params)
                 );
             }
         }
@@ -164,6 +169,7 @@ class PhpCookieManager implements CookieManagerInterface
 
     /**
      * Retrieve the size of a cookie.
+     *
      * The size of a cookie is determined by the length of 'name=value' portion of the cookie.
      *
      * @param string $name
@@ -177,8 +183,7 @@ class PhpCookieManager implements CookieManagerInterface
     }
 
     /**
-     * Determines whether or not it is possible to send the cookie, based on the number of cookies that already
-     * exist and the size of the cookie.
+     * Determines ability to send cookies, based on the number of existing cookies and cookie size
      *
      * @param string $name
      * @param string|null $value
@@ -207,7 +212,10 @@ class PhpCookieManager implements CookieManagerInterface
         if ($numCookies > static::MAX_NUM_COOKIES) {
             $this->logger->warning(
                 new Phrase('Unable to send the cookie. Maximum number of cookies would be exceeded.'),
-                array_merge($_COOKIE, ['user-agent' => $this->httpHeader->getHttpUserAgent()])
+                [
+                    'cookies' => $_COOKIE,
+                    'user-agent' => $this->httpHeader->getHttpUserAgent()
+                ]
             );
         }
 
@@ -237,9 +245,7 @@ class PhpCookieManager implements CookieManagerInterface
         ) {
             $expireTime = $metadataArray[PhpCookieManager::KEY_EXPIRE_TIME];
         } else {
-            if (isset($metadataArray[CookieMetadata::KEY_DURATION])
-                && $metadataArray[CookieMetadata::KEY_DURATION] !== PhpCookieManager::EXPIRE_AT_END_OF_SESSION_TIME
-            ) {
+            if (isset($metadataArray[CookieMetadata::KEY_DURATION])) {
                 $expireTime = $metadataArray[CookieMetadata::KEY_DURATION] + time();
             } else {
                 $expireTime = PhpCookieManager::EXPIRE_AT_END_OF_SESSION_TIME;
@@ -251,6 +257,7 @@ class PhpCookieManager implements CookieManagerInterface
 
     /**
      * Determines the value to be used as a $parameter.
+     *
      * If $metadataArray[$parameter] is not set, returns the $defaultValue.
      *
      * @param string $parameter

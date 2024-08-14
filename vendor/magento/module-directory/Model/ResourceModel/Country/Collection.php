@@ -190,7 +190,7 @@ class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\Ab
      *
      * $countryCode can be either array of country codes or string representing one country code.
      * $iso can be either array containing 'iso2', 'iso3' values or string with containing one of that values directly.
-     * The collection will contain countries where at least one of contry $iso fields matches $countryCode.
+     * The collection will contain countries where at least one of country $iso fields matches $countryCode.
      *
      * @param string|string[] $countryCode
      * @param string|string[] $iso
@@ -326,8 +326,6 @@ class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\Ab
     }
 
     /**
-     * @deprecated use \Magento\Directory\Helper\Data::getCountriesWithStatesRequired() instead
-     *
      * Get list of countries with required states
      *
      * @return \Magento\Directory\Model\Country[]

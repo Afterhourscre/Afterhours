@@ -320,9 +320,13 @@ class ConfigurableProductsFixture extends Fixture
     {
         $attributeSetClosure = function ($index) use ($defaultAttributeSets) {
             $attributeSetAmount = count(array_keys($defaultAttributeSets));
+            // phpcs:ignore
             mt_srand($index);
 
+            // phpcs:ignore Magento2.Functions.DiscouragedFunction
             return $attributeSetAmount > ($index - 1) % (int)$this->fixtureModel->getValue('categories', 30)
+                // mt_rand() here is not for cryptographic use.
+                // phpcs:ignore Magento2.Security.InsecureFunction
                 ? array_keys($defaultAttributeSets)[mt_rand(0, $attributeSetAmount - 1)]
                 : 'Default';
         };
@@ -439,7 +443,7 @@ class ConfigurableProductsFixture extends Fixture
     }
 
     /**
-     * Get default attribute sets with attributes
+     * Get default attribute sets with attributes.
      *
      * @see config/attributeSets.xml
      *
@@ -559,7 +563,7 @@ class ConfigurableProductsFixture extends Fixture
 
         if (count($skuPull) !== count(array_unique($skuPull))) {
             throw new ValidatorException(
-                __('Sku pattern for configurable product must be unique per attribute set')
+                __("The configurable product's SKU pattern must be unique in an attribute set.")
             );
         }
 
@@ -570,7 +574,7 @@ class ConfigurableProductsFixture extends Fixture
      * Prepare configuration.
      *
      * If amount of configurable products set in profile then return predefined attribute sets
-     * else return configuration from profile
+     * else return configuration from profile.
      *
      * @param array $defaultAttributeSets
      * @return array
@@ -600,7 +604,9 @@ class ConfigurableProductsFixture extends Fixture
                 }
             }
         } else {
-            throw new ValidatorException(__('Configurable product config is invalid'));
+            throw new ValidatorException(
+                __('The configurable product config is invalid. Verify the product and try again.')
+            );
         }
 
         return $configurableConfigs;
@@ -739,6 +745,8 @@ class ConfigurableProductsFixture extends Fixture
         if ($searchTerms !== null) {
             $searchTerms = array_key_exists(0, $searchTerms['search_term'])
                 ? $searchTerms['search_term'] : [$searchTerms['search_term']];
+        } else {
+            $searchTerms = [];
         }
         return $searchTerms;
     }
@@ -855,7 +863,7 @@ class ConfigurableProductsFixture extends Fixture
     ) {
         if (null === $this->dataGenerator) {
             $fileName = __DIR__ . DIRECTORY_SEPARATOR . '_files' . DIRECTORY_SEPARATOR . 'dictionary.csv';
-            $this->dataGenerator = new DataGenerator(realpath($fileName));
+            $this->dataGenerator = new DataGenerator($fileName);
         }
 
         return function ($index) use (
@@ -874,6 +882,7 @@ class ConfigurableProductsFixture extends Fixture
                         $configurableProductsCount / ($simpleProductsCount + $configurableProductsCount)
                     )
                 );
+            // phpcs:ignore
             mt_srand($index);
             return $this->dataGenerator->generate(
                 $minAmountOfWordsDescription,

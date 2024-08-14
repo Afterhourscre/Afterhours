@@ -5,16 +5,31 @@
  */
 namespace Magento\Ui\Controller\Adminhtml\Index;
 
-use Magento\Ui\Controller\Adminhtml\AbstractAction;
-use Magento\Framework\View\Element\UiComponentInterface;
 use Magento\Backend\App\Action\Context;
+use Magento\Ui\Controller\Adminhtml\AbstractAction;
 use Magento\Framework\View\Element\UiComponentFactory;
+use Magento\Framework\View\Element\UiComponentInterface;
+use Magento\Ui\Model\UiComponentTypeResolver;
 use Psr\Log\LoggerInterface;
 use Magento\Framework\Escaper;
 use Magento\Framework\Controller\Result\JsonFactory;
+use Magento\Framework\App\ResponseInterface;
+use Magento\Framework\Controller\Result\Json;
+use Magento\Framework\Controller\ResultInterface;
 
+/**
+ * Render a component.
+ *
+ * @SuppressWarnings(PHPMD.AllPurposeAction)
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ */
 class Render extends AbstractAction
 {
+    /**
+     * @var \Magento\Ui\Model\UiComponentTypeResolver
+     */
+    private $contentTypeResolver;
+
     /**
      * @var JsonFactory
      */
@@ -33,6 +48,7 @@ class Render extends AbstractAction
     /**
      * @param Context $context
      * @param UiComponentFactory $factory
+     * @param UiComponentTypeResolver $contentTypeResolver
      * @param JsonFactory|null $resultJsonFactory
      * @param Escaper|null $escaper
      * @param LoggerInterface|null $logger
@@ -40,11 +56,13 @@ class Render extends AbstractAction
     public function __construct(
         Context $context,
         UiComponentFactory $factory,
+        UiComponentTypeResolver $contentTypeResolver,
         JsonFactory $resultJsonFactory = null,
         Escaper $escaper = null,
         LoggerInterface $logger = null
     ) {
         parent::__construct($context, $factory);
+        $this->contentTypeResolver = $contentTypeResolver;
         $this->resultJsonFactory = $resultJsonFactory ?: \Magento\Framework\App\ObjectManager::getInstance()
             ->get(\Magento\Framework\Controller\Result\JsonFactory::class);
         $this->escaper = $escaper ?: \Magento\Framework\App\ObjectManager::getInstance()
@@ -54,27 +72,38 @@ class Render extends AbstractAction
     }
 
     /**
-     * Action for AJAX request.
+     * Render a component
      *
-     * @return void|\Magento\Framework\Controller\ResultInterface
+     * @return ResponseInterface|Json|ResultInterface|void
      */
     public function execute()
     {
         if ($this->_request->getParam('namespace') === null) {
             $this->_redirect('admin/noroute');
+
             return;
         }
 
         try {
-            $component = $this->factory->create($this->_request->getParam('namespace'));
+            $component = $this->factory->create($this->getRequest()->getParam('namespace'));
             if ($this->validateAclResource($component->getContext()->getDataProvider()->getConfigData())) {
                 $this->prepareComponent($component);
+                $this->getResponse()->appendBody((string)$component->render());
 
-                if ($component->getContext()->getAcceptType() === 'json') {
-                    $this->_response->setHeader('Content-Type', 'application/json');
-                }
-
-                $this->_response->appendBody((string) $component->render());
+                $contentType = $this->contentTypeResolver->resolve($component->getContext());
+                $this->getResponse()->setHeader('Content-Type', $contentType, true);
+            } else {
+                /** @var \Magento\Framework\Controller\Result\Json $resultJson */
+                $resultJson = $this->resultJsonFactory->create();
+                $resultJson->setStatusHeader(
+                    \Laminas\Http\Response::STATUS_CODE_403,
+                    \Laminas\Http\AbstractMessage::VERSION_11,
+                    'Forbidden'
+                );
+                return $resultJson->setData([
+                        'error' => $this->escaper->escapeHtml('Forbidden'),
+                        'errorcode' => 403
+                ]);
             }
         } catch (\Magento\Framework\Exception\LocalizedException $e) {
             $this->logger->critical($e);
@@ -85,10 +114,11 @@ class Render extends AbstractAction
             /** @var \Magento\Framework\Controller\Result\Json $resultJson */
             $resultJson = $this->resultJsonFactory->create();
             $resultJson->setStatusHeader(
-                \Zend\Http\Response::STATUS_CODE_400,
-                \Zend\Http\AbstractMessage::VERSION_11,
+                \Laminas\Http\Response::STATUS_CODE_400,
+                \Laminas\Http\AbstractMessage::VERSION_11,
                 'Bad Request'
             );
+
             return $resultJson->setData($result);
         } catch (\Exception $e) {
             $this->logger->critical($e);
@@ -99,16 +129,17 @@ class Render extends AbstractAction
             /** @var \Magento\Framework\Controller\Result\Json $resultJson */
             $resultJson = $this->resultJsonFactory->create();
             $resultJson->setStatusHeader(
-                \Zend\Http\Response::STATUS_CODE_400,
-                \Zend\Http\AbstractMessage::VERSION_11,
+                \Laminas\Http\Response::STATUS_CODE_400,
+                \Laminas\Http\AbstractMessage::VERSION_11,
                 'Bad Request'
             );
+
             return $resultJson->setData($result);
         }
     }
 
     /**
-     * Call prepare method in the component UI.
+     * Call prepare method in the component UI
      *
      * @param UiComponentInterface $component
      * @return void
@@ -123,7 +154,7 @@ class Render extends AbstractAction
     }
 
     /**
-     * Optionally validate ACL resource of components with a DataSource/DataProvider.
+     * Optionally validate ACL resource of components with a DataSource/DataProvider
      *
      * @param mixed $dataProviderConfigData
      * @return bool

@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Tests\WhiteSpace;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class FunctionClosingBraceSpaceUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the FunctionClosingBraceSpace sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace\FunctionClosingBraceSpaceSniff
+ */
+final class FunctionClosingBraceSpaceUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,34 +30,33 @@ class FunctionClosingBraceSpaceUnitTest extends AbstractSniffUnitTest
      *
      * @return array<int, int>
      */
-    public function getErrorList($testFile='FunctionClosingBraceSpaceUnitTest.inc')
+    public function getErrorList($testFile='')
     {
         switch ($testFile) {
         case 'FunctionClosingBraceSpaceUnitTest.inc':
-            return array(
-                    10 => 1,
-                    21 => 1,
-                    28 => 1,
-                    29 => 1,
-                    31 => 1,
-                    39 => 1,
-                   );
-            break;
+            return [
+                10 => 1,
+                21 => 1,
+                28 => 1,
+                29 => 1,
+                31 => 1,
+                39 => 1,
+            ];
+
         case 'FunctionClosingBraceSpaceUnitTest.js':
-            return array(
-                    13  => 1,
-                    25  => 1,
-                    32  => 1,
-                    53  => 1,
-                    59  => 1,
-                    67  => 1,
-                    84  => 1,
-                    128 => 1,
-                   );
-            break;
+            return [
+                13  => 1,
+                25  => 1,
+                32  => 1,
+                53  => 1,
+                59  => 1,
+                67  => 1,
+                84  => 1,
+                128 => 1,
+            ];
+
         default:
-            return array();
-            break;
+            return [];
         }//end switch
 
     }//end getErrorList()
@@ -68,7 +72,7 @@ class FunctionClosingBraceSpaceUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

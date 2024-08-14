@@ -73,11 +73,12 @@ define([
                 ['Magento_Paypal/js/view/payment/method-renderer/paypal-express-abstract'],
                 function (Constr) {
                     paypalExpressAbstract = new Constr({
+                        isChecked: ko.observable(true),
                         provider: 'provName',
                         name: 'test',
                         index: 'test',
                         item: {
-                            method: 'paypal_express_bml'
+                            method: 'payflow_express_bml'
                         }
                     });
 
@@ -86,6 +87,13 @@ define([
                     ko.applyBindings(paypalExpressAbstract, tplElement);
                     done();
                 });
+        });
+
+        afterEach(function () {
+            try {
+                injector.clean();
+                injector.remove();
+            } catch (e) {}
         });
 
         it('showAcceptanceWindow is invoked when the anchor element of help link is clicked', function (done) {
@@ -113,9 +121,7 @@ define([
         });
 
         it('setPaymentMethodAction is called before redirect to paypal', function () {
-            spyOn(paypalExpressAbstract, 'selectPaymentMethod');
             paypalExpressAbstract.continueToPayPal();
-            expect(paypalExpressAbstract.selectPaymentMethod).toHaveBeenCalled();
             expect(validateMock).toHaveBeenCalled();
             expect(validateMock.calls.mostRecent()).toEqual(jasmine.objectContaining({
                 object: mocks['Magento_Checkout/js/model/payment/additional-validators'],

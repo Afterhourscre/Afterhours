@@ -7,136 +7,163 @@ declare(strict_types=1);
 
 namespace Magento\User\Test\Unit\Controller\Adminhtml\User\Role;
 
+use Magento\Authorization\Model\Role;
+use Magento\Authorization\Model\RoleFactory;
+use Magento\Authorization\Model\RulesFactory;
+use Magento\Backend\App\Action\Context;
+use Magento\Backend\Model\Auth\Session;
+use Magento\Backend\Model\View\Result\Redirect;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Filter\FilterManager;
+use Magento\Framework\Message\Manager;
+use Magento\Framework\Registry;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
+use Magento\User\Controller\Adminhtml\User\Role\Delete;
+use Magento\User\Model\User;
+use Magento\User\Model\UserFactory;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Unit tests for \Magento\User\Controller\Adminhtml\User\Role\Delete.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class DeleteTest extends \PHPUnit\Framework\TestCase
+class DeleteTest extends TestCase
 {
     /**
-     * @var \Magento\User\Controller\Adminhtml\User\Role\Delete
+     * @var Delete
      */
     private $controller;
 
     /**
-     * @var \Magento\Framework\App\Action\Context|\PHPUnit_Framework_MockObject_MockObject
+     * @var Context|MockObject
      */
     private $contextMock;
 
     /**
-     * @var \Magento\Authorization\Model\RoleFactory|\PHPUnit_Framework_MockObject_MockObject
+     * @var RoleFactory|MockObject
      */
     private $roleFactoryMock;
 
     /**
-     * @var \Magento\User\Model\UserFactory|\PHPUnit_Framework_MockObject_MockObject
+     * @var UserFactory|MockObject
      */
     private $userFactoryMock;
 
     /**
-     * @var \Magento\Framework\Registry|\PHPUnit_Framework_MockObject_MockObject
+     * @var Registry|MockObject
      */
     private $coreRegistryMock;
 
     /**
-     * @var \Magento\Authorization\Model\RulesFactory|\PHPUnit_Framework_MockObject_MockObject
+     * @var RulesFactory|MockObject
      */
     private $rulesFactoryMock;
 
     /**
-     * @var \Magento\Backend\Model\Auth\Session|\PHPUnit_Framework_MockObject_MockObject
+     * @var Session|MockObject
      */
     private $authSessionMock;
 
     /**
-     * @var \Magento\Framework\Filter\FilterManager|\PHPUnit_Framework_MockObject_MockObject
+     * @var FilterManager|MockObject
      */
     private $filterManagerMock;
 
     /**
-     * @var \Magento\Backend\Model\View\Result\Redirect|\PHPUnit_Framework_MockObject_MockObject
+     * @var Redirect|MockObject
      */
     private $resultRedirectMock;
 
     /**
-     * @var \Magento\Framework\Controller\ResultFactory|\PHPUnit_Framework_MockObject_MockObject
+     * @var ResultFactory|MockObject
      */
     private $resultFactoryMock;
 
     /**
-     * @var \Magento\Framework\App\RequestInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var RequestInterface|MockObject
      */
     private $requestMock;
 
     /**
-     * @var \Magento\Framework\Message\Manager|\PHPUnit_Framework_MockObject_MockObject
+     * @var Manager|MockObject
      */
     private $messageManagerMock;
 
     /**
-     * @var \Magento\Authorization\Model\Role|\PHPUnit_Framework_MockObject_MockObject
+     * @var Role|MockObject
      */
     private $roleModelMock;
 
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $objectManagerHelper = new ObjectManagerHelper($this);
 
-        $this->contextMock = $this->createMock(\Magento\Backend\App\Action\Context::class);
-        $this->coreRegistryMock = $this->createPartialMock(\Magento\Framework\Registry::class, ['getId']);
-        $this->roleFactoryMock = $this->createMock(\Magento\Authorization\Model\RoleFactory::class);
+        $this->contextMock = $this->createMock(Context::class);
+        $this->coreRegistryMock = $this->getMockBuilder(Registry::class)
+            ->addMethods(['getId'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->roleFactoryMock = $this->createMock(RoleFactory::class);
         $this->userFactoryMock = $this->createPartialMock(
-            \Magento\User\Model\UserFactory::class,
+            UserFactory::class,
             ['create']
         );
-        $this->rulesFactoryMock = $this->createMock(\Magento\Authorization\Model\RulesFactory::class);
-        $this->authSessionMock = $this->createPartialMock(
-            \Magento\Backend\Model\Auth\Session::class,
-            ['getUser']
+        $this->rulesFactoryMock = $this->createMock(RulesFactory::class);
+        $this->authSessionMock = $this->getMockBuilder(Session::class)
+            ->addMethods(['getUser'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->filterManagerMock = $this->createMock(FilterManager::class);
+        $this->resultRedirectMock = $this->createPartialMock(
+            Redirect::class,
+            ['setPath']
         );
-        $this->filterManagerMock = $this->createMock(\Magento\Framework\Filter\FilterManager::class);
+        $this->resultFactoryMock = $this->createPartialMock(
+            ResultFactory::class,
+            ['create']
+        );
 
+        $this->resultFactoryMock->expects($this->atLeastOnce())
+            ->method('create')
+            ->willReturn($this->resultRedirectMock);
         $this->requestMock = $this->getMockForAbstractClass(
-            \Magento\Framework\App\RequestInterface::class,
+            RequestInterface::class,
             [],
             '',
             false,
             true,
             true,
-            ['getParam', 'isPost']
-        );
-        $this->contextMock->expects($this->once())->method('getRequest')->willReturn($this->requestMock);
-
-        $this->resultFactoryMock = $this->createPartialMock(
-            \Magento\Framework\Controller\ResultFactory::class,
-            ['create']
+            ['getParam']
         );
         $this->contextMock->expects($this->once())
             ->method('getResultFactory')
             ->willReturn($this->resultFactoryMock);
+        $this->resultFactoryMock->expects($this->once())
+            ->method('create')
+            ->with(ResultFactory::TYPE_REDIRECT, [])
+            ->willReturn($this->resultRedirectMock);
 
-        $this->messageManagerMock = $this->createMock(\Magento\Framework\Message\Manager::class);
+        $this->messageManagerMock = $this->createMock(Manager::class);
         $this->contextMock->expects($this->once())
             ->method('getMessageManager')
             ->willReturn($this->messageManagerMock);
 
-        $this->resultRedirectMock = $this->createPartialMock(
-            \Magento\Backend\Model\View\Result\Redirect::class,
-            ['setPath']
-        );
-        $this->roleModelMock = $this->createPartialMock(
-            \Magento\Authorization\Model\Role::class,
-            ['load', 'getId', 'getRoleType', 'delete']
-        );
+        $this->contextMock->expects($this->once())->method('getRequest')->willReturn($this->requestMock);
+
+        $this->roleModelMock = $this->getMockBuilder(Role::class)
+            ->addMethods(['getRoleType'])
+            ->onlyMethods(['load', 'getId', 'delete'])
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $this->controller = $objectManagerHelper->getObject(
-            \Magento\User\Controller\Adminhtml\User\Role\Delete::class,
+            Delete::class,
             [
                 'context' => $this->contextMock,
                 'coreRegistry' => $this->coreRegistryMock,
@@ -144,23 +171,9 @@ class DeleteTest extends \PHPUnit\Framework\TestCase
                 'userFactory' => $this->userFactoryMock,
                 'rulesFactory' => $this->rulesFactoryMock,
                 'authSession' => $this->authSessionMock,
-                'filterManager' => $this->filterManagerMock,
+                'filterManager' => $this->filterManagerMock
             ]
         );
-    }
-
-    /**
-     * Unit test with a non Post request.
-     *
-     * @expectedException \Magento\Framework\Exception\NotFoundException
-     * @expectedExceptionMessage Page not found
-     * @return void
-     */
-    public function testExecuteWithNonPostMethod()
-    {
-        $this->requestMock->expects($this->once())->method('isPost')->willReturn(false);
-
-        $this->controller->execute();
     }
 
     /**
@@ -168,14 +181,12 @@ class DeleteTest extends \PHPUnit\Framework\TestCase
      *
      * @return void
      */
-    public function testExecuteDeleteSelfAssignedRole()
+    public function testExecuteDeleteSelfAssignedRole(): void
     {
         $idUser = 1;
         $idUserRole = 3;
         $idDeleteRole = 3;
 
-        $this->createFactoryMock();
-        $this->requestMock->expects($this->once())->method('isPost')->willReturn(true);
         $this->checkUserAndRoleIds($idDeleteRole, $idUser, $idUserRole);
 
         $this->messageManagerMock->expects($this->once())
@@ -196,15 +207,13 @@ class DeleteTest extends \PHPUnit\Framework\TestCase
      *
      * @return void
      */
-    public function testExecuteDeleteWithNormalScenario()
+    public function testExecuteDeleteWithNormalScenario(): void
     {
         $idUser = 1;
         $idUserRole = 3;
         $idDeleteRole = 5;
         $roleType = 'G';
 
-        $this->createFactoryMock();
-        $this->requestMock->expects($this->once())->method('isPost')->willReturn(true);
         $this->checkUserAndRoleIds($idDeleteRole, $idUser, $idUserRole);
 
         $this->initRoleExecute($roleType);
@@ -230,21 +239,19 @@ class DeleteTest extends \PHPUnit\Framework\TestCase
      *
      * @return void
      */
-    public function testExecuteDeleteWithError()
+    public function testExecuteDeleteWithError(): void
     {
         $idUser = 1;
         $idUserRole = 3;
         $idDeleteRole = 5;
         $roleType = 'G';
 
-        $this->createFactoryMock();
-        $this->requestMock->expects($this->once())->method('isPost')->willReturn(true);
         $this->checkUserAndRoleIds($idDeleteRole, $idUser, $idUserRole);
 
         $this->initRoleExecute($roleType);
         $this->roleModelMock->expects($this->exactly(2))->method('getId')->willReturn($idDeleteRole);
 
-        $this->roleModelMock->expects($this->once())->method('delete')->willThrowException(new \Exception);
+        $this->roleModelMock->expects($this->once())->method('delete')->willThrowException(new \Exception());
 
         $this->messageManagerMock->expects($this->once())
             ->method('addError')
@@ -264,20 +271,19 @@ class DeleteTest extends \PHPUnit\Framework\TestCase
      *
      * @return void
      */
-    public function testExecuteWithoutRole()
+    public function testExecuteWithoutRole(): void
     {
         $idUser = 1;
         $idUserRole = 3;
         $idDeleteRole = 100;
         $roleType = null;
 
-        $this->createFactoryMock();
-        $this->requestMock->expects($this->once())->method('isPost')->willReturn(true);
         $this->checkUserAndRoleIds($idDeleteRole, $idUser, $idUserRole);
 
         $this->initRoleExecute($roleType);
-        $this->roleModelMock->expects($this->at(1))->method('getId')->willReturn($idDeleteRole);
-        $this->roleModelMock->expects($this->at(2))->method('getId')->willReturn(null);
+        $this->roleModelMock
+            ->method('getId')
+            ->willReturnOnConsecutiveCalls($idDeleteRole, null);
 
         $this->messageManagerMock->expects($this->once())
             ->method('addError')
@@ -293,31 +299,19 @@ class DeleteTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * Creates Classes needed in tests.
-     *
-     * @return void
-     */
-    private function createFactoryMock()
-    {
-        $this->resultFactoryMock->expects($this->once())
-            ->method('create')
-            ->with(\Magento\Framework\Controller\ResultFactory::TYPE_REDIRECT, [])
-            ->willReturn($this->resultRedirectMock);
-    }
-
-    /**
      * Method which takes Id from request and check with User Role Id.
      *
      * @param int $id
      * @param int $userId
      * @param int $userRoleId
+     *
      * @return void
      */
-    private function checkUserAndRoleIds(int $id, int $userId, int $userRoleId)
+    private function checkUserAndRoleIds(int $id, int $userId, int $userRoleId): void
     {
         $this->requestMock->expects($this->atLeastOnce())->method('getParam')->with('rid')->willReturn($id);
 
-        $userModelMock = $this->createPartialMock(\Magento\User\Model\User::class, ['getId', 'setId', 'getRoles']);
+        $userModelMock = $this->createPartialMock(User::class, ['getId', 'setId', 'getRoles']);
         $this->authSessionMock->expects($this->once())->method('getUser')->willReturn($userModelMock);
         $userModelMock->expects($this->once())->method('getId')->willReturn($userId);
 
@@ -331,9 +325,10 @@ class DeleteTest extends \PHPUnit\Framework\TestCase
      * Execute initialization Role.
      *
      * @param string|null $roleType
+     *
      * @return void
      */
-    private function initRoleExecute($roleType)
+    private function initRoleExecute(?string $roleType): void
     {
         $this->roleFactoryMock->expects($this->once())->method('create')->willReturn($this->roleModelMock);
         $this->roleModelMock->expects($this->once())->method('load')->willReturnSelf();

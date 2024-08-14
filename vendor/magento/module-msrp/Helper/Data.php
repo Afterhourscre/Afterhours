@@ -7,15 +7,17 @@ namespace Magento\Msrp\Helper;
 
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\App\ObjectManager;
 use Magento\Msrp\Model\Product\Attribute\Source\Type;
+use Magento\Msrp\Pricing\MsrpPriceCalculatorInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Api\ProductRepositoryInterface;
-use Magento\GroupedProduct\Model\Product\Type\Grouped;
-use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 
 /**
  * Msrp data helper
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Data extends AbstractHelper
 {
@@ -45,6 +47,16 @@ class Data extends AbstractHelper
     protected $productRepository;
 
     /**
+     * @var MsrpPriceCalculatorInterface
+     */
+    private $msrpPriceCalculator;
+
+    /**
+     * @var \Magento\Msrp\Model\Msrp
+     */
+    private $msrp;
+
+    /**
      * @param Context $context
      * @param StoreManagerInterface $storeManager
      * @param \Magento\Msrp\Model\Product\Options $productOptions
@@ -52,6 +64,7 @@ class Data extends AbstractHelper
      * @param \Magento\Msrp\Model\Config $config
      * @param \Magento\Framework\Pricing\PriceCurrencyInterface $priceCurrency
      * @param ProductRepositoryInterface $productRepository
+     * @param MsrpPriceCalculatorInterface|null $msrpPriceCalculator
      */
     public function __construct(
         Context $context,
@@ -60,7 +73,8 @@ class Data extends AbstractHelper
         \Magento\Msrp\Model\Msrp $msrp,
         \Magento\Msrp\Model\Config $config,
         \Magento\Framework\Pricing\PriceCurrencyInterface $priceCurrency,
-        ProductRepositoryInterface $productRepository
+        ProductRepositoryInterface $productRepository,
+        MsrpPriceCalculatorInterface $msrpPriceCalculator = null
     ) {
         parent::__construct($context);
         $this->storeManager = $storeManager;
@@ -69,16 +83,19 @@ class Data extends AbstractHelper
         $this->config = $config;
         $this->priceCurrency = $priceCurrency;
         $this->productRepository = $productRepository;
+        $this->msrpPriceCalculator = $msrpPriceCalculator
+            ?: ObjectManager::getInstance()->get(MsrpPriceCalculatorInterface::class);
     }
 
     /**
-     * Check if can apply MAP to product in specific visibility.
+     * Check if can apply Minimum Advertise price to product in specific visibility
      *
      * @param int|Product $product
      * @param int|null $visibility Check displaying price in concrete place (by default generally)
      * @return bool
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function canApplyMsrp($product, $visibility = null)
     {
@@ -112,6 +129,7 @@ class Data extends AbstractHelper
      *
      * @param Product $product
      * @return string
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getMsrpPriceMessage($product)
     {
@@ -129,6 +147,7 @@ class Data extends AbstractHelper
      *
      * @param int|Product $product
      * @return bool
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function isShowPriceOnGesture($product)
     {
@@ -136,10 +155,11 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Check if should show MAP price before order confirmation.
+     * Check if we should show MAP proce before order confirmation
      *
      * @param int|Product $product
      * @return bool
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function isShowBeforeOrderConfirm($product)
     {
@@ -147,33 +167,19 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Check if any MAP price is larger than "As low as" value.
+     * Check if any MAP price is larger than as low as value.
      *
      * @param int|Product $product
-     * @return bool|float
+     * @return bool
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function isMinimalPriceLessMsrp($product)
     {
         if (is_numeric($product)) {
             $product = $this->productRepository->getById($product, false, $this->storeManager->getStore()->getId());
         }
-        $msrp = $product->getMsrp();
+        $msrp = $this->msrpPriceCalculator->getMsrpPriceValue($product);
         $price = $product->getPriceInfo()->getPrice(\Magento\Catalog\Pricing\Price\FinalPrice::PRICE_CODE);
-        if ($msrp === null) {
-            if ($product->getTypeId() === Grouped::TYPE_CODE) {
-                $msrp = $product->getTypeInstance()->getChildrenMsrp($product);
-            } elseif ($product->getTypeId() === Configurable::TYPE_CODE) {
-                $prices = [];
-                foreach ($product->getTypeInstance()->getUsedProducts($product) as $item) {
-                    if ($item->getMsrp() !== null) {
-                        $prices[] = $item->getMsrp();
-                    }
-                }
-                $msrp = $prices ? max($prices) : 0;
-            } else {
-                return false;
-            }
-        }
         if ($msrp) {
             $msrp = $this->priceCurrency->convertAndRound($msrp);
         }

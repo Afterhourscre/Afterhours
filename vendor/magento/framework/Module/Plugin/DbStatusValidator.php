@@ -5,6 +5,7 @@
  */
 namespace Magento\Framework\Module\Plugin;
 
+use Magento\Framework\App\DeploymentConfig;
 use Magento\Framework\Cache\FrontendInterface as FrontendCacheInterface;
 use Magento\Framework\Module\DbVersionInfo;
 use Magento\Framework\App\FrontController;
@@ -17,6 +18,8 @@ use Magento\Framework\Phrase;
  */
 class DbStatusValidator
 {
+    private const DEPLOYMENT_BLUE_GREEN_ENABLED = 'deployment/blue_green/enabled';
+
     /**
      * @var FrontendCacheInterface
      */
@@ -28,13 +31,23 @@ class DbStatusValidator
     private $dbVersionInfo;
 
     /**
+     * @var DeploymentConfig
+     */
+    private $deploymentConfig;
+
+    /**
      * @param FrontendCacheInterface $cache
      * @param DbVersionInfo $dbVersionInfo
+     * @param DeploymentConfig $deploymentConfig
      */
-    public function __construct(FrontendCacheInterface $cache, DbVersionInfo $dbVersionInfo)
-    {
+    public function __construct(
+        FrontendCacheInterface $cache,
+        DbVersionInfo $dbVersionInfo,
+        DeploymentConfig $deploymentConfig
+    ) {
         $this->cache = $cache;
         $this->dbVersionInfo = $dbVersionInfo;
+        $this->deploymentConfig = $deploymentConfig;
     }
 
     /**
@@ -49,6 +62,10 @@ class DbStatusValidator
      */
     public function beforeDispatch(FrontController $subject, RequestInterface $request)
     {
+        if ($this->deploymentConfig->get(self::DEPLOYMENT_BLUE_GREEN_ENABLED)) {
+            return;
+        }
+
         if (!$this->cache->load('db_is_up_to_date')) {
             list($versionTooLowErrors, $versionTooHighErrors) = array_values($this->getGroupedDbVersionErrors());
             if ($versionTooHighErrors) {
@@ -100,11 +117,10 @@ class DbStatusValidator
     private function formatVersionTooHighErrors($errorsData)
     {
         $formattedErrors = [];
-
         foreach ($errorsData as $error) {
-            $formattedErrors[] = $error[DbVersionInfo::KEY_MODULE] . ' db ' . $error[DbVersionInfo::KEY_TYPE]
-                . ' version: defined in codebase - ' . $error[DbVersionInfo::KEY_REQUIRED]
-                . ', currently installed - ' . $error[DbVersionInfo::KEY_CURRENT];
+            $formattedErrors[] = $error[DbVersionInfo::KEY_MODULE] . ' ' . $error[DbVersionInfo::KEY_TYPE]
+                . ': code version - ' . $error[DbVersionInfo::KEY_REQUIRED]
+                . ', database version - ' . $error[DbVersionInfo::KEY_CURRENT];
         }
 
         return $formattedErrors;
@@ -122,7 +138,7 @@ class DbStatusValidator
             (array)$allDbVersionErrors,
             function ($carry, $item) {
                 if ($item[DbVersionInfo::KEY_CURRENT] === 'none'
-                    || $item[DbVersionInfo::KEY_CURRENT] < $item[DbVersionInfo::KEY_REQUIRED]
+                    || version_compare($item[DbVersionInfo::KEY_CURRENT], $item[DbVersionInfo::KEY_REQUIRED], '<')
                 ) {
                     $carry['version_too_low'][] = $item;
                 } else {

@@ -3,11 +3,18 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Translation\Test\Unit\Block;
 
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Translation\Block\Js;
+use Magento\Translation\Model\FileManager;
+use Magento\Translation\Model\Js\Config;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class JsTest extends \PHPUnit\Framework\TestCase
+class JsTest extends TestCase
 {
     /**
      * @var Js
@@ -15,26 +22,26 @@ class JsTest extends \PHPUnit\Framework\TestCase
     protected $model;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     protected $configMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     protected $fileManagerMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
-        $this->configMock = $this->getMockBuilder(\Magento\Translation\Model\Js\Config::class)
+        $objectManager = new ObjectManager($this);
+        $this->configMock = $this->getMockBuilder(Config::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->fileManagerMock = $this->getMockBuilder(\Magento\Translation\Model\FileManager::class)
+        $this->fileManagerMock = $this->getMockBuilder(FileManager::class)
             ->disableOriginalConstructor()
             ->getMock();
         $this->model = $objectManager->getObject(
-            \Magento\Translation\Block\Js::class,
+            Js::class,
             [
                 'config' => $this->configMock,
                 'fileManager' => $this->fileManagerMock
@@ -64,5 +71,15 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ->method('getTranslationFilePath')
             ->willReturn('frontend/Magento/luma/en_EN');
         $this->assertEquals('frontend/Magento/luma/en_EN', $this->model->getTranslationFilePath());
+    }
+
+    public function testGetTranslationFileVersion()
+    {
+        $version = sha1('translationFile');
+
+        $this->fileManagerMock->expects($this->once())
+            ->method('getTranslationFileVersion')
+            ->willReturn($version);
+        $this->assertEquals($version, $this->model->getTranslationFileVersion());
     }
 }

@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\PEAR\Tests\Commenting;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class ClassCommentUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the ClassComment sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\PEAR\Sniffs\Commenting\ClassCommentSniff
+ */
+final class ClassCommentUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,26 +30,29 @@ class ClassCommentUnitTest extends AbstractSniffUnitTest
      */
     public function getErrorList()
     {
-        return array(
-                4   => 1,
-                15  => 1,
-                51  => 1,
-                63  => 1,
-                65  => 2,
-                66  => 1,
-                68  => 1,
-                70  => 1,
-                71  => 1,
-                72  => 1,
-                74  => 2,
-                75  => 1,
-                76  => 1,
-                77  => 1,
-                85  => 1,
-                96  => 5,
-                106 => 5,
-                116 => 5,
-               );
+        return [
+            4   => 1,
+            15  => 1,
+            51  => 1,
+            63  => 1,
+            65  => 2,
+            66  => 1,
+            68  => 1,
+            70  => 1,
+            71  => 1,
+            72  => 1,
+            74  => 2,
+            75  => 1,
+            76  => 1,
+            77  => 1,
+            85  => 1,
+            96  => 5,
+            106 => 5,
+            116 => 5,
+            126 => 5,
+            161 => 1,
+            163 => 1,
+        ];
 
     }//end getErrorList()
 
@@ -59,10 +67,10 @@ class ClassCommentUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array(
-                71 => 1,
-                73 => 1,
-               );
+        return [
+            71 => 1,
+            73 => 1,
+        ];
 
     }//end getWarningList()
 

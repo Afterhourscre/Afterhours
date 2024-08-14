@@ -12,11 +12,12 @@ use Magento\Directory\Model\Currency\Import\FixerIo;
 use Magento\Directory\Model\CurrencyFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\DataObject;
-use Magento\Framework\HTTP\ZendClient;
-use Magento\Framework\HTTP\ZendClientFactory;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use Magento\Framework\HTTP\LaminasClient;
+use Magento\Framework\HTTP\LaminasClientFactory;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class FixerIoTest extends \PHPUnit\Framework\TestCase
+class FixerIoTest extends TestCase
 {
     /**
      * @var FixerIo
@@ -29,7 +30,7 @@ class FixerIoTest extends \PHPUnit\Framework\TestCase
     private $currencyFactory;
 
     /**
-     * @var ZendClientFactory|MockObject
+     * @var LaminasClientFactory|MockObject
      */
     private $httpClientFactory;
 
@@ -38,32 +39,40 @@ class FixerIoTest extends \PHPUnit\Framework\TestCase
      */
     private $scopeConfig;
 
-    protected function setUp()
+    /**
+     * @inheritdoc
+     */
+    protected function setUp(): void
     {
         $this->currencyFactory = $this->getMockBuilder(CurrencyFactory::class)
             ->disableOriginalConstructor()
             ->setMethods(['create'])
             ->getMock();
-        $this->httpClientFactory = $this->getMockBuilder(ZendClientFactory::class)
+        $this->httpClientFactory = $this->getMockBuilder(LaminasClientFactory::class)
             ->disableOriginalConstructor()
             ->setMethods(['create'])
             ->getMock();
         $this->scopeConfig = $this->getMockBuilder(ScopeConfigInterface::class)
             ->disableOriginalConstructor()
             ->setMethods([])
-            ->getMock();
+            ->getMockForAbstractClass();
 
         $this->model = new FixerIo($this->currencyFactory, $this->scopeConfig, $this->httpClientFactory);
     }
 
-    public function testFetchRates()
+    /**
+     * Test Fetch Rates
+     *
+     * @return void
+     */
+    public function testFetchRates(): void
     {
         $currencyFromList = ['USD'];
         $currencyToList = ['EUR', 'UAH'];
         $responseBody = '{"success":"true","base":"USD","date":"2015-10-07","rates":{"EUR":0.9022}}';
         $expectedCurrencyRateList = ['USD' => ['EUR' => 0.9022, 'UAH' => null]];
         $message = "We can't retrieve a rate from "
-            . "http://data.fixer.io/api/latest?access_key=api_key&base=USD&symbols=EUR,UAH for UAH.";
+            . "http://data.fixer.io for UAH.";
 
         $this->scopeConfig->method('getValue')
             ->withConsecutive(
@@ -76,8 +85,8 @@ class FixerIoTest extends \PHPUnit\Framework\TestCase
         $currency = $this->getMockBuilder(Currency::class)
             ->disableOriginalConstructor()
             ->getMock();
-        /** @var ZendClient|MockObject $httpClient */
-        $httpClient = $this->getMockBuilder(ZendClient::class)
+        /** @var LaminasClient|MockObject $httpClient */
+        $httpClient = $this->getMockBuilder(LaminasClient::class)
             ->disableOriginalConstructor()
             ->getMock();
         /** @var DataObject|MockObject $currencyMock */
@@ -97,9 +106,11 @@ class FixerIoTest extends \PHPUnit\Framework\TestCase
             ->willReturn($httpClient);
         $httpClient->method('setUri')
             ->willReturnSelf();
-        $httpClient->method('setConfig')
+        $httpClient->method('setOptions')
             ->willReturnSelf();
-        $httpClient->method('request')
+        $httpClient->method('setMethod')
+            ->willReturnSelf();
+        $httpClient->method('send')
             ->willReturn($httpResponse);
         $httpResponse->method('getBody')
             ->willReturn($responseBody);
@@ -108,7 +119,7 @@ class FixerIoTest extends \PHPUnit\Framework\TestCase
 
         $messages = $this->model->getMessages();
         self::assertNotEmpty($messages);
-        self::assertTrue(is_array($messages));
+        self::assertIsArray($messages);
         self::assertEquals($message, (string)$messages[0]);
     }
 }

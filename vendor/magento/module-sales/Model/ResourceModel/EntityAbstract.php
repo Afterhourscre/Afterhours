@@ -3,33 +3,33 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Sales\Model\ResourceModel;
 
 use Magento\Framework\Model\ResourceModel\Db\VersionControl\AbstractDb;
 use Magento\Framework\Model\ResourceModel\Db\VersionControl\RelationComposite;
 use Magento\Framework\Model\ResourceModel\Db\VersionControl\Snapshot;
+use Magento\Framework\ObjectManager\ResetAfterRequestInterface;
 use Magento\SalesSequence\Model\Manager;
 use Magento\Sales\Model\EntityInterface;
 
 /**
  * Abstract sales entity provides to its children knowledge about eventPrefix and eventObject
  *
+ * phpcs:disable Magento2.Classes.AbstractApi
  * @api
  * @SuppressWarnings(PHPMD.NumberOfChildren)
  * @since 100.0.2
  */
-abstract class EntityAbstract extends AbstractDb
+abstract class EntityAbstract extends AbstractDb implements ResetAfterRequestInterface
 {
     /**
-     * Event prefix
-     *
      * @var string
      */
     protected $_eventPrefix = 'sales_order_resource';
 
     /**
-     * Event object
-     *
      * @var string
      */
     protected $_eventObject = 'resource';
@@ -84,7 +84,7 @@ abstract class EntityAbstract extends AbstractDb
      * Perform actions after object save
      *
      * @param \Magento\Framework\Model\AbstractModel $object
-     * @param string $attribute
+     * @param AbstractAttribute|string[]|string $attribute
      * @return $this
      * @throws \Exception
      */
@@ -96,6 +96,7 @@ abstract class EntityAbstract extends AbstractDb
 
     /**
      * Prepares data for saving and removes update time (if exists).
+     *
      * This prevents saving same update time on each entity update.
      *
      * @param \Magento\Framework\Model\AbstractModel $object
@@ -114,6 +115,7 @@ abstract class EntityAbstract extends AbstractDb
 
     /**
      * Perform actions before object save
+     *
      * Perform actions before object save, calculate next sequence value for increment Id
      *
      * @param \Magento\Framework\Model\AbstractModel|\Magento\Framework\DataObject $object
@@ -122,7 +124,7 @@ abstract class EntityAbstract extends AbstractDb
     protected function _beforeSave(\Magento\Framework\Model\AbstractModel $object)
     {
         /** @var \Magento\Sales\Model\AbstractModel $object */
-        if ($object instanceof EntityInterface && $object->getIncrementId() == null) {
+        if ($object instanceof EntityInterface && $object->getEntityId() == null && $object->getIncrementId() == null) {
             $store = $object->getStore();
             $storeId = $store->getId();
             if ($storeId === null) {
@@ -174,7 +176,9 @@ abstract class EntityAbstract extends AbstractDb
         $condition = $this->getConnection()->quoteInto($this->getIdFieldName() . '=?', $object->getId());
         $data = $this->_prepareDataForSave($object);
         unset($data[$this->getIdFieldName()]);
-        $this->getConnection()->update($this->getMainTable(), $data, $condition);
+        if (count($data) > 0) {
+            $this->getConnection()->update($this->getMainTable(), $data, $condition);
+        }
     }
 
     /**
@@ -201,5 +205,14 @@ abstract class EntityAbstract extends AbstractDb
     {
         parent::_afterDelete($object);
         return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function _resetState(): void
+    {
+        $this->_uniqueFields = null;
+        $this->serializer = null;
     }
 }

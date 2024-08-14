@@ -9,11 +9,14 @@ use Magento\Framework\View\Element\UiComponent\Control\ButtonProviderInterface;
 
 /**
  * Class InvalidateTokenButton
+ *
  * @package Magento\Customer\Block\Adminhtml\Edit
  */
 class InvalidateTokenButton extends GenericButton implements ButtonProviderInterface
 {
     /**
+     * Get button data.
+     *
      * @return array
      */
     public function getButtonData()
@@ -25,15 +28,17 @@ class InvalidateTokenButton extends GenericButton implements ButtonProviderInter
             $data = [
                 'label' => __('Force Sign-In'),
                 'class' => 'invalidate-token',
-                'on_click' => 'deleteConfirm("' . $deleteConfirmMsg . '", "' . $this->getInvalidateTokenUrl() .
-                '", {data: {}})',
+                'on_click' => 'deleteConfirm("' . $deleteConfirmMsg . '", "' . $this->getInvalidateTokenUrl() . '")',
                 'sort_order' => 65,
+                'aclResource' => 'Magento_Customer::invalidate_tokens',
             ];
         }
         return $data;
     }
 
     /**
+     * Get invalidate token url.
+     *
      * @return string
      */
     public function getInvalidateTokenUrl()

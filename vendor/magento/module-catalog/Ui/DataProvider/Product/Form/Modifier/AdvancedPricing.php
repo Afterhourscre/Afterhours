@@ -7,15 +7,14 @@ namespace Magento\Catalog\Ui\DataProvider\Product\Form\Modifier;
 
 use Magento\Catalog\Api\Data\ProductAttributeInterface;
 use Magento\Catalog\Model\Locator\LocatorInterface;
-use Magento\Customer\Api\GroupManagementInterface;
-use Magento\Customer\Api\GroupRepositoryInterface;
 use Magento\Customer\Model\Customer\Source\GroupSourceInterface;
 use Magento\Directory\Helper\Data;
-use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\ObjectManager;
-use Magento\Framework\Module\Manager as ModuleManager;
-use Magento\Framework\Stdlib\ArrayManager;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Customer\Api\GroupManagementInterface;
+use Magento\Customer\Api\GroupRepositoryInterface;
+use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\Module\Manager as ModuleManager;
 use Magento\Ui\Component\Container;
 use Magento\Ui\Component\Form\Element\DataType\Number;
 use Magento\Ui\Component\Form\Element\DataType\Price;
@@ -24,9 +23,10 @@ use Magento\Ui\Component\Form\Element\Input;
 use Magento\Ui\Component\Form\Element\Select;
 use Magento\Ui\Component\Form\Field;
 use Magento\Ui\Component\Modal;
+use Magento\Framework\Stdlib\ArrayManager;
 
 /**
- * Class AdvancedPricing
+ * Class for Product Modifier Advanced Pricing
  *
  * @api
  *
@@ -101,6 +101,11 @@ class AdvancedPricing extends AbstractModifier
     private $customerGroupSource;
 
     /**
+     * @var CurrencySymbolProvider
+     */
+    private $currencySymbolProvider;
+
+    /**
      * @param LocatorInterface $locator
      * @param StoreManagerInterface $storeManager
      * @param GroupRepositoryInterface $groupRepository
@@ -110,7 +115,8 @@ class AdvancedPricing extends AbstractModifier
      * @param Data $directoryHelper
      * @param ArrayManager $arrayManager
      * @param string $scopeName
-     * @param GroupSourceInterface $customerGroupSource
+     * @param GroupSourceInterface|null $customerGroupSource
+     * @param CurrencySymbolProvider|null $currencySymbolProvider
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
@@ -123,7 +129,8 @@ class AdvancedPricing extends AbstractModifier
         Data $directoryHelper,
         ArrayManager $arrayManager,
         $scopeName = '',
-        GroupSourceInterface $customerGroupSource = null
+        GroupSourceInterface $customerGroupSource = null,
+        ?CurrencySymbolProvider $currencySymbolProvider = null
     ) {
         $this->locator = $locator;
         $this->storeManager = $storeManager;
@@ -136,6 +143,8 @@ class AdvancedPricing extends AbstractModifier
         $this->scopeName = $scopeName;
         $this->customerGroupSource = $customerGroupSource
             ?: ObjectManager::getInstance()->get(GroupSourceInterface::class);
+        $this->currencySymbolProvider = $currencySymbolProvider
+            ?: ObjectManager::getInstance()->get(CurrencySymbolProvider::class);
     }
 
     /**
@@ -149,6 +158,7 @@ class AdvancedPricing extends AbstractModifier
 
         $this->specialPriceDataToInline();
         $this->customizeTierPrice();
+        $this->customizePrice();
 
         if (isset($this->meta['advanced-pricing'])) {
             $this->addAdvancedPriceLink();
@@ -191,6 +201,29 @@ class AdvancedPricing extends AbstractModifier
                 $pricePath . '/arguments/data/config',
                 $this->meta,
                 ['validation' => ['validate-zero-or-greater' => true]]
+            );
+        }
+
+        return $this;
+    }
+
+    /**
+     * Customize price field.
+     *
+     * @return $this
+     */
+    private function customizePrice(): AdvancedPricing
+    {
+        $pathFrom = $this->arrayManager->findPath('price', $this->meta, null, 'children');
+
+        if ($pathFrom) {
+            $this->meta = $this->arrayManager->merge(
+                $this->arrayManager->slicePath($pathFrom, 0, -2) . '/arguments/data/config',
+                $this->meta,
+                [
+                    'label' => false,
+                    'required' => false,
+                ]
             );
         }
 
@@ -389,6 +422,9 @@ class AdvancedPricing extends AbstractModifier
                 'componentType' => Container::NAME,
                 'component' => 'Magento_Ui/js/form/components/button',
                 'template' => 'ui/form/components/button/container',
+                'imports' => [
+                    'childError' => $this->scopeName . '.advanced_pricing_modal.advanced-pricing:error',
+                ],
                 'actions' => [
                     [
                         'targetName' => $this->scopeName . '.advanced_pricing_modal',
@@ -461,6 +497,7 @@ class AdvancedPricing extends AbstractModifier
                             'arguments' => [
                                 'data' => [
                                     'config' => [
+                                        'component' => 'Magento_Catalog/js/components/website-currency-symbol',
                                         'dataType' => Text::NAME,
                                         'formElement' => Select::NAME,
                                         'componentType' => Field::NAME,
@@ -471,6 +508,10 @@ class AdvancedPricing extends AbstractModifier
                                         'visible' => $this->isMultiWebsites(),
                                         'disabled' => ($this->isShowWebsiteColumn() && !$this->isAllowChangeWebsite()),
                                         'sortOrder' => 10,
+                                        'currenciesForWebsites' => $this->currencySymbolProvider
+                                            ->getCurrenciesPerWebsite(),
+                                        'currency' => $this->currencySymbolProvider
+                                            ->getDefaultCurrency(),
                                     ],
                                 ],
                             ],
@@ -521,9 +562,6 @@ class AdvancedPricing extends AbstractModifier
                                         'label' => __('Price'),
                                         'enableLabel' => true,
                                         'dataScope' => 'price',
-                                        'addbefore' => $this->locator->getStore()
-                                                                     ->getBaseCurrency()
-                                                                     ->getCurrencySymbol(),
                                         'sortOrder' => 40,
                                         'validation' => [
                                             'required-entry' => true,
@@ -532,7 +570,12 @@ class AdvancedPricing extends AbstractModifier
                                         ],
                                         'imports' => [
                                             'priceValue' => '${ $.provider }:data.product.price',
+                                            '__disableTmpl' => ['priceValue' => false, 'addbefore' => false],
+                                            'addbefore' => '${ $.parentName }:currency'
                                         ],
+                                        'tracks' => [
+                                            'addbefore' => true
+                                        ]
                                     ],
                                 ],
                             ],
@@ -570,12 +613,11 @@ class AdvancedPricing extends AbstractModifier
                 $this->arrayManager->slicePath($pathFrom, 0, -2) . '/arguments/data/config',
                 $this->meta,
                 [
-                    'label' => __('Special Price From'),
+                    'label' => false,
+                    'required' => false,
                     'additionalClasses' => 'admin__control-grouped-date',
                     'breakLine' => false,
                     'component' => 'Magento_Ui/js/form/components/group',
-                    'scopeLabel' =>
-                        $this->arrayManager->get($pathFrom . '/arguments/data/config/scopeLabel', $this->meta),
                 ]
             );
             $this->meta = $this->arrayManager->merge(
@@ -583,8 +625,9 @@ class AdvancedPricing extends AbstractModifier
                 $this->meta,
                 [
                     'label' => __('Special Price From'),
-                    'scopeLabel' => null,
-                    'additionalClasses' => 'admin__field-date'
+                    'scopeLabel' =>
+                        $this->arrayManager->get($pathFrom . '/arguments/data/config/scopeLabel', $this->meta),
+                    'additionalClasses' => 'admin__field-date',
                 ]
             );
             $this->meta = $this->arrayManager->merge(
@@ -627,7 +670,7 @@ class AdvancedPricing extends AbstractModifier
             'componentType' => Modal::NAME,
             'dataScope' => '',
             'provider' => 'product_form.product_form_data_source',
-            'onCancel' => 'closeModal',
+            'onCancel' => 'actionDone',
             'options' => [
                 'title' => __('Advanced Pricing'),
                 'buttons' => [
@@ -637,6 +680,7 @@ class AdvancedPricing extends AbstractModifier
                         'actions' => [
                             [
                                 'targetName' => '${ $.name }',
+                                '__disableTmpl' => ['targetName' => false],
                                 'actionName' => 'actionDone'
                             ]
                         ]

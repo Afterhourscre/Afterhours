@@ -8,11 +8,15 @@
 
 <actionGroups xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:noNamespaceSchemaLocation="urn:magento:mftf:Test/etc/actionGroupSchema.xsd">
-    <actionGroup name="AddDownloadableProductLink">
+    <actionGroup name="AddDownloadableProductLinkActionGroup">
+        <annotations>
+            <description>Clicks on 'Add Link', under the 'Links' section. Fills in the provided Link details including Unlimited Downloads.</description>
+        </annotations>
         <arguments>
             <argument name="link" defaultValue="downloadableLink"/>
             <argument name="index" type="string" defaultValue="1"/>
         </arguments>
+
         <click selector="{{AdminProductDownloadableSection.linksAddLinkButton}}" stepKey="clickLinkAddLinkButton"/>
         <waitForPageLoad stepKey="waitForPageLoad"/>
         <fillField userInput="{{link.title}}" selector="{{AdminProductDownloadableSection.addLinkTitleInput(index)}}" stepKey="fillDownloadableLinkTitle"/>
@@ -23,5 +27,6 @@
         <checkOption selector="{{AdminProductDownloadableSection.addLinkIsUnlimitedDownloads(index)}}" stepKey="checkDownloadableLinkUnlimited"/>
         <fillField userInput="{{link.file}}" selector="{{AdminProductDownloadableSection.addLinkFileUrlInput(index)}}" stepKey="fillDownloadableLinkFileUrl"/>
         <attachFile userInput="{{link.sample}}" selector="{{AdminProductDownloadableSection.addLinkSampleUploadFile(index)}}" stepKey="attachDownloadableLinkUploadSample"/>
+        <waitForPageLoad stepKey="waitForPageLoadAfterFillingOutForm" />
     </actionGroup>
 </actionGroups>

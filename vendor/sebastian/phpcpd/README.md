@@ -1,59 +1,45 @@
-[![Latest Stable Version](https://poser.pugx.org/sebastian/phpcpd/v/stable.png)](https://packagist.org/packages/sebastian/phpcpd)
-[![Build Status](https://travis-ci.org/sebastianbergmann/phpcpd.png?branch=master)](https://travis-ci.org/sebastianbergmann/phpcpd)
-
 # PHP Copy/Paste Detector (PHPCPD)
 
 `phpcpd` is a Copy/Paste Detector (CPD) for PHP code.
 
 ## Installation
 
-### PHP Archive (PHAR)
+This tool is distributed as a [PHP Archive (PHAR)](https://php.net/phar):
 
-The easiest way to obtain PHPCPD is to download a [PHP Archive (PHAR)](http://php.net/phar) that has all required dependencies of PHPCPD bundled in a single file:
+```bash
+$ wget https://phar.phpunit.de/phpcpd.phar
 
-    wget https://phar.phpunit.de/phpcpd.phar
-    chmod +x phpcpd.phar
-    mv phpcpd.phar /usr/local/bin/phpcpd
+$ php phpcpd.phar --version
+```
 
-You can also immediately use the PHAR after you have downloaded it, of course:
+Using [Phive](https://phar.io/) is the recommended way for managing the tool dependencies of your project:
 
-    wget https://phar.phpunit.de/phpcpd.phar
-    php phpcpd.phar
+```bash
+$ phive install phpcpd
 
-### Composer
+$ ./tools/phpcpd --version
+```
 
-Simply add a dependency on `sebastian/phpcpd` to your project's `composer.json` file if you use [Composer](http://getcomposer.org/) to manage the dependencies of your project. Here is a minimal example of a `composer.json` file that just defines a development-time dependency on PHPCPD:
-
-    {
-        "require-dev": {
-            "sebastian/phpcpd": "*"
-        }
-    }
-
-For a system-wide installation via Composer, you can run:
-
-    composer global require "sebastian/phpcpd=*"
-
-Make sure you have `~/.composer/vendor/bin/` in your path.
+**[It is not recommended to use Composer to download and install this tool.](https://twitter.com/s_bergmann/status/999635212723212288)**
 
 ## Usage Example
 
-    ➜ ~ phpcpd /tmp/wordpress-3.8.1/wp-includes
-    phpcpd 2.0.1 by Sebastian Bergmann.
+```
+$ php phpcpd.phar --fuzzy wordpress-5.5
+phpcpd 6.0.0 by Sebastian Bergmann.
 
-    Found 34 exact clones with 1273 duplicated lines in 11 files:
+Found 121 clones with 8137 duplicated lines in 69 files:
 
-      - /tmp/wordpress-3.8.1/wp-includes/class-snoopy.php:165-195
-        /tmp/wordpress-3.8.1/wp-includes/class-snoopy.php:225-255
+  - /home/sb/wordpress-5.5/wp-includes/sodium_compat/src/Core/Curve25519/H.php:19-1466 (1447 lines)
+    /home/sb/wordpress-5.5/wp-includes/sodium_compat/src/Core32/Curve25519/H.php:19-1466
+.
+.
+.
+  - /home/sb/wordpress-5.5/wp-includes/sodium_compat/src/Core32/Curve25519.php:879-889 (10 lines)
+    /home/sb/wordpress-5.5/wp-includes/sodium_compat/src/Core32/Curve25519.php:1072-1082
 
-      .
-      .
-      .
+1.82% duplicated lines out of 446676 total lines of code.
+Average size of duplication is 67 lines, largest clone has 1447 of lines
 
-      - /tmp/wordpress-3.8.1/wp-includes/SimplePie/Misc.php:1769-1830
-        /tmp/wordpress-3.8.1/wp-includes/SimplePie/Parse/Date.php:710-771
-
-    0.86% duplicated lines out of 147877 total lines of code.
-
-    Time: 24.67 seconds, Memory: 159.00Mb
-
+Time: 00:02.980, Memory: 318.00 MB
+```

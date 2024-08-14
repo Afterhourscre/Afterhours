@@ -1,154 +1,172 @@
 <?php
 /**
- *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\Catalog\Test\Unit\Model\ProductRepository;
 
 use Magento\Catalog\Model\Product;
+use Magento\Catalog\Model\Product\Gallery\DeleteValidator;
 use Magento\Catalog\Model\Product\Gallery\Processor;
+use Magento\Catalog\Model\Product\Media\Config;
 use Magento\Catalog\Model\ProductRepository\MediaGalleryProcessor;
 use Magento\Framework\Api\Data\ImageContentInterface;
 use Magento\Framework\Api\Data\ImageContentInterfaceFactory;
+use Magento\Framework\Api\ImageContent;
 use Magento\Framework\Api\ImageProcessorInterface;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Provide tests for ProductRepository/MediaGalleryProcessor.
- */
 class MediaGalleryProcessorTest extends TestCase
 {
     /**
-     * Test subject.
-     *
      * @var MediaGalleryProcessor
      */
-    private $model;
+    private $galleryProcessor;
 
     /**
-     * @var Processor|\PHPUnit_Framework_MockObject_MockObject
+     * @var Processor|MockObject
      */
-    private $processor;
+    private $processorMock;
 
     /**
-     * @var ImageContentInterfaceFactory|\PHPUnit_Framework_MockObject_MockObject
+     * @var ImageContentInterfaceFactory|MockObject
      */
-    private $contentFactory;
+    private $contentFactoryMock;
 
     /**
-     * @var ImageProcessorInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var ImageProcessorInterface|MockObject
      */
-    private $imageProcessor;
+    private $imageProcessorMock;
 
     /**
-     * @var Product|\PHPUnit_Framework_MockObject_MockObject
+     * @var DeleteValidator|MockObject
      */
-    private $product;
+    private $deleteValidatorMock;
 
     /**
-     * @inheritdoc
+     * @var Product|MockObject
      */
-    protected function setUp()
+    private $productMock;
+
+    protected function setUp(): void
     {
-        $this->product = $this->createPartialMock(
-            \Magento\Catalog\Model\Product::class,
-            [
-                'hasGalleryAttribute',
-                'getMediaConfig',
-                'getMediaAttributes',
-                'getMediaGalleryEntries',
-            ]
-        );
-        $this->product->expects($this->any())
-            ->method('hasGalleryAttribute')
-            ->willReturn(true);
-        $this->processor = $this->getMockBuilder(Processor::class)
+        $this->processorMock = $this->getMockBuilder(Processor::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->contentFactory = $this->getMockBuilder(ImageContentInterfaceFactory::class)
-            ->setMethods(['create'])
+        $this->contentFactoryMock = $this->getMockBuilder(ImageContentInterfaceFactory::class)
             ->disableOriginalConstructor()
-            ->getMockForAbstractClass();
-        $this->imageProcessor = $this->getMockBuilder(ImageProcessorInterface::class)
+            ->getMock();
+        $this->imageProcessorMock = $this->getMockBuilder(ImageProcessorInterface::class)
             ->disableOriginalConstructor()
-            ->getMockForAbstractClass();
-        $objectManager = new ObjectManager($this);
-        $this->model = $objectManager->getObject(
-            MediaGalleryProcessor::class,
-            [
-                'processor' => $this->processor,
-                'contentFactory' => $this->contentFactory,
-                'imageProcessor' => $this->imageProcessor,
-            ]
+            ->getMock();
+        $this->deleteValidatorMock = $this->getMockBuilder(DeleteValidator::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->productMock = $this->getMockBuilder(Product::class)
+            ->addMethods(['getMediaGallery'])
+            ->onlyMethods(['hasGalleryAttribute', 'getMediaConfig', 'getMediaAttributes'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $this->galleryProcessor = new MediaGalleryProcessor(
+            $this->processorMock,
+            $this->contentFactoryMock,
+            $this->imageProcessorMock,
+            $this->deleteValidatorMock
         );
     }
 
     /**
-     * Test add image.
+     * The media gallery array should not have "removed" key while adding the new entry
      *
      * @return void
      */
-    public function testProcessWithNewMediaEntry()
+    public function testProcessMediaGallery(): void
     {
-        $mediaGalleryEntries = [
-            [
-                'value_id' => null,
-                'label' => 'label_text',
-                'position' => 10,
-                'disabled' => false,
-                'types' => ['image', 'small_image'],
-                'content' => [
-                    ImageContentInterface::NAME => 'filename',
-                    ImageContentInterface::TYPE => 'image/jpeg',
-                    ImageContentInterface::BASE64_ENCODED_DATA => 'encoded_content',
-                ],
-                'media_type' => 'media_type',
-            ],
+        $initialExitingEntry = [
+            'value_id' => 5,
+            "label" => "new_label_text",
+            'file' => 'filename1',
+            'position' => 10,
+            'disabled' => false,
+            'types' => ['image', 'small_image']
         ];
-
-        //setup media attribute backend.
+        $newEntriesData = [
+            'images' => [
+                $initialExitingEntry,
+                [
+                    'value_id' => null,
+                    'label' => "label_text",
+                    'position' => 10,
+                    'disabled' => false,
+                    'types' => ['image', 'small_image'],
+                    'content' => [
+                        'data' => [
+                            ImageContentInterface::NAME => 'filename',
+                            ImageContentInterface::TYPE => 'image/jpeg',
+                            ImageContentInterface::BASE64_ENCODED_DATA => 'encoded_content'
+                        ]
+                    ],
+                    'media_type' => 'media_type'
+                ]
+            ]
+        ];
+        $newExitingEntriesData = [
+            'images' => [
+                $initialExitingEntry,
+                [
+                    'value_id' => 6,
+                    "label" => "label_text2",
+                    'file' => 'filename2',
+                    'position' => 10,
+                    'disabled' => false,
+                    'types' => ['image', 'small_image']
+                ]
+            ]
+        ];
+        $this->productMock->method('getMediaGallery')
+            ->willReturnOnConsecutiveCalls(
+                $newExitingEntriesData['images'],
+                $newExitingEntriesData['images']
+            );
+        $this->productMock->expects($this->any())
+            ->method('getMediaAttributes')
+            ->willReturn(["image" => "imageAttribute", "small_image" => "small_image_attribute"]);
+        $this->productMock->method('hasGalleryAttribute')->willReturn(true);
         $mediaTmpPath = '/tmp';
         $absolutePath = '/a/b/filename.jpg';
-        $mediaConfigMock = $this->getMockBuilder(\Magento\Catalog\Model\Product\Media\Config::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $mediaConfigMock->expects($this->once())
-            ->method('getTmpMediaShortUrl')
-            ->with($absolutePath)
+        $this->processorMock->expects($this->once())->method('clearMediaAttribute')
+            ->with($this->productMock, ['image', 'small_image']);
+        $mediaConfigMock = $this->getMockBuilder(Config::class)->disableOriginalConstructor()->getMock();
+        $mediaConfigMock->expects($this->once())->method('getTmpMediaShortUrl')->with($absolutePath)
             ->willReturn($mediaTmpPath . $absolutePath);
-        $this->product->setData('media_gallery', ['images' => $mediaGalleryEntries]);
-        $this->product->expects($this->any())
-            ->method('getMediaAttributes')
-            ->willReturn(['image' => 'imageAttribute', 'small_image' => 'small_image_attribute']);
-        $this->product->expects($this->once())
-            ->method('getMediaConfig')
-            ->willReturn($mediaConfigMock);
-        $this->processor->expects($this->once())->method('clearMediaAttribute')
-            ->with($this->product, ['image', 'small_image']);
-
-        //verify new entries.
-        $contentDataObject = $this->getMockBuilder(\Magento\Framework\Api\ImageContent::class)
+        $this->productMock->expects($this->once())->method('getMediaConfig')->willReturn($mediaConfigMock);
+        //verify new entries
+        $contentDataObject = $this->getMockBuilder(ImageContent::class)
             ->disableOriginalConstructor()
-            ->setMethods(null)
+            ->onlyMethods([])
             ->getMock();
-        $this->contentFactory->expects($this->once())
-            ->method('create')
-            ->willReturn($contentDataObject);
-
-        $this->imageProcessor->expects($this->once())
-            ->method('processImageContent')
-            ->willReturn($absolutePath);
-
-        $imageFileUri = 'imageFileUri';
-        $this->processor->expects($this->once())->method('addImage')
-            ->with($this->product, $mediaTmpPath . $absolutePath, ['image', 'small_image'], true, false)
-            ->willReturn($imageFileUri);
-        $this->processor->expects($this->once())->method('updateImage')
+        $this->contentFactoryMock->expects($this->once())->method('create')->willReturn($contentDataObject);
+        $this->imageProcessorMock->expects($this->once())->method('processImageContent')->willReturn($absolutePath);
+        $imageFileUri = $mediaTmpPath . $absolutePath;
+        $this->processorMock->expects($this->once())->method('addImage')
+            ->willReturnCallback(
+                function ($product, $imageFileUri) use ($newEntriesData) {
+                    foreach ($product['media_gallery']['images'] as $entry) {
+                        if (isset($entry['value_id'])) {
+                            $this->assertArrayNotHasKey('removed', $entry);
+                        }
+                    }
+                    $this->productMock->setData('media_gallery', $newEntriesData);
+                    return $imageFileUri;
+                }
+            );
+        $this->processorMock->expects($this->once())->method('updateImage')
             ->with(
-                $this->product,
+                $this->productMock,
                 $imageFileUri,
                 [
                     'label' => 'label_text',
@@ -157,71 +175,6 @@ class MediaGalleryProcessorTest extends TestCase
                     'media_type' => 'media_type',
                 ]
             );
-
-        $this->model->processMediaGallery($this->product, $mediaGalleryEntries);
-    }
-
-    /**
-     * Test update(delete) images.
-     */
-    public function testProcessExistingWithMediaGalleryEntries()
-    {
-        //update one entry, delete one entry.
-        $newEntries = [
-            [
-                'id' => 5,
-                'label' => 'new_label_text',
-                'file' => 'filename1',
-                'position' => 10,
-                'disabled' => false,
-                'types' => ['image', 'small_image'],
-            ],
-        ];
-
-        $existingMediaGallery = [
-            'images' => [
-                [
-                    'value_id' => 5,
-                    'label' => 'label_text',
-                    'file' => 'filename1',
-                    'position' => 10,
-                    'disabled' => true,
-                ],
-                [
-                    'value_id' => 6, //will be deleted.
-                    'file' => 'filename2',
-                ],
-            ],
-        ];
-
-        $expectedResult = [
-            [
-                'value_id' => 5,
-                'id' => 5,
-                'label' => 'new_label_text',
-                'file' => 'filename1',
-                'position' => 10,
-                'disabled' => false,
-                'types' => ['image', 'small_image'],
-            ],
-            [
-                'value_id' => 6, //will be deleted.
-                'file' => 'filename2',
-                'removed' => true,
-            ],
-        ];
-
-        $this->product->setData('media_gallery', $existingMediaGallery);
-        $this->product->expects($this->any())
-            ->method('getMediaAttributes')
-            ->willReturn(['image' => 'filename1', 'small_image' => 'filename2']);
-
-        $this->processor->expects($this->once())->method('clearMediaAttribute')
-            ->with($this->product, ['image', 'small_image']);
-        $this->processor->expects($this->once())
-            ->method('setMediaAttribute')
-            ->with($this->product, ['image', 'small_image'], 'filename1');
-        $this->model->processMediaGallery($this->product, $newEntries);
-        $this->assertEquals($expectedResult, $this->product->getMediaGallery('images'));
+        $this->galleryProcessor->processMediaGallery($this->productMock, $newEntriesData['images']);
     }
 }

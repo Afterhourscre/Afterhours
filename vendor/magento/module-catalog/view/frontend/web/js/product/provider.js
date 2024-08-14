@@ -93,17 +93,20 @@ define([
          * @private
          */
         _resolveDataByIds: function () {
+            if (!window.checkout || !window.checkout.baseUrl) {
+                // We need data that the minicart provdes to determine storeId/websiteId
+                return;
+            }
+
+            // Filter initial ids to remove "out of scope" and "outdated" data
+            this.ids(
+                this.filterIds(this.ids())
+            );
             this.initIdsListener();
             this.idsMerger(
                 this.idsStorage.get(),
                 this.prepareDataFromCustomerData(customerData.get(this.identifiersConfig.namespace)())
             );
-
-            if (!_.isEmpty(this.productStorage.data())) {
-                this.dataCollectionHandler(this.productStorage.data());
-            } else {
-                this.productStorage.setIds(this.data.currency, this.data.store, this.ids());
-            }
         },
 
         /**
@@ -138,12 +141,17 @@ define([
         filterIds: function (ids) {
             var _ids = {},
                 currentTime = new Date().getTime() / 1000,
-                currentProductIds = productResolver($('#product_addtocart_form'));
+                currentProductIds = productResolver($('#product_addtocart_form')),
+                productCurrentScope = this.data.productCurrentScope,
+                scopeId = productCurrentScope === 'store' ? window.checkout.storeId :
+                productCurrentScope === 'group' ? window.checkout.storeGroupId :
+                    window.checkout.websiteId;
 
-            _.each(ids, function (id) {
+            _.each(ids, function (id, key) {
                 if (
-                    currentTime - id['added_at'] < ~~this.idsStorage.lifetime &&
-                    !_.contains(currentProductIds, id['product_id'])
+                    currentTime - ids[key]['added_at'] < ~~this.idsStorage.lifetime &&
+                    !_.contains(currentProductIds, ids[key]['product_id']) &&
+                    (!id.hasOwnProperty('scope_id') || ids[key]['scope_id'] === scopeId)
                 ) {
                     _ids[id['product_id']] = id;
 
@@ -166,7 +174,7 @@ define([
 
             if (!_.isEmpty(data)) {
                 this.ids(
-                    this.filterIds(_.extend(this.ids(), data))
+                    this.filterIds(_.extend(utils.copy(this.ids()), data))
                 );
             }
         },

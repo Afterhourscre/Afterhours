@@ -10,6 +10,8 @@
 namespace Magento\Config\Model\Config\Backend\Log;
 
 /**
+ * Cron logger configuration
+ *
  * @api
  * @since 100.0.2
  */
@@ -79,7 +81,7 @@ class Cron extends \Magento\Framework\App\Config\Value
                 '*',                                              # Month of the Year
                 $frequency == $frequencyWeekly ? '1' : '*',        # Day of the Week
             ];
-            $cronExprString = implode(' ', $cronExprArray);
+            $cronExprString = join(' ', $cronExprArray);
         } else {
             $cronExprString = '';
         }

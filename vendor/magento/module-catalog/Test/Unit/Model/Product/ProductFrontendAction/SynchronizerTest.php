@@ -3,70 +3,99 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Catalog\Test\Unit\Model\Product\ProductFrontendAction;
 
 use Magento\Catalog\Api\Data\ProductFrontendActionInterface;
+use Magento\Catalog\Model\FrontendStorageConfigurationInterface;
+use Magento\Catalog\Model\FrontendStorageConfigurationPool;
+use Magento\Catalog\Model\Product\ProductFrontendAction\Synchronizer;
+use Magento\Catalog\Model\ProductFrontendActionFactory;
 use Magento\Catalog\Model\ResourceModel\ProductFrontendAction\Collection;
+use Magento\Catalog\Model\ResourceModel\ProductFrontendAction\CollectionFactory;
+use Magento\Customer\Model\Session;
+use Magento\Customer\Model\Visitor;
+use Magento\Framework\EntityManager\EntityManager;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class SynchronizerTest extends \PHPUnit\Framework\TestCase
+class SynchronizerTest extends TestCase
 {
-    /** @var \Magento\Catalog\Model\Product\ProductFrontendAction\Synchronizer */
+    /**
+     * @var Synchronizer
+     */
     protected $model;
 
-    /** @var ObjectManagerHelper */
+    /**
+     * @var ObjectManagerHelper
+     */
     protected $objectManagerHelper;
 
-    /** @var \Magento\Customer\Model\Session|\PHPUnit_Framework_MockObject_MockObject */
+    /**
+     * @var Session|MockObject
+     */
     protected $sessionMock;
 
-    /** @var \Magento\Customer\Model\Visitor|\PHPUnit_Framework_MockObject_MockObject */
+    /**
+     * @var Visitor|MockObject
+     */
     protected $visitorMock;
 
-    /** @var \Magento\Catalog\Model\ProductFrontendActionFactory|\PHPUnit_Framework_MockObject_MockObject */
+    /**
+     * @var ProductFrontendActionFactory|MockObject
+     */
     protected $productFrontendActionFactoryMock;
 
-    /** @var \Magento\Framework\EntityManager\EntityManager|\PHPUnit_Framework_MockObject_MockObject */
+    /**
+     * @var EntityManager|MockObject
+     */
     protected $entityManagerMock;
 
-    /** @var \PHPUnit_Framework_MockObject_MockObject */
+    /**
+     * @var MockObject
+     */
     protected $collectionFactoryMock;
 
-    /** @var \PHPUnit_Framework_MockObject_MockObject */
+    /**
+     * @var MockObject
+     */
     protected $frontendStorageConfigurationPoolMock;
 
-    protected function setUp()
+    /**
+     * @inheritDoc
+     */
+    protected function setUp(): void
     {
-        $this->sessionMock = $this->getMockBuilder(\Magento\Customer\Model\Session::class)
+        $this->sessionMock = $this->getMockBuilder(Session::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->visitorMock = $this->getMockBuilder(\Magento\Customer\Model\Visitor::class)
+        $this->visitorMock = $this->getMockBuilder(Visitor::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->productFrontendActionFactoryMock = $this
-            ->getMockBuilder(\Magento\Catalog\Model\ProductFrontendActionFactory::class)
+        $this->productFrontendActionFactoryMock = $this->getMockBuilder(ProductFrontendActionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
-        $this->entityManagerMock = $this->getMockBuilder(\Magento\Framework\EntityManager\EntityManager::class)
+        $this->entityManagerMock = $this->getMockBuilder(EntityManager::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->collectionFactoryMock = $this
-            ->getMockBuilder(\Magento\Catalog\Model\ResourceModel\ProductFrontendAction\CollectionFactory::class)
+        $this->collectionFactoryMock = $this->getMockBuilder(CollectionFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
         $this->frontendStorageConfigurationPoolMock = $this
-            ->getMockBuilder(\Magento\Catalog\Model\FrontendStorageConfigurationPool::class)
+            ->getMockBuilder(FrontendStorageConfigurationPool::class)
             ->disableOriginalConstructor()
             ->getMock();
 
         $this->objectManagerHelper = new ObjectManagerHelper($this);
         $this->model = $this->objectManagerHelper->getObject(
-            \Magento\Catalog\Model\Product\ProductFrontendAction\Synchronizer::class,
+            Synchronizer::class,
             [
                 'session' => $this->sessionMock,
                 'visitor' => $this->visitorMock,
@@ -79,19 +108,30 @@ class SynchronizerTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @dataProvider filterProductActionsDataProvider
-     *
-     * @param array $productsData
-     * @param bool $correct
-     * @return void
+     * @inheritDoc
      */
-    public function testFilterProductActions(array $productsData, bool $correct)
+    public function testFilterProductActions(): void
     {
-        $frontendConfiguration = $this->createMock(\Magento\Catalog\Model\FrontendStorageConfigurationInterface::class);
+        $typeId = 'recently_compared_product';
+        $productsData = [
+            'website-1-1' => [
+                'added_at' => 12,
+                'product_id' => 1
+            ],
+            'website-1-2' => [
+                'added_at' => 13,
+                'product_id' => '2'
+            ],
+            'website-2-3' => [
+                'added_at' => 14,
+                'product_id' => 3
+            ]
+        ];
+        $frontendConfiguration = $this->getMockForAbstractClass(FrontendStorageConfigurationInterface::class);
         $frontendConfiguration->expects($this->once())
             ->method('get')
             ->willReturn([
-                'lifetime' => 2,
+                'lifetime' => 2
             ]);
         $this->frontendStorageConfigurationPoolMock->expects($this->once())
             ->method('get')
@@ -103,6 +143,7 @@ class SynchronizerTest extends \PHPUnit\Framework\TestCase
         $action2 = $this->getMockBuilder(ProductFrontendActionInterface::class)
             ->getMockForAbstractClass();
 
+        $frontendAction = $this->getMockForAbstractClass(ProductFrontendActionInterface::class);
         $collection = $this->getMockBuilder(Collection::class)
             ->disableOriginalConstructor()
             ->getMock();
@@ -118,91 +159,46 @@ class SynchronizerTest extends \PHPUnit\Framework\TestCase
         $collection->expects($this->once())
             ->method('addFilterByUserIdentities')
             ->with(1, 34);
-
-        if ($correct) {
-            $frontendAction = $this->createMock(ProductFrontendActionInterface::class);
-            $iterator = new \IteratorIterator(new \ArrayIterator([$frontendAction]));
-            $collection->expects($this->any())
-                ->method('addFieldToFilter')
-                ->withConsecutive(['type_id'], ['product_id']);
-            $collection->expects($this->once())
-                ->method('getIterator')
-                ->willReturn($iterator);
-            $this->entityManagerMock->expects($this->once())
-                ->method('delete')
-                ->with($frontendAction);
-            $this->entityManagerMock->expects($this->exactly(2))
-                ->method('save')
-                ->withConsecutive([$action1], [$action2]);
-            $this->productFrontendActionFactoryMock->expects($this->exactly(2))
-                ->method('create')
-                ->withConsecutive(
+        $collection
+            ->method('addFieldToFilter')
+            ->withConsecutive(['type_id', $typeId], ['product_id', [1, 2]]);
+        $iterator = new \IteratorIterator(new \ArrayIterator([$frontendAction]));
+        $collection->expects($this->once())
+            ->method('getIterator')
+            ->willReturn($iterator);
+        $this->entityManagerMock->expects($this->once())
+            ->method('delete')
+            ->with($frontendAction);
+        $this->productFrontendActionFactoryMock->expects($this->exactly(2))
+            ->method('create')
+            ->withConsecutive(
+                [
                     [
-                        [
-                            'data' => [
-                                'visitor_id' => null,
-                                'customer_id' => 1,
-                                'added_at' => 12,
-                                'product_id' => 1,
-                                'type_id' => 'recently_compared_product',
-                            ],
-                        ],
-                    ],
-                    [
-                        [
-                            'data' => [
-                                'visitor_id' => null,
-                                'customer_id' => 1,
-                                'added_at' => 13,
-                                'product_id' => 2,
-                                'type_id' => 'recently_compared_product',
-                            ],
-                        ],
+                        'data' => [
+                            'visitor_id' => null,
+                            'customer_id' => 1,
+                            'added_at' => 12,
+                            'product_id' => 1,
+                            'type_id' => 'recently_compared_product'
+                        ]
                     ]
-                )
-                ->willReturnOnConsecutiveCalls($action1, $action2);
-        } else {
-            $this->entityManagerMock->expects($this->never())
-                ->method('delete');
-            $this->entityManagerMock->expects($this->never())
-                ->method('save');
-        }
-
+                ],
+                [
+                    [
+                        'data' => [
+                            'visitor_id' => null,
+                            'customer_id' => 1,
+                            'added_at' => 13,
+                            'product_id' => 2,
+                            'type_id' => 'recently_compared_product'
+                        ]
+                    ]
+                ]
+            )
+            ->willReturnOnConsecutiveCalls($action1, $action2);
+        $this->entityManagerMock->expects($this->exactly(2))
+            ->method('save')
+            ->withConsecutive([$action1], [$action2]);
         $this->model->syncActions($productsData, 'recently_compared_product');
-    }
-
-    /**
-     * @return array
-     */
-    public function filterProductActionsDataProvider(): array
-    {
-        return [
-            [
-                'productsData' => [
-                    1 => [
-                        'added_at' => 12,
-                        'product_id' => 1,
-                    ],
-                    2 => [
-                        'added_at' => 13,
-                        'product_id' => 2,
-                    ],
-                    3 => [
-                        'added_at' => 14,
-                        'product_id' => 3,
-                    ],
-                ],
-                'correct' => true,
-            ],
-            [
-                'productsData' => [
-                    1 => [
-                        'added_at' => 12,
-                        'product_id' => 'test',
-                    ],
-                ],
-                'correct' => false,
-            ],
-        ];
     }
 }

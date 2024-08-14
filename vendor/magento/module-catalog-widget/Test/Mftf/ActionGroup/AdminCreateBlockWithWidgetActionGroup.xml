@@ -8,38 +8,45 @@
 
 <actionGroups xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:noNamespaceSchemaLocation="urn:magento:mftf:Test/etc/actionGroupSchema.xsd">
-    <actionGroup name="AdminCreateCmsBlockWithCatalogProductListWidget">
+    <actionGroup name="AdminCreateBlockWithWidget">
+        <annotations>
+            <description>Inserts a Widget into a Block on the Block creation/edit page.</description>
+        </annotations>
         <arguments>
-            <argument name="conditionAttribute" type="string"/>
-            <argument name="conditionOperator" type="string"/>
-            <argument name="conditionValue" type="string"/>
+            <argument name="addCondition" type="string"/>
+            <argument name="isCondition" type="string"/>
+            <argument name="fieldCondition" type="string"/>
         </arguments>
-        <fillField selector="{{AdminCmsBlockContentSection.content}}" userInput="" stepKey="makeContentFieldEmpty"/>
 
-        <click selector="{{AdminCmsBlockContentSection.insertWidgetButton}}" stepKey="clickInsertWidgetButton"/>
-        <waitForElementVisible selector="{{AdminNewWidgetSection.widgetTypeDropDown}}" time="10" stepKey="waitForInsertWidgetFrame"/>
+        <click stepKey="clickShowHideButton" selector="{{TinyMCESection.ShowHideBtn}}"/>
+        <waitForElementVisible stepKey="waitForInsertWidgetButton" selector="{{CatalogWidgetSection.insertWidgetButton}}"/>
 
-        <selectOption selector="{{AdminNewWidgetSection.widgetTypeDropDown}}" userInput="Catalog Products List" stepKey="selectCatalogProductListOption"/>
-        <waitForElementVisible selector="{{AdminNewWidgetSection.addNewCondition}}" stepKey="waitForConditionsElementBecomeAvailable"/>
+        <selectOption stepKey="selectAllStoreView" userInput="All Store Views" selector="{{CatalogWidgetSection.storeViewOption}}"/>
+        <fillField selector="{{TinyMCESection.Content}}" userInput="" stepKey="makeContentFieldEmpty"/>
 
-        <click selector="{{AdminNewWidgetSection.addNewCondition}}" stepKey="clickToAddCondition"/>
-        <waitForElementVisible selector="{{AdminNewWidgetSection.selectCondition}}" stepKey="waitForSelectBoxOpened"/>
+        <click selector="{{CatalogWidgetSection.insertWidgetButton}}" stepKey="clickInsertWidgetButton"/>
+        <waitForElementVisible stepKey="waitForInsertWidgetFrame" selector="{{InsertWidgetSection.widgetTypeDropDown}}" time="10"/>
 
-        <selectOption selector="{{AdminNewWidgetSection.selectCondition}}" userInput="{{conditionAttribute}}" stepKey="selectConditionsSelectBox"/>
-        <waitForElementVisible selector="{{AdminNewWidgetSection.ruleParameter}}" stepKey="seeConditionsAdded"/>
+        <selectOption selector="{{InsertWidgetSection.widgetTypeDropDown}}" userInput="Catalog Products List" stepKey="selectCatalogProductListOption"/>
+        <waitForElementVisible stepKey="waitForConditionsElementBecomeAvailable" selector="{{InsertWidgetSection.conditionsAddButton}}"/>
 
-        <click selector="{{AdminNewWidgetSection.conditionOperator}}" stepKey="clickToConditionIs"/>
-        <selectOption selector="{{AdminNewWidgetSection.conditionOperatorSelect('1')}}" userInput="{{conditionOperator}}" stepKey="selectOperator"/>
+        <click selector="{{InsertWidgetSection.conditionsAddButton}}" stepKey="clickToAddCondition"/>
+        <waitForElementVisible stepKey="waitForSelectBoxOpened" selector="{{InsertWidgetSection.conditionsSelectBox}}"/>
 
-        <click selector="{{AdminNewWidgetSection.ruleParameter}}" stepKey="clickAddConditionItem"/>
-        <waitForElementVisible selector="{{AdminNewWidgetSection.setRuleParameter}}" stepKey="waitForConditionFieldOpened"/>
+        <selectOption selector="{{InsertWidgetSection.conditionsSelectBox}}" userInput="{{addCondition}}" stepKey="selectConditionsSelectBox"/>
+        <waitForElementVisible stepKey="seeConditionsAdded" selector="{{InsertWidgetSection.addCondition('1')}}"/>
 
-        <fillField selector="{{AdminNewWidgetSection.setRuleParameter}}" userInput="{{conditionValue}}" stepKey="setConditionValue"/>
-        <click selector="{{AdminNewWidgetSection.insertWidget}}" stepKey="clickInsertWidget"/>
+        <click selector="{{InsertWidgetSection.conditionIs}}" stepKey="clickToConditionIs"/>
+        <selectOption selector="{{InsertWidgetSection.conditionOperator('1')}}" stepKey="selectOperatorGreaterThan" userInput="{{isCondition}}"/>
 
-        <waitForElementVisible selector="{{AdminMainActionsSection.save}}" stepKey="waitForInsertWidgetSaved"/>
-        <click selector="{{AdminMainActionsSection.save}}" stepKey="clickSaveButton"/>
+        <click selector="{{InsertWidgetSection.addCondition('1')}}" stepKey="clickAddConditionItem"/>
+        <waitForElementVisible stepKey="waitForConditionFieldOpened" selector="{{InsertWidgetSection.conditionField('1')}}"/>
+
+        <fillField selector="{{InsertWidgetSection.conditionField('1')}}" stepKey="setOperator" userInput="{{fieldCondition}}"/>
+        <click selector="{{WidgetSection.InsertWidget}}" stepKey="clickInsertWidget"/>
+
+        <waitForElementVisible stepKey="waitForInsertWidgetSaved" selector="{{InsertWidgetSection.save}}"/>
+        <click stepKey="clickSaveButton" selector="{{InsertWidgetSection.save}}"/>
         <see userInput="You saved the block." stepKey="seeSavedBlockMsgOnForm"/>
-        <conditionalClick selector="{{AdminDataGridHeaderSection.clearFilters}}" dependentSelector="{{AdminDataGridHeaderSection.clearFilters}}" visible="true" stepKey="clearExistingOrderFilters"/>
     </actionGroup>
 </actionGroups>

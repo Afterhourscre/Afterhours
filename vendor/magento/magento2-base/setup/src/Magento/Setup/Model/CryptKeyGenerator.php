@@ -10,7 +10,7 @@ use Magento\Framework\Config\ConfigOptionsListConstants;
 use Magento\Framework\Math\Random;
 
 /**
- * Generates a crypt
+ * Generates a crypt.
  */
 class CryptKeyGenerator implements CryptKeyGeneratorInterface
 {
@@ -32,24 +32,23 @@ class CryptKeyGenerator implements CryptKeyGeneratorInterface
     /**
      * Generates & returns a string to be used as crypt key.
      *
-     * The key length is not a parameter, but an implementation detail.
-     *
      * @return string
-     *
      * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function generate()
     {
-        return md5($this->getRandomString());
+        return $this->getRandomString();
     }
 
     /**
      * Returns a random string.
      *
      * @return string
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     private function getRandomString()
     {
-        return $this->random->getRandomString(ConfigOptionsListConstants::STORE_KEY_RANDOM_STRING_SIZE);
+        return ConfigOptionsListConstants::STORE_KEY_ENCODED_RANDOM_STRING_PREFIX .
+            $this->random->getRandomBytes(ConfigOptionsListConstants::STORE_KEY_RANDOM_STRING_SIZE);
     }
 }

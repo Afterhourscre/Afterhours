@@ -10,14 +10,15 @@ use Magento\Backend\Model\Auth\Session;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\View\Layout\Condition\VisibilityConditionInterface;
 use Magento\Framework\App\CacheInterface;
-use Magento\Framework\App\ObjectManager;
-use Magento\Framework\Config\DataInterfaceFactory;
 
 /**
- * Class CanViewNotification
- *
  * Dynamic validator for UI release notification, manage UI component visibility.
  * Return true if the logged in user has not seen the notification.
+ * @SuppressWarnings(PHPMD.CookieAndSessionMisuse)
+ *
+ * @deprecated Starting from Magento OS 2.4.7 Magento_ReleaseNotification module is deprecated
+ * in favor of another in-product messaging mechanism
+ * @see Current in-product messaging mechanism
  */
 class CanViewNotification implements VisibilityConditionInterface
 {
@@ -56,61 +57,40 @@ class CanViewNotification implements VisibilityConditionInterface
     private $cacheStorage;
 
     /**
-     * @var DataInterfaceFactory
-     */
-    private $configFactory;
-
-    /**
      * CanViewNotification constructor.
      *
      * @param Logger $viewerLogger
      * @param Session $session
      * @param ProductMetadataInterface $productMetadata
      * @param CacheInterface $cacheStorage
-     * @param DataInterfaceFactory|null $configFactory
      */
     public function __construct(
         Logger $viewerLogger,
         Session $session,
         ProductMetadataInterface $productMetadata,
-        CacheInterface $cacheStorage,
-        DataInterfaceFactory $configFactory = null
+        CacheInterface $cacheStorage
     ) {
         $this->viewerLogger = $viewerLogger;
         $this->session = $session;
         $this->productMetadata = $productMetadata;
         $this->cacheStorage = $cacheStorage;
-        $this->configFactory = $configFactory ?? ObjectManager::getInstance()->get(DataInterfaceFactory::class);
     }
 
     /**
-     * Validate if notification popup can be shown and set the notification flag
-     *
      * @inheritdoc
      */
     public function isVisible(array $arguments)
     {
-        $config = $this->configFactory->create(['componentName' => 'release_notification']);
-        $releaseContentVerion = $config->get('release_notification/arguments/data/releaseContentVersion');
         $userId = $this->session->getUser()->getId();
         $cacheKey = self::$cachePrefix . $userId;
         $value = $this->cacheStorage->load($cacheKey);
+
         if ($value === false) {
-            $value = version_compare(
-                $this->viewerLogger->get($userId)->getLastViewVersion(),
-                $this->productMetadata->getVersion(),
-                '<'
-            );
+            $lastViewVersion = $this->viewerLogger->get($userId)->getLastViewVersion();
+            $value = ($lastViewVersion) ?
+                version_compare($lastViewVersion, $this->productMetadata->getVersion(), '<') : true;
             $this->cacheStorage->save(false, $cacheKey);
         }
-        if ($value) {
-            $value = version_compare(
-                $this->productMetadata->getVersion(),
-                $releaseContentVerion,
-                '<='
-            );
-        }
-        
         return (bool)$value;
     }
 

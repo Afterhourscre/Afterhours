@@ -168,7 +168,7 @@ class Full extends AbstractAction
      * @throws \Exception
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function execute($ids = null)
+    public function execute($ids = null): void
     {
         try {
             //Prepare indexer tables before full reindex
@@ -201,7 +201,7 @@ class Full extends AbstractAction
      * @return void
      * @throws \Exception
      */
-    private function prepareTables()
+    private function prepareTables(): void
     {
         $this->_defaultIndexerResource->getTableStrategy()->setUseIdxTable(false);
 
@@ -216,7 +216,7 @@ class Full extends AbstractAction
      * @return void
      * @throws \Exception
      */
-    private function truncateReplicaTables()
+    private function truncateReplicaTables(): void
     {
         foreach ($this->dimensionCollectionFactory->create() as $dimension) {
             $dimensionTable = $this->dimensionTableMaintainer->getMainReplicaTable($dimension);
@@ -233,7 +233,7 @@ class Full extends AbstractAction
      * @return void
      * @throws \Exception
      */
-    private function reindexProductTypeWithDimensions(DimensionalIndexerInterface $priceIndexer, string $typeId)
+    private function reindexProductTypeWithDimensions(DimensionalIndexerInterface $priceIndexer, string $typeId): void
     {
         $userFunctions = [];
         foreach ($this->dimensionCollectionFactory->create() as $dimensions) {
@@ -254,8 +254,11 @@ class Full extends AbstractAction
      * @return void
      * @throws \Exception
      */
-    private function reindexByBatches(DimensionalIndexerInterface $priceIndexer, array $dimensions, string $typeId)
-    {
+    private function reindexByBatches(
+        DimensionalIndexerInterface $priceIndexer,
+        array $dimensions,
+        string $typeId
+    ): void {
         foreach ($this->getBatchesForIndexer($typeId) as $batch) {
             $this->reindexByBatchWithDimensions($priceIndexer, $batch, $dimensions);
         }
@@ -267,6 +270,7 @@ class Full extends AbstractAction
      * @param string $typeId
      *
      * @return BatchIterator
+     * @throws \Exception
      */
     private function getBatchesForIndexer(string $typeId): BatchIterator
     {
@@ -275,9 +279,10 @@ class Full extends AbstractAction
         $select = $connection->select();
         $select->distinct(true);
         $select->from(['e' => $entityMetadata->getEntityTable()], $entityMetadata->getIdentifierField());
+        $select->where('type_id = ?', $typeId);
 
         return $this->batchQueryGenerator->generate(
-            $entityMetadata->getIdentifierField(),
+            $this->getProductMetaData()->getIdentifierField(),
             $select,
             $this->batchSizeCalculator->estimateBatchSize(
                 $connection,
@@ -300,14 +305,12 @@ class Full extends AbstractAction
         DimensionalIndexerInterface $priceIndexer,
         Select $batchQuery,
         array $dimensions
-    ) {
+    ): void {
         $entityIds = $this->getEntityIdsFromBatch($batchQuery);
 
         if (!empty($entityIds)) {
             $this->dimensionTableMaintainer->createMainTmpTable($dimensions);
             $temporaryTable = $this->dimensionTableMaintainer->getMainTmpTable($dimensions);
-            $this->_emptyTable($temporaryTable);
-
             $priceIndexer->executeByDimensions($dimensions, \SplFixedArray::fromArray($entityIds, false));
 
             // Sync data from temp table to index table
@@ -315,6 +318,7 @@ class Full extends AbstractAction
                 $temporaryTable,
                 $this->dimensionTableMaintainer->getMainReplicaTable($dimensions)
             );
+            $this->_defaultIndexerResource->getConnection()->dropTable($temporaryTable);
         }
     }
 
@@ -327,7 +331,7 @@ class Full extends AbstractAction
      * @return void
      * @throws \Exception
      */
-    private function reindexProductType(PriceInterface $priceIndexer, string $typeId)
+    private function reindexProductType(PriceInterface $priceIndexer, string $typeId): void
     {
         foreach ($this->getBatchesForIndexer($typeId) as $batch) {
             $this->reindexBatch($priceIndexer, $batch);
@@ -342,14 +346,13 @@ class Full extends AbstractAction
      * @return void
      * @throws \Exception
      */
-    private function reindexBatch(PriceInterface $priceIndexer, Select $batch)
+    private function reindexBatch(PriceInterface $priceIndexer, Select $batch): void
     {
         $entityIds = $this->getEntityIdsFromBatch($batch);
 
         if (!empty($entityIds)) {
             // Temporary table will created if not exists
             $idxTableName = $this->_defaultIndexerResource->getIdxTable();
-            $this->_emptyTable($idxTableName);
 
             if ($priceIndexer->getIsComposite()) {
                 $this->_copyRelationIndexData($entityIds);
@@ -371,6 +374,7 @@ class Full extends AbstractAction
      *
      * @param Select $batch
      * @return array
+     * @throws \Exception
      */
     private function getEntityIdsFromBatch(Select $batch): array
     {
@@ -383,6 +387,7 @@ class Full extends AbstractAction
      * Get product meta data
      *
      * @return EntityMetadataInterface
+     * @throws \Exception
      */
     private function getProductMetaData(): EntityMetadataInterface
     {
@@ -397,6 +402,7 @@ class Full extends AbstractAction
      * Get replica table
      *
      * @return string
+     * @throws \Exception
      */
     private function getReplicaTable(): string
     {
@@ -409,14 +415,15 @@ class Full extends AbstractAction
      * Replacement of tables from replica to main
      *
      * @return void
+     * @throws \Zend_Db_Statement_Exception
      */
-    private function switchTables()
+    private function switchTables(): void
     {
         // Switch dimension tables
         $mainTablesByDimension = [];
 
         foreach ($this->dimensionCollectionFactory->create() as $dimensions) {
-            $mainTablesByDimension[] = $this->dimensionTableMaintainer->getMainTable($dimensions);
+            $mainTablesByDimension[] = $this->dimensionTableMaintainer->getMainTableByDimensions($dimensions);
 
             //Move data from indexers with old realisation
             $this->moveDataFromReplicaTableToReplicaTables($dimensions);
@@ -437,8 +444,9 @@ class Full extends AbstractAction
      *
      * @param array $dimensions
      * @return void
+     * @throws \Zend_Db_Statement_Exception
      */
-    private function moveDataFromReplicaTableToReplicaTables(array $dimensions)
+    private function moveDataFromReplicaTableToReplicaTables(array $dimensions): void
     {
         if (!$dimensions) {
             return;
@@ -478,7 +486,8 @@ class Full extends AbstractAction
     /**
      * Retrieves the index table that should be used
      *
-     * @deprecated
+     * @deprecated 102.0.6
+     * @see only used in another deprecated method: _copyRelationIndexData
      */
     protected function getIndexTargetTable(): string
     {

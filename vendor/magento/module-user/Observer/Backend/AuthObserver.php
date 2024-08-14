@@ -21,6 +21,7 @@ use Magento\User\Model\UserFactory;
 /**
  * User backend observer model for authentication
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.CookieAndSessionMisuse)
  */
 class AuthObserver implements ObserverInterface
 {
@@ -125,7 +126,10 @@ class AuthObserver implements ObserverInterface
             $lockExpires = new \DateTime($lockExpires);
             if ($lockExpires > new \DateTime()) {
                 throw new UserLockedException(
-                    __('You did not sign in correctly or your account is temporarily disabled.')
+                    __(
+                        'The account sign-in was incorrect or your account is disabled temporarily. '
+                        . 'Please wait and try again later.'
+                    )
                 );
             }
         }
@@ -170,7 +174,10 @@ class AuthObserver implements ObserverInterface
         $updateLockExpires = false;
         $lockThreshInterval = new \DateInterval('PT' . $lockThreshold.'S');
         // set first failure date when this is first failure or last first failure expired
-        if (1 === $failuresNum || !$firstFailureDate || $now->diff($firstFailureDate) > $lockThreshInterval) {
+        if (1 === $failuresNum
+            || !$firstFailureDate
+            || ($now->getTimestamp() - $firstFailureDate->getTimestamp()) > $lockThreshold
+        ) {
             $newFirstFailureDate = $now;
             // otherwise lock user
         } elseif ($failuresNum >= $maxFailures) {
@@ -181,6 +188,7 @@ class AuthObserver implements ObserverInterface
 
     /**
      * Check whether the latest password is expired
+     *
      * Side-effect can be when passwords were changed with different lifetime configuration settings
      *
      * @param array $latestPassword

@@ -5,23 +5,32 @@
  */
 namespace Magento\CatalogRule\Model\Indexer\Product;
 
-use Magento\TestFramework\Helper\Bootstrap;
-use Magento\CatalogRule\Model\ResourceModel\Rule;
-use Magento\Catalog\Model\ResourceModel\Product\Collection;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\ResourceModel\Product\Collection;
+use Magento\CatalogRule\Model\ResourceModel\Rule;
 use Magento\Framework\Api\SearchCriteriaInterface;
 use Magento\Framework\Api\SortOrder;
+use Magento\TestFramework\Helper\Bootstrap;
 
 class PriceTest extends \PHPUnit\Framework\TestCase
 {
+    /**
+     * @var \Magento\Framework\ObjectManagerInterface
+     */
+    private $objectManager;
+
     /**
      * @var Rule
      */
     private $resourceRule;
 
-    protected function setUp()
+    /**
+     * @inheritdoc
+     */
+    protected function setUp(): void
     {
-        $this->resourceRule = Bootstrap::getObjectManager()->get(Rule::class);
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->resourceRule = $this->objectManager->get(Rule::class);
     }
 
     /**

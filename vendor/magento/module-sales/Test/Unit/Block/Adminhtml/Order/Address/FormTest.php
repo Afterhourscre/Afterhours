@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace Magento\Sales\Test\Unit\Block\Adminhtml\Order\Address;
 
+use Magento\Backend\Model\Session\Quote as QuoteSession;
 use Magento\Customer\Model\Metadata\Form as CustomerForm;
 use Magento\Customer\Model\Metadata\FormFactory as CustomerFormFactory;
 use Magento\Directory\Model\ResourceModel\Country\Collection;
@@ -17,16 +18,16 @@ use Magento\Framework\Data\FormFactory;
 use Magento\Framework\Registry;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Sales\Block\Adminhtml\Order\Address\Form;
+use Magento\Sales\Model\AdminOrder\Create;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Address;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
-use Magento\Backend\Model\Session\Quote as QuoteSession;
-use Magento\Sales\Model\AdminOrder\Create;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class FormTest extends \PHPUnit\Framework\TestCase
+class FormTest extends TestCase
 {
     /**
      * @var Form
@@ -54,16 +55,16 @@ class FormTest extends \PHPUnit\Framework\TestCase
     private $countriesCollection;
 
     /**
-     * @var Create|MockObject
-     */
-    private $orderCreate;
-
-    /**
      * @var QuoteSession|MockObject
      */
     private $sessionQuote;
 
-    protected function setUp()
+    /**
+     * @var Create|MockObject
+     */
+    private $orderCreate;
+
+    protected function setUp(): void
     {
         $objectManager = new ObjectManager($this);
 
@@ -77,6 +78,7 @@ class FormTest extends \PHPUnit\Framework\TestCase
             ->disableOriginalConstructor()
             ->setMethods(['getStoreId', 'getStore'])
             ->getMock();
+
         $this->orderCreate = $this->getMockBuilder(Create::class)
             ->disableOriginalConstructor()
             ->getMock();
@@ -94,6 +96,11 @@ class FormTest extends \PHPUnit\Framework\TestCase
                 '_orderCreate' => $this->orderCreate
             ]
         );
+
+        // Do not display VAT validation button on edit order address form
+        // Emulate fix done in controller
+        /** @see \Magento\Sales\Controller\Adminhtml\Order\Address::execute */
+        $this->addressBlock->setDisplayVatValidationButton(false);
     }
 
     public function testGetForm()
@@ -127,6 +134,7 @@ class FormTest extends \PHPUnit\Framework\TestCase
                 $select,
                 null
             );
+
         $address->method('getOrder')
             ->willReturn($order);
         $order->method('getStoreId')

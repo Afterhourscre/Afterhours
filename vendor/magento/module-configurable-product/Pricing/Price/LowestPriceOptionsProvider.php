@@ -10,7 +10,6 @@ use Magento\Catalog\Model\ResourceModel\Product\LinkedProductSelectBuilderInterf
 use Magento\Framework\App\ResourceConnection;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\Framework\App\ObjectManager;
 
 /**
  * Retrieve list of products where each product contains lower price than others at least for one possible price type
@@ -54,24 +53,25 @@ class LowestPriceOptionsProvider implements LowestPriceOptionsProviderInterface
         ResourceConnection $resourceConnection,
         LinkedProductSelectBuilderInterface $linkedProductSelectBuilder,
         CollectionFactory $collectionFactory,
-        StoreManagerInterface $storeManager = null
+        StoreManagerInterface $storeManager
     ) {
         $this->resource = $resourceConnection;
         $this->linkedProductSelectBuilder = $linkedProductSelectBuilder;
         $this->collectionFactory = $collectionFactory;
-        $this->storeManager = $storeManager
-            ?: ObjectManager::getInstance()->get(StoreManagerInterface::class);
+        $this->storeManager = $storeManager;
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getProducts(ProductInterface $product)
     {
-        $key = $this->storeManager->getStore()->getId() . '-' . $product->getId();
+        $productId = $product->getId();
+        $storeId = $product->getStoreId() ?: $this->storeManager->getStore()->getId();
+        $key = $storeId . '-' . $productId;
         if (!isset($this->linkedProductMap[$key])) {
             $productIds = $this->resource->getConnection()->fetchCol(
-                '(' . implode(') UNION (', $this->linkedProductSelectBuilder->build($product->getId())) . ')'
+                '(' . implode(') UNION (', $this->linkedProductSelectBuilder->build($productId, $storeId)) . ')'
             );
 
             $this->linkedProductMap[$key] = $this->collectionFactory->create()

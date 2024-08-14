@@ -67,7 +67,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             self::XML_PATH_EXPORT_LOCAL_VALID_PATH,
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
-
         return $paths;
     }
 

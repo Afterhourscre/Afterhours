@@ -3,49 +3,42 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\ReleaseNotification\Test\Unit\Model\Condition;
 
+use Magento\Backend\Model\Auth\Session;
+use Magento\Framework\App\CacheInterface;
+use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\ReleaseNotification\Model\Condition\CanViewNotification;
 use Magento\ReleaseNotification\Model\ResourceModel\Viewer\Logger;
 use Magento\ReleaseNotification\Model\Viewer\Log;
-use Magento\Framework\App\ProductMetadataInterface;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\Backend\Model\Auth\Session;
-use Magento\Framework\App\CacheInterface;
-use Magento\Framework\Config\DataInterfaceFactory;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-/**
- * Class CanViewNotificationTest
- */
-class CanViewNotificationTest extends \PHPUnit\Framework\TestCase
+class CanViewNotificationTest extends TestCase
 {
     /** @var CanViewNotification */
     private $canViewNotification;
 
-    /** @var  Logger|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var Logger|MockObject */
     private $viewerLoggerMock;
 
-    /** @var ProductMetadataInterface|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var ProductMetadataInterface|MockObject */
     private $productMetadataMock;
 
-    /** @var Session|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var Session|MockObject */
     private $sessionMock;
 
-    /** @var  Log|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var Log|MockObject */
     private $logMock;
 
-    /** @var  $cacheStorageMock \PHPUnit_Framework_MockObject_MockObject|CacheInterface */
+    /** @var MockObject|CacheInterface */
     private $cacheStorageMock;
 
-    /** @var  $dataInterfaceFactoryMock \PHPUnit_Framework_MockObject_MockObject|DataInterfaceFactory */
-    private $dataInterfaceFactoryMock;
-
-    public function setUp()
+    protected function setUp(): void
     {
-        $this->dataInterfaceFactoryMock = $this->getMockBuilder(DataInterfaceFactory::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['create', 'get'])
-            ->getMock();
         $this->cacheStorageMock = $this->getMockBuilder(CacheInterface::class)
             ->getMockForAbstractClass();
         $this->logMock = $this->getMockBuilder(Log::class)
@@ -59,7 +52,7 @@ class CanViewNotificationTest extends \PHPUnit\Framework\TestCase
             ->getMock();
         $this->productMetadataMock = $this->getMockBuilder(ProductMetadataInterface::class)
             ->disableOriginalConstructor()
-            ->getMock();
+            ->getMockForAbstractClass();
         $objectManager = new ObjectManager($this);
         $this->canViewNotification = $objectManager->getObject(
             CanViewNotification::class,
@@ -68,21 +61,12 @@ class CanViewNotificationTest extends \PHPUnit\Framework\TestCase
                 'session' => $this->sessionMock,
                 'productMetadata' => $this->productMetadataMock,
                 'cacheStorage' => $this->cacheStorageMock,
-                'configFactory' => $this->dataInterfaceFactoryMock,
             ]
         );
     }
 
     public function testIsVisibleLoadDataFromCache()
     {
-        $this->dataInterfaceFactoryMock->expects($this->once())
-            ->method('create')
-            ->with(['componentName' => 'release_notification'])
-            ->willReturn($this->dataInterfaceFactoryMock);
-        $this->dataInterfaceFactoryMock->expects($this->once())
-            ->method('get')
-            ->with('release_notification/arguments/data/releaseContentVersion')
-            ->willReturn('2.2.4');
         $this->sessionMock->expects($this->once())
             ->method('getUser')
             ->willReturn($this->sessionMock);
@@ -93,26 +77,17 @@ class CanViewNotificationTest extends \PHPUnit\Framework\TestCase
             ->method('load')
             ->with('release-notification-popup-1')
             ->willReturn("0");
-        $this->assertEquals(false, $this->canViewNotification->isVisible([]));
+        $this->assertFalse($this->canViewNotification->isVisible([]));
     }
 
     /**
      * @param bool $expected
      * @param string $version
      * @param string|null $lastViewVersion
-     * @param string $releaseContentVersion
      * @dataProvider isVisibleProvider
      */
-    public function testIsVisible(bool $expected, string $version, $lastViewVersion, string $releaseContentVersion)
+    public function testIsVisible($expected, $version, $lastViewVersion)
     {
-        $this->dataInterfaceFactoryMock->expects($this->once())
-            ->method('create')
-            ->with(['componentName' => 'release_notification'])
-            ->willReturn($this->dataInterfaceFactoryMock);
-        $this->dataInterfaceFactoryMock->expects($this->once())
-            ->method('get')
-            ->with('release_notification/arguments/data/releaseContentVersion')
-            ->willReturn($releaseContentVersion);
         $this->cacheStorageMock->expects($this->once())
             ->method('load')
             ->with('release-notification-popup-1')
@@ -145,16 +120,13 @@ class CanViewNotificationTest extends \PHPUnit\Framework\TestCase
     public function isVisibleProvider()
     {
         return [
-            [false, '2.2.1-dev', '999.999.999-alpha', '2.2.0'],
-            [true, '2.2.1-dev', '2.0.0', '2.2.1'],
-            [true, '2.2.1-dev', null, '2.2.1'],
-            [false, '2.2.1-dev', '2.2.1', '2.2.0'],
-            [true, '2.2.1-dev', '2.2.0', '2.2.1'],
-            [true, '2.3.0', '2.2.0', '2.3.0'],
-            [false, '2.2.2', '2.2.2', '2.2.2'],
-            [false, '2.2.5', '2.2.4', '2.2.4'],
-            [true, '2.2.6', '2.2.5', '2.2.6'],
-            [true, '2.2.7', '2.2.6', '2.2.7'],
+            [false, '2.2.1-dev', '999.999.999-alpha'],
+            [true, '2.2.1-dev', '2.0.0'],
+            [true, '2.2.1-dev', null],
+            [false, '2.2.1-dev', '2.2.1'],
+            [true, '2.2.1-dev', '2.2.0'],
+            [true, '2.3.0', '2.2.0'],
+            [false, '2.2.2', '2.2.2'],
         ];
     }
 }

@@ -50,7 +50,7 @@ class LayoutUpdateValidator implements ValidatorInterface
      * @param PageInterface $page
      * @throws LocalizedException
      */
-    public function validate(PageInterface $page)
+    public function validate(PageInterface $page): void
     {
         $this->validateRequiredFields($page);
         $this->validateLayoutUpdate($page);
@@ -63,7 +63,7 @@ class LayoutUpdateValidator implements ValidatorInterface
      * @param PageInterface $page
      * @throws LocalizedException
      */
-    private function validateRequiredFields(PageInterface $page)
+    private function validateRequiredFields(PageInterface $page): void
     {
         if (empty($page->getTitle())) {
             throw new LocalizedException(__('Required field "%1" is empty.', 'title'));
@@ -76,7 +76,7 @@ class LayoutUpdateValidator implements ValidatorInterface
      * @param PageInterface $page
      * @throws LocalizedException
      */
-    private function validateLayoutUpdate(PageInterface $page)
+    private function validateLayoutUpdate(PageInterface $page): void
     {
         $layoutXmlValidator = $this->getLayoutValidator();
 
@@ -86,9 +86,7 @@ class LayoutUpdateValidator implements ValidatorInterface
             ) {
                 throw new LocalizedException(__('Layout update is invalid'));
             }
-        } catch (ValidationException $e) {
-            throw new LocalizedException(__('Layout update is invalid'));
-        } catch (ValidationSchemaException $e) {
+        } catch (ValidationException|ValidationSchemaException $e) {
             throw new LocalizedException(__('Layout update is invalid'));
         }
     }
@@ -99,7 +97,7 @@ class LayoutUpdateValidator implements ValidatorInterface
      * @param PageInterface $page
      * @throws LocalizedException
      */
-    private function validateCustomLayoutUpdate(PageInterface $page)
+    private function validateCustomLayoutUpdate(PageInterface $page): void
     {
         $layoutXmlValidator = $this->getLayoutValidator();
 
@@ -109,9 +107,7 @@ class LayoutUpdateValidator implements ValidatorInterface
             ) {
                 throw new LocalizedException(__('Custom layout update is invalid'));
             }
-        } catch (ValidationException $e) {
-            throw new LocalizedException(__('Custom layout update is invalid'));
-        } catch (ValidationSchemaException $e) {
+        } catch (ValidationException|ValidationSchemaException $e) {
             throw new LocalizedException(__('Custom layout update is invalid'));
         }
     }

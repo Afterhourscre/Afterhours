@@ -13,7 +13,7 @@ use Magento\Framework\View\Element\UiComponent\ContextInterface;
 use Magento\Ui\Component\AbstractComponent;
 
 /**
- * Provide validation of allowed massaction for user.
+ * Class MassAction for Component Product
  */
 class MassAction extends AbstractComponent
 {
@@ -45,14 +45,15 @@ class MassAction extends AbstractComponent
     /**
      * @inheritdoc
      */
-    public function prepare()
+    public function prepare() : void
     {
         $config = $this->getConfiguration();
 
         foreach ($this->getChildComponents() as $actionComponent) {
             $actionType = $actionComponent->getConfiguration()['type'];
             if ($this->isActionAllowed($actionType)) {
-                $config['actions'][] = array_merge($actionComponent->getConfiguration(), ['__disableTmpl' => true]);
+                // phpcs:ignore Magento2.Performance.ForeachArrayMerge
+                $config['actions'][] = array_merge($actionComponent->getConfiguration());
             }
         }
         $origConfig = $this->getConfiguration();
@@ -75,16 +76,18 @@ class MassAction extends AbstractComponent
     }
 
     /**
-     * Check if the given type of action is allowed.
+     * Check if the given type of action is allowed
      *
      * @param string $actionType
      * @return bool
      */
-    public function isActionAllowed(string $actionType) : bool
+    public function isActionAllowed($actionType) : bool
     {
         $isAllowed = true;
         switch ($actionType) {
             case 'delete':
+                $isAllowed = $this->authorization->isAllowed('Magento_Catalog::products');
+                break;
             case 'status':
                 $isAllowed = $this->authorization->isAllowed('Magento_Catalog::products');
                 break;
@@ -94,7 +97,6 @@ class MassAction extends AbstractComponent
             default:
                 break;
         }
-
         return $isAllowed;
     }
 }

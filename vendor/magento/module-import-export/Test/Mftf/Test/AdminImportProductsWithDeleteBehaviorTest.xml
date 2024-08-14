@@ -14,13 +14,14 @@
             <stories value="Verify Magento native import products with delete behavior."/>
             <features value="Import/Export"/>
             <title value="Verify Magento native import products with delete behavior."/>
-            <severity value="CRITICAL"/>
-            <testCaseId value="MAGETWO-79495"/>
+            <severity value="BLOCKER"/>
+            <testCaseId value="MAGETWO-30587"/>
             <group value="importExport"/>
+            <group value="cloud"/>
         </annotations>
         <before>
             <!--Create Simple product-->
-            <createData entity="SimpleProduct3" stepKey="createSimpleProduct">
+            <createData entity="SimpleProduct2" stepKey="createSimpleProduct">
                 <field key="name">Simple Product for Test</field>
                 <field key="sku">Simple Product for Test</field>
             </createData>
@@ -34,12 +35,11 @@
                 <field key="name">Api Downloadable Product for Test</field>
                 <field key="sku">Api Downloadable Product for Test</field>
             </createData>
-            <actionGroup ref="LoginAsAdmin" stepKey="loginAsAdmin"/>
+            <actionGroup ref="AdminLoginActionGroup" stepKey="loginAsAdmin"/>
         </before>
         <after>
-            <amOnPage url="{{AdminProductIndexPage.url}}" stepKey="navigateToProductIndexPage"/>
-            <actionGroup ref="clearFiltersAdminDataGrid" stepKey="clearProductFilters"/>
-            <actionGroup ref="logout" stepKey="logoutFromAdmin"/>
+            <actionGroup ref="AdminClearFiltersActionGroup" stepKey="clearProductFilters"/>
+            <actionGroup ref="AdminLogoutActionGroup" stepKey="logoutFromAdmin"/>
         </after>
         <amOnPage url="{{AdminImportIndexPage.url}}" stepKey="goToImportIndexPage"/>
         <selectOption selector="{{AdminImportMainSection.entityType}}" userInput="Products" stepKey="selectProductsOption"/>
@@ -48,7 +48,8 @@
         <attachFile selector="{{AdminImportMainSection.selectFileToImport}}" userInput="catalog_products.csv" stepKey="attachFileForImport"/>
         <click selector="{{AdminImportHeaderSection.checkDataButton}}" stepKey="clickCheckDataButton"/>
         <click selector="{{AdminImportMainSection.importButton}}" stepKey="clickImportButton"/>
-        <see selector="{{AdminMessagesSection.successMessage}}" userInput="Import successfully done" stepKey="assertSuccessMessage"/>
+        <see selector="{{AdminImportValidationMessagesSection.success}}" userInput="Import successfully done" stepKey="assertSuccessMessage"/>
+        <see selector="{{AdminImportValidationMessagesSection.notice}}" userInput="Created: 0, Updated: 0, Deleted: 3" stepKey="assertNotice"/>
         <actionGroup ref="SearchForProductOnBackendActionGroup" stepKey="searchSimpleProductOnBackend">
             <argument name="product" value="$$createSimpleProduct$$"/>
         </actionGroup>

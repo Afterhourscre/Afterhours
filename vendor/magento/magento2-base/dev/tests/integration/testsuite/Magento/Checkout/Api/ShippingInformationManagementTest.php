@@ -13,6 +13,7 @@ use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Api\Data\ShippingAssignmentInterface;
 use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Framework\Exception\InputException;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -43,7 +44,7 @@ class ShippingInformationManagementTest extends TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $objectManager = Bootstrap::getObjectManager();
         $this->management = $objectManager->get(ShippingInformationManagementInterface::class);
@@ -60,11 +61,9 @@ class ShippingInformationManagementTest extends TestCase
      *
      * @magentoDataFixture Magento/Sales/_files/quote_with_customer.php
      * @magentoDataFixture Magento/Customer/_files/customer_with_addresses.php
-     * @dataProvider differentAddressesDataProvider
-     * @expectedException  \Magento\Framework\Exception\InputException
-     * @expectedExceptionMessage Unable to save shipping information. Please check input data.
+     * @dataProvider getAddressesVariation
      */
-    public function testDifferentAddresses(bool $swapShipping)
+    public function testDifferentAddresses(bool $swapShipping): void
     {
         $cart = $this->cartRepo->getForCustomer(1);
         $otherCustomer = $this->customerRepo->get('customer_with_addresses@test.com');
@@ -89,17 +88,27 @@ class ShippingInformationManagementTest extends TestCase
         $shippingInformation->setBillingAddress($billingAddress);
         $shippingInformation->setShippingAddress($shippingAddress);
         $shippingInformation->setShippingMethodCode('flatrate');
+
+        $this->expectExceptionMessage(
+            sprintf(
+                'The shipping information was unable to be saved. Error: "Invalid customer address id %s"',
+                $address->getCustomerAddressId()
+            )
+        );
+        $this->expectException(InputException::class);
         $this->management->saveAddressInformation($cart->getId(), $shippingInformation);
     }
 
     /**
+     * Different variations for addresses test.
+     *
      * @return array
      */
-    public function differentAddressesDataProvider(): array
+    public function getAddressesVariation(): array
     {
         return [
             'Shipping address swap' => [true],
-            'Billing address swap' => [false],
+            'Billing address swap' => [false]
         ];
     }
 }

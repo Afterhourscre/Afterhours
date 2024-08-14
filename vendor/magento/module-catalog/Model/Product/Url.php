@@ -30,8 +30,6 @@ class Url extends \Magento\Framework\DataObject
     protected $filter;
 
     /**
-     * Store manager
-     *
      * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $storeManager;
@@ -47,7 +45,7 @@ class Url extends \Magento\Framework\DataObject
     protected $urlFinder;
 
     /**
-     * @var ScopeConfigInterface
+     * @var \Magento\Framework\App\Config\ScopeConfigInterface
      */
     private $scopeConfig;
 
@@ -101,15 +99,10 @@ class Url extends \Magento\Framework\DataObject
      */
     public function getProductUrl($product, $useSid = null)
     {
-        if ($useSid === null) {
-            $useSid = $this->sidResolver->getUseSessionInUrl();
-        }
-
         $params = [];
         if (!$useSid) {
             $params['_nosid'] = true;
         }
-
         return $this->getUrl($product, $params);
     }
 
@@ -156,17 +149,15 @@ class Url extends \Magento\Framework\DataObject
                     UrlRewrite::ENTITY_ID => $product->getId(),
                     UrlRewrite::ENTITY_TYPE => \Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator::ENTITY_TYPE,
                     UrlRewrite::STORE_ID => $storeId,
+                    UrlRewrite::REDIRECT_TYPE => 0
                 ];
                 $useCategories = $this->scopeConfig->getValue(
                     \Magento\Catalog\Helper\Product::XML_PATH_PRODUCT_URL_USE_CATEGORY,
                     \Magento\Store\Model\ScopeInterface::SCOPE_STORE
                 );
 
-                if ($useCategories && $categoryId) {
-                    $filterData[UrlRewrite::METADATA]['category_id'] = $categoryId;
-                } elseif (!$useCategories) {
-                    $filterData[UrlRewrite::METADATA]['category_id'] = '';
-                }
+                $filterData[UrlRewrite::METADATA]['category_id']
+                    = $categoryId && $useCategories ? $categoryId : '';
 
                 $rewrite = $this->urlFinder->findOneByData($filterData);
 
@@ -204,7 +195,6 @@ class Url extends \Magento\Framework\DataObject
         }
 
         $url = $this->urlFactory->create()->setScope($storeId);
-
         return $url->getUrl($routePath, $routeParams);
     }
 }

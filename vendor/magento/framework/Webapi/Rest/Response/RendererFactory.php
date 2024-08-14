@@ -1,7 +1,5 @@
 <?php
 /**
- * Factory of REST renders
- *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
@@ -9,6 +7,9 @@ namespace Magento\Framework\Webapi\Rest\Response;
 
 use Magento\Framework\Phrase;
 
+/**
+ * Factory of REST renders
+ */
 class RendererFactory
 {
     /**
@@ -33,7 +34,7 @@ class RendererFactory
      */
     public function __construct(
         \Magento\Framework\ObjectManagerInterface $objectManager,
-        \Magento\Framework\Webapi\Rest\Request $request,
+        \Magento\Framework\App\RequestInterface $request,
         array $renders = []
     ) {
         $this->_objectManager = $objectManager;
@@ -67,14 +68,16 @@ class RendererFactory
      */
     protected function _getRendererClass()
     {
-        $acceptTypes = $this->_request->getAcceptTypes();
-        if (!is_array($acceptTypes)) {
-            $acceptTypes = [$acceptTypes];
-        }
+        $acceptTypes = $this->getAcceptTypes();
         foreach ($acceptTypes as $acceptType) {
-            $renderer = $this->getRendererConfig($acceptType);
-            if ($renderer !== null) {
-                return $renderer['model'];
+            foreach ($this->_renders as $rendererConfig) {
+                $rendererType = $rendererConfig['type'];
+                if ($acceptType == $rendererType
+                    || $acceptType == current(explode('/', $rendererType ?? '')) . '/*'
+                    || $acceptType == '*/*'
+                ) {
+                    return $rendererConfig['model'];
+                }
             }
         }
         /** If server does not have renderer for any of the accepted types it SHOULD send 406 (not acceptable). */
@@ -90,28 +93,40 @@ class RendererFactory
     }
 
     /**
-     * Get renderer config by accept type.
+     * Retrieve accept types understandable by requester in a form of array sorted by quality in descending order.
      *
-     * @param string $acceptType
-     * @return array|null
+     * @return string[]
      */
-    private function getRendererConfig($acceptType)
+    private function getAcceptTypes()
     {
-        // If Accept type = '*/*' then return default renderer.
-        if ($acceptType == '*/*' && isset($this->_renders['default'])) {
-            return $this->_renders['default'];
-        }
-        
-        foreach ($this->_renders as $rendererConfig) {
-            $rendererType = $rendererConfig['type'];
-            if ($acceptType == $rendererType
-                || $acceptType == current(explode('/', $rendererType)) . '/*'
-                || $acceptType == '*/*'
-            ) {
-                return $rendererConfig;
-            }
-        }
+        $qualityToTypes = [];
+        $orderedTypes = [];
 
-        return null;
+        foreach (preg_split('/,\s*/', $this->_request->getHeader('Accept') ?? '') as $definition) {
+            $typeWithQ = explode(';', $definition);
+            $mimeType = trim(array_shift($typeWithQ));
+
+            // check MIME type validity
+            if (!preg_match('~^([0-9a-z*+\-]+)(?:/([0-9a-z*+\-\.]+))?$~i', $mimeType)) {
+                continue;
+            }
+            $quality = '1.0';
+            // default value for quality
+
+            if ($typeWithQ) {
+                $qAndValue = explode('=', $typeWithQ[0]);
+
+                if (2 == count($qAndValue)) {
+                    $quality = $qAndValue[1];
+                }
+            }
+            $qualityToTypes[$quality][$mimeType] = true;
+        }
+        krsort($qualityToTypes);
+
+        foreach ($qualityToTypes as $typeList) {
+            $orderedTypes += $typeList;
+        }
+        return empty($orderedTypes) ? ['*/*'] : array_keys($orderedTypes);
     }
 }

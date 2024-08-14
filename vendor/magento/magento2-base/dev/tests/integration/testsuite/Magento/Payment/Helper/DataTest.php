@@ -23,7 +23,7 @@ class DataTest extends TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -44,7 +44,7 @@ class DataTest extends TestCase
     }
 
     /**
-     * Test to load Payment method title from the store config
+     * Test to load Payment method title from store config
      *
      * @magentoConfigFixture current_store payment/cashondelivery/title Cash On Delivery Title Of The Method
      */
@@ -55,7 +55,7 @@ class DataTest extends TestCase
         $this->assertEquals(
             'Cash On Delivery Title Of The Method',
             $result['cashondelivery']['label'],
-            'Payment method title is not loaded from the store config'
+            'Payment method title is not loaded from store config'
         );
     }
 }

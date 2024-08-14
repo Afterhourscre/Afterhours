@@ -1,16 +1,21 @@
 <?php
 /**
+ *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Email\Controller\Adminhtml\Email\Template;
 
 use Magento\Email\Controller\Adminhtml\Email\Template;
+use Magento\Framework\App\Action\HttpGetActionInterface;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 
 /**
  * Rendering email template preview.
  */
-class Preview extends Template
+class Preview extends Template implements HttpGetActionInterface, HttpPostActionInterface
 {
     /**
      * Preview transactional email action.

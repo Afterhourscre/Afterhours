@@ -9,16 +9,16 @@ namespace Magento\Backend\Block;
 /**
  * Backend menu block
  *
- * @api
- * @method \Magento\Backend\Block\Menu setAdditionalCacheKeyInfo(array $cacheKeyInfo)
+ * @method $this setAdditionalCacheKeyInfo(array $cacheKeyInfo)
  * @method array getAdditionalCacheKeyInfo()
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @api
  * @since 100.0.2
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Menu extends \Magento\Backend\Block\Template
 {
-    const CACHE_TAGS = 'BACKEND_MAINMENU';
+    public const CACHE_TAGS = 'BACKEND_MAINMENU';
 
     /**
      * @var string
@@ -75,21 +75,22 @@ class Menu extends \Magento\Backend\Block\Template
     private $anchorRenderer;
 
     /**
-     * @var ConfigInterface
+     * @var \Magento\Framework\App\Route\ConfigInterface
      */
     private $routeConfig;
 
     /**
-     * @param Template\Context $context
+     * @param \Magento\Backend\Block\Template\Context $context
      * @param \Magento\Backend\Model\UrlInterface $url
      * @param \Magento\Backend\Model\Menu\Filter\IteratorFactory $iteratorFactory
      * @param \Magento\Backend\Model\Auth\Session $authSession
      * @param \Magento\Backend\Model\Menu\Config $menuConfig
      * @param \Magento\Framework\Locale\ResolverInterface $localeResolver
-     * @param \Magento\Framework\App\Route\ConfigInterface $routeConfig
      * @param array $data
      * @param MenuItemChecker|null $menuItemChecker
      * @param AnchorRenderer|null $anchorRenderer
+     * @param \Magento\Framework\App\Route\ConfigInterface|null $routeConfig
+     *
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
@@ -346,6 +347,11 @@ class Menu extends \Magento\Backend\Block\Template
             }
             $result[] = ['place' => $place, 'colbrake' => $colbrake];
         }
+
+        if (isset($result[1]) && $result[1]['colbrake'] === true && isset($result[2])) {
+            $result[2]['colbrake'] = true;
+        }
+
         return $result;
     }
 
@@ -355,7 +361,7 @@ class Menu extends \Magento\Backend\Block\Template
      * @param \Magento\Backend\Model\Menu\Item $menuItem
      * @param int $level
      * @param int $limit
-     * @param $id int
+     * @param int|null $id
      * @return string HTML code
      */
     protected function _addSubMenu($menuItem, $level, $limit, $id = null)
@@ -365,7 +371,7 @@ class Menu extends \Magento\Backend\Block\Template
             return $output;
         }
         $output .= '<div class="submenu"' . ($level == 0 && isset($id) ? ' aria-labelledby="' . $id . '"' : '') . '>';
-        $colStops = null;
+        $colStops = [];
         if ($level == 0 && $limit) {
             $colStops = $this->_columnBrake($menuItem->getChildren(), $limit);
             $output .= '<strong class="submenu-title">' . $this->_getAnchorLabel($menuItem) . '</strong>';

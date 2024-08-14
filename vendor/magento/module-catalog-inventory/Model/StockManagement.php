@@ -6,17 +6,22 @@
 namespace Magento\CatalogInventory\Model;
 
 use Magento\CatalogInventory\Api\Data\StockItemInterface;
+use Magento\CatalogInventory\Api\RegisterProductSaleInterface;
+use Magento\CatalogInventory\Api\RevertProductSaleInterface;
 use Magento\CatalogInventory\Api\StockConfigurationInterface;
 use Magento\CatalogInventory\Api\StockManagementInterface;
 use Magento\CatalogInventory\Model\ResourceModel\QtyCounterInterface;
 use Magento\CatalogInventory\Model\Spi\StockRegistryProviderInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\CatalogInventory\Model\ResourceModel\Stock as ResourceStock;
+use Magento\Framework\Exception\LocalizedException;
 
 /**
- * Class StockManagement
+ * Implements a few interfaces for backward compatibility
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class StockManagement implements StockManagementInterface
+class StockManagement implements StockManagementInterface, RegisterProductSaleInterface, RevertProductSaleInterface
 {
     /**
      * @var StockRegistryProviderInterface
@@ -89,7 +94,8 @@ class StockManagement implements StockManagementInterface
      * @param string[] $items
      * @param int $websiteId
      * @return StockItemInterface[]
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws StockStateException
+     * @throws LocalizedException
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function registerProductsSale($items, $websiteId = null)
@@ -116,8 +122,8 @@ class StockManagement implements StockManagementInterface
                 && !$this->stockState->checkQty($productId, $orderedQty, $stockItem->getWebsiteId())
             ) {
                 $this->getResource()->commit();
-                throw new \Magento\Framework\Exception\LocalizedException(
-                    __('Not all of your products are available in the requested quantity.')
+                throw new StockStateException(
+                    __('Some of the products are out of stock.')
                 );
             }
             if ($this->canSubtractQty($stockItem)) {
@@ -135,7 +141,7 @@ class StockManagement implements StockManagementInterface
         }
         $this->qtyCounter->correctItemsQty($registeredItems, $websiteId, '-');
         $this->getResource()->commit();
-        
+
         return $fullSaveItems;
     }
 

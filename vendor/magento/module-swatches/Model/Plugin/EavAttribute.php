@@ -9,11 +9,13 @@ use Magento\Catalog\Model\ResourceModel\Eav\Attribute;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Serialize\Serializer\Json;
-use Magento\Swatches\Model\Swatch;
 use Magento\Swatches\Model\ResourceModel\Swatch as SwatchResource;
+use Magento\Swatches\Model\Swatch;
 
 /**
  * Plugin model for Catalog Resource Attribute
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 class EavAttribute
 {
@@ -28,6 +30,11 @@ class EavAttribute
      * Base option title used for string operations to detect is option already exists or new
      */
     const BASE_OPTION_TITLE = 'option';
+
+    /**
+     * Prefix added to option value added through API
+     */
+    private const API_OPTION_PREFIX = 'id_';
 
     /**
      * @var \Magento\Swatches\Model\ResourceModel\Swatch\CollectionFactory
@@ -189,7 +196,9 @@ class EavAttribute
 
         if (!empty($optionsArray) && is_array($optionsArray)) {
             $optionsArray = $this->prepareOptionIds($optionsArray);
-            $attributeSavedOptions = $attribute->getSource()->getAllOptions();
+            $adminStoreAttribute = clone $attribute;
+            $adminStoreAttribute->setStoreId(self::DEFAULT_STORE_ID);
+            $attributeSavedOptions = $adminStoreAttribute->getSource()->getAllOptions();
             $this->prepareOptionLinks($optionsArray, $attributeSavedOptions);
         }
 
@@ -227,10 +236,9 @@ class EavAttribute
     {
         $dependencyArray = [];
         if (is_array($optionsArray['value'])) {
-            $optionCounter = 1;
-            foreach (array_keys($optionsArray['value']) as $baseOptionId) {
-                $dependencyArray[$baseOptionId] = $attributeSavedOptions[$optionCounter]['value'];
-                $optionCounter++;
+            $options = array_column($attributeSavedOptions, 'value', 'label');
+            foreach ($optionsArray['value'] as $id => $labels) {
+                $dependencyArray[$id] = $options[$labels[self::DEFAULT_STORE_ID]];
             }
         }
 
@@ -285,7 +293,7 @@ class EavAttribute
      * Clean swatch option values after switching to the dropdown type.
      *
      * @param array $attributeOptions
-     * @param int|null  $swatchType
+     * @param int|null $swatchType
      * @throws \Magento\Framework\Exception\LocalizedException
      */
     private function cleanEavAttributeOptionSwatchValues(array $attributeOptions, int $swatchType = null)
@@ -309,6 +317,8 @@ class EavAttribute
     }
 
     /**
+     * Get the visual swatch type based on its value
+     *
      * @param string $value
      * @return int
      */
@@ -342,7 +352,7 @@ class EavAttribute
                 }
                 $defaultSwatchValue = reset($storeValues);
                 foreach ($storeValues as $storeId => $value) {
-                    if (!$value) {
+                    if ($value === null || $value === '') {
                         $value = $defaultSwatchValue;
                     }
                     $swatch = $this->loadSwatchIfExists($optionId, $storeId);
@@ -368,8 +378,9 @@ class EavAttribute
      */
     protected function getAttributeOptionId($optionId)
     {
-        if (substr($optionId, 0, 6) == self::BASE_OPTION_TITLE) {
-            $optionId = isset($this->dependencyArray[$optionId]) ? $this->dependencyArray[$optionId] : null;
+        if (strpos((string)$optionId, self::BASE_OPTION_TITLE) === 0 ||
+            strpos((string)$optionId, self::API_OPTION_PREFIX) === 0) {
+            $optionId = $this->dependencyArray[$optionId] ?? null;
         }
         return $optionId;
     }
@@ -447,13 +458,10 @@ class EavAttribute
         if (!empty($defaultValue)) {
             /** @var \Magento\Swatches\Model\Swatch $swatch */
             $swatch = $this->swatchFactory->create();
-            // created and removed on frontend option not exists in dependency array
-            if (substr($defaultValue, 0, 6) == self::BASE_OPTION_TITLE &&
-                isset($this->dependencyArray[$defaultValue])
-            ) {
-                $defaultValue = $this->dependencyArray[$defaultValue];
-            }
-            $swatch->getResource()->saveDefaultSwatchOption($attribute->getId(), $defaultValue);
+            $swatch->getResource()->saveDefaultSwatchOption(
+                $attribute->getId(),
+                $this->getAttributeOptionId($defaultValue)
+            );
         }
     }
 
@@ -503,6 +511,10 @@ class EavAttribute
     }
 
     /**
+     * Modifies Attribute::usesSource() response
+     *
+     * Returns true if attribute type is swatch
+     *
      * @param Attribute $attribute
      * @param bool $result
      * @return bool

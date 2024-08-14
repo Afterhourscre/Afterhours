@@ -6,6 +6,7 @@
 ?>
 
 <?php
+// @codingStandardsIgnoreFile
 $idSuffix = $block->getIdSuffix() ? $block->getIdSuffix() : '';
 /** @var \Magento\Bundle\Pricing\Render\FinalPriceBox $block */
 
@@ -18,6 +19,13 @@ $maximalPrice = $finalPriceModel->getMaximalPrice();
 $regularPriceModel = $block->getPriceType('regular_price');
 $maximalRegularPrice = $regularPriceModel->getMaximalPrice();
 $minimalRegularPrice = $regularPriceModel->getMinimalPrice();
+$regularPriceAttributes = [
+    'display_label'     => __('Regular Price'),
+    'price_id'          => $block->getPriceId('old-price-' . $idSuffix),
+    'include_container' => true,
+    'skip_adjustments'  => false
+];
+$renderMinimalRegularPrice = $block->renderAmount($minimalRegularPrice, $regularPriceAttributes);
 ?>
 <?php if ($block->getSaleableItem()->getPriceView()) : ?>
     <p class="minimal-price">
@@ -28,12 +36,7 @@ $minimalRegularPrice = $regularPriceModel->getMinimalPrice();
         ]); ?>
         <?php if ($minimalPrice < $minimalRegularPrice) : ?>
             <span class="old-price">
-                <?= /* @noEscape */ $block->renderAmount($minimalRegularPrice, [
-                    'display_label'     => __('Regular Price'),
-                    'price_id'          => $block->getPriceId('old-price-' . $idSuffix),
-                    'include_container' => true,
-                    'skip_adjustments'  => true
-                ]); ?>
+                <?= /* @noEscape */ $renderMinimalRegularPrice ?>
             </span>
         <?php endif ?>
     </p>
@@ -48,12 +51,7 @@ $minimalRegularPrice = $regularPriceModel->getMinimalPrice();
             ]); ?>
             <?php if ($minimalPrice < $minimalRegularPrice) : ?>
                 <span class="old-price">
-                    <?= /* @noEscape */ $block->renderAmount($minimalRegularPrice, [
-                        'display_label'     => __('Regular Price'),
-                        'price_id'          => $block->getPriceId('old-price-' . $idSuffix),
-                        'include_container' => true,
-                        'skip_adjustments'  => true
-                    ]); ?>
+                    <?= /* @noEscape */ $renderMinimalRegularPrice ?>
                 </span>
             <?php endif ?>
         </p>
@@ -66,12 +64,7 @@ $minimalRegularPrice = $regularPriceModel->getMinimalPrice();
             ]); ?>
             <?php if ($maximalPrice < $maximalRegularPrice) : ?>
                 <span class="old-price">
-                    <?= /* @noEscape */ $block->renderAmount($maximalRegularPrice, [
-                        'display_label'     => __('Regular Price'),
-                        'price_id'          => $block->getPriceId('old-price-' . $idSuffix),
-                        'include_container' => true,
-                        'skip_adjustments'  => true
-                    ]); ?>
+                    <?= /* @noEscape */ $block->renderAmount($maximalRegularPrice, $regularPriceAttributes); ?>
                 </span>
             <?php endif ?>
         </p>
@@ -82,12 +75,7 @@ $minimalRegularPrice = $regularPriceModel->getMinimalPrice();
         ]); ?>
         <?php if ($minimalPrice < $minimalRegularPrice) : ?>
             <span class="old-price">
-                <?= /* @noEscape */ $block->renderAmount($minimalRegularPrice, [
-                    'display_label'     => __('Regular Price'),
-                    'price_id'          => $block->getPriceId('old-price-' . $idSuffix),
-                    'include_container' => true,
-                    'skip_adjustments'  => true
-                ]); ?>
+                <?= /* @noEscape */ $renderMinimalRegularPrice ?>
             </span>
         <?php endif ?>
     <?php endif ?>

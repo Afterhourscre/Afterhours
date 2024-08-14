@@ -9,79 +9,119 @@
 <tests xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:mftf:Test/etc/testSchema.xsd">
     <test name="AllowedCountriesRestrictionApplyOnBackendTest">
         <annotations>
+            <features value="Customer"/>
+            <stories value="Country filter"/>
             <title value="Country filter on Customers page when allowed countries restriction for a default website is applied"/>
             <description value="Country filter on Customers page when allowed countries restriction for a default website is applied"/>
-            <features value="Customer"/>
-            <stories value="Admin Customer Grid"/>
             <severity value="MAJOR"/>
-            <testCaseId value="MC-17282"/>
-            <useCaseId value="MAGETWO-86624"/>
+            <testCaseId value="MC-6441"/>
+            <useCaseId value="MAGETWO-91523"/>
             <group value="customer"/>
+            <group value="cloud"/>
         </annotations>
         <before>
-            <createData entity="CustomerAccountSharingDefault" stepKey="setCustomerAccountSharingToDefault"/>
-            <createData entity="Simple_Customer_Without_Address" stepKey="createCustomer"/>
-            <actionGroup ref="LoginActionGroup" stepKey="loginToAdmin"/>
-
+            <createData entity="ApiCategory" stepKey="createCategory"/>
+            <createData entity="SimpleProduct" stepKey="createSimpleProduct">
+                <requiredEntity createDataKey="createCategory"/>
+            </createData>
+            <actionGroup ref="AdminLoginActionGroup" stepKey="login"/>
             <!--Create new website,store and store view-->
+            <comment userInput="Create new website,store and store view" stepKey="createWebsite"/>
+            <actionGroup ref="AdminSystemStoreOpenPageActionGroup" stepKey="goToAdminSystemStorePage"/>
             <actionGroup ref="AdminCreateWebsiteActionGroup" stepKey="adminCreateNewWebsite">
-                <argument name="newWebsiteName" value="{{CustomWebSite.name}}"/>
-                <argument name="websiteCode" value="{{CustomWebSite.code}}"/>
+                <argument name="newWebsiteName" value="{{NewWebSiteData.name}}"/>
+                <argument name="websiteCode" value="{{NewWebSiteData.code}}"/>
             </actionGroup>
             <actionGroup ref="AdminCreateNewStoreGroupActionGroup" stepKey="adminCreateNewStore">
-                <argument name="website" value="{{CustomWebSite.name}}"/>
-                <argument name="storeGroupName" value="{{customStore.name}}"/>
-                <argument name="storeGroupCode" value="{{customStore.code}}"/>
+                <argument name="website" value="{{NewWebSiteData.name}}"/>
+                <argument name="storeGroupName" value="{{NewStoreData.name}}"/>
+                <argument name="storeGroupCode" value="{{NewStoreData.code}}"/>
             </actionGroup>
             <actionGroup ref="AdminCreateStoreViewActionGroup" stepKey="adminCreateNewStoreView">
-                <argument name="storeGroup" value="customStore"/>
+                <argument name="StoreGroup" value="NewStoreData"/>
+            </actionGroup>
+            <!--Set account sharing option - Default value is 'Per Website'-->
+            <comment userInput="Set account sharing option - Default value is 'Per Website'" stepKey="setAccountSharingOption"/>
+            <createData entity="CustomerAccountSharingDefault" stepKey="setToAccountSharingToDefault"/>
+            <actionGroup ref="CliIndexerReindexActionGroup" stepKey="reindex">
+                <argument name="indices" value=""/>
             </actionGroup>
         </before>
         <after>
-            <!--Delete all created data and set main website country options to default-->
+            <!--delete all created data and set main website country options to default-->
             <comment userInput="Delete all created data and set main website country options to default" stepKey="resetConfigToDefault"/>
+            <actionGroup ref="StorefrontCustomerLogoutActionGroup" stepKey="logoutCustomer" />
             <deleteData createDataKey="createCustomer" stepKey="deleteCustomer"/>
-            <createData entity="CustomerAccountSharingSystemValue" stepKey="setAccountSharingToSystemValue"/>
-            <actionGroup ref="AdminDeleteWebsiteActionGroup" stepKey="deleteWebsite">
-                <argument name="websiteName" value="{{CustomWebSite.name}}"/>
+            <deleteData createDataKey="createCategory" stepKey="deleteCategory"/>
+            <deleteData createDataKey="createSimpleProduct" stepKey="deleteSimpleProduct"/>
+            <actionGroup ref="AdminDeleteWebsiteActionGroup" stepKey="deleteTestWebsite">
+                <argument name="websiteName" value="{{NewWebSiteData.name}}"/>
             </actionGroup>
-            <amOnPage url="{{AdminConfigurationGeneralSectionPage.url('#general_country-link')}}" stepKey="goToConfigurationSectionPage"/>
+            <actionGroup ref="NavigateToConfigurationGeneralPageActionGroup" stepKey="navigateToConfigGeneralPage2"/>
             <actionGroup ref="AdminSwitchWebsiteActionGroup" stepKey="adminSwitchWebsiteActionGroup">
-                <argument name="scopeName" value="_defaultWebsite.name"/>
+                <argument name="website" value="_defaultWebsite"/>
             </actionGroup>
             <actionGroup ref="SetWebsiteCountryOptionsToDefaultActionGroup" stepKey="setCountryOptionsToDefault"/>
-            <actionGroup ref="logout" stepKey="logoutFromAdmin"/>
+            <createData entity="CustomerAccountSharingSystemValue" stepKey="setAccountSharingToSystemValue"/>
+            <actionGroup ref="AdminLogoutActionGroup" stepKey="logout"/>
+            <actionGroup ref="CliIndexerReindexActionGroup" stepKey="reindex">
+                <argument name="indices" value=""/>
+            </actionGroup>
+            <comment userInput="Adding the comment to replace CliCacheFlushActionGroup action group ('cache:flush' command) for preserving Backward Compatibility" stepKey="flushCache"/>
         </after>
-
         <!--Check that all countries are allowed initially and get amount-->
-        <amOnPage url="{{AdminConfigurationGeneralSectionPage.url('#general_country-link')}}" stepKey="goToCountryConfigurationSectionPage"/>
-        <executeJS function="return document.querySelectorAll('{{AdminConfigurationGeneralCountryOptionsSection.allowedCountriesOptions}}').length" stepKey="countriesAmount"/>
-
+        <comment userInput="Check that all countries are allowed initially and get amount" stepKey="checkAllCountriesAreAllowed"/>
+        <actionGroup ref="NavigateToConfigurationGeneralPageActionGroup" stepKey="navigateToConfigGeneralPage"/>
+        <createData entity="DisableAdminAccountAllowCountry" stepKey="setDefaultValueForAllowCountries"/>
+        <executeJS function="return document.querySelectorAll('{{CountryOptionsSection.allowedCountries}} option').length" stepKey="countriesAmount"/>
+        <!-- Create customer for US -->
+        <comment userInput="Create customer for US" stepKey="createUSCustomer"/>
+        <createData entity="Simple_US_CA_Customer" stepKey="createCustomer"/>
         <!-- Switch to first website, allow only Canada and set Canada as default country -->
-        <actionGroup ref="AdminSwitchWebsiteActionGroup" stepKey="adminSwitchWebsite">
-            <argument name="scopeName" value="_defaultWebsite.name"/>
+        <comment userInput="Switch to first website, allow only Canada and set Canada as default country" stepKey="setCanadaAsDefaultCountry"/>
+        <actionGroup ref="AdminSwitchWebsiteActionGroup" stepKey="adminSwitchWebsiteActionGroup">
+            <argument name="website" value="_defaultWebsite"/>
         </actionGroup>
-        <actionGroup ref="AllowOnlyOneCountryActionGroup" stepKey="allowCanadaCountry">
-            <argument name="country" value="Canada"/>
-        </actionGroup>
-
+        <conditionalClick selector="{{CountryOptionsSection.countryOptions}}" dependentSelector="{{CountryOptionsSection.countryOptionsOpen}}" visible="false" stepKey="clickOnStoreInformation2"/>
+        <waitForElementVisible selector="{{CountryOptionsSection.allowedCountries}}" stepKey="waitAllowedCountriesToBeVisible"/>
+        <uncheckOption selector="{{CountryOptionsSection.generalCountryDefaultInherit}}" stepKey="uncheckCheckbox1"/>
+        <selectOption selector="{{CountryOptionsSection.generalCountryDefault}}" userInput="Canada" stepKey="chooseCanada1"/>
+        <uncheckOption selector="{{CountryOptionsSection.generalCountryAllowInherit}}" stepKey="uncheckCheckbox2"/>
+        <selectOption selector="{{CountryOptionsSection.allowedCountries}}" userInput="Canada" stepKey="chooseCanada2"/>
+        <click selector="{{ContentManagementSection.Save}}" stepKey="saveConfig2"/>
+        <waitForPageLoad stepKey="waitForSavingSystemConfiguration2"/>
         <!--Switch to second website and allow all countries except Canada-->
-        <actionGroup ref="AdminSwitchWebsiteActionGroup" stepKey="adminSwitchToSecondWebsite">
-            <argument name="scopeName" value="CustomWebSite.name"/>
+        <comment userInput="Switch to second website and allow all countries except Canada" stepKey="switchToWebsiteAndAllowOnlyCanada"/>
+        <actionGroup ref="AdminSwitchWebsiteActionGroup" stepKey="adminSwitchWebsiteActionGroup2">
+            <argument name="website" value="NewWebSiteData"/>
         </actionGroup>
-        <actionGroup ref="AllowAllCountriesExceptOneActionGroup" stepKey="allowAllCountriesExceptCanada">
-            <argument name="country" value="Canada"/>
-        </actionGroup>
-
-        <!--Open created customer details page and add Canada address-->
+        <conditionalClick selector="{{CountryOptionsSection.countryOptions}}" dependentSelector="{{CountryOptionsSection.countryOptionsOpen}}" visible="false" stepKey="clickOnStoreInformation3"/>
+        <waitForElementVisible selector="{{CountryOptionsSection.allowedCountries}}" stepKey="waitAllowedCountriesToBeVisible2"/>
+        <uncheckOption selector="{{CountryOptionsSection.generalCountryAllowInherit}}" stepKey="uncheckCheckbox3"/>
+        <unselectOption selector="{{CountryOptionsSection.allowedCountries}}" userInput="Canada" stepKey="unselectCanada"/>
+        <click selector="{{ContentManagementSection.Save}}" stepKey="saveConfig3"/>
+        <waitForPageLoad stepKey="waitForSavingSystemConfiguration3"/>
         <amOnPage url="{{AdminEditCustomerPage.url($$createCustomer.id$$)}}" stepKey="goToCustomerEditPage"/>
-        <actionGroup ref="AdminAddCustomerAddressWithRegionTypeSelectActionGroup" stepKey="addAddressForCustomer">
-            <argument name="customerAddress" value="Canada_Address"/>
+        <waitForPageLoad stepKey="waitPageToLoad"/>
+        <!--Open created customer details page and change US address to Canada address-->
+        <comment userInput="Open created customer details page and change US address to Canada address" stepKey="changeCustomerAddressToCanada"/>
+        <actionGroup ref="OpenEditCustomerAddressFromAdminActionGroup" stepKey="editCustomerAddress">
+            <argument name="address" value="US_Address_CA"/>
         </actionGroup>
-
+        <selectOption selector="{{AdminEditCustomerAddressesSection.country}}" userInput="Canada" stepKey="selectCountry"/>
+        <selectOption selector="{{AdminEditCustomerAddressesSection.state}}" userInput="Quebec" stepKey="selectState"/>
+        <click selector="{{AdminEditCustomerAddressesSection.save}}" stepKey="saveAddress"/>
+        <waitForPageLoad stepKey="waitForAddressSaved"/>
+        <click stepKey="saveCustomer" selector="{{AdminCustomerAccountInformationSection.saveCustomerAndContinueEdit}}"/>
+        <waitForPageLoad stepKey="waitForCustomersPage"/>
         <!--Go to Customers grid and check that filter countries amount is the same as initial allowed countries amount-->
-        <amOnPage url="{{AdminCustomerPage.url}}" stepKey="goToCustomersGrid"/>
+        <comment userInput="Go to Customers grid and check that filter countries amount is the same as initial allowed countries amount" stepKey="compareCountriesAmount"/>
+        <actionGroup ref="AdminOpenCustomersGridActionGroup" stepKey="goToCustomersGrid"/>
         <click selector="{{AdminDataGridHeaderSection.filters}}" stepKey="openFiltersSectionOnCustomersGrid"/>
-        <seeNumberOfElements userInput="$countriesAmount" selector="{{AdminCustomerFiltersSection.countryOptionsWithoutEmptyOption}}" stepKey="assertCountryAmounts"/>
+        <executeJS function="var len = document.querySelectorAll('{{AdminCustomerFiltersSection.countryOptions}}').length; return len-1;" stepKey="countriesAmount2"/>
+        <assertEquals stepKey="assertCountryAmounts">
+			<actualResult type="const">($countriesAmount2)</actualResult>
+			<expectedResult type="const">($countriesAmount)</expectedResult>
+        </assertEquals>
     </test>
 </tests>

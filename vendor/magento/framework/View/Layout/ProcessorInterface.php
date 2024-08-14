@@ -3,10 +3,14 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Framework\View\Layout;
 
 /**
  * Interface ProcessorInterface
+ *
+ * @api
  */
 interface ProcessorInterface
 {
@@ -126,7 +130,7 @@ interface ProcessorInterface
     public function getContainers();
 
     /**
-     * Return cache ID based current area/package/theme/store and handles
+     * Return cache ID based current area/package/theme/store, handles and cache key(s)
      *
      * @return string
      */

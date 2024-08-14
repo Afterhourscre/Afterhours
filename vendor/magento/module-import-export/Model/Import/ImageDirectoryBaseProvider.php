@@ -12,7 +12,6 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Filesystem\Directory\ReadInterface;
 use Magento\Framework\Filesystem;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Filesystem\DriverPool;
 
 /**
  * Provides base directory to use for images when user imports entities.
@@ -30,23 +29,13 @@ class ImageDirectoryBaseProvider
     private $filesystem;
 
     /**
-     * @var \Magento\Framework\Filesystem\Directory\ReadFactory
-     */
-    private $directoryReadFactory;
-
-    /**
      * @param ScopeConfigInterface $config
      * @param Filesystem $filesystem
-     * @param Filesystem\Directory\ReadFactory|null $directoryReadFactory
      */
-    public function __construct(
-        ScopeConfigInterface $config,
-        Filesystem $filesystem,
-        Filesystem\Directory\ReadFactory $directoryReadFactory
-    ) {
+    public function __construct(ScopeConfigInterface $config, Filesystem $filesystem)
+    {
         $this->config = $config;
         $this->filesystem = $filesystem;
-        $this->directoryReadFactory = $directoryReadFactory;
     }
 
     /**
@@ -58,7 +47,7 @@ class ImageDirectoryBaseProvider
     {
         $path = $this->getDirectoryRelativePath();
 
-        return $this->getDirectoryReadByPath(
+        return $this->filesystem->getDirectoryReadByPath(
             $this->filesystem->getDirectoryRead(DirectoryList::ROOT)->getAbsolutePath($path)
         );
     }
@@ -71,18 +60,5 @@ class ImageDirectoryBaseProvider
     public function getDirectoryRelativePath(): string
     {
         return $this->config->getValue('general/file/import_images_base_dir');
-    }
-
-    /**
-     * Create an instance of directory with read permissions by path.
-     *
-     * @param string $path
-     * @param string $driverCode
-     *
-     * @return ReadInterface
-     */
-    private function getDirectoryReadByPath(string $path, string $driverCode = DriverPool::FILE): ReadInterface
-    {
-        return $this->directoryReadFactory->create($path, $driverCode);
     }
 }

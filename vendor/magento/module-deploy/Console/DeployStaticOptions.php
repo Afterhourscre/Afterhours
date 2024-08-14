@@ -7,8 +7,8 @@
 namespace Magento\Deploy\Console;
 
 use Magento\Deploy\Process\Queue;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 
 /**
  * Static Content Deployment Options helper
@@ -79,6 +79,11 @@ class DeployStaticOptions
     const NO_JAVASCRIPT = 'no-javascript';
 
     /**
+     * Key for js-bundle option
+     */
+    const NO_JS_BUNDLE = 'no-js-bundle';
+
+    /**
      * Key for css option
      */
     const NO_CSS = 'no-css';
@@ -123,8 +128,10 @@ class DeployStaticOptions
     const NO_LESS = 'no-less';
 
     /**
-     * Default jobs amount
+     * Key for not compiling parent themes
      */
+    const NO_PARENT = 'no-parent';
+
     const DEFAULT_JOBS_AMOUNT = 0;
 
     /**
@@ -254,7 +261,7 @@ class DeployStaticOptions
             new InputArgument(
                 self::LANGUAGES_ARGUMENT,
                 InputArgument::IS_ARRAY,
-                'Space-separated list of ISO-636 language codes for which to output static view files.'
+                'Space-separated list of ISO-639 language codes for which to output static view files.'
             ),
         ];
     }
@@ -274,6 +281,12 @@ class DeployStaticOptions
                 null,
                 InputOption::VALUE_NONE,
                 'Do not deploy JavaScript files.'
+            ),
+            new InputOption(
+                self::NO_JS_BUNDLE,
+                null,
+                InputOption::VALUE_NONE,
+                'Do not deploy JavaScript bundle files.'
             ),
             new InputOption(
                 self::NO_CSS,
@@ -316,7 +329,13 @@ class DeployStaticOptions
                 null,
                 InputOption::VALUE_NONE,
                 'Do not minify HTML files.'
-            )
+            ),
+            new InputOption(
+                self::NO_PARENT,
+                null,
+                InputOption::VALUE_NONE,
+                'Do not compile parent themes. Supported only in quick and standard strategies.'
+            ),
         ];
     }
 }

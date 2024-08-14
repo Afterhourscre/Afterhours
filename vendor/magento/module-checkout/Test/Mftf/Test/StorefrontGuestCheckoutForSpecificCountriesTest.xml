@@ -15,12 +15,12 @@
             <title value="Storefront guest checkout for specific countries test"/>
             <description value="Checkout flow if shipping rates are not available"/>
             <severity value="CRITICAL"/>
-            <testCaseId value="MC-8190"/>
+            <testCaseId value="MC-13414"/>
             <group value="checkout"/>
         </annotations>
         <before>
             <!-- Create simple product -->
-            <createData entity="SimpleProduct3" stepKey="createProduct"/>
+            <createData entity="SimpleProduct2" stepKey="createProduct"/>
 
             <!-- Enable free shipping to specific country -  Afghanistan  -->
             <magentoCLI command="config:set {{EnableFreeShippingConfigData.path}} {{EnableFreeShippingConfigData.value}}" stepKey="enableFreeShipping"/>
@@ -41,11 +41,6 @@
             <!-- Delete product -->
             <deleteData createDataKey="createProduct" stepKey="deleteProduct"/>
         </after>
-
-        <!-- Go to Storefront as Guest. Check that "Log out" button absent on page -->
-        <amOnPage url="{{StorefrontHomePage.url}}" stepKey="amOnHomePage"/>
-        <waitForPageLoad stepKey="waitForPage"/>
-        <dontSeeElement selector="{{StorefrontPanelHeaderSection.customerLogoutLink}}" stepKey="dontSeeLogOutButton"/>
 
         <!-- Add product to cart -->
         <actionGroup ref="OpenStoreFrontProductPageActionGroup" stepKey="openProductPage">

@@ -3,6 +3,8 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Sales\Test\Unit\Model\Order;
 
 use Magento\Payment\Model\MethodInterface;
@@ -10,9 +12,10 @@ use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Magento\Sales\Model\Order\Config;
 use Magento\Sales\Model\Order\StatusResolver;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class StatusResolverTest extends \PHPUnit\Framework\TestCase
+class StatusResolverTest extends TestCase
 {
     /**
      * @param OrderInterface|MockObject $order
@@ -52,7 +55,7 @@ class StatusResolverTest extends \PHPUnit\Framework\TestCase
     private function getOrder($newOrderStatus, $stateStatuses)
     {
         $order = $this->getMockBuilder(OrderInterface::class)
-            ->setMethods(['getConfig'])
+            ->addMethods(['getConfig'])
             ->getMockForAbstractClass();
         $order->method('getPayment')
             ->willReturn($this->getPayment($newOrderStatus));
@@ -69,7 +72,7 @@ class StatusResolverTest extends \PHPUnit\Framework\TestCase
     private function getPayment($newOrderStatus)
     {
         $payment = $this->getMockBuilder(OrderPaymentInterface::class)
-            ->setMethods(['getMethodInstance'])
+            ->addMethods(['getMethodInstance'])
             ->getMockForAbstractClass();
         $payment->method('getMethodInstance')
             ->willReturn($this->getMethodInstance($newOrderStatus));

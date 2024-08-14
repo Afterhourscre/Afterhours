@@ -13,12 +13,9 @@ use Magento\Framework\Event\Observer;
 use Magento\Review\Model\ResourceModel\Rating;
 use Magento\Review\Model\ResourceModel\Review;
 use Magento\Review\Observer\ProcessProductAfterDeleteEventObserver;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use PHPUnit_Framework_MockObject_MockObject;
 
-/**
- * Class ProcessProductAfterDeleteEventObserverTest
- */
 class ProcessProductAfterDeleteEventObserverTest extends TestCase
 {
     /**
@@ -29,26 +26,26 @@ class ProcessProductAfterDeleteEventObserverTest extends TestCase
     private $observer;
 
     /**
-     * @var Review|PHPUnit_Framework_MockObject_MockObject
+     * @var Review|MockObject
      */
-    private $_resourceReviewMock;
+    private $resourceReviewMock;
 
     /**
-     * @var Rating|PHPUnit_Framework_MockObject_MockObject
+     * @var Rating|MockObject
      */
-    private $_resourceRatingMock;
+    private $resourceRatingMock;
 
     /**
      * Set up
      */
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->_resourceReviewMock = $this->createMock(Review::class);
-        $this->_resourceRatingMock = $this->createMock(Rating::class);
+        $this->resourceReviewMock = $this->createMock(Review::class);
+        $this->resourceRatingMock = $this->createMock(Rating::class);
 
         $this->observer = new ProcessProductAfterDeleteEventObserver(
-            $this->_resourceReviewMock,
-            $this->_resourceRatingMock
+            $this->resourceReviewMock,
+            $this->resourceRatingMock
         );
     }
 
@@ -80,10 +77,10 @@ class ProcessProductAfterDeleteEventObserverTest extends TestCase
         $observerMock->expects($this->once())
             ->method('getEvent')
             ->willReturn($eventMock);
-        $this->_resourceReviewMock->expects($this->once())
+        $this->resourceReviewMock->expects($this->once())
             ->method('deleteReviewsByProductId')
             ->willReturnSelf();
-        $this->_resourceRatingMock->expects($this->once())
+        $this->resourceRatingMock->expects($this->once())
             ->method('deleteAggregatedRatingsByProductId')
             ->willReturnSelf();
 
@@ -109,10 +106,10 @@ class ProcessProductAfterDeleteEventObserverTest extends TestCase
         $observerMock->expects($this->once())
             ->method('getEvent')
             ->willReturn($eventMock);
-        $this->_resourceReviewMock->expects($this->never())
+        $this->resourceReviewMock->expects($this->never())
             ->method('deleteReviewsByProductId')
             ->willReturnSelf();
-        $this->_resourceRatingMock->expects($this->never())
+        $this->resourceRatingMock->expects($this->never())
             ->method('deleteAggregatedRatingsByProductId')
             ->willReturnSelf();
 

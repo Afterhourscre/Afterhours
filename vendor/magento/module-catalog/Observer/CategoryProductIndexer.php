@@ -8,12 +8,12 @@ declare(strict_types=1);
 namespace Magento\Catalog\Observer;
 
 use Magento\Catalog\Model\Indexer\Category\Product\Processor;
+use Magento\Catalog\Model\Indexer\Category\Flat\State as FlatState;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 
 /**
- * Checks if a category has changed products and depends on indexer configuration
- * marks `Category Products` indexer as invalid or reindexes affected products.
+ * Checks if a category has changed products and depends on indexer configuration.
  */
 class CategoryProductIndexer implements ObserverInterface
 {
@@ -23,20 +23,29 @@ class CategoryProductIndexer implements ObserverInterface
     private $processor;
 
     /**
-     * @param Processor $processor
+     * @var FlatState
      */
-    public function __construct(Processor $processor)
-    {
+    private $flatState;
+
+    /**
+     * @param Processor $processor
+     * @param FlatState $flatState
+     */
+    public function __construct(
+        Processor $processor,
+        FlatState $flatState
+    ) {
         $this->processor = $processor;
+        $this->flatState = $flatState;
     }
 
     /**
      * @inheritdoc
      */
-    public function execute(Observer $observer)
+    public function execute(Observer $observer): void
     {
         $productIds = $observer->getEvent()->getProductIds();
-        if (!empty($productIds) && $this->processor->isIndexerScheduled()) {
+        if (!empty($productIds) && $this->processor->isIndexerScheduled() && $this->flatState->isFlatEnabled()) {
             $this->processor->markIndexerAsInvalid();
         }
     }

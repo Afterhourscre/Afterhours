@@ -22,7 +22,7 @@ class DomainManager implements DomainManagerInterface
     /**
      * Path to the allowed domains in the deployment config
      */
-    const PARAM_DOWNLOADABLE_DOMAINS = 'downloadable_domains';
+    private const PARAM_DOWNLOADABLE_DOMAINS = 'downloadable_domains';
 
     /**
      * @var ConfigWriter
@@ -59,12 +59,12 @@ class DomainManager implements DomainManagerInterface
     /**
      * @inheritdoc
      */
-    public function addDomains(array $hosts)
+    public function addDomains(array $hosts): void
     {
         $whitelist = $this->getDomains();
         foreach (array_map('strtolower', $hosts) as $host) {
             if (!in_array($host, $whitelist)) {
-                array_push($whitelist, $host);
+                $whitelist[] = $host;
             }
         }
 
@@ -81,7 +81,7 @@ class DomainManager implements DomainManagerInterface
     /**
      * @inheritdoc
      */
-    public function removeDomains(array $hosts)
+    public function removeDomains(array $hosts): void
     {
         $whitelist = $this->getDomains();
         foreach (array_map('strtolower', $hosts) as $host) {

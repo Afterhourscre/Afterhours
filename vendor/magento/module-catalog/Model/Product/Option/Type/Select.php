@@ -3,12 +3,16 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
 namespace Magento\Catalog\Model\Product\Option\Type;
 
+use Magento\Catalog\Model\Product\Option\Value;
 use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Catalog product option select type
+ *
+ * @SuppressWarnings(PHPMD.CookieAndSessionMisuse)
  */
 class Select extends \Magento\Catalog\Model\Product\Option\Type\DefaultType
 {
@@ -55,8 +59,8 @@ class Select extends \Magento\Catalog\Model\Product\Option\Type\DefaultType
         parent::__construct($checkoutSession, $scopeConfig, $data);
 
         $this->singleSelectionTypes = $singleSelectionTypes ?: [
-            \Magento\Catalog\Api\Data\ProductCustomOptionInterface::OPTION_TYPE_DROP_DOWN,
-            \Magento\Catalog\Api\Data\ProductCustomOptionInterface::OPTION_TYPE_RADIO,
+            'drop_down' => \Magento\Catalog\Api\Data\ProductCustomOptionInterface::OPTION_TYPE_DROP_DOWN,
+            'radio' => \Magento\Catalog\Api\Data\ProductCustomOptionInterface::OPTION_TYPE_RADIO,
         ];
     }
 
@@ -74,16 +78,30 @@ class Select extends \Magento\Catalog\Model\Product\Option\Type\DefaultType
         $option = $this->getOption();
         $value = $this->getUserValue();
 
-        if (empty($value) && $option->getIsRequire() && !$this->getSkipCheckRequiredOption()) {
-            $this->setIsValid(false);
-            throw new LocalizedException(__('Please specify product\'s required option(s).'));
-        }
-        if (!$this->_isSingleSelection()) {
-            $valuesCollection = $option->getOptionValuesByOptionId($value, $this->getProduct()->getStoreId())->load();
-            $valueCount = is_array($value) ? count($value) : 0;
-            if ($valuesCollection->count() != $valueCount) {
+        if (empty($value)) {
+            if ($option->getIsRequire() && !$this->getSkipCheckRequiredOption()) {
                 $this->setIsValid(false);
-                throw new LocalizedException(__('Please specify product\'s required option(s).'));
+                throw new LocalizedException(
+                    __(
+                        "The product's required option(s) weren't entered. "
+                        . "Make sure the options are entered and try again."
+                    )
+                );
+            }
+        } else {
+            if (!$this->_isSingleSelection()) {
+                if (is_string($value)) {
+                    $value = explode(',', $value);
+                }
+                $valuesCollection = $option->getOptionValuesByOptionId($value, $this->getProduct()->getStoreId());
+                $valueCount = is_array($value) ? count($value) : 0;
+                if ($valuesCollection->count() != $valueCount) {
+                    $this->setIsValid(false);
+                    throw new LocalizedException($this->_getWrongConfigurationMessage());
+                }
+            } elseif (!$option->getValueById($value)) {
+                $this->setIsValid(false);
+                throw new LocalizedException($this->_getWrongConfigurationMessage());
             }
         }
         return $this;
@@ -149,7 +167,7 @@ class Select extends \Magento\Catalog\Model\Product\Option\Type\DefaultType
         $option = $this->getOption();
         $result = '';
         if (!$this->_isSingleSelection()) {
-            foreach (explode(',', $optionValue) as $_value) {
+            foreach (explode(',', (string)$optionValue) as $_value) {
                 $_result = $option->getValueById($_value);
                 if ($_result) {
                     $result .= $_result->getTitle() . ', ';
@@ -190,7 +208,7 @@ class Select extends \Magento\Catalog\Model\Product\Option\Type\DefaultType
         $values = [];
         if (!$this->_isSingleSelection()) {
             foreach (explode(',', $optionValue) as $value) {
-                $value = trim($value);
+                $value = $value === null ? '' : trim($value);
                 if (array_key_exists($value, $productOptionValues)) {
                     $values[] = $productOptionValues[$value];
                 }
@@ -214,7 +232,7 @@ class Select extends \Magento\Catalog\Model\Product\Option\Type\DefaultType
     public function prepareOptionValueForRequest($optionValue)
     {
         if (!$this->_isSingleSelection()) {
-            return explode(',', $optionValue);
+            return explode(',', (string)$optionValue);
         }
         return $optionValue;
     }
@@ -232,12 +250,12 @@ class Select extends \Magento\Catalog\Model\Product\Option\Type\DefaultType
         $result = 0;
 
         if (!$this->_isSingleSelection()) {
-            foreach (explode(',', $optionValue) as $value) {
+            foreach (explode(',', (string)$optionValue) as $value) {
                 $_result = $option->getValueById($value);
                 if ($_result) {
                     $result += $this->_getChargeableOptionPrice(
                         $_result->getPrice(),
-                        $_result->getPriceType() == 'percent',
+                        $_result->getPriceType() === Value::TYPE_PERCENT,
                         $basePrice
                     );
                 } else {
@@ -252,7 +270,7 @@ class Select extends \Magento\Catalog\Model\Product\Option\Type\DefaultType
             if ($_result) {
                 $result = $this->_getChargeableOptionPrice(
                     $_result->getPrice(),
-                    $_result->getPriceType() == 'percent',
+                    $_result->getPriceType() === Value::TYPE_PERCENT,
                     $basePrice
                 );
             } else {
@@ -278,7 +296,7 @@ class Select extends \Magento\Catalog\Model\Product\Option\Type\DefaultType
 
         if (!$this->_isSingleSelection()) {
             $skus = [];
-            foreach (explode(',', $optionValue) as $value) {
+            foreach (explode(',', (string)$optionValue) as $value) {
                 $optionSku = $option->getValueById($value);
                 if ($optionSku) {
                     $skus[] = $optionSku->getSku();

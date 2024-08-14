@@ -11,6 +11,9 @@
  */
 namespace Magento\CurrencySymbol\Block\Adminhtml\System\Currency\Rate;
 
+/**
+ * Manage currency block
+ */
 class Matrix extends \Magento\Backend\Block\Template
 {
     /**
@@ -104,8 +107,8 @@ class Matrix extends \Magento\Backend\Block\Template
 
         foreach ($array as $key => $rate) {
             foreach ($rate as $code => $value) {
-                $parts = explode('.', $value);
-                if (sizeof($parts) == 2) {
+                $parts = $value !== null ? explode('.', $value) : [];
+                if (count($parts) == 2) {
                     $parts[1] = str_pad(rtrim($parts[1], 0), 4, '0', STR_PAD_RIGHT);
                     $array[$key][$code] = join('.', $parts);
                 } elseif ($value > 0) {

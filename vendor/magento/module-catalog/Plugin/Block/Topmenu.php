@@ -3,6 +3,8 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Catalog\Plugin\Block;
 
 use Magento\Catalog\Model\Category;
@@ -10,13 +12,12 @@ use Magento\Framework\Data\Collection;
 use Magento\Framework\Data\Tree\Node;
 
 /**
- * Plugin for top menu block
+ * Plugin that enhances the top menu block by building and managing the category tree
+ * for menu rendering in a storefront.
  */
 class Topmenu
 {
     /**
-     * Catalog category
-     *
      * @var \Magento\Catalog\Helper\Category
      */
     protected $catalogCategory;
@@ -32,28 +33,20 @@ class Topmenu
     private $storeManager;
 
     /**
-     * @var \Magento\Catalog\Model\Layer\Resolver
-     */
-    private $layerResolver;
-
-    /**
      * Initialize dependencies.
      *
      * @param \Magento\Catalog\Helper\Category $catalogCategory
      * @param \Magento\Catalog\Model\ResourceModel\Category\StateDependentCollectionFactory $categoryCollectionFactory
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \Magento\Catalog\Model\Layer\Resolver $layerResolver
      */
     public function __construct(
         \Magento\Catalog\Helper\Category $catalogCategory,
         \Magento\Catalog\Model\ResourceModel\Category\StateDependentCollectionFactory $categoryCollectionFactory,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Catalog\Model\Layer\Resolver $layerResolver
+        \Magento\Store\Model\StoreManagerInterface $storeManager
     ) {
         $this->catalogCategory = $catalogCategory;
         $this->collectionFactory = $categoryCollectionFactory;
         $this->storeManager = $storeManager;
-        $this->layerResolver = $layerResolver;
     }
 
     /**
@@ -76,7 +69,6 @@ class Topmenu
         $storeId = $this->storeManager->getStore()->getId();
         /** @var \Magento\Catalog\Model\ResourceModel\Category\Collection $collection */
         $collection = $this->getCategoryTree($storeId, $rootId);
-        $currentCategory = $this->getCurrentCategory();
         $mapping = [$rootId => $subject->getMenu()];  // use nodes stack to avoid recursion
         foreach ($collection as $category) {
             $categoryParentId = $category->getParentId();
@@ -95,7 +87,6 @@ class Topmenu
             $categoryNode = new Node(
                 $this->getCategoryAsArray(
                     $category,
-                    $currentCategory,
                     $category->getParentId() == $categoryParentId
                 ),
                 'id',
@@ -131,37 +122,19 @@ class Topmenu
     }
 
     /**
-     * Get current Category from catalog layer
-     *
-     * @return \Magento\Catalog\Model\Category
-     */
-    private function getCurrentCategory()
-    {
-        $catalogLayer = $this->layerResolver->get();
-
-        if (!$catalogLayer) {
-            return null;
-        }
-
-        return $catalogLayer->getCurrentCategory();
-    }
-
-    /**
      * Convert category to array
      *
-     * @param \Magento\Catalog\Model\Category $category
-     * @param \Magento\Catalog\Model\Category $currentCategory
+     * @param Category $category
      * @param bool $isParentActive
      * @return array
      */
-    private function getCategoryAsArray($category, $currentCategory, $isParentActive)
+    private function getCategoryAsArray($category, $isParentActive): array
     {
+        $categoryId = $category->getId();
         return [
             'name' => $category->getName(),
-            'id' => 'category-node-' . $category->getId(),
+            'id' => 'category-node-' . $categoryId,
             'url' => $this->catalogCategory->getCategoryUrl($category),
-            'has_active' => in_array((string)$category->getId(), explode('/', $currentCategory->getPath()), true),
-            'is_active' => $category->getId() == $currentCategory->getId(),
             'is_category' => true,
             'is_parent_active' => $isParentActive
         ];
@@ -184,6 +157,7 @@ class Topmenu
         $collection->addFieldToFilter('path', ['like' => '1/' . $rootId . '/%']); //load only from store root
         $collection->addAttributeToFilter('include_in_menu', 1);
         $collection->addIsActiveFilter();
+        $collection->addNavigationMaxDepthFilter();
         $collection->addUrlRewriteToResult();
         $collection->addOrder('level', Collection::SORT_ORDER_ASC);
         $collection->addOrder('position', Collection::SORT_ORDER_ASC);

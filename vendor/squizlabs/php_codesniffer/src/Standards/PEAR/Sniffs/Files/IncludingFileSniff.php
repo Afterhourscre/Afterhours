@@ -6,13 +6,13 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\PEAR\Sniffs\Files;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Util\Tokens;
 
 class IncludingFileSniff implements Sniff
@@ -22,16 +22,16 @@ class IncludingFileSniff implements Sniff
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(
-                T_INCLUDE_ONCE,
-                T_REQUIRE_ONCE,
-                T_REQUIRE,
-                T_INCLUDE,
-               );
+        return [
+            T_INCLUDE_ONCE,
+            T_REQUIRE_ONCE,
+            T_REQUIRE,
+            T_INCLUDE,
+        ];
 
     }//end register()
 
@@ -52,7 +52,7 @@ class IncludingFileSniff implements Sniff
         $nextToken = $phpcsFile->findNext(Tokens::$emptyTokens, ($stackPtr + 1), null, true);
         if ($tokens[$nextToken]['code'] === T_OPEN_PARENTHESIS) {
             $error = '"%s" is a statement not a function; no parentheses are required';
-            $data  = array($tokens[$stackPtr]['content']);
+            $data  = [$tokens[$stackPtr]['content']];
             $fix   = $phpcsFile->addFixableError($error, $stackPtr, 'BracketsNotRequired', $data);
             if ($fix === true) {
                 $phpcsFile->fixer->beginChangeset();

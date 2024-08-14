@@ -7,7 +7,7 @@ define([
     'jquery',
     'mage/template',
     'Magento_Ui/js/modal/confirm',
-    'jquery/ui'
+    'jquery-ui-modules/widget'
 ], function ($, mageTemplate, uiConfirm) {
     'use strict';
 
@@ -86,12 +86,12 @@ define([
                     actions: {
                         /** @inheritdoc */
                         confirm: function () {
-                            $form.appendTo('body').hide().submit();
+                            $form.appendTo('body').hide().trigger('submit');
                         }
                     }
                 });
             } else {
-                $form.appendTo('body').hide().submit();
+                $form.appendTo('body').hide().trigger('submit');
             }
         }
     });

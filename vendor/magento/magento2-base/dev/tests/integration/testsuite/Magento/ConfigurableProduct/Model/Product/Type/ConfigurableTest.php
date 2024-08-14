@@ -4,19 +4,23 @@
  * See COPYING.txt for license details.
  */
 
+// @codingStandardsIgnoreFile
+
 namespace Magento\ConfigurableProduct\Model\Product\Type;
 
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product;
 use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Catalog\Api\Data\ProductCustomOptionInterfaceFactory;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Class ConfigurableTest
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class ConfigurableTest extends \PHPUnit\Framework\TestCase
+class ConfigurableTest extends TestCase
 {
     /**
      * Object under test
@@ -35,7 +39,7 @@ class ConfigurableTest extends \PHPUnit\Framework\TestCase
      */
     private $productRepository;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->productRepository = Bootstrap::getObjectManager()
             ->create(ProductRepositoryInterface::class);
@@ -234,7 +238,7 @@ class ConfigurableTest extends \PHPUnit\Framework\TestCase
     public function testGetUsedProductIds()
     {
         $ids = $this->model->getUsedProductIds($this->product);
-        $this->assertInternalType('array', $ids);
+        $this->assertIsArray($ids);
         $this->assertTrue(2 === count($ids)); // impossible to check actual IDs, they are dynamic in the fixture
     }
 
@@ -245,10 +249,37 @@ class ConfigurableTest extends \PHPUnit\Framework\TestCase
     public function testGetUsedProducts()
     {
         $products = $this->model->getUsedProducts($this->product);
-        $this->assertInternalType('array', $products);
+        $this->assertIsArray($products);
         $this->assertTrue(2 === count($products));
         foreach ($products as $product) {
             $this->assertInstanceOf(\Magento\Catalog\Model\Product::class, $product);
+        }
+    }
+
+    /**
+     * Tests the $requiredAttributes parameter; uses meta_description as an example of an attribute that is not
+     * included in default attribute select.
+     * @magentoAppIsolation enabled
+     * @magentoDataFixture Magento/ConfigurableProduct/_files/product_configurable_with_metadescription.php
+     */
+    public function testGetUsedProductsWithRequiredAttributes()
+    {
+        $requiredAttributeIds = [86];
+        $products = $this->model->getUsedProducts($this->product, $requiredAttributeIds);
+        foreach ($products as $product) {
+            self::assertNotNull($product->getData('meta_description'));
+        }
+    }
+
+    /**
+     * @magentoAppIsolation enabled
+     * @magentoDataFixture Magento/ConfigurableProduct/_files/product_configurable_with_metadescription.php
+     */
+    public function testGetUsedProductsWithoutRequiredAttributes()
+    {
+        $products = $this->model->getUsedProducts($this->product);
+        foreach ($products as $product) {
+            self::assertNull($product->getData('meta_description'));
         }
     }
 
@@ -336,8 +367,7 @@ class ConfigurableTest extends \PHPUnit\Framework\TestCase
         $attribute = reset($attributes);
         $optionValueId = $attribute['values'][0]['value_index'];
 
-        $product->addCustomOption(
-            'attributes',
+        $product->addCustomOption('attributes',
             $serializer->serialize([$attribute['attribute_id'] => $optionValueId])
         );
 
@@ -390,7 +420,7 @@ class ConfigurableTest extends \PHPUnit\Framework\TestCase
             ['qty' => 5, 'super_attribute' => [$attribute['attribute_id'] => $optionValueId]]
         );
         $result = $this->model->prepareForCart($buyRequest, $this->product);
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
         $this->assertTrue(2 === count($result));
         foreach ($result as $product) {
             $this->assertInstanceOf(\Magento\Catalog\Model\Product::class, $product);
@@ -486,7 +516,7 @@ class ConfigurableTest extends \PHPUnit\Framework\TestCase
     {
         $result = $this->model->getProductsToPurchaseByReqGroups($this->product);
         $this->assertArrayHasKey(0, $result);
-        $this->assertInternalType('array', $result[0]);
+        $this->assertIsArray($result[0]);
         $this->assertTrue(2 === count($result[0]));
         // fixture has 2 simple products
         foreach ($result[0] as $product) {
@@ -616,5 +646,31 @@ class ConfigurableTest extends \PHPUnit\Framework\TestCase
         $product = Bootstrap::getObjectManager()->create(Product::class);
         $product->load(1);
         return $this->model->getUsedProducts($product);
+    }
+
+    /**
+     * Unable to save product required option to product which is a part of configurable product
+     *
+     * @magentoDataFixture Magento/ConfigurableProduct/_files/configurable_product_with_two_child_products.php
+     * @return void
+     */
+    public function testAddCustomOptionToConfigurableChildProduct(): void
+    {
+        $this->expectExceptionMessage(
+            'Required custom options cannot be added to a simple product that is a part of a composite product.'
+        );
+
+        $sku = 'Simple option 1';
+        $product = $this->productRepository->get($sku);
+        $optionRepository = Bootstrap::getObjectManager()->get(ProductCustomOptionInterfaceFactory::class);
+        $createdOption = $optionRepository->create(
+            ['data' => ['title' => 'drop_down option', 'type' => 'drop_down', 'sort_order' => 4, 'is_require' => 1]]
+        );
+        $createdOption->setProductSku($product->getSku());
+        $product->setOptions([$createdOption]);
+        $this->productRepository->save($product);
+
+        $product = $this->productRepository->get($sku);
+        $this->assertEmpty($product->getOptions());
     }
 }

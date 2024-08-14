@@ -7,13 +7,14 @@ namespace Magento\Customer\Ui\Component\MassAction\Group;
 
 use Magento\Framework\Phrase;
 use Magento\Framework\UrlInterface;
-use Zend\Stdlib\JsonSerializable;
 use Magento\Customer\Model\ResourceModel\Group\CollectionFactory;
 
 /**
- * Class Options
+ * Class Options for Mass Action Group
+ *
+ * Disable template needed for customers
  */
-class Options implements JsonSerializable
+class Options implements \JsonSerializable
 {
     /**
      * @var array
@@ -80,6 +81,7 @@ class Options implements JsonSerializable
      *
      * @return array
      */
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         if ($this->options === null) {
@@ -89,7 +91,7 @@ class Options implements JsonSerializable
                 $this->options[$optionCode['value']] = [
                     'type' => 'customer_group_' . $optionCode['value'],
                     'label' => __($optionCode['label']),
-                    '__disableTmpl' => true,
+                    '__disableTmpl' => true
                 ];
 
                 if ($this->urlPath && $this->paramName) {

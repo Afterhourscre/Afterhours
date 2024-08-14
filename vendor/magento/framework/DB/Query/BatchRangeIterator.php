@@ -80,20 +80,20 @@ class BatchRangeIterator implements BatchIteratorInterface
      * @param int $batchSize
      * @param string $correlationName
      * @param string|array $rangeField
-     * @param string $rangeFieldAlias
+     * @param string $rangeFieldAlias @deprecated
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function __construct(
         Select $select,
         $batchSize,
         $correlationName,
         $rangeField,
-        $rangeFieldAlias
+        $rangeFieldAlias = ''
     ) {
         $this->batchSize = $batchSize;
         $this->select = $select;
         $this->correlationName = $correlationName;
         $this->rangeField = $rangeField;
-        $this->rangeFieldAlias = $rangeFieldAlias;
         $this->connection = $select->getConnection();
     }
 
@@ -116,7 +116,7 @@ class BatchRangeIterator implements BatchIteratorInterface
     /**
      * Return the key of the current element
      *
-     * Сan return the number of the current sub-select in the iteration.
+     * Can return the number of the current sub-select in the iteration.
      *
      * @return int
      */

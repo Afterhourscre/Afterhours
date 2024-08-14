@@ -126,7 +126,6 @@ class RowParser
                 )
             );
         }
-
         return $countryId;
     }
 
@@ -141,7 +140,7 @@ class RowParser
      * @throws ColumnNotFoundException
      * @throws RowException
      */
-    private function getRegionIds(array $rowData, $rowNumber, ColumnResolver $columnResolver, $countryId): array
+    private function getRegionIds(array $rowData, $rowNumber, ColumnResolver $columnResolver, $countryId)
     {
         $regionCode = $columnResolver->getColumnValue(ColumnResolver::COLUMN_REGION, $rowData);
         if ($countryId !== '0' && $this->locationDirectory->hasRegionId($countryId, $regionCode)) {
@@ -158,7 +157,6 @@ class RowParser
                 )
             );
         }
-
         return $regionIds;
     }
 
@@ -176,7 +174,6 @@ class RowParser
         if ($zipCode === '') {
             $zipCode = '*';
         }
-
         return $zipCode;
     }
 
@@ -206,7 +203,6 @@ class RowParser
                 )
             );
         }
-
         return $value;
     }
 
@@ -233,7 +229,6 @@ class RowParser
                 )
             );
         }
-
         return $price;
     }
 
@@ -254,7 +249,6 @@ class RowParser
                 $result = $value;
             }
         }
-
         return $result;
     }
 }

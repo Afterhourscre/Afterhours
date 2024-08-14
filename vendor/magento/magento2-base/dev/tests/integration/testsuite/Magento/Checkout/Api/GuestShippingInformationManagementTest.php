@@ -11,6 +11,9 @@ use Magento\Checkout\Api\Data\ShippingInformationInterface;
 use Magento\Checkout\Api\Data\ShippingInformationInterfaceFactory;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\Exception\InputException;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Api\Data\ShippingAssignmentInterface;
 use Magento\TestFramework\Helper\Bootstrap;
@@ -56,7 +59,7 @@ class GuestShippingInformationManagementTest extends TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $objectManager = Bootstrap::getObjectManager();
         $this->management = $objectManager->get(GuestShippingInformationManagementInterface::class);
@@ -75,11 +78,9 @@ class GuestShippingInformationManagementTest extends TestCase
      *
      * @magentoDataFixture Magento/Sales/_files/quote.php
      * @magentoDataFixture Magento/Customer/_files/customer_with_addresses.php
-     * @dataProvider differentAddressesDataProvider
-     * @expectedException  \Magento\Framework\Exception\InputException
-     * @expectedExceptionMessage Unable to save shipping information. Please check input data.
+     * @dataProvider getAddressesVariation
      */
-    public function testDifferentAddresses(bool $swapShipping)
+    public function testDifferentAddresses(bool $swapShipping): void
     {
         $carts = $this->cartRepo->getList(
             $this->searchCriteria->addFilter('reserved_order_id', 'test01')->create()
@@ -110,17 +111,72 @@ class GuestShippingInformationManagementTest extends TestCase
         /** @var QuoteIdMask $idMask */
         $idMask = $this->maskFactory->create();
         $idMask->load($cart->getId(), 'quote_id');
+
+        $this->expectExceptionMessage(
+            sprintf(
+                'The shipping information was unable to be saved. Error: "Invalid customer address id %s"',
+                $address->getCustomerAddressId()
+            )
+        );
+        $this->expectException(InputException::class);
         $this->management->saveAddressInformation($idMask->getMaskedId(), $shippingInformation);
     }
 
     /**
+     * Test save address information with customer custom address attribute for quote
+     *
+     * @return void
+     *
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     * @magentoDataFixture Magento/Sales/_files/quote.php
+     * @magentoDataFixture Magento/Customer/_files/customer_address_with_custom_text_attribute.php
+     */
+    public function testSaveAddressInformationWithCustomerCustomAddressAttribute(): void
+    {
+        $carts = $this->cartRepo->getList(
+            $this->searchCriteria->addFilter('reserved_order_id', 'test01')->create()
+        )->getItems();
+        $currentQuote = array_pop($carts);
+        $guestCustomer = $this->customerRepo->get('JohnDoe@mail.com');
+
+        $customerCustomAddressAttribute = $guestCustomer->getCustomAttributes();
+
+        /** @var ShippingAssignmentInterface $shippingAssignment */
+        $shippingAssignment = $currentQuote->getExtensionAttributes()->getShippingAssignments()[0];
+        $shippingAddress = $shippingAssignment->getShipping()->getAddress();
+        $billingAddress = $currentQuote->getBillingAddress();
+
+        if ($customerCustomAddressAttribute) {
+            $shippingAddress->setCustomAttributes($customerCustomAddressAttribute);
+            $billingAddress->setCustomAttributes($customerCustomAddressAttribute);
+        }
+
+        /** @var ShippingInformationInterface $shippingInformation */
+        $shippingInformation = $this->shippingFactory->create();
+        $shippingInformation->setBillingAddress($billingAddress);
+        $shippingInformation->setShippingAddress($shippingAddress);
+        $shippingInformation->setShippingMethodCode('flatrate');
+        $shippingInformation->setShippingCarrierCode('flatrate');
+        /** @var QuoteIdMask $idMask */
+        $idMask = $this->maskFactory->create();
+        $idMask->load($currentQuote->getId(), 'quote_id');
+
+        $paymentDetails = $this->management->saveAddressInformation($idMask->getMaskedId(), $shippingInformation);
+        $this->assertNotEmpty($paymentDetails);
+        $this->assertEquals($currentQuote->getGrandTotal(), $paymentDetails->getTotals()->getSubtotal());
+    }
+
+    /**
+     * Different variations for addresses test.
+     *
      * @return array
      */
-    public function differentAddressesDataProvider(): array
+    public function getAddressesVariation(): array
     {
         return [
             'Shipping address swap' => [true],
-            'Billing address swap' => [false],
+            'Billing address swap' => [false]
         ];
     }
 }

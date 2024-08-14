@@ -23,10 +23,10 @@ class Alerts extends \Magento\Backend\Block\Widget\Tab
      */
     protected function _prepareLayout()
     {
-        /** @var \Magento\Backend\Block\Widget\Accordion $accordion */
-        $accordion = $this->getLayout()
-            ->createBlock(\Magento\Backend\Block\Widget\Accordion::class)
-            ->setId('productAlerts');
+        $accordion = $this->getLayout()->createBlock(
+            \Magento\Backend\Block\Widget\Accordion::class
+        )->setId('productAlerts');
+        /* @var $accordion \Magento\Backend\Block\Widget\Accordion */
 
         $alertPriceAllow = $this->_scopeConfig->getValue(
             'catalog/productalert/allow_price',
@@ -90,7 +90,6 @@ class Alerts extends \Magento\Backend\Block\Widget\Tab
             'catalog/productalert/allow_stock',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
-
         return ($alertPriceAllow || $alertStockAllow) && parent::canShowTab();
     }
 }

@@ -3,31 +3,36 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Catalog\Test\Unit\Model\Product;
 
-use \Magento\Catalog\Model\Product\Option;
+use Magento\Catalog\Model\Product;
+use Magento\Catalog\Model\Product\Option;
+use Magento\Catalog\Model\Product\Option\Value;
+use Magento\Framework\Pricing\Amount\AmountInterface;
+use Magento\Framework\Pricing\PriceInfoInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-/**
- * Tests \Magento\Catalog\Model\Product\Option.
- */
-class OptionTest extends \PHPUnit\Framework\TestCase
+class OptionTest extends TestCase
 {
     /**
-     * @var \Magento\Catalog\Model\Product\Option
+     * @var Option
      */
     protected $model;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     protected $productMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->productMock = $this->createMock(\Magento\Catalog\Model\Product::class);
+        $this->productMock = $this->createMock(Product::class);
         $objectManager = new ObjectManager($this);
-        $this->model = $objectManager->getObject(\Magento\Catalog\Model\Product\Option::class);
+        $this->model = $objectManager->getObject(Option::class);
         $this->model->setProduct($this->productMock);
     }
 
@@ -50,7 +55,7 @@ class OptionTest extends \PHPUnit\Framework\TestCase
     public function testGetRegularPrice()
     {
         $priceInfoMock = $this->getMockForAbstractClass(
-            \Magento\Framework\Pricing\PriceInfoInterface::class,
+            PriceInfoInterface::class,
             [],
             '',
             false,
@@ -59,14 +64,14 @@ class OptionTest extends \PHPUnit\Framework\TestCase
             ['getAmount', 'getPrice']
         );
         $priceInfoMock->expects($this->once())->method('getPrice')->willReturnSelf();
-        $amountMock = $this->getMockForAbstractClass(\Magento\Framework\Pricing\Amount\AmountInterface::class);
+        $amountMock = $this->getMockForAbstractClass(AmountInterface::class);
         $priceInfoMock->expects($this->once())->method('getAmount')->willReturn($amountMock);
 
         $this->productMock->expects($this->once())->method('getPriceInfo')->willReturn($priceInfoMock);
 
         $amountMock->expects($this->once())->method('getValue')->willReturn(50);
         $this->model->setPrice(50);
-        $this->model->setPriceType(\Magento\Catalog\Model\Product\Option\Value::TYPE_PERCENT);
+        $this->model->setPriceType(Value::TYPE_PERCENT);
         $this->assertEquals(25, $this->model->getRegularPrice());
         $this->model->setPriceType(null);
         $this->assertEquals(50, $this->model->getRegularPrice());
@@ -77,26 +82,23 @@ class OptionTest extends \PHPUnit\Framework\TestCase
      *
      * @param string $rawExtensions
      * @param string $expectedExtensions
-     * @dataProvider beforeSaveFileOptionDataProvider
+     * @dataProvider cleanFileExtensionsDataProvider
      */
-    public function testBeforeSaveFileOption($rawExtensions, $expectedExtensions)
+    public function testCleanFileExtensions(string $rawExtensions, string $expectedExtensions)
     {
         $this->model->setType(Option::OPTION_GROUP_FILE);
         $this->model->setFileExtension($rawExtensions);
         $this->model->beforeSave();
         $actualExtensions = $this->model->getFileExtension();
-        $this->assertEquals(
-            $expectedExtensions,
-            $actualExtensions
-        );
+        $this->assertEquals($expectedExtensions, $actualExtensions);
     }
 
     /**
-     * Data provider for testBeforeSaveFileOption.
+     * Data provider for testCleanFileExtensions.
      *
      * @return array
      */
-    public function beforeSaveFileOptionDataProvider()
+    public function cleanFileExtensionsDataProvider()
     {
         return [
             ['JPG, PNG, GIF', 'jpg, png, gif'],

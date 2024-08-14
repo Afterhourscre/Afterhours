@@ -5,15 +5,15 @@
  */
 namespace Magento\CatalogUrlRewrite\Model\Category;
 
-use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Catalog\Model\Category;
-use Magento\CatalogUrlRewrite\Model\CategoryUrlRewriteGenerator;
 use Magento\CatalogUrlRewrite\Model\CategoryUrlRewriteGeneratorFactory;
-use Magento\Framework\App\ObjectManager;
+use Magento\CatalogUrlRewrite\Model\CategoryUrlRewriteGenerator;
 use Magento\UrlRewrite\Model\MergeDataProviderFactory;
+use Magento\Framework\App\ObjectManager;
+use Magento\Catalog\Api\CategoryRepositoryInterface;
 
 /**
- * Model for generate url rewrites for children categories.
+ * Model for generate url rewrites for children categories
  */
 class ChildrenUrlRewriteGenerator
 {
@@ -66,6 +66,7 @@ class ChildrenUrlRewriteGenerator
      * @param \Magento\Catalog\Model\Category $category
      * @param int|null $rootCategoryId
      * @return \Magento\UrlRewrite\Service\V1\Data\UrlRewrite[]
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function generate($storeId, Category $category, $rootCategoryId = null)
     {

@@ -3,24 +3,29 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Sales\Controller\Adminhtml\Order;
 
 use Magento\Backend\App\Action;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\View\Result\PageFactory;
 use Magento\Backend\Model\View\Result\ForwardFactory;
+use Magento\Sales\Model\Order\Create\ValidateCoupon;
 
 /**
  * Adminhtml sales orders creation process controller
  *
- * @author      Magento Core Team <core@magentocommerce.com>
  * @SuppressWarnings(PHPMD.NumberOfChildren)
+ * @SuppressWarnings(PHPMD.AllPurposeAction)
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 abstract class Create extends \Magento\Backend\App\Action
 {
     /**
      * Indicates how to process post data
      */
-    private static $actionSave = 'save';
+    private const ACTION_SAVE = 'save';
     /**
      * @var \Magento\Framework\Escaper
      */
@@ -37,24 +42,32 @@ abstract class Create extends \Magento\Backend\App\Action
     protected $resultForwardFactory;
 
     /**
+     * @var ValidateCoupon
+     */
+    private $validateCoupon;
+
+    /**
      * @param Action\Context $context
      * @param \Magento\Catalog\Helper\Product $productHelper
      * @param \Magento\Framework\Escaper $escaper
      * @param PageFactory $resultPageFactory
      * @param ForwardFactory $resultForwardFactory
+     * @param ValidateCoupon|null $validateCoupon
      */
     public function __construct(
         Action\Context $context,
         \Magento\Catalog\Helper\Product $productHelper,
         \Magento\Framework\Escaper $escaper,
         PageFactory $resultPageFactory,
-        ForwardFactory $resultForwardFactory
+        ForwardFactory $resultForwardFactory,
+        ValidateCoupon $validateCoupon = null
     ) {
         parent::__construct($context);
         $productHelper->setSkipSaleableCheck(true);
         $this->escaper = $escaper;
         $this->resultPageFactory = $resultPageFactory;
         $this->resultForwardFactory = $resultForwardFactory;
+        $this->validateCoupon = $validateCoupon ?: ObjectManager::getInstance()->get(ValidateCoupon::class);
     }
 
     /**
@@ -184,7 +197,7 @@ abstract class Create extends \Magento\Backend\App\Action
             && $this->_getOrderCreateModel()->getShippingAddress()->getSameAsBilling() && empty($shippingMethod)
             ) {
                 $this->_getOrderCreateModel()->setShippingAsBilling(1);
-            } else {
+            } elseif ($syncFlag !== null) {
                 $this->_getOrderCreateModel()->setShippingAsBilling((int)$syncFlag);
             }
         }
@@ -210,7 +223,7 @@ abstract class Create extends \Magento\Backend\App\Action
         /**
          * Apply mass changes from sidebar
          */
-        if (($data = $this->getRequest()->getPost('sidebar')) && $action !== self::$actionSave) {
+        if (($data = $this->getRequest()->getPost('sidebar')) && $action !== self::ACTION_SAVE) {
             $this->_getOrderCreateModel()->applySidebarData($data);
         }
 
@@ -227,7 +240,7 @@ abstract class Create extends \Magento\Backend\App\Action
          * Adding products to quote from special grid
          */
         if ($this->getRequest()->has('item') && !$this->getRequest()->getPost('update_items')
-            && $action !== self::$actionSave
+            && $action !== self::ACTION_SAVE
         ) {
             $items = $this->getRequest()->getPost('item');
             $items = $this->_processFiles($items);
@@ -308,39 +321,7 @@ abstract class Create extends \Magento\Backend\App\Action
         }
 
         $data = $this->getRequest()->getPost('order');
-        $couponCode = '';
-        if (isset($data) && isset($data['coupon']['code'])) {
-            $couponCode = trim($data['coupon']['code']);
-        }
-
-        if (!empty($couponCode)) {
-            $isApplyDiscount = false;
-            foreach ($this->_getQuote()->getAllItems() as $item) {
-                if (!$item->getNoDiscount()) {
-                    $isApplyDiscount = true;
-                    break;
-                }
-            }
-            if (!$isApplyDiscount) {
-                $this->messageManager->addError(
-                    __(
-                        '"%1" coupon code was not applied. Do not apply discount is selected for item(s)',
-                        $this->escaper->escapeHtml($couponCode)
-                    )
-                );
-            } else {
-                if ($this->_getQuote()->getCouponCode() !== $couponCode) {
-                    $this->messageManager->addError(
-                        __(
-                            '"%1" coupon code is not valid.',
-                            $this->escaper->escapeHtml($couponCode)
-                        )
-                    );
-                } else {
-                    $this->messageManager->addSuccess(__('The coupon code has been accepted.'));
-                }
-            }
-        }
+        $this->validateCoupon->execute($this->_getQuote(), $data);
 
         return $this;
     }
@@ -367,6 +348,8 @@ abstract class Create extends \Magento\Backend\App\Action
     }
 
     /**
+     * Reload quote
+     *
      * @return $this
      */
     protected function _reloadQuote()
@@ -393,7 +376,7 @@ abstract class Create extends \Magento\Backend\App\Action
      */
     protected function _getAclResource()
     {
-        $action = strtolower($this->getRequest()->getActionName());
+        $action = strtolower($this->getRequest()->getActionName() ?? '');
         if (in_array($action, ['index', 'save', 'cancel']) && $this->_getSession()->getReordered()) {
             $action = 'reorder';
         }

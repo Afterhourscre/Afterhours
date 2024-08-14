@@ -3,6 +3,8 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Deploy\Test\Unit\Console\Command;
 
 use Magento\Config\Model\Config\Export\Comment;
@@ -12,46 +14,48 @@ use Magento\Framework\App\Config\Reader\Source\SourceInterface;
 use Magento\Framework\App\DeploymentConfig\Writer;
 use Magento\Framework\Config\File\ConfigFilePool;
 use Magento\Framework\Console\Cli;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Test command for dump application state
  */
-class ApplicationDumpCommandTest extends \PHPUnit\Framework\TestCase
+class ApplicationDumpCommandTest extends TestCase
 {
     /**
-     * @var InputInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var InputInterface|MockObject
      */
     private $input;
 
     /**
-     * @var OutputInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var OutputInterface|MockObject
      */
     private $output;
 
     /**
-     * @var Writer|\PHPUnit_Framework_MockObject_MockObject
+     * @var Writer|MockObject
      */
     private $writer;
 
     /**
-     * @var SourceInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var SourceInterface|MockObject
      */
     private $source;
 
     /**
-     * @var SourceInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var SourceInterface|MockObject
      */
     private $sourceEnv;
 
     /**
-     * @var Hash|\PHPUnit_Framework_MockObject_MockObject
+     * @var Hash|MockObject
      */
     private $configHashMock;
 
     /**
-     * @var Comment|\PHPUnit_Framework_MockObject_MockObject
+     * @var Comment|MockObject
      */
     private $commentMock;
 
@@ -60,7 +64,7 @@ class ApplicationDumpCommandTest extends \PHPUnit\Framework\TestCase
      */
     private $command;
 
-    public function setUp()
+    protected function setUp(): void
     {
         $this->configHashMock = $this->getMockBuilder(Hash::class)
             ->disableOriginalConstructor()
@@ -74,10 +78,10 @@ class ApplicationDumpCommandTest extends \PHPUnit\Framework\TestCase
             ->getMock();
         $this->source = $this->getMockBuilder(SourceInterface::class)
             ->disableOriginalConstructor()
-            ->getMock();
+            ->getMockForAbstractClass();
         $this->sourceEnv = $this->getMockBuilder(SourceInterface::class)
             ->disableOriginalConstructor()
-            ->getMock();
+            ->getMockForAbstractClass();
         $this->commentMock = $this->getMockBuilder(Comment::class)
             ->disableOriginalConstructor()
             ->getMock();
@@ -121,17 +125,23 @@ class ApplicationDumpCommandTest extends \PHPUnit\Framework\TestCase
             ->willReturn('Some comment message');
         $this->writer->expects($this->exactly(2))
             ->method('saveConfig')
-            ->withConsecutive(
-                [[ConfigFilePool::APP_CONFIG => $dump]],
-                [[ConfigFilePool::APP_ENV => $dump]]
-            );
+            ->willReturnCallback(function ($arg1) use ($dump) {
+                if ($arg1 == [ConfigFilePool::APP_CONFIG => $dump]) {
+                    return null;
+                } elseif ($arg1 == [ConfigFilePool::APP_ENV => $dump]) {
+                    return null;
+                }
+            });
 
         $this->output->expects($this->exactly(2))
             ->method('writeln')
-            ->withConsecutive(
-                [['system' => 'Some comment message']],
-                ['<info>Done. Config types dumped: system</info>']
-            );
+            ->willReturnCallback(function ($arg1) {
+                if ($arg1 == ['system' => 'Some comment message']) {
+                    return null;
+                } elseif ($arg1 == ['<info>Done. Config types dumped: system</info>']) {
+                    return null;
+                }
+            });
 
         $method = new \ReflectionMethod(ApplicationDumpCommand::class, 'execute');
         $method->setAccessible(true);

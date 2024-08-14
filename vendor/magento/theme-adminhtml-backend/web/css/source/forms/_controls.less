@@ -75,9 +75,9 @@
 
     max-width: 100%;
     min-width: 8.5rem;
-    padding-bottom: @field-control__padding-bottom - .1rem;
+    padding-bottom: @field-control__padding-bottom;
     padding-right: 4.4rem; // Distance between select switch and inner text
-    padding-top: @field-control__padding-top - .1rem;
+    padding-top: @field-control__padding-top;
     transition: @smooth__border-color;
 
     &:hover {
@@ -99,11 +99,6 @@
 
     &::-ms-expand {
         display: none;
-    }
-
-    .ie9 & {
-        background-image: none;
-        padding-right: @field-control__padding-horizontal;
     }
 }
 
@@ -138,6 +133,7 @@ option:empty {
 .admin__control-file-label {
     &:before {
         &:extend(.abs-form-control-pattern);
+
         .admin__control-file:active + &,
         .admin__control-file:focus + & {
             /**
@@ -179,6 +175,7 @@ option:empty {
     line-height: @field-control__line-height;
     padding-bottom: @field-control__padding-bottom;
     padding-top: @field-control__padding-top;
+    margin-left: @action__outer-indent;
 
     + [class*='admin__control-'] {
         margin-left: @action__outer-indent;
@@ -323,36 +320,4 @@ option:empty {
 
 .admin__addon-prefix {
     .lib-vendor-prefix-order(0);
-}
-
-.ie9 {
-    .admin__control-addon {
-        &:after {
-            clear: both;
-            content: '';
-            display: block;
-            height: 0;
-            overflow: hidden;
-        }
-    }
-
-    .admin__addon {
-        min-width: 0;
-        overflow: hidden;
-        text-align: right;
-        white-space: nowrap;
-        width: auto;
-
-        [class*='admin__control-'] {
-            display: inline;
-        }
-
-        &-prefix {
-            float: left;
-        }
-
-        &-suffix {
-            float: right;
-        }
-    }
 }

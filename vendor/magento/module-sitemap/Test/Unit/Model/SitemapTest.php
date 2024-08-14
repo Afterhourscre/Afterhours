@@ -3,203 +3,234 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Sitemap\Test\Unit\Model;
+
+use Magento\Framework\App\Request\Http;
+use Magento\Framework\DataObject;
+use Magento\Framework\Escaper;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Filesystem;
+use Magento\Framework\Filesystem\Directory\Write as DirectoryWrite;
+use Magento\Framework\Filesystem\File\Write;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Framework\Translate\InlineInterface;
+use Magento\Framework\ZendEscaper;
+use Magento\Sitemap\Helper\Data;
+use Magento\Sitemap\Model\ItemProvider\ConfigReaderInterface;
+use Magento\Sitemap\Model\ItemProvider\ItemProviderInterface;
+use Magento\Sitemap\Model\ResourceModel\Catalog\Category;
+use Magento\Sitemap\Model\ResourceModel\Catalog\CategoryFactory;
+use Magento\Sitemap\Model\ResourceModel\Catalog\Product;
+use Magento\Sitemap\Model\ResourceModel\Catalog\ProductFactory;
+use Magento\Sitemap\Model\ResourceModel\Cms\Page;
+use Magento\Sitemap\Model\ResourceModel\Cms\PageFactory;
+use Magento\Sitemap\Model\ResourceModel\Sitemap as SitemapResource;
+use Magento\Sitemap\Model\Sitemap;
+use Magento\Sitemap\Model\SitemapConfigReaderInterface;
+use Magento\Sitemap\Model\SitemapItem;
+use Magento\Store\Model\Store;
+use Magento\Store\Model\StoreManagerInterface;
+use PHPUnit\Framework\Assert;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class SitemapTest extends \PHPUnit\Framework\TestCase
+class SitemapTest extends TestCase
 {
     /**
-     * @var \Magento\Sitemap\Helper\Data
+     * @var Data
      */
-    protected $_helperMockSitemap;
+    private $helperMockSitemap;
 
     /**
-     * @var \Magento\Sitemap\Model\ResourceModel\Sitemap
+     * @var SitemapResource
      */
-    protected $_resourceMock;
+    private $resourceMock;
 
     /**
-     * @var \Magento\Sitemap\Model\ResourceModel\Catalog\Category
+     * @var Category
      */
-    protected $_sitemapCategoryMock;
+    private $sitemapCategoryMock;
 
     /**
-     * @var \Magento\Sitemap\Model\ResourceModel\Catalog\Product
+     * @var Product
      */
-    protected $_sitemapProductMock;
+    private $sitemapProductMock;
 
     /**
-     * @var \Magento\Sitemap\Model\ResourceModel\Cms\Page
+     * @var Page
      */
-    protected $_sitemapCmsPageMock;
+    private $sitemapCmsPageMock;
 
     /**
-     * @var \Magento\Framework\Filesystem
+     * @var Filesystem
      */
-    protected $_filesystemMock;
+    private $filesystemMock;
 
     /**
-     * @var \Magento\Framework\Filesystem\Directory\Write
+     * @var DirectoryWrite
      */
-    protected $_directoryMock;
+    private $directoryMock;
 
     /**
-     * @var \Magento\Framework\Filesystem\File\Write
+     * @var Write
      */
-    protected $_fileMock;
+    private $fileMock;
 
     /**
-     * @var \Magento\Store\Model\StoreManagerInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var StoreManagerInterface|MockObject
      */
     private $storeManagerMock;
 
     /**
-     * Set helper mocks, create resource model mock
+     * @var ItemProviderInterface|MockObject
      */
-    protected function setUp()
+    private $itemProviderMock;
+
+    /**
+     * @var ConfigReaderInterface|MockObject
+     */
+    private $configReaderMock;
+
+    /**
+     * @var Http|MockObject
+     */
+    private $request;
+    /**
+     * @var Store|MockObject
+     */
+    private $store;
+
+    /**
+     * @inheritdoc
+     */
+    protected function setUp(): void
     {
-        $this->_sitemapCategoryMock = $this->getMockBuilder(
-            \Magento\Sitemap\Model\ResourceModel\Catalog\Category::class
-        )->disableOriginalConstructor()->getMock();
-        $this->_sitemapProductMock = $this->getMockBuilder(
-            \Magento\Sitemap\Model\ResourceModel\Catalog\Product::class
-        )->disableOriginalConstructor()->getMock();
-        $this->_sitemapCmsPageMock = $this->getMockBuilder(
-            \Magento\Sitemap\Model\ResourceModel\Cms\Page::class
-        )->disableOriginalConstructor()->getMock();
-        $this->_helperMockSitemap = $this->createPartialMock(\Magento\Sitemap\Helper\Data::class, [
-                'getCategoryChangefreq',
-                'getProductChangefreq',
-                'getPageChangefreq',
-                'getCategoryPriority',
-                'getProductPriority',
-                'getPagePriority',
-                'getMaximumLinesNumber',
-                'getMaximumFileSize',
-                'getEnableSubmissionRobots'
-            ]);
-        $this->_helperMockSitemap->expects(
-            $this->any()
-        )->method(
-            'getCategoryChangefreq'
-        )->will(
-            $this->returnValue('daily')
-        );
-        $this->_helperMockSitemap->expects(
-            $this->any()
-        )->method(
-            'getProductChangefreq'
-        )->will(
-            $this->returnValue('monthly')
-        );
-        $this->_helperMockSitemap->expects(
-            $this->any()
-        )->method(
-            'getPageChangefreq'
-        )->will(
-            $this->returnValue('daily')
-        );
-        $this->_helperMockSitemap->expects($this->any())->method('getCategoryPriority')->will($this->returnValue('1'));
-        $this->_helperMockSitemap->expects(
-            $this->any()
-        )->method(
-            'getProductPriority'
-        )->will(
-            $this->returnValue('0.5')
-        );
-        $this->_helperMockSitemap->expects($this->any())->method('getPagePriority')->will($this->returnValue('0.25'));
+        $this->sitemapCategoryMock = $this->getMockBuilder(Category::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->sitemapProductMock = $this->getMockBuilder(Product::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->sitemapCmsPageMock = $this->getMockBuilder(Page::class)
+            ->disableOriginalConstructor()
+            ->getMock();
 
-        $this->_resourceMock = $this->getMockBuilder(
-            \Magento\Sitemap\Model\ResourceModel\Sitemap::class
-        )->setMethods(
-            ['_construct', 'beginTransaction', 'rollBack', 'save', 'addCommitCallback', 'commit', '__wakeup']
-        )->disableOriginalConstructor()->getMock();
-        $this->_resourceMock->expects($this->any())->method('addCommitCallback')->will($this->returnSelf());
+        $this->helperMockSitemap = $this->getMockBuilder(Data::class)
+            ->disableOriginalConstructor()
+            ->getMock();
 
-        $this->_fileMock = $this->getMockBuilder(
-            \Magento\Framework\Filesystem\File\Write::class
-        )->disableOriginalConstructor()->setMethods(['write', 'close'])->getMock();
+        $resourceMethods = [
+            '_construct',
+            'beginTransaction',
+            'rollBack',
+            'save',
+            'addCommitCallback',
+            'commit',
+            '__wakeup',
+        ];
 
-        $this->_directoryMock = $this->getMockBuilder(
-            \Magento\Framework\Filesystem\Directory\Write::class
-        )->disableOriginalConstructor()->setMethods(
-            ['write', 'openFile', 'isExist', 'renameFile', 'readFile', 'isWritable']
-        )->getMock();
-        $this->_directoryMock->expects($this->any())->method('openFile')->will($this->returnValue($this->_fileMock));
+        $this->resourceMock = $this->getMockBuilder(SitemapResource::class)
+            ->onlyMethods($resourceMethods)
+            ->disableOriginalConstructor()
+            ->getMock();
 
-        $this->_filesystemMock = $this->getMockBuilder(
-            \Magento\Framework\Filesystem::class
-        )->setMethods(
-            ['getDirectoryWrite']
-        )->disableOriginalConstructor()->getMock();
-        $this->_filesystemMock->expects(
-            $this->any()
-        )->method(
-            'getDirectoryWrite'
-        )->will(
-            $this->returnValue($this->_directoryMock)
-        );
+        $this->resourceMock->method('addCommitCallback')
+            ->willReturnSelf();
+
+        $this->fileMock = $this->createMock(Write::class);
+
+        $this->directoryMock = $this->createMock(DirectoryWrite::class);
+
+        $this->directoryMock->method('openFile')
+            ->willReturn($this->fileMock);
+
+        $this->filesystemMock = $this->getMockBuilder(Filesystem::class)
+            ->onlyMethods(['getDirectoryWrite'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $this->filesystemMock->method('getDirectoryWrite')
+            ->willReturn($this->directoryMock);
+
+        $this->configReaderMock = $this->getMockForAbstractClass(SitemapConfigReaderInterface::class);
+        $this->itemProviderMock = $this->getMockForAbstractClass(ItemProviderInterface::class);
+        $this->request = $this->createMock(Http::class);
+        $this->store = $this->createPartialMock(Store::class, ['isFrontUrlSecure', 'getBaseUrl']);
+        $this->storeManagerMock = $this->getMockForAbstractClass(StoreManagerInterface::class);
+        $this->storeManagerMock->method('getStore')
+            ->willReturn($this->store);
     }
 
     /**
      * Check not allowed sitemap path validation
-     *
-     * @expectedException \Magento\Framework\Exception\LocalizedException
-     * @expectedExceptionMessage Please define a correct path.
      */
     public function testNotAllowedPath()
     {
-        $model = $this->_getModelMock();
+        $this->expectException('Magento\Framework\Exception\LocalizedException');
+        $this->expectExceptionMessage('Please define a correct path.');
+        $model = $this->getModelMock();
         $model->setSitemapPath('../');
         $model->beforeSave();
     }
 
     /**
      * Check not exists sitemap path validation
-     *
-     * @expectedException \Magento\Framework\Exception\LocalizedException
-     * @expectedExceptionMessage Please create the specified folder "/" before saving the sitemap.
      */
     public function testPathNotExists()
     {
-        $this->_directoryMock->expects($this->once())->method('isExist')->will($this->returnValue(false));
+        $this->expectException('Magento\Framework\Exception\LocalizedException');
+        $this->expectExceptionMessage('Please create the specified folder "/" before saving the sitemap.');
+        $this->directoryMock->expects($this->once())
+            ->method('isExist')
+            ->willReturn(false);
 
-        $model = $this->_getModelMock();
+        $model = $this->getModelMock();
         $model->beforeSave();
     }
 
     /**
      * Check not writable sitemap path validation
-     *
-     * @expectedException \Magento\Framework\Exception\LocalizedException
-     * @expectedExceptionMessage Please make sure that "/" is writable by the web-server.
      */
     public function testPathNotWritable()
     {
-        $this->_directoryMock->expects($this->once())->method('isExist')->will($this->returnValue(true));
-        $this->_directoryMock->expects($this->once())->method('isWritable')->will($this->returnValue(false));
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('Please make sure that "/" is writable by the web-server.');
+        $this->directoryMock->expects($this->once())
+            ->method('isExist')
+            ->willReturn(true);
 
-        $model = $this->_getModelMock();
+        $this->directoryMock->expects($this->once())
+            ->method('isWritable')
+            ->willReturn(false);
+
+        $model = $this->getModelMock();
         $model->beforeSave();
     }
 
-    //@codingStandardsIgnoreStart
     /**
      * Check invalid chars in sitemap filename validation
-     *
-     * @expectedException \Magento\Framework\Exception\LocalizedException
-     * @expectedExceptionMessage Please use only letters (a-z or A-Z), numbers (0-9) or underscores (_) in the filename.
      * No spaces or other characters are allowed.
      */
-    //@codingStandardsIgnoreEnd
     public function testFilenameInvalidChars()
     {
-        $this->_directoryMock->expects($this->once())->method('isExist')->will($this->returnValue(true));
-        $this->_directoryMock->expects($this->once())->method('isWritable')->will($this->returnValue(true));
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage(
+            'Please use only letters (a-z or A-Z), numbers (0-9) or underscores (_) in the filename.'
+        );
+        $this->directoryMock->expects($this->once())
+            ->method('isExist')
+            ->willReturn(true);
 
-        $model = $this->_getModelMock();
+        $this->directoryMock->expects($this->once())
+            ->method('isWritable')
+            ->willReturn(true);
+
+        $model = $this->getModelMock();
         $model->setSitemapFilename('*sitemap?.xml');
         $model->beforeSave();
     }
@@ -229,7 +260,7 @@ class SitemapTest extends \PHPUnit\Framework\TestCase
         return [
             [50000, 10485760, $expectedSingleFile, 6],
             [1, 10485760, $expectedMultiFile, 18],
-            [50000, 264, $expectedMultiFile, 18]
+            [50000, 264, $expectedMultiFile, 18],
         ];
     }
 
@@ -245,7 +276,7 @@ class SitemapTest extends \PHPUnit\Framework\TestCase
     public function testGenerateXml($maxLines, $maxFileSize, $expectedFile, $expectedWrites)
     {
         $actualData = [];
-        $model = $this->_prepareSitemapModelMock(
+        $model = $this->prepareSitemapModelMock(
             $actualData,
             $maxLines,
             $maxFileSize,
@@ -253,8 +284,6 @@ class SitemapTest extends \PHPUnit\Framework\TestCase
             $expectedWrites,
             null
         );
-        $this->storeManagerMock->expects($this->once())->method('setCurrentStore')->with(1);
-
         $model->generateXml();
 
         $this->assertCount(count($expectedFile), $actualData, 'Number of generated files is incorrect');
@@ -354,7 +383,7 @@ class SitemapTest extends \PHPUnit\Framework\TestCase
     public function testAddSitemapToRobotsTxt($maxLines, $maxFileSize, $expectedFile, $expectedWrites, $robotsInfo)
     {
         $actualData = [];
-        $model = $this->_prepareSitemapModelMock(
+        $model = $this->prepareSitemapModelMock(
             $actualData,
             $maxLines,
             $maxFileSize,
@@ -362,8 +391,6 @@ class SitemapTest extends \PHPUnit\Framework\TestCase
             $expectedWrites,
             $robotsInfo
         );
-        $this->storeManagerMock->expects($this->once())->method('setCurrentStore')->with(1);
-
         $model->generateXml();
     }
 
@@ -376,10 +403,10 @@ class SitemapTest extends \PHPUnit\Framework\TestCase
      * @param array $expectedFile
      * @param int $expectedWrites
      * @param array $robotsInfo
-     * @return \Magento\Sitemap\Model\Sitemap|\PHPUnit_Framework_MockObject_MockObject
+     * @return Sitemap|MockObject
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    protected function _prepareSitemapModelMock(
+    protected function prepareSitemapModelMock(
         &$actualData,
         $maxLines,
         $maxFileSize,
@@ -398,35 +425,33 @@ class SitemapTest extends \PHPUnit\Framework\TestCase
         };
 
         // Check that all expected lines were written
-        $this->_fileMock->expects(
+        $this->fileMock->expects(
             $this->exactly($expectedWrites)
         )->method(
             'write'
-        )->will(
-            $this->returnCallback($streamWriteCallback)
+        )->willReturnCallback(
+            $streamWriteCallback
         );
 
-        // Check that all expected file descriptors were created
-        $this->_directoryMock->expects($this->exactly(count($expectedFile)))->method('openFile')->will(
-            $this->returnCallback(
-                function ($file) use (&$currentFile) {
-                    $currentFile = $file;
-                }
-            )
-        );
+        $checkFileCallback = function ($file) use (&$currentFile) {
+            $currentFile = $file;
+        };// Check that all expected file descriptors were created
+        $this->directoryMock->expects($this->exactly(count($expectedFile)))->method('openFile')
+            ->willReturnCallback($checkFileCallback);
 
         // Check that all file descriptors were closed
-        $this->_fileMock->expects($this->exactly(count($expectedFile)))->method('close');
+        $this->fileMock->expects($this->exactly(count($expectedFile)))
+            ->method('close');
 
         if (count($expectedFile) == 1) {
-            $this->_directoryMock->expects($this->once())->method('renameFile')->will(
-                $this->returnCallback(
+            $this->directoryMock->expects($this->once())
+                ->method('renameFile')
+                ->willReturnCallback(
                     function ($from, $to) {
-                        \PHPUnit\Framework\Assert::assertEquals('/sitemap-1-1.xml', $from);
-                        \PHPUnit\Framework\Assert::assertEquals('/sitemap.xml', $to);
+                        Assert::assertEquals('/sitemap-1-1.xml', $from);
+                        Assert::assertEquals('/sitemap.xml', $to);
                     }
-                )
-            );
+                );
         }
 
         // Check robots txt
@@ -438,58 +463,39 @@ class SitemapTest extends \PHPUnit\Framework\TestCase
         if (isset($robotsInfo['robotsFinish'])) {
             $robotsFinish = $robotsInfo['robotsFinish'];
         }
-        $this->_directoryMock->expects($this->any())->method('readFile')->will($this->returnValue($robotsStart));
-        $this->_directoryMock->expects(
-            $this->any()
-        )->method(
-            'write'
-        )->with(
-            $this->equalTo('robots.txt'),
-            $this->equalTo($robotsFinish)
-        );
+        $this->directoryMock->method('readFile')
+            ->willReturn($robotsStart);
+
+        $this->directoryMock->method('writeFile')
+            ->with(
+                $this->equalTo('robots.txt'),
+                $this->equalTo($robotsFinish)
+            );
 
         // Mock helper methods
         $pushToRobots = 0;
         if (isset($robotsInfo['pushToRobots'])) {
             $pushToRobots = (int)$robotsInfo['pushToRobots'];
         }
-        $this->_helperMockSitemap->expects(
-            $this->any()
-        )->method(
-            'getMaximumLinesNumber'
-        )->will(
-            $this->returnValue($maxLines)
-        );
-        $this->_helperMockSitemap->expects(
-            $this->any()
-        )->method(
-            'getMaximumFileSize'
-        )->will(
-            $this->returnValue($maxFileSize)
-        );
-        $this->_helperMockSitemap->expects(
-            $this->any()
-        )->method(
-            'getEnableSubmissionRobots'
-        )->will(
-            $this->returnValue($pushToRobots)
-        );
+        $this->configReaderMock->method('getMaximumLinesNumber')
+            ->willReturn($maxLines);
 
-        $model = $this->_getModelMock(true);
+        $this->configReaderMock->method('getMaximumFileSize')
+            ->willReturn($maxFileSize);
 
-        $storeMock = $this->getMockBuilder(\Magento\Store\Model\Store::class)
-            ->setMethods(['isFrontUrlSecure', 'getBaseUrl'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $storeMock->expects($this->atLeastOnce())->method('isFrontUrlSecure')->willReturn(false);
-        $storeMock->expects($this->atLeastOnce())
+        $this->configReaderMock->method('getEnableSubmissionRobots')
+            ->willReturn($pushToRobots);
+
+        $model = $this->getModelMock(true);
+
+        $this->store->expects($this->atLeastOnce())
+            ->method('isFrontUrlSecure')
+            ->willReturn(false);
+
+        $this->store->expects($this->atLeastOnce())
             ->method('getBaseUrl')
             ->with($this->isType('string'), false)
             ->willReturn('http://store.com/');
-        $this->storeManagerMock->expects($this->atLeastOnce())
-            ->method('getStore')
-            ->with(1)
-            ->willReturn($storeMock);
 
         return $model;
     }
@@ -498,100 +504,80 @@ class SitemapTest extends \PHPUnit\Framework\TestCase
      * Get model mock object
      *
      * @param bool $mockBeforeSave
-     * @return \Magento\Sitemap\Model\Sitemap|PHPUnit_Framework_MockObject_MockObject
+     * @return Sitemap|MockObject
      */
-    protected function _getModelMock($mockBeforeSave = false)
+    protected function getModelMock($mockBeforeSave = false)
     {
+        $addMethods = [
+            '_getFileObject',
+            '_afterSave',
+            '_getCategoryItemsCollection',
+            '_getProductItemsCollection',
+            '_getPageItemsCollection'
+        ];
         $methods = [
             '_construct',
             '_getResource',
             '_getBaseDir',
-            '_getFileObject',
-            '_afterSave',
             '_getCurrentDateTime',
-            '_getCategoryItemsCollection',
-            '_getProductItemsCollection',
-            '_getPageItemsCollection',
-            '_getDocumentRoot',
+            '_getDocumentRoot'
         ];
         if ($mockBeforeSave) {
             $methods[] = 'beforeSave';
         }
 
-        $this->_sitemapCategoryMock->expects(
-            $this->any()
-        )->method(
-            'getCollection'
-        )->will(
-            $this->returnValue(
+        $storeBaseMediaUrl = 'http://store.com/media/catalog/product/cache/c9e0b0ef589f3508e5ba515cde53c5ff/';
+
+        $this->itemProviderMock->method('getItems')
+            ->willReturn(
                 [
-                    new \Magento\Framework\DataObject(
-                        ['url' => 'category.html', 'updated_at' => '2012-12-21 00:00:00']
-                    ),
-                    new \Magento\Framework\DataObject(
-                        ['url' => '/category/sub-category.html', 'updated_at' => '2012-12-21 00:00:00']
-                    ),
+                    new SitemapItem('category.html', '1.0', 'daily', '2012-12-21 00:00:00'),
+                    new SitemapItem('/category/sub-category.html', '1.0', 'daily', '2012-12-21 00:00:00'),
+                    new SitemapItem('product.html', '0.5', 'monthly', '2012-12-21 00:00:00'),
+                    new SitemapItem(
+                        'product2.html',
+                        '0.5',
+                        'monthly',
+                        '2012-12-21 00:00:00',
+                        new DataObject(
+                            [
+                                'collection' => [
+                                    new DataObject(
+                                        [
+                                            'url' => $storeBaseMediaUrl . 'i/m/image1.png',
+                                            'caption' => 'Copyright © caption &trade; & > title < "'
+                                        ]
+                                    ),
+                                    new DataObject(
+                                        ['url' => $storeBaseMediaUrl . 'i/m/image_no_caption.png', 'caption' => null]
+                                    ),
+                                ],
+                                'thumbnail' => $storeBaseMediaUrl . 't/h/thumbnail.jpg',
+                                'title' => 'Product & > title < "',
+                            ]
+                        )
+                    )
                 ]
-            )
-        );
+            );
 
-        $storeBaseMediaUrl = 'http://store.com/pub/media/catalog/product/cache/10f519365b01716ddb90abc57de5a837/';
-        $this->_sitemapProductMock->expects(
-            $this->any()
-        )->method(
-            'getCollection'
-        )->will(
-            $this->returnValue(
-                [
-                    new \Magento\Framework\DataObject(
-                        ['url' => 'product.html', 'updated_at' => '0000-00-00 00:00:00']
-                    ),
-                    new \Magento\Framework\DataObject(
-                        [
-                            'url' => 'product2.html',
-                            'updated_at' => '2012-12-21 00:00:00',
-                            'images' => new \Magento\Framework\DataObject(
-                                [
-                                    'collection' => [
-                                        new \Magento\Framework\DataObject(
-                                            [
-                                                'url' => $storeBaseMediaUrl.'i/m/image1.png',
-                                                'caption' => 'caption & > title < "'
-                                            ]
-                                        ),
-                                        new \Magento\Framework\DataObject(
-                                            ['url' => $storeBaseMediaUrl.'i/m/image_no_caption.png', 'caption' => null]
-                                        ),
-                                    ],
-                                    'thumbnail' => $storeBaseMediaUrl.'t/h/thumbnail.jpg',
-                                    'title' => 'Product & > title < "',
-                                ]
-                            ),
-                        ]
-                    ),
-                ]
-            )
-        );
-        $this->_sitemapCmsPageMock->expects($this->any())->method('getCollection')->will($this->returnValue([]));
+        /** @var Sitemap $model */
+        $model = $this->getMockBuilder(Sitemap::class)
+            ->addMethods($addMethods)
+            ->onlyMethods($methods)
+            ->setConstructorArgs($this->getModelConstructorArgs())
+            ->getMock();
 
-        /** @var $model \Magento\Sitemap\Model\Sitemap */
-        $model = $this->getMockBuilder(
-            \Magento\Sitemap\Model\Sitemap::class
-        )->setMethods(
-            $methods
-        )->setConstructorArgs(
-            $this->_getModelConstructorArgs()
-        )->getMock();
+        $model->method('_getResource')
+            ->willReturn($this->resourceMock);
 
-        $model->expects($this->any())->method('_getResource')->will($this->returnValue($this->_resourceMock));
-        $model->expects(
-            $this->any()
-        )->method(
-            '_getCurrentDateTime'
-        )->will(
-            $this->returnValue('2012-12-21T00:00:00-08:00')
-        );
-        $model->expects($this->any())->method('_getDocumentRoot')->will($this->returnValue('/project'));
+        $model->method('_getCurrentDateTime')
+            ->willReturn('2012-12-21T00:00:00-08:00');
+
+        $model->method('_getBaseDir')
+            ->willReturn('');
+
+        $model->method('_getDocumentRoot')
+            ->willReturn('/project');
 
         $model->setSitemapFilename('sitemap.xml');
         $model->setStoreId(1);
@@ -603,60 +589,37 @@ class SitemapTest extends \PHPUnit\Framework\TestCase
     /**
      * @return array
      */
-    protected function _getModelConstructorArgs()
+    private function getModelConstructorArgs()
     {
-        $categoryFactory = $this->getMockBuilder(
-            \Magento\Sitemap\Model\ResourceModel\Catalog\CategoryFactory::class
-        )->setMethods(
-            ['create']
-        )->disableOriginalConstructor()->getMock();
-        $categoryFactory->expects(
-            $this->any()
-        )->method(
-            'create'
-        )->will(
-            $this->returnValue($this->_sitemapCategoryMock)
-        );
-
-        $productFactory = $this->getMockBuilder(
-            \Magento\Sitemap\Model\ResourceModel\Catalog\ProductFactory::class
-        )->setMethods(
-            ['create']
-        )->disableOriginalConstructor()->getMock();
-        $productFactory->expects($this->any())->method('create')->will($this->returnValue($this->_sitemapProductMock));
-
-        $cmsFactory = $this->getMockBuilder(
-            \Magento\Sitemap\Model\ResourceModel\Cms\PageFactory::class
-        )->setMethods(
-            ['create']
-        )->disableOriginalConstructor()->getMock();
-        $cmsFactory->expects($this->any())->method('create')->will($this->returnValue($this->_sitemapCmsPageMock));
-
-        $this->storeManagerMock = $this->getMockBuilder(\Magento\Store\Model\StoreManagerInterface::class)
-            ->setMethods(['getStore'])
-            ->getMockForAbstractClass();
-
-        $escaper = $this->getMockBuilder(\Magento\Framework\Escaper::class)
-            ->setMethods(['escapeHtml'])
+        $categoryFactory = $this->getMockBuilder(CategoryFactory::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $escaper->expects($this->any())->method('escapeHtml')->willReturnArgument(0);
 
-        $objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
-        $escaper = $objectManager->getObject(
-            \Magento\Framework\Escaper::class
-        );
+        $productFactory = $this->getMockBuilder(ProductFactory::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $cmsFactory = $this->getMockBuilder(PageFactory::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $objectManager = new ObjectManager($this);
+        $escaper = $objectManager->getObject(Escaper::class);
+        $this->setPrivatePropertyValue($escaper, 'escaper', $objectManager->getObject(ZendEscaper::class));
+        $this->setPrivatePropertyValue($escaper, 'translateInline', $this->createMock(InlineInterface::class));
         $constructArguments = $objectManager->getConstructArguments(
-            \Magento\Sitemap\Model\Sitemap::class,
+            Sitemap::class,
             [
-                'escaper' => $escaper,
                 'categoryFactory' => $categoryFactory,
                 'productFactory' => $productFactory,
                 'cmsFactory' => $cmsFactory,
                 'storeManager' => $this->storeManagerMock,
-                'sitemapData' => $this->_helperMockSitemap,
-                'filesystem' => $this->_filesystemMock,
-                'escaper' => $escaper
+                'sitemapData' => $this->helperMockSitemap,
+                'filesystem' => $this->filesystemMock,
+                'itemProvider' => $this->itemProviderMock,
+                'configReader' => $this->configReaderMock,
+                'escaper' => $escaper,
+                'request' => $this->request,
             ]
         );
         $constructArguments['resource'] = null;
@@ -676,20 +639,27 @@ class SitemapTest extends \PHPUnit\Framework\TestCase
      */
     public function testGetSitemapUrl($storeBaseUrl, $documentRoot, $baseDir, $sitemapPath, $sitemapFileName, $result)
     {
-        /** @var $model \Magento\Sitemap\Model\Sitemap */
-        $model = $this->getMockBuilder(
-            \Magento\Sitemap\Model\Sitemap::class
-        )->setMethods(
-            ['_getStoreBaseUrl', '_getDocumentRoot', '_getBaseDir', '_construct']
-        )->setConstructorArgs(
-            $this->_getModelConstructorArgs()
-        )->getMock();
+        /** @var Sitemap $model */
+        $model = $this->getMockBuilder(Sitemap::class)
+            ->onlyMethods(
+                [
+                    '_getStoreBaseUrl',
+                    '_getDocumentRoot',
+                    '_getBaseDir',
+                    '_construct',
+                ]
+            )
+            ->setConstructorArgs($this->getModelConstructorArgs())
+            ->getMock();
 
-        $model->expects($this->any())->method('_getStoreBaseUrl')->will($this->returnValue($storeBaseUrl));
+        $model->method('_getStoreBaseUrl')
+            ->willReturn($storeBaseUrl);
 
-        $model->expects($this->any())->method('_getDocumentRoot')->will($this->returnValue($documentRoot));
+        $model->method('_getDocumentRoot')
+            ->willReturn($documentRoot);
 
-        $model->expects($this->any())->method('_getBaseDir')->will($this->returnValue($baseDir));
+        $model->method('_getBaseDir')
+            ->willReturn($baseDir);
 
         $this->assertEquals($result, $model->getSitemapUrl($sitemapPath, $sitemapFileName));
     }
@@ -760,5 +730,80 @@ class SitemapTest extends \PHPUnit\Framework\TestCase
                 'http://store.com/store2/sitemaps/store2/sitemap.xml'
             ]
         ];
+    }
+
+    /**
+     * Check site URL getter
+     *
+     * @param string $storeBaseUrl
+     * @param string $baseDir
+     * @param string $documentRoot
+     * @dataProvider getDocumentRootFromBaseDirUrlDataProvider
+     */
+    public function testGetDocumentRootFromBaseDir(
+        string $storeBaseUrl,
+        string $baseDir,
+        ?string $documentRoot
+    ) {
+        $this->store->setCode('store');
+        $this->store->method('getBaseUrl')->willReturn($storeBaseUrl);
+        $this->directoryMock->method('getAbsolutePath')->willReturn($baseDir);
+        /** @var Sitemap $model */
+        $model = $this->getMockBuilder(Sitemap::class)
+            ->onlyMethods(['_construct'])
+            ->setConstructorArgs($this->getModelConstructorArgs())
+            ->getMock();
+
+        $method = new \ReflectionMethod($model, 'getDocumentRootFromBaseDir');
+        $method->setAccessible(true);
+        $this->assertSame($documentRoot, $method->invoke($model));
+    }
+
+    /**
+     * Provides test cases for document root testing
+     *
+     * @return array
+     */
+    public static function getDocumentRootFromBaseDirUrlDataProvider(): array
+    {
+        return [
+            [
+                'http://magento.com/',
+                '/var/www',
+                '/var/www',
+            ],
+            [
+                'http://magento.com/usa',
+                '/var/www/usa',
+                '/var/www',
+            ],
+            [
+                'http://magento.com/usa/tx',
+                '/var/www/usa/tx',
+                '/var/www',
+            ],
+            'symlink <document root>/usa/txt -> /var/www/html' => [
+                'http://magento.com/usa/tx',
+                '/var/www/html',
+                null,
+            ],
+        ];
+    }
+
+    /**
+     * @param mixed $object
+     * @param string $attributeName
+     * @param string $value
+     */
+    private function setPrivatePropertyValue($object, $attributeName, $value): void
+    {
+        $attribute = new \ReflectionProperty($object, $attributeName);
+        if ($attribute->isPublic()) {
+            $object->$attributeName = $value;
+        } else {
+            $attribute->setAccessible(true);
+            $attribute->setValue($object, $value);
+            $attribute->setAccessible(false);
+        }
     }
 }

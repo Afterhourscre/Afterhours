@@ -46,8 +46,8 @@ $filters = [
     $filterBuilder->setField('attribute_code')
         ->setValue(
             [
-                'address_multiline_attribute',
-                'address_multiselect_attribute',
+                'fixture_address_multiline_attribute',
+                'fixture_address_multiselect_attribute',
             ]
         )
         ->setConditionType('IN')

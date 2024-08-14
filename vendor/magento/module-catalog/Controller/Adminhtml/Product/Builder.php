@@ -3,8 +3,11 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Catalog\Controller\Adminhtml\Product;
 
+use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Model\ProductFactory;
 use Magento\Cms\Model\Wysiwyg as WysiwygModel;
 use Magento\Framework\App\RequestInterface;
@@ -16,7 +19,9 @@ use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Type as ProductTypes;
 
 /**
- * Build a product based on a request.
+ * Build a product based on a request
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Builder
 {
@@ -82,10 +87,11 @@ class Builder
      * Build product based on user request
      *
      * @param RequestInterface $request
-     * @return \Magento\Catalog\Model\Product
+     * @return ProductInterface
      * @throws \RuntimeException
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function build(RequestInterface $request)
+    public function build(RequestInterface $request): ProductInterface
     {
         $productId = (int) $request->getParam('id');
         $storeId = $request->getParam('store', 0);
@@ -109,6 +115,9 @@ class Builder
         $store = $this->storeFactory->create();
         $store->load($storeId);
 
+        $this->registry->unregister('product');
+        $this->registry->unregister('current_product');
+        $this->registry->unregister('current_store');
         $this->registry->register('product', $product);
         $this->registry->register('current_product', $product);
         $this->registry->register('current_store', $store);

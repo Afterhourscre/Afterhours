@@ -11,7 +11,7 @@
 .admin__fieldset-wrapper-title {
     &:extend(.abs-clearfix all);
     border-bottom: 1px solid @color-gray80;
-    line-height: 1.2;
+    line-height: 1.4;
     margin-bottom: 0;
     padding: 14px 0 16px;
 
@@ -233,8 +233,8 @@ label.mage-error {
     .popup-loading {
         height: 149px;
         left: 50%;
-        margin-left: -218px/2;
-        margin-top: -149px/2;
+        margin-left: (-218px/2);
+        margin-top: (-149px/2);
         overflow: hidden;
         position: absolute;
         top: 50%;
@@ -409,25 +409,17 @@ label.mage-error {
             z-index: 1;
 
             /**
-             *@codingStandardsIgnoreStart
+             * @codingStandardsIgnoreStart
              */
             &:before {
-                /**
-                 * @codingStandardsIgnoreStart
-                 */
                 &:extend(.admin__control-checkbox + label:before);
-                //  @codingStandardsIgnoreEnd
                 left: 0;
                 position: absolute;
                 top: 0;
             }
 
             &:after {
-                /**
-                 * @codingStandardsIgnoreStart
-                 */
                 &:extend(.action-multicheck-wrap .action-multicheck-toggle:after);
-                //  @codingStandardsIgnoreEnd
                 top: 40% !important;
             }
         }
@@ -435,11 +427,7 @@ label.mage-error {
         &:focus {
             + label {
                 &:after {
-                    /**
-                     * @codingStandardsIgnoreStart
-                     */
                     &:extend(.action-multicheck-wrap .action-multicheck-toggle._active:after);
-                    //  @codingStandardsIgnoreEnd
                 }
             }
         }
@@ -447,13 +435,9 @@ label.mage-error {
         &._checked {
             + label {
                 &:before {
-                    /**
-                     * @codingStandardsIgnoreStart
-                     */
                     &:extend(.admin__control-checkbox:checked + label:before);
-                    //  @codingStandardsIgnoreEnd
                 }
-                //@codingStandardsIgnoreEnd
+                //  @codingStandardsIgnoreEnd
             }
 
             &._indeterminate {
@@ -486,10 +470,9 @@ label.mage-error {
     }
 
     .admin__data-grid-header-row {
-        &:extend(.abs-cleafix);
-
         .action-select-multiselect {
             -webkit-appearance: menulist-button;
+            appearance: menulist-button;
             height: 38px;
             left: -1rem;
             min-width: 0;

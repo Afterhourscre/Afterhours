@@ -3,71 +3,80 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\Integration\Test\Unit\Block\Adminhtml\Integration\Edit\Tab;
 
+use Magento\Framework\Acl\AclResource\ProviderInterface;
+use Magento\Framework\Acl\RootResource;
+use Magento\Framework\Registry;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Integration\Block\Adminhtml\Integration\Edit\Tab\Info;
+use Magento\Integration\Block\Adminhtml\Integration\Edit\Tab\Webapi;
 use Magento\Integration\Controller\Adminhtml\Integration as IntegrationController;
+use Magento\Integration\Helper\Data;
 use Magento\Integration\Model\Integration as IntegrationModel;
+use Magento\Integration\Model\IntegrationService;
+use PHPUnit\Framework\TestCase;
 
-class WebapiTest extends \PHPUnit\Framework\TestCase
+class WebapiTest extends TestCase
 {
     /**
-     * @var \Magento\Framework\TestFramework\Unit\Helper\ObjectManager
+     * @var ObjectManager
      */
     private $objectManager;
 
     /**
-     * @var \Magento\Integration\Block\Adminhtml\Integration\Edit\Tab\Info
+     * @var Info
      */
     private $webapiBlock;
 
     /**
-     * @var \Magento\Framework\Registry
+     * @var Registry
      */
     private $registry;
 
     /**
-     * @var \Magento\Framework\Acl\RootResource
+     * @var RootResource
      */
     private $rootResource;
 
     /**
-     * @var \Magento\Framework\Acl\AclResource\ProviderInterface
+     * @var ProviderInterface
      */
     private $aclResourceProvider;
 
     /**
-     * @var \Magento\Integration\Helper\Data
+     * @var Data
      */
     private $integrationHelper;
 
     /**
-     * @var \Magento\Integration\Model\IntegrationService
+     * @var IntegrationService
      */
     private $integrationService;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
+        $this->objectManager = new ObjectManager($this);
 
-        $this->registry = $this->getMockBuilder(\Magento\Framework\Registry::class)
+        $this->registry = $this->getMockBuilder(Registry::class)
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->rootResource = $this->getMockBuilder(\Magento\Framework\Acl\RootResource::class)
+        $this->rootResource = $this->getMockBuilder(RootResource::class)
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->aclResourceProvider = $this->getMockBuilder(\Magento\Framework\Acl\AclResource\ProviderInterface::class)
+        $this->aclResourceProvider = $this->getMockBuilder(ProviderInterface::class)
             ->disableOriginalConstructor()
             ->getMockForAbstractClass();
 
-        $this->integrationHelper = $this->getMockBuilder(\Magento\Integration\Helper\Data::class)
+        $this->integrationHelper = $this->getMockBuilder(Data::class)
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->integrationService = $this->getMockBuilder(\Magento\Integration\Model\IntegrationService::class)
+        $this->integrationService = $this->getMockBuilder(IntegrationService::class)
             ->disableOriginalConstructor()
             ->getMock();
     }
@@ -86,7 +95,7 @@ class WebapiTest extends \PHPUnit\Framework\TestCase
     /**
      * @return array
      */
-    public function canShowTabProvider()
+    public static function canShowTabProvider()
     {
         return [
             'null data' => [
@@ -126,14 +135,14 @@ class WebapiTest extends \PHPUnit\Framework\TestCase
         $this->webapiBlock = $this->getWebapiBlock($integrationData, $selectedResources);
         $this->rootResource->expects($this->once())
             ->method('getId')
-            ->will($this->returnValue($rootResourceId));
+            ->willReturn($rootResourceId);
         $this->assertEquals($expectedValue, $this->webapiBlock->isEverythingAllowed());
     }
 
     /**
      * @return array
      */
-    public function isEverythingAllowedProvider()
+    public static function isEverythingAllowedProvider()
     {
         return [
             'root resource in array' => [
@@ -166,12 +175,12 @@ class WebapiTest extends \PHPUnit\Framework\TestCase
         ];
         $this->aclResourceProvider->expects($this->once())
             ->method('getAclResources')
-            ->will($this->returnValue($resources));
+            ->willReturn($resources);
         $rootArray = "rootArrayValue";
         $this->integrationHelper->expects($this->once())
             ->method('mapResources')
             ->with(['resource1', 'resource2', 'resource3'])
-            ->will($this->returnValue($rootArray));
+            ->willReturn($rootArray);
         $this->assertEquals($rootArray, $this->webapiBlock->getTree());
     }
 
@@ -189,7 +198,7 @@ class WebapiTest extends \PHPUnit\Framework\TestCase
 
         $this->rootResource->expects($this->any())
             ->method('getId')
-            ->will($this->returnValue($rootResourceId));
+            ->willReturn($rootResourceId);
 
         $this->webapiBlock = $this->getWebapiBlock();
 
@@ -199,7 +208,7 @@ class WebapiTest extends \PHPUnit\Framework\TestCase
     /**
      * @return array
      */
-    public function isEverythingAllowedWithSavedFromDataProvider()
+    public static function isEverythingAllowedWithSavedFromDataProvider()
     {
         return [
             'root resource in array' => [
@@ -218,7 +227,7 @@ class WebapiTest extends \PHPUnit\Framework\TestCase
     /**
      * @param array $integrationData
      * @param array $selectedResources
-     * @return \Magento\Integration\Block\Adminhtml\Integration\Edit\Tab\Webapi
+     * @return Webapi
      */
     private function getWebapiBlock($integrationData = [], array $selectedResources = [])
     {
@@ -227,20 +236,19 @@ class WebapiTest extends \PHPUnit\Framework\TestCase
                 $this->integrationService->expects($this->once())
                     ->method('getSelectedResources')
                     ->with($integrationData['integration_id'])
-                    ->will($this->returnValue($selectedResources));
+                    ->willReturn($selectedResources);
             }
         }
 
         $this->registry->expects($this->any())
-            ->method('registry')->withConsecutive(
-                [IntegrationController::REGISTRY_KEY_CURRENT_RESOURCE],
-                [IntegrationController::REGISTRY_KEY_CURRENT_INTEGRATION],
-                [IntegrationController::REGISTRY_KEY_CURRENT_INTEGRATION]
-            )
-            ->willReturnOnConsecutiveCalls(false, $integrationData, $integrationData);
+            ->method('registry')
+            ->willReturnCallback(fn($param) => match ([$param]) {
+                [IntegrationController::REGISTRY_KEY_CURRENT_RESOURCE] => false,
+                [IntegrationController::REGISTRY_KEY_CURRENT_INTEGRATION] => $integrationData
+            });
 
         return $this->objectManager->getObject(
-            \Magento\Integration\Block\Adminhtml\Integration\Edit\Tab\Webapi::class,
+            Webapi::class,
             [
                 'registry' => $this->registry,
                 'rootResource' => $this->rootResource,

@@ -13,13 +13,22 @@
     "support": {
         "issues": "https://github.com/sebastianbergmann/phpcpd/issues"
     },
+    "config": {
+        "platform": {
+            "php": "7.3.0"
+        },
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "require": {
-        "php": ">=5.3.3",
-        "sebastian/finder-facade": "~1.1",
-        "sebastian/version": "~1.0|~2.0",
-        "symfony/console": "~2.7|^3.0",
-        "phpunit/php-timer": ">=1.0.6",
-        "theseer/fdomdocument": "~1.4"
+        "php": ">=7.3",
+        "ext-dom": "*",
+        "sebastian/cli-parser": "^1.0",
+        "sebastian/version": "^3.0",
+        "phpunit/php-file-iterator": "^3.0",
+        "phpunit/php-timer": "^5.0"
     },
     "autoload": {
         "classmap": [
@@ -31,7 +40,7 @@
     ],
     "extra": {
         "branch-alias": {
-            "dev-master": "2.0-dev"
+            "dev-master": "6.0-dev"
         }
     }
 }

@@ -1,7 +1,8 @@
 define([
     'jquery',
     'underscore',
-    'Magento_Customer/js/customer-data'
+    'Magento_Customer/js/customer-data',
+    'domReady!'
 ], function ($, _, customerData) {
     'use strict';
 
@@ -61,7 +62,6 @@ define([
             this.setProductOptions(cartData());
             this.updateOptions();
         }.bind(this));
-        this.updateOptions();
     },
 
     /**

@@ -38,7 +38,7 @@ class Config
      * @param int|null $storeId
      * @return string
      */
-    public function getApiKey($storeId = null): string
+    public function getApiKey(?int $storeId = null): string
     {
         $apiKey = $this->scopeConfig->getValue(
             'three_d_secure/cardinal/api_key',
@@ -56,7 +56,7 @@ class Config
      * @param int|null $storeId
      * @return string
      */
-    public function getApiIdentifier($storeId = null): string
+    public function getApiIdentifier(?int $storeId = null): string
     {
         $apiIdentifier = $this->scopeConfig->getValue(
             'three_d_secure/cardinal/api_identifier',
@@ -74,7 +74,7 @@ class Config
      * @param int|null $storeId
      * @return string
      */
-    public function getOrgUnitId($storeId = null): string
+    public function getOrgUnitId(?int $storeId = null): string
     {
         $orgUnitId = $this->scopeConfig->getValue(
             'three_d_secure/cardinal/org_unit_id',
@@ -92,7 +92,7 @@ class Config
      * @param int|null $storeId
      * @return string
      */
-    public function getEnvironment($storeId = null): string
+    public function getEnvironment(?int $storeId = null): string
     {
         $environment = $this->scopeConfig->getValue(
             'three_d_secure/cardinal/environment',
@@ -108,7 +108,7 @@ class Config
      * @param int|null $storeId
      * @return bool
      */
-    public function isDebugModeEnabled($storeId = null): bool
+    public function isDebugModeEnabled(?int $storeId = null): bool
     {
         $debugModeEnabled = $this->scopeConfig->isSetFlag(
             'three_d_secure/cardinal/debug',

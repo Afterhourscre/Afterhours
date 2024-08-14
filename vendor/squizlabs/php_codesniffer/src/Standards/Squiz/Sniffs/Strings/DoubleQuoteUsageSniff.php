@@ -4,13 +4,13 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Sniffs\Strings;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 
 class DoubleQuoteUsageSniff implements Sniff
 {
@@ -19,14 +19,14 @@ class DoubleQuoteUsageSniff implements Sniff
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(
-                T_CONSTANT_ENCAPSED_STRING,
-                T_DOUBLE_QUOTED_STRING,
-               );
+        return [
+            T_CONSTANT_ENCAPSED_STRING,
+            T_DOUBLE_QUOTED_STRING,
+        ];
 
     }//end register()
 
@@ -38,7 +38,7 @@ class DoubleQuoteUsageSniff implements Sniff
      * @param int                         $stackPtr  The position of the current token
      *                                               in the stack passed in $tokens.
      *
-     * @return void
+     * @return int
      */
     public function process(File $phpcsFile, $stackPtr)
     {
@@ -83,7 +83,7 @@ class DoubleQuoteUsageSniff implements Sniff
             foreach ($stringTokens as $token) {
                 if (is_array($token) === true && $token[0] === T_VARIABLE) {
                     $error = 'Variable "%s" not allowed in double quoted string; use concatenation instead';
-                    $data  = array($token[1]);
+                    $data  = [$token[1]];
                     $phpcsFile->addError($error, $stackPtr, 'ContainsVar', $data);
                 }
             }
@@ -91,26 +91,26 @@ class DoubleQuoteUsageSniff implements Sniff
             return $skipTo;
         }//end if
 
-        $allowedChars = array(
-                         '\0',
-                         '\1',
-                         '\2',
-                         '\3',
-                         '\4',
-                         '\5',
-                         '\6',
-                         '\7',
-                         '\n',
-                         '\r',
-                         '\f',
-                         '\t',
-                         '\v',
-                         '\x',
-                         '\b',
-                         '\e',
-                         '\u',
-                         '\'',
-                        );
+        $allowedChars = [
+            '\0',
+            '\1',
+            '\2',
+            '\3',
+            '\4',
+            '\5',
+            '\6',
+            '\7',
+            '\n',
+            '\r',
+            '\f',
+            '\t',
+            '\v',
+            '\x',
+            '\b',
+            '\e',
+            '\u',
+            '\'',
+        ];
 
         foreach ($allowedChars as $testChar) {
             if (strpos($workingString, $testChar) !== false) {
@@ -119,7 +119,7 @@ class DoubleQuoteUsageSniff implements Sniff
         }
 
         $error = 'String %s does not require double quotes; use single quotes instead';
-        $data  = array(str_replace(array("\r", "\n"), array('\r', '\n'), $workingString));
+        $data  = [str_replace(["\r", "\n"], ['\r', '\n'], $workingString)];
         $fix   = $phpcsFile->addFixableError($error, $stackPtr, 'NotRequired', $data);
 
         if ($fix === true) {

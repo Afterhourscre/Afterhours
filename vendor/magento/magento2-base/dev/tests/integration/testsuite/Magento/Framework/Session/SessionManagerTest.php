@@ -26,7 +26,6 @@ namespace Magento\Framework\Session {
         if ($mockPHPFunctions) {
             return PHP_SESSION_NONE;
         }
-
         return call_user_func_array('\session_status', func_get_args());
     }
 
@@ -36,12 +35,11 @@ namespace Magento\Framework\Session {
         if ($mockPHPFunctions) {
             return false;
         }
-
         return call_user_func_array('\headers_sent', func_get_args());
     }
 
     /**
-     * Mock ini_set global function.
+     * Mock ini_set global function
      *
      * @param string $varName
      * @param string $newValue
@@ -52,15 +50,13 @@ namespace Magento\Framework\Session {
         global $mockPHPFunctions;
         if ($mockPHPFunctions) {
             SessionManagerTest::$isIniSetInvoked[$varName] = $newValue;
-
             return true;
         }
-
-        return call_user_func_array('\ini_set', func_get_args());
+        return call_user_func_array('\ini_set', [$varName, $newValue]);
     }
 
     /**
-     * Mock session_set_save_handler global function.
+     * Mock session_set_save_handler global function
      *
      * @return bool
      */
@@ -69,30 +65,12 @@ namespace Magento\Framework\Session {
         global $mockPHPFunctions;
         if ($mockPHPFunctions) {
             SessionManagerTest::$isSessionSetSaveHandlerInvoked = true;
-
             return true;
         }
-
         return call_user_func_array('\session_set_save_handler', func_get_args());
     }
 
     /**
-     * Mock session_start global function.
-     *
-     * @return bool
-     */
-    function session_start()
-    {
-        global $mockPHPFunctions;
-        if ($mockPHPFunctions) {
-            return true;
-        }
-
-        return call_user_func_array('\session_start', func_get_args());
-    }
-
-    /**
-     * @magentoAppIsolation enabled
      * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
      */
     class SessionManagerTest extends \PHPUnit\Framework\TestCase
@@ -133,14 +111,14 @@ namespace Magento\Framework\Session {
         private $request;
 
         /**
-         * @var State|\PHPUnit_Framework_MockObject_MockObject
+         * @var State|\PHPUnit\Framework\MockObject\MockObject
          */
         private $appState;
 
         /**
          * @inheritdoc
          */
-        protected function setUp()
+        protected function setUp(): void
         {
             $this->sessionName = 'frontEndSession';
 
@@ -166,10 +144,7 @@ namespace Magento\Framework\Session {
             $this->request = $this->objectManager->get(\Magento\Framework\App\RequestInterface::class);
         }
 
-        /**
-         * @inheritdoc
-         */
-        protected function tearDown()
+        protected function tearDown(): void
         {
             global $mockPHPFunctions;
             $mockPHPFunctions = false;
@@ -181,9 +156,6 @@ namespace Magento\Framework\Session {
             }
         }
 
-        /**
-         * @return void
-         */
         public function testSessionNameFromIni()
         {
             $this->initializeModel();
@@ -192,9 +164,6 @@ namespace Magento\Framework\Session {
             $this->model->destroy();
         }
 
-        /**
-         * @return void
-         */
         public function testSessionUseOnlyCookies()
         {
             $this->initializeModel();
@@ -203,9 +172,6 @@ namespace Magento\Framework\Session {
             $this->assertSame($expectedValue, $sessionUseOnlyCookies);
         }
 
-        /**
-         * @return void
-         */
         public function testGetData()
         {
             $this->initializeModel();
@@ -214,27 +180,18 @@ namespace Magento\Framework\Session {
             $this->assertNull($this->model->getData('test_key'));
         }
 
-        /**
-         * @return void
-         */
         public function testGetSessionId()
         {
             $this->initializeModel();
             $this->assertEquals(session_id(), $this->model->getSessionId());
         }
 
-        /**
-         * @return void
-         */
         public function testGetName()
         {
             $this->initializeModel();
             $this->assertEquals(session_name(), $this->model->getName());
         }
 
-        /**
-         * @return void
-         */
         public function testSetName()
         {
             $this->initializeModel();
@@ -244,9 +201,6 @@ namespace Magento\Framework\Session {
             $this->assertEquals('test', $this->model->getName());
         }
 
-        /**
-         * @return void
-         */
         public function testDestroy()
         {
             $this->initializeModel();
@@ -259,46 +213,21 @@ namespace Magento\Framework\Session {
             $this->assertEquals([], $this->model->getData());
         }
 
-        /**
-         * @return void
-         */
         public function testSetSessionId()
         {
             $this->initializeModel();
-            $sessionId = $this->model->getSessionId();
-            $this->appState->expects($this->atLeastOnce())
+            $this->assertNotEmpty($this->model->getSessionId());
+            $this->appState->expects($this->any())
                 ->method('getAreaCode')
                 ->willReturn(\Magento\Framework\App\Area::AREA_FRONTEND);
-            $this->model->setSessionId($this->sidResolver->getSid($this->model));
-            $this->assertEquals($sessionId, $this->model->getSessionId());
 
             $this->model->setSessionId('test');
             $this->assertEquals('test', $this->model->getSessionId());
-        }
-
-        /**
-         * @return void
-         * @magentoConfigFixture current_store web/session/use_frontend_sid 1
-         */
-        public function testSetSessionIdFromParam()
-        {
-            $this->initializeModel();
-            $this->appState->expects($this->atLeastOnce())
-                ->method('getAreaCode')
-                ->willReturn(\Magento\Framework\App\Area::AREA_FRONTEND);
-            $this->assertNotEquals('test_id', $this->model->getSessionId());
-            $this->request->getQuery()->set($this->sidResolver->getSessionIdQueryParam($this->model), 'test-id');
-            $this->model->setSessionId($this->sidResolver->getSid($this->model));
-            $this->assertEquals('test-id', $this->model->getSessionId());
             /* Use not valid identifier */
-            $this->request->getQuery()->set($this->sidResolver->getSessionIdQueryParam($this->model), 'test_id');
-            $this->model->setSessionId($this->sidResolver->getSid($this->model));
-            $this->assertEquals('test-id', $this->model->getSessionId());
+            $this->model->setSessionId('test_id');
+            $this->assertEquals('test', $this->model->getSessionId());
         }
 
-        /**
-         * @return void
-         */
         public function testGetSessionIdForHost()
         {
             $this->initializeModel();
@@ -309,9 +238,6 @@ namespace Magento\Framework\Session {
             $this->model->destroy();
         }
 
-        /**
-         * @return void
-         */
         public function testIsValidForHost()
         {
             $this->initializeModel();
@@ -327,13 +253,11 @@ namespace Magento\Framework\Session {
             $this->model->destroy();
         }
 
-        /**
-         * @return void
-         * @expectedException \Magento\Framework\Exception\SessionException
-         * @expectedExceptionMessage Area code not set: Area code must be set before starting a session.
-         */
         public function testStartAreaNotSet()
         {
+            $this->expectException(\Magento\Framework\Exception\SessionException::class);
+            $this->expectExceptionMessage('Area code not set: Area code must be set before starting a session.');
+
             $scope = $this->objectManager->get(\Magento\Framework\Config\ScopeInterface::class);
             $appState = new \Magento\Framework\App\State($scope);
 
@@ -361,19 +285,22 @@ namespace Magento\Framework\Session {
         }
 
         /**
+         * @param string $saveMethod
+         * @dataProvider dataConstructor
+         *
          * @return void
          */
-        public function testConstructor()
+        public function testConstructor(string $saveMethod): void
         {
             global $mockPHPFunctions;
             $mockPHPFunctions = true;
 
             $deploymentConfigMock = $this->createMock(DeploymentConfig::class);
             $deploymentConfigMock->method('get')
-                ->willReturnCallback(function ($configPath) {
+                ->willReturnCallback(function ($configPath) use ($saveMethod) {
                     switch ($configPath) {
                         case Config::PARAM_SESSION_SAVE_METHOD:
-                            return 'db';
+                            return $saveMethod;
                         case Config::PARAM_SESSION_CACHE_LIMITER:
                             return 'private_no_expire';
                         case Config::PARAM_SESSION_SAVE_PATH:
@@ -382,7 +309,6 @@ namespace Magento\Framework\Session {
                             return null;
                     }
                 });
-
             $sessionConfig = $this->objectManager->create(Config::class, ['deploymentConfig' => $deploymentConfigMock]);
             $saveHandler = $this->objectManager->create(SaveHandler::class, ['sessionConfig' => $sessionConfig]);
 
@@ -394,14 +320,13 @@ namespace Magento\Framework\Session {
                     'sessionConfig' => $sessionConfig,
                 ]
             );
-
-            $this->assertEquals('db', $sessionConfig->getOption('session.save_handler'));
+            $this->assertEquals($saveMethod, $sessionConfig->getOption('session.save_handler'));
             $this->assertEquals('private_no_expire', $sessionConfig->getOption('session.cache_limiter'));
             $this->assertEquals('explicit_save_path', $sessionConfig->getOption('session.save_path'));
             $this->assertArrayHasKey('session.use_only_cookies', self::$isIniSetInvoked);
             $this->assertEquals('1', self::$isIniSetInvoked['session.use_only_cookies']);
             foreach ($sessionConfig->getOptions() as $option => $value) {
-                if ($option=='session.save_handler') {
+                if ($option === 'session.save_handler' && $value !== 'memcached') {
                     $this->assertArrayNotHasKey('session.save_handler', self::$isIniSetInvoked);
                 } else {
                     $this->assertArrayHasKey($option, self::$isIniSetInvoked);
@@ -412,9 +337,19 @@ namespace Magento\Framework\Session {
         }
 
         /**
-         * @return void
+         * @return array
          */
-        private function initializeModel()
+        public function dataConstructor(): array
+        {
+            return [
+                [Config::PARAM_SESSION_SAVE_METHOD =>'db'],
+                [Config::PARAM_SESSION_SAVE_METHOD =>'redis'],
+                [Config::PARAM_SESSION_SAVE_METHOD =>'memcached'],
+                [Config::PARAM_SESSION_SAVE_METHOD =>'user'],
+            ];
+        }
+
+        private function initializeModel(): void
         {
             $this->model = $this->objectManager->create(
                 \Magento\Framework\Session\SessionManager::class,

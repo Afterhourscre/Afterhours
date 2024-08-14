@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Generic\Tests\Files;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class EndFileNewlineUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the EndFileNewline sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Generic\Sniffs\Files\EndFileNewlineSniff
+ */
+final class EndFileNewlineUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -31,15 +36,13 @@ class EndFileNewlineUnitTest extends AbstractSniffUnitTest
         case 'EndFileNewlineUnitTest.3.inc':
         case 'EndFileNewlineUnitTest.3.js':
         case 'EndFileNewlineUnitTest.3.css':
-            return array(2 => 1);
         case 'EndFileNewlineUnitTest.4.inc':
-            // HHVM just removes the entire comment token, as if it was never there.
-            if (defined('HHVM_VERSION') === true) {
-                return array();
-            }
-            return array(2 => 1);
+            return [2 => 1];
+        case 'EndFileNewlineUnitTest.6.inc':
+        case 'EndFileNewlineUnitTest.7.inc':
+            return [1 => 1];
         default:
-            return array();
+            return [];
         }//end switch
 
     }//end getErrorList()
@@ -57,7 +60,7 @@ class EndFileNewlineUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList($testFile='')
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

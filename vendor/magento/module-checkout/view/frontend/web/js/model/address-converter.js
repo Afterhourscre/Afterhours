@@ -9,8 +9,9 @@ define([
     'jquery',
     'Magento_Checkout/js/model/new-customer-address',
     'Magento_Customer/js/customer-data',
-    'mage/utils/objects'
-], function ($, address, customerData, mageUtils) {
+    'mage/utils/objects',
+    'underscore'
+], function ($, address, customerData, mageUtils, _) {
     'use strict';
 
     var countryData = customerData.get('directory-data');
@@ -18,6 +19,7 @@ define([
     return {
         /**
          * Convert address form data to Address object
+         *
          * @param {Object} formData
          * @returns {Object}
          */
@@ -25,7 +27,8 @@ define([
             // clone address form data to new object
             var addressData = $.extend(true, {}, formData),
                 region,
-                regionName = addressData.region;
+                regionName = addressData.region,
+                customAttributes;
 
             if (mageUtils.isObject(addressData.street)) {
                 addressData.street = this.objectToArray(addressData.street);
@@ -59,13 +62,25 @@ define([
             delete addressData['region_id'];
 
             if (addressData['custom_attributes']) {
-                addressData['custom_attributes'] = Object.entries(addressData['custom_attributes'])
-                    .map(function (customAttribute) {
-                        return {
-                            'attribute_code': customAttribute[0],
-                            'value': customAttribute[1]
+                addressData['custom_attributes'] = _.map(
+                    addressData['custom_attributes'],
+                    function (value, key) {
+                        customAttributes = {
+                            'attribute_code': key,
+                            'value': value
                         };
-                    });
+
+                        if (typeof value === 'boolean') {
+                            customAttributes = {
+                                'attribute_code': key,
+                                'value': value,
+                                'label': value === true ? 'Yes' : 'No'
+                            };
+                        }
+
+                        return customAttributes;
+                    }
+                );
             }
 
             return address(addressData);
@@ -80,21 +95,32 @@ define([
         quoteAddressToFormAddressData: function (addrs) {
             var self = this,
                 output = {},
-                streetObject;
+                streetObject,
+                customAttributesObject;
 
             $.each(addrs, function (key) {
-                if (addrs.hasOwnProperty(key) && !$.isFunction(addrs[key])) {
+                if (addrs.hasOwnProperty(key) && typeof addrs[key] !== 'function') {
                     output[self.toUnderscore(key)] = addrs[key];
                 }
             });
 
-            if ($.isArray(addrs.street)) {
+            if (Array.isArray(addrs.street)) {
                 streetObject = {};
                 addrs.street.forEach(function (value, index) {
                     streetObject[index] = value;
                 });
                 output.street = streetObject;
             }
+
+            //jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+            if (Array.isArray(addrs.customAttributes)) {
+                customAttributesObject = {};
+                addrs.customAttributes.forEach(function (value) {
+                    customAttributesObject[value.attribute_code] = value.value;
+                });
+                output.custom_attributes = customAttributesObject;
+            }
+            //jscs:enable requireCamelCaseOrUpperCaseIdentifiers
 
             return output;
         },

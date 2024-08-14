@@ -26,15 +26,11 @@ class Collection extends AbstractCollection
     protected $_previewFlag;
 
     /**
-     * Event prefix
-     *
      * @var string
      */
     protected $_eventPrefix = 'cms_page_collection';
 
     /**
-     * Event object
-     *
      * @var string
      */
     protected $_eventObject = 'page_collection';
@@ -74,7 +70,9 @@ class Collection extends AbstractCollection
     {
         if (!$this->getFlag('store_filter_added')) {
             $this->performAddStoreFilter($store, $withAdmin);
+            $this->setFlag('store_filter_added', true);
         }
+
         return $this;
     }
 

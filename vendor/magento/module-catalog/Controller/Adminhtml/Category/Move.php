@@ -6,7 +6,12 @@
  */
 namespace Magento\Catalog\Controller\Adminhtml\Category;
 
-class Move extends \Magento\Catalog\Controller\Adminhtml\Category
+use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
+
+/**
+ * Move category admin controller
+ */
+class Move extends \Magento\Catalog\Controller\Adminhtml\Category implements HttpPostActionInterface
 {
     /**
      * @var \Magento\Framework\Controller\Result\JsonFactory
@@ -44,18 +49,17 @@ class Move extends \Magento\Catalog\Controller\Adminhtml\Category
     /**
      * Move category action
      *
-     * @return \Magento\Framework\Controller\Result\Raw
-     * @throws \Magento\Framework\Exception\NotFoundException
+     * @return \Magento\Framework\Controller\Result\Json
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new \Magento\Framework\Exception\NotFoundException(__('Page not found.'));
-        }
-
-        /** New parent category identifier */
+        /**
+         * New parent category identifier
+         */
         $parentNodeId = $this->getRequest()->getPost('pid', false);
-        /** Category id after which we have put our category */
+        /**
+         * Category id after which we have put our category
+         */
         $prevNodeId = $this->getRequest()->getPost('aid', false);
 
         /** @var $block \Magento\Framework\View\Element\Messages */

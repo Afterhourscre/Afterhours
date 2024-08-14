@@ -4,14 +4,14 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Sniffs\NamingConventions;
 
+use PHP_CodeSniffer\Files\File;
 use PHP_CodeSniffer\Standards\PEAR\Sniffs\NamingConventions\ValidFunctionNameSniff as PEARValidFunctionNameSniff;
 use PHP_CodeSniffer\Util\Common;
-use PHP_CodeSniffer\Files\File;
 
 class ValidFunctionNameSniff extends PEARValidFunctionNameSniff
 {
@@ -33,13 +33,14 @@ class ValidFunctionNameSniff extends PEARValidFunctionNameSniff
             return;
         }
 
-        $errorData = array($functionName);
+        $errorData = [$functionName];
 
         // Does this function claim to be magical?
         if (preg_match('|^__[^_]|', $functionName) !== 0) {
             $error = 'Function name "%s" is invalid; only PHP magic methods should be prefixed with a double underscore';
             $phpcsFile->addError($error, $stackPtr, 'DoubleUnderscore', $errorData);
-            return;
+
+            $functionName = ltrim($functionName, '_');
         }
 
         if (Common::isCamelCaps($functionName, false, true, false) === false) {

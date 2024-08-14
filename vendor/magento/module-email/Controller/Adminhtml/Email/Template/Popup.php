@@ -7,18 +7,13 @@ declare(strict_types=1);
 
 namespace Magento\Email\Controller\Adminhtml\Email\Template;
 
+use Magento\Framework\App\Action\HttpPostActionInterface;
+
 /**
  * Rendering popup email template.
  */
-class Popup extends \Magento\Backend\App\Action
+class Popup extends \Magento\Backend\App\Action implements HttpPostActionInterface
 {
-    /**
-     * Authorization level of a basic admin session.
-     *
-     * @see _isAllowed()
-     */
-    const ADMIN_RESOURCE = 'Magento_Email::template';
-
     /**
      * @var \Magento\Framework\View\Result\PageFactory
      */
@@ -45,11 +40,14 @@ class Popup extends \Magento\Backend\App\Action
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            $this->_forward('noroute');
-            return;
-        }
-
         return $this->resultPageFactory->create();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function _isAllowed()
+    {
+        return $this->_authorization->isAllowed('Magento_Email::template');
     }
 }

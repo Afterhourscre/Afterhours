@@ -1,10 +1,8 @@
 <?php
 /**
- *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-
 declare(strict_types=1);
 
 namespace Magento\Customer\Api;
@@ -14,6 +12,8 @@ use Magento\Framework\Controller\Result\Redirect;
 
 /**
  * Delegating account actions from outside of customer module.
+ *
+ * @api
  */
 interface AccountDelegationInterface
 {

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /*
  * This file is part of PHP Copy/Paste Detector (PHPCPD).
  *
@@ -7,55 +7,49 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
 namespace SebastianBergmann\PHPCPD;
 
-use SebastianBergmann\PHPCPD\CodeClone;
+use function count;
+use function max;
+use function sprintf;
+use Countable;
+use IteratorAggregate;
 
-/**
- * A map of exact clones.
- *
- * @author    Sebastian Bergmann <sebastian@phpunit.de>
- * @copyright Sebastian Bergmann <sebastian@phpunit.de>
- * @license   http://www.opensource.org/licenses/BSD-3-Clause  The BSD 3-Clause License
- * @link      http://github.com/sebastianbergmann/phpcpd/tree
- * @since     Class available since Release 1.1.0
- */
-class CodeCloneMap implements \Countable, \Iterator
+final class CodeCloneMap implements Countable, IteratorAggregate
 {
     /**
-     * @var CodeClone[] The clones in the clone map
+     * @var CodeClone[]
      */
-    protected $clones = array();
+    private $clones = [];
 
     /**
-     * @var CodeClone[] The clones in the clone map, stored by ID
+     * @var CodeClone[]
      */
-    protected $clonesById = array();
+    private $clonesById = [];
 
     /**
-     * @var integer Current position while iterating the clone map
+     * @var int
      */
-    protected $position = 0;
+    private $numberOfDuplicatedLines = 0;
 
     /**
-     * @var integer Number of duplicate lines in the clone map
+     * @var int
      */
-    protected $numDuplicateLines = 0;
+    private $numberOfLines = 0;
 
     /**
-     * @var integer Number of lines analyzed
+     * @var int
      */
-    protected $numLines = 0;
+    private $largestCloneSize = 0;
 
     /**
-     * Adds a clone to the map.
-     *
-     * @param CodeClone $clone
+     * @var array
      */
-    public function addClone(CodeClone $clone)
+    private $filesWithClones = [];
+
+    public function add(CodeClone $clone): void
     {
-        $id = $clone->getId();
+        $id = $clone->id();
 
         if (!isset($this->clonesById[$id])) {
             $this->clones[]        = $clone;
@@ -63,33 +57,34 @@ class CodeCloneMap implements \Countable, \Iterator
         } else {
             $existClone = $this->clonesById[$id];
 
-            foreach ($clone->getFiles() as $file) {
-                $existClone->addFile($file);
+            foreach ($clone->files() as $file) {
+                $existClone->add($file);
             }
         }
 
-        $this->numDuplicateLines += $clone->getSize();
+        $this->numberOfDuplicatedLines += $clone->numberOfLines() * (count($clone->files()) - 1);
+
+        foreach ($clone->files() as $file) {
+            if (!isset($this->filesWithClones[$file->name()])) {
+                $this->filesWithClones[$file->name()] = true;
+            }
+        }
+
+        $this->largestCloneSize = max($this->largestCloneSize, $clone->numberOfLines());
     }
 
     /**
-     * Returns the clones stored in this map.
-     *
      * @return CodeClone[]
      */
-    public function getClones()
+    public function clones(): array
     {
         return $this->clones;
     }
 
-    /**
-     * Returns the percentage of duplicated code lines in the project.
-     *
-     * @return string
-     */
-    public function getPercentage()
+    public function percentage(): string
     {
-        if ($this->numLines > 0) {
-            $percent = ($this->numDuplicateLines / $this->numLines) * 100;
+        if ($this->numberOfLines > 0) {
+            $percent = ($this->numberOfDuplicatedLines / $this->numberOfLines) * 100;
         } else {
             $percent = 100;
         }
@@ -97,77 +92,48 @@ class CodeCloneMap implements \Countable, \Iterator
         return sprintf('%01.2F%%', $percent);
     }
 
-    /**
-     * Returns the number of lines analyzed.
-     *
-     * @return integer
-     */
-    public function getNumLines()
+    public function numberOfLines(): int
     {
-        return $this->numLines;
+        return $this->numberOfLines;
     }
 
-    /**
-     * Sets the number of physical source code lines in the project.
-     *
-     * @param integer $numLines
-     */
-    public function setNumLines($numLines)
+    public function addToNumberOfLines(int $numberOfLines): void
     {
-        $this->numLines = $numLines;
+        $this->numberOfLines += $numberOfLines;
     }
 
-    /**
-     * Returns the number of clones stored in this map.
-     */
-    public function count()
+    public function count(): int
     {
         return count($this->clones);
     }
 
-    /**
-     * Rewinds the Iterator to the first element.
-     */
-    public function rewind()
+    public function numberOfFilesWithClones(): int
     {
-        $this->position = 0;
+        return count($this->filesWithClones);
     }
 
-    /**
-     * Checks if there is a current element after calls to rewind() or next().
-     *
-     * @return boolean
-     */
-    public function valid()
+    public function numberOfDuplicatedLines(): int
     {
-        return $this->position < count($this->clones);
+        return $this->numberOfDuplicatedLines;
     }
 
-    /**
-     * Returns the key of the current element.
-     *
-     * @return integer
-     */
-    public function key()
+    public function getIterator(): CodeCloneMapIterator
     {
-        return $this->position;
+        return new CodeCloneMapIterator($this);
     }
 
-    /**
-     * Returns the current element.
-     *
-     * @return CodeClone
-     */
-    public function current()
+    public function isEmpty(): bool
     {
-        return $this->clones[$this->position];
+        return empty($this->clones);
     }
 
-    /**
-     * Moves forward to next element.
-     */
-    public function next()
+    public function averageSize(): float
     {
-        $this->position++;
+        return $this->numberOfDuplicatedLines() / $this->count();
+    }
+
+    public function largestSize(): int
+    {
+        return $this->largestCloneSize;
     }
 }

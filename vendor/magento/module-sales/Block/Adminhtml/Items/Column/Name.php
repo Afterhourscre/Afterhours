@@ -3,11 +3,11 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Sales\Block\Adminhtml\Items\Column;
 
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Filter\TruncateFilter\Result;
+use Magento\Catalog\Helper\Data as CatalogHelper;
 
 /**
  * Sales Order items name column renderer
@@ -17,6 +17,28 @@ use Magento\Framework\Filter\TruncateFilter\Result;
  */
 class Name extends \Magento\Sales\Block\Adminhtml\Items\Column\DefaultColumn
 {
+    /**
+     * @param \Magento\Backend\Block\Template\Context $context
+     * @param \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry
+     * @param \Magento\CatalogInventory\Api\StockConfigurationInterface $stockConfiguration
+     * @param \Magento\Framework\Registry $registry
+     * @param \Magento\Catalog\Model\Product\OptionFactory $optionFactory
+     * @param array $data
+     * @param CatalogHelper|null $catalogHelper
+     */
+    public function __construct(
+        \Magento\Backend\Block\Template\Context $context,
+        \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry,
+        \Magento\CatalogInventory\Api\StockConfigurationInterface $stockConfiguration,
+        \Magento\Framework\Registry $registry,
+        \Magento\Catalog\Model\Product\OptionFactory $optionFactory,
+        array $data = [],
+        ?CatalogHelper $catalogHelper = null
+    ) {
+        $data['catalogHelper'] = $catalogHelper ?? ObjectManager::getInstance()->get(CatalogHelper::class);
+        parent::__construct($context, $stockRegistry, $stockConfiguration, $registry, $optionFactory, $data);
+    }
+
     /**
      * @var Result
      */
@@ -33,13 +55,8 @@ class Name extends \Magento\Sales\Block\Adminhtml\Items\Column\DefaultColumn
      * @return string
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function truncateString(
-        string $value,
-        int $length = 80,
-        string $etc = '...',
-        &$remainder = '',
-        bool $breakWords = true
-    ): string {
+    public function truncateString($value, $length = 80, $etc = '...', &$remainder = '', $breakWords = true)
+    {
         $this->truncateResult = $this->filterManager->truncateFilter(
             $value,
             ['length' => $length, 'etc' => $etc, 'breakWords' => $breakWords]
@@ -53,7 +70,7 @@ class Name extends \Magento\Sales\Block\Adminhtml\Items\Column\DefaultColumn
      * @param string $value
      * @return array
      */
-    public function getFormattedOption(string $value): array
+    public function getFormattedOption($value)
     {
         $remainder = '';
         $this->truncateString($value, 55, '', $remainder);

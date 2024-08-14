@@ -18,7 +18,7 @@ function myFunction()	{
 }
 
 
-class myClass()
+class myClass
 {
     // Good.
     function myFunction() {
@@ -64,7 +64,7 @@ function myFunction($variable1, $variable2,
 }
 
 
-class myClass()
+class myClass
 {
     // Good.
     function myFunction($variable1, $variable2,
@@ -88,7 +88,7 @@ class myClass()
     }
 }
 
-interface MyInterface()
+interface MyInterface
 {
     function myFunction();
 }
@@ -118,7 +118,7 @@ function myFunction() {}
 function myFunction()
 {}
 
-// @codingStandardsChangeSetting Generic.Functions.OpeningFunctionBraceKernighanRitchie checkClosures 1
+// phpcs:set Generic.Functions.OpeningFunctionBraceKernighanRitchie checkClosures 1
 
 $closureWithArgs = function ($arg1, $arg2){
     // body
@@ -131,19 +131,23 @@ $closureWithArgsAndVars = function ($arg1, $arg2) use ($var1, $var2){
 $test = function ($param) use ($result)
 {
     return null;
-}
+};
 
 $test = function ($param) use ($result) : Something
 {
     return null;
-}
+};
 
 $test = function ($param) use ($result): Something
 {
     return null;
-}
+};
 
-// @codingStandardsChangeSetting Generic.Functions.OpeningFunctionBraceKernighanRitchie checkClosures 0
+foo(function ($bar) { ?>
+    <div><?php echo $bar; ?></div>
+<?php });
+
+// phpcs:set Generic.Functions.OpeningFunctionBraceKernighanRitchie checkClosures 0
 
 $closureWithArgs = function ($arg1, $arg2){
     // body
@@ -167,3 +171,44 @@ function myFunction(): Something
 {
     return null;
 }
+
+function myFunction($bar) { ?>
+    <div><?php echo $bar; ?></div>
+<?php }
+
+function myFunction($a, $lot, $of, $params)
+    : array
+{
+    return null;
+}
+
+function myFunction($a, $lot, $of, $params)
+    : array {
+    return null;
+}
+
+function myFunction($a, $lot, $of, $params) // comment
+{
+    return null;
+}
+
+function myFunction($a, $lot, $of, $params)
+    : array // comment
+{
+    return null;
+}
+
+function myFunction($a, $lot, $of, $params)
+    : array // phpcs:ignore Standard.Category.Sniff -- for reasons.
+{
+    return null;
+}
+
+function myFunction($a, $lot, $of, $params)
+    : array { // phpcs:ignore Standard.Category.Sniff -- for reasons.
+    return null;
+}
+
+function myFunction() {}
+function myFunction()      {} // Too many spaces with an empty function.
+function myFunction()	{} // Too many spaces (tab) with an empty function.

@@ -11,36 +11,17 @@ namespace Magento\Cms\Model\Template;
 class Filter extends \Magento\Email\Model\Template\Filter
 {
     /**
-     * Whether to allow SID in store directive: AUTO
-     *
-     * @var bool
-     */
-    protected $_useSessionInUrl;
-
-    /**
-     * Setter whether SID is allowed in store directive
-     *
-     * @param bool $flag
-     * @return $this
-     */
-    public function setUseSessionInUrl($flag)
-    {
-        $this->_useSessionInUrl = (bool)$flag;
-        return $this;
-    }
-
-    /**
      * Retrieve media file URL directive
      *
      * @param string[] $construction
      * @return string
-     * @throws \InvalidArgumentException
      */
     public function mediaDirective($construction)
     {
-        $params = $this->getParameters($construction[2]);
-        if (preg_match('/\.\.(\\\|\/)/', $params['url'])) {
-            throw new \InvalidArgumentException('Image path must be absolute');
+        // phpcs:ignore Magento2.Functions.DiscouragedFunction
+        $params = $this->getParameters(html_entity_decode($construction[2], ENT_QUOTES));
+        if (preg_match('/(^.*:\/\/.*|\.\.\/.*)/', $params['url'])) {
+            throw new \InvalidArgumentException('Image path must be absolute and not include URLs');
         }
 
         return $this->_storeManager->getStore()->getBaseMediaDir() . '/' . $params['url'];

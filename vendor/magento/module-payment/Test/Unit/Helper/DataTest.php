@@ -3,58 +3,77 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\Payment\Test\Unit\Helper;
 
+use Magento\Framework\App\Area;
+use Magento\Framework\App\Helper\Context;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Framework\TestFramework\Unit\Matcher\MethodInvokedAtIndex;
+use Magento\Framework\View\Element\BlockInterface;
+use Magento\Framework\View\LayoutFactory;
+use Magento\Framework\View\LayoutInterface;
 use Magento\Payment\Helper\Data;
-use Magento\Store\Model\ScopeInterface;
+use Magento\Payment\Model\Info;
+use Magento\Payment\Model\Method\AbstractMethod;
+use Magento\Payment\Model\MethodInterface;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class DataTest extends \PHPUnit\Framework\TestCase
+class DataTest extends TestCase
 {
-    /** @var \Magento\Payment\Helper\Data */
+    /**
+     * @var Data
+     */
     private $helper;
 
-    /**  @var \PHPUnit_Framework_MockObject_MockObject */
+    /**
+     * @var MockObject
+     */
     private $scopeConfig;
 
-    /**  @var \PHPUnit_Framework_MockObject_MockObject */
-    private $paymentConfig;
-
-    /**  @var \PHPUnit_Framework_MockObject_MockObject */
+    /**
+     * @var MockObject
+     */
     private $initialConfig;
 
-    /**  @var \PHPUnit_Framework_MockObject_MockObject */
+    /**
+     * @var MockObject
+     */
     private $methodFactory;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $layoutMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $appEmulation;
 
     /**
-     * @inheritDoc
+     * @var LayoutFactory|MockObject
      */
-    protected function setUp()
+    private $layoutFactoryMock;
+
+    /**
+     * @inheritdoc
+     */
+    protected function setUp(): void
     {
-        $objectManagerHelper = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
-        $className = \Magento\Payment\Helper\Data::class;
+        $objectManagerHelper = new ObjectManager($this);
+        $className = Data::class;
         $arguments = $objectManagerHelper->getConstructArguments($className);
-        /** @var \Magento\Framework\App\Helper\Context $context */
+        /** @var Context $context */
         $context = $arguments['context'];
         $this->scopeConfig = $context->getScopeConfig();
-        $this->layoutMock = $this->createMock(\Magento\Framework\View\LayoutInterface::class);
-        $layoutFactoryMock = $arguments['layoutFactory'];
-        $layoutFactoryMock->expects($this->once())->method('create')->willReturn($this->layoutMock);
+        $this->layoutMock = $this->getMockForAbstractClass(LayoutInterface::class);
+        $this->layoutFactoryMock = $arguments['layoutFactory'];
 
         $this->methodFactory = $arguments['paymentMethodFactory'];
         $this->appEmulation = $arguments['appEmulation'];
-        $this->paymentConfig = $arguments['paymentConfig'];
         $this->initialConfig = $arguments['initialConfig'];
 
         $this->helper = $objectManagerHelper->getObject($className, $arguments);
@@ -63,7 +82,7 @@ class DataTest extends \PHPUnit\Framework\TestCase
     /**
      * @return void
      */
-    public function testGetMethodInstance()
+    public function testGetMethodInstance(): void
     {
         list($code, $class, $methodInstance) = ['method_code', 'method_class', 'method_instance'];
 
@@ -71,10 +90,8 @@ class DataTest extends \PHPUnit\Framework\TestCase
             $this->once()
         )->method(
             'getValue'
-        )->will(
-            $this->returnValue(
-                $class
-            )
+        )->willReturn(
+            $class
         );
         $this->methodFactory->expects(
             $this->any()
@@ -82,20 +99,19 @@ class DataTest extends \PHPUnit\Framework\TestCase
             'create'
         )->with(
             $class
-        )->will(
-            $this->returnValue(
-                $methodInstance
-            )
+        )->willReturn(
+            $methodInstance
         );
 
         $this->assertEquals($methodInstance, $this->helper->getMethodInstance($code));
     }
 
     /**
-     * @expectedException \UnexpectedValueException
+     * @return void
      */
-    public function testGetMethodInstanceWithException()
+    public function testGetMethodInstanceWithException(): void
     {
+        $this->expectException(\UnexpectedValueException::class);
         $this->scopeConfig->expects($this->once())
             ->method('getValue')
             ->willReturn(null);
@@ -107,92 +123,86 @@ class DataTest extends \PHPUnit\Framework\TestCase
      * @param array $methodA
      * @param array $methodB
      *
+     * @return void
      * @dataProvider getSortMethodsDataProvider
      */
-    public function testSortMethods(array $methodA, array $methodB)
+    public function testSortMethods(array $methodA, array $methodB): void
     {
         $this->initialConfig->expects($this->once())
             ->method('getData')
-            ->will(
-                $this->returnValue(
-                    [
-                        \Magento\Payment\Helper\Data::XML_PATH_PAYMENT_METHODS => [
-                            $methodA['code'] => $methodA['data'],
-                            $methodB['code'] => $methodB['data'],
-                            'empty' => [],
-
-                        ]
+            ->willReturn(
+                [
+                    Data::XML_PATH_PAYMENT_METHODS => [
+                        $methodA['code'] => $methodA['data'],
+                        $methodB['code'] => $methodB['data'],
+                        'empty' => []
                     ]
-                )
+                ]
             );
 
         $this->scopeConfig->expects(new MethodInvokedAtIndex(0))
             ->method('getValue')
             ->with(sprintf('%s/%s/model', Data::XML_PATH_PAYMENT_METHODS, $methodA['code']))
-            ->will($this->returnValue(\Magento\Payment\Model\Method\AbstractMethod::class));
+            ->willReturn(AbstractMethod::class);
         $this->scopeConfig->expects(new MethodInvokedAtIndex(1))
             ->method('getValue')
             ->with(
                 sprintf('%s/%s/model', Data::XML_PATH_PAYMENT_METHODS, $methodB['code'])
             )
-            ->will($this->returnValue(\Magento\Payment\Model\Method\AbstractMethod::class));
+            ->willReturn(AbstractMethod::class);
         $this->scopeConfig->expects(new MethodInvokedAtIndex(2))
             ->method('getValue')
             ->with(sprintf('%s/%s/model', Data::XML_PATH_PAYMENT_METHODS, 'empty'))
-            ->will($this->returnValue(null));
+            ->willReturn(null);
 
-        $methodInstanceMockA = $this->getMockBuilder(\Magento\Payment\Model\MethodInterface::class)
+        $methodInstanceMockA = $this->getMockBuilder(MethodInterface::class)
             ->getMockForAbstractClass();
         $methodInstanceMockA->expects($this->any())
             ->method('isAvailable')
-            ->will($this->returnValue(true));
+            ->willReturn(true);
         $methodInstanceMockA->expects($this->any())
             ->method('getConfigData')
             ->with('sort_order', null)
-            ->will($this->returnValue($methodA['data']['sort_order']));
+            ->willReturn($methodA['data']['sort_order']);
 
-        $methodInstanceMockB = $this->getMockBuilder(\Magento\Payment\Model\MethodInterface::class)
+        $methodInstanceMockB = $this->getMockBuilder(MethodInterface::class)
             ->getMockForAbstractClass();
         $methodInstanceMockB->expects($this->any())
             ->method('isAvailable')
-            ->will($this->returnValue(true));
+            ->willReturn(true);
         $methodInstanceMockB->expects($this->any())
             ->method('getConfigData')
             ->with('sort_order', null)
-            ->will($this->returnValue($methodB['data']['sort_order']));
+            ->willReturn($methodB['data']['sort_order']);
 
-        $this->methodFactory->expects($this->at(0))
+        $this->methodFactory
             ->method('create')
-            ->will($this->returnValue($methodInstanceMockA));
-
-        $this->methodFactory->expects($this->at(1))
-            ->method('create')
-            ->will($this->returnValue($methodInstanceMockB));
+            ->willReturnOnConsecutiveCalls($methodInstanceMockA, $methodInstanceMockB);
 
         $sortedMethods = $this->helper->getStoreMethods();
-        $this->assertTrue(
+
+        $this->assertGreaterThan(
+            array_shift($sortedMethods)->getConfigData('sort_order'),
             array_shift($sortedMethods)->getConfigData('sort_order')
-            < array_shift($sortedMethods)->getConfigData('sort_order')
         );
     }
 
     /**
      * @return void
      */
-    public function testGetMethodFormBlock()
+    public function testGetMethodFormBlock(): void
     {
         list($blockType, $methodCode) = ['method_block_type', 'method_code'];
 
-        $methodMock = $this->getMockBuilder(\Magento\Payment\Model\MethodInterface::class)
+        $methodMock = $this->getMockBuilder(MethodInterface::class)
             ->getMockForAbstractClass();
-        $layoutMock = $this->getMockBuilder(\Magento\Framework\View\LayoutInterface::class)
-            ->disableOriginalConstructor()
-            ->setMethods([])
-            ->getMock();
-        $blockMock = $this->getMockBuilder(\Magento\Framework\View\Element\BlockInterface::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['setMethod', 'toHtml'])
-            ->getMock();
+        $layoutMock = $this->getMockBuilder(LayoutInterface::class)->disableOriginalConstructor()
+            ->addMethods([])
+            ->getMockForAbstractClass();
+        $blockMock = $this->getMockBuilder(BlockInterface::class)->disableOriginalConstructor()
+            ->onlyMethods(['toHtml'])
+            ->addMethods(['setMethod'])
+            ->getMockForAbstractClass();
 
         $methodMock->expects($this->once())->method('getFormBlockType')->willReturn($blockType);
         $methodMock->expects($this->once())->method('getCode')->willReturn($methodCode);
@@ -205,28 +215,28 @@ class DataTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @return void`
+     * @return void
      */
-    public function testGetInfoBlock()
+    public function testGetInfoBlock(): void
     {
         $blockType = 'method_block_type';
 
-        $methodMock = $this->getMockBuilder(\Magento\Payment\Model\MethodInterface::class)
+        $methodMock = $this->getMockBuilder(MethodInterface::class)
             ->getMockForAbstractClass();
-        $infoMock = $this->getMockBuilder(\Magento\Payment\Model\Info::class)
-            ->disableOriginalConstructor()
-            ->setMethods([])
+        $infoMock = $this->getMockBuilder(Info::class)->disableOriginalConstructor()
+            ->onlyMethods(['getMethodInstance'])
             ->getMock();
-        $blockMock = $this->getMockBuilder(\Magento\Framework\View\Element\BlockInterface::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['setInfo', 'toHtml'])
-            ->getMock();
+        $blockMock = $this->getMockBuilder(BlockInterface::class)->disableOriginalConstructor()
+            ->onlyMethods(['toHtml'])
+            ->addMethods(['setInfo'])
+            ->getMockForAbstractClass();
 
         $infoMock->expects($this->once())->method('getMethodInstance')->willReturn($methodMock);
         $methodMock->expects($this->once())->method('getInfoBlockType')->willReturn($blockType);
         $this->layoutMock->expects($this->once())->method('createBlock')
             ->with($blockType)
             ->willReturn($blockMock);
+        $this->layoutFactoryMock->expects($this->once())->method('create')->willReturn($this->layoutMock);
         $blockMock->expects($this->once())->method('setInfo')->with($infoMock);
 
         $this->assertSame($blockMock, $this->helper->getInfoBlock($infoMock));
@@ -235,30 +245,32 @@ class DataTest extends \PHPUnit\Framework\TestCase
     /**
      * @return void
      */
-    public function testGetInfoBlockHtml()
+    public function testGetInfoBlockHtml(): void
     {
         list($storeId, $blockHtml, $secureMode, $blockType) = [1, 'HTML MARKUP', true, 'method_block_type'];
 
-        $methodMock = $this->getMockBuilder(\Magento\Payment\Model\MethodInterface::class)
+        $methodMock = $this->getMockBuilder(MethodInterface::class)
             ->getMockForAbstractClass();
-        $infoMock = $this->getMockBuilder(\Magento\Payment\Model\Info::class)
-            ->disableOriginalConstructor()
-            ->setMethods([])
+        $infoMock = $this->getMockBuilder(Info::class)->disableOriginalConstructor()
+            ->onlyMethods(['getMethodInstance'])
             ->getMock();
-        $paymentBlockMock = $this->getMockBuilder(\Magento\Framework\View\Element\BlockInterface::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['setArea', 'setIsSecureMode', 'getMethod', 'setStore', 'toHtml', 'setInfo'])
-            ->getMock();
+        $paymentBlockMock = $this->getMockBuilder(BlockInterface::class)->disableOriginalConstructor()
+            ->onlyMethods(['toHtml'])
+            ->addMethods(['setArea', 'setIsSecureMode', 'getMethod', 'setStore', 'setInfo'])
+            ->getMockForAbstractClass();
 
-        $this->appEmulation->expects($this->once())->method('startEnvironmentEmulation')->with($storeId);
+        $this->appEmulation->expects($this->once())
+            ->method('startEnvironmentEmulation')
+            ->with($storeId, Area::AREA_FRONTEND, true);
         $infoMock->expects($this->once())->method('getMethodInstance')->willReturn($methodMock);
         $methodMock->expects($this->once())->method('getInfoBlockType')->willReturn($blockType);
         $this->layoutMock->expects($this->once())->method('createBlock')
             ->with($blockType)
             ->willReturn($paymentBlockMock);
+        $this->layoutFactoryMock->expects($this->once())->method('create')->willReturn($this->layoutMock);
         $paymentBlockMock->expects($this->once())->method('setInfo')->with($infoMock);
         $paymentBlockMock->expects($this->once())->method('setArea')
-            ->with(\Magento\Framework\App\Area::AREA_FRONTEND)
+            ->with(Area::AREA_FRONTEND)
             ->willReturnSelf();
         $paymentBlockMock->expects($this->once())->method('setIsSecureMode')
             ->with($secureMode);
@@ -275,7 +287,7 @@ class DataTest extends \PHPUnit\Framework\TestCase
     /**
      * @return array
      */
-    public function getSortMethodsDataProvider()
+    public function getSortMethodsDataProvider(): array
     {
         return [
             [
@@ -284,121 +296,8 @@ class DataTest extends \PHPUnit\Framework\TestCase
             ],
             [
                 ['code' => 'methodA', 'data' => ['sort_order' => 2]],
-                ['code' => 'methodB', 'data' => ['sort_order' => 1]],
+                ['code' => 'methodB', 'data' => ['sort_order' => 1]]
             ]
-        ];
-    }
-
-    /**
-     * @param bool $sorted
-     * @param bool $asLabelValue
-     * @param bool $withGroups
-     * @param string|null $configTitle
-     * @param array $paymentMethod
-     * @param array $expectedPaymentMethodList
-     * @return void
-     *
-     * @dataProvider paymentMethodListDataProvider
-     */
-    public function testGetPaymentMethodList(
-        bool $sorted,
-        bool $asLabelValue,
-        bool $withGroups,
-        $configTitle,
-        array $paymentMethod,
-        array $expectedPaymentMethodList
-    ) {
-        $groups = ['group' => 'Group Title'];
-
-        $this->initialConfig->method('getData')
-            ->with('default')
-            ->willReturn(
-                [
-                    Data::XML_PATH_PAYMENT_METHODS => [
-                        $paymentMethod['code'] => $paymentMethod['data'],
-                    ],
-                ]
-            );
-
-        $titlePath = sprintf('%s/%s/title', Data::XML_PATH_PAYMENT_METHODS, $paymentMethod['code']);
-        $this->scopeConfig->method('getValue')
-            ->with($titlePath, ScopeInterface::SCOPE_STORE, null)
-            ->willReturn($configTitle);
-
-        $this->paymentConfig->method('getGroups')
-            ->willReturn($groups);
-
-        $paymentMethodList = $this->helper->getPaymentMethodList($sorted, $asLabelValue, $withGroups);
-        $this->assertEquals($expectedPaymentMethodList, $paymentMethodList);
-    }
-
-    /**
-     * @return array
-     */
-    public function paymentMethodListDataProvider(): array
-    {
-        return [
-            'Payment method with changed title' =>
-                [
-                    true,
-                    false,
-                    false,
-                    'Config Payment Title',
-                    [
-                        'code' => 'payment_method',
-                        'data' => [
-                            'active' => 1,
-                            'title' => 'Payment Title',
-                        ],
-                    ],
-                    ['payment_method' => 'Config Payment Title'],
-                ],
-            'Payment method as value => label' =>
-                [
-                    true,
-                    true,
-                    false,
-                    'Payment Title',
-                    [
-                        'code' => 'payment_method',
-                        'data' => [
-                            'active' => 1,
-                            'title' => 'Payment Title',
-                        ],
-                    ],
-                    [
-                        'payment_method' => [
-                            'value' => 'payment_method',
-                            'label' => 'Payment Title',
-                        ],
-                    ],
-                ],
-            'Payment method with group' =>
-                [
-                    true,
-                    true,
-                    true,
-                    'Payment Title',
-                    [
-                        'code' => 'payment_method',
-                        'data' => [
-                            'active' => 1,
-                            'title' => 'Payment Title',
-                            'group' => 'group',
-                        ],
-                    ],
-                    [
-                        'group' => [
-                            'label' => 'Group Title',
-                            'value' => [
-                                'payment_method' => [
-                                    'value' => 'payment_method',
-                                    'label' => 'Payment Title',
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
         ];
     }
 }

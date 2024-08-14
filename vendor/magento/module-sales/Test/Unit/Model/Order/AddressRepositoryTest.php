@@ -8,22 +8,22 @@ declare(strict_types=1);
 namespace Magento\Sales\Test\Unit\Model\Order;
 
 use Magento\Customer\Model\AttributeMetadataDataProvider;
-use Magento\Eav\Model\Entity\Attribute;
-use Magento\Framework\Api\SearchCriteria\CollectionProcessorInterface;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\Sales\Model\Order\Address as OrderAddress;
-use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
-use Magento\Sales\Model\Order\AddressRepository;
-use Magento\Sales\Model\ResourceModel\Order\Address\Collection as OrderAddressCollection;
 use Magento\Customer\Model\ResourceModel\Form\Attribute\Collection as FormAttributeCollection;
+use Magento\Eav\Model\Entity\Attribute;
 use Magento\Framework\Api\SearchCriteria;
-use Magento\Sales\Api\Data\OrderAddressSearchResultInterfaceFactory;
-use Magento\Sales\Model\ResourceModel\Metadata;
-use Magento\Sales\Model\Order\AddressRepository as OrderAddressRepository;
-use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\MockObject\MockObject;
-use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Api\SearchCriteria\CollectionProcessorInterface;
 use Magento\Framework\Exception\InputException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Sales\Api\Data\OrderAddressSearchResultInterfaceFactory;
+use Magento\Sales\Model\Order\Address as OrderAddress;
+use Magento\Sales\Model\Order\AddressRepository;
+use Magento\Sales\Model\Order\AddressRepository as OrderAddressRepository;
+use Magento\Sales\Model\ResourceModel\Metadata;
+use Magento\Sales\Model\ResourceModel\Order\Address\Collection as OrderAddressCollection;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Unit test for order address repository class.
@@ -79,7 +79,7 @@ class AddressRepositoryTest extends TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->objectManager = new ObjectManager($this);
 
@@ -129,7 +129,7 @@ class AddressRepositoryTest extends TestCase
      * @return void
      * @dataProvider getDataProvider
      */
-    public function testGet($id, $entityId)
+    public function testGet(?int $id, ?int $entityId): void
     {
         if (!$id) {
             $this->expectException(InputException::class);
@@ -190,7 +190,7 @@ class AddressRepositoryTest extends TestCase
      *
      * @return void
      */
-    public function testGetList()
+    public function testGetList(): void
     {
         $searchCriteria = $this->createMock(SearchCriteria::class);
         $collection = $this->createMock(OrderAddressCollection::class);
@@ -210,7 +210,7 @@ class AddressRepositoryTest extends TestCase
      *
      * @return void
      */
-    public function testDelete()
+    public function testDelete(): void
     {
         $this->orderAddress->expects($this->once())
             ->method('getEntityId')
@@ -240,11 +240,11 @@ class AddressRepositoryTest extends TestCase
      * Test for delete order address with exception
      *
      * @return void
-     * @expectedException \Magento\Framework\Exception\CouldNotDeleteException
-     * @expectedExceptionMessage Could not delete order address
      */
-    public function testDeleteWithException()
+    public function testDeleteWithException(): void
     {
+        $this->expectException('Magento\Framework\Exception\CouldNotDeleteException');
+        $this->expectExceptionMessage('The order address couldn\'t be deleted.');
         $this->orderAddress->expects($this->never())
             ->method('getEntityId');
 
@@ -273,7 +273,7 @@ class AddressRepositoryTest extends TestCase
      *
      * @return void
      */
-    public function testSave()
+    public function testSave(): void
     {
         $this->orderAddress->expects($this->any())
             ->method('getEntityId')
@@ -303,11 +303,11 @@ class AddressRepositoryTest extends TestCase
      * Test for save order address with exception
      *
      * @return void
-     * @expectedException \Magento\Framework\Exception\CouldNotSaveException
-     * @expectedExceptionMessage Could not save order address
      */
-    public function testSaveWithException()
+    public function testSaveWithException(): void
     {
+        $this->expectException('Magento\Framework\Exception\CouldNotSaveException');
+        $this->expectExceptionMessage('The order address couldn\'t be saved.');
         $this->orderAddress->expects($this->never())
             ->method('getEntityId');
 
@@ -336,7 +336,7 @@ class AddressRepositoryTest extends TestCase
      *
      * @return void
      */
-    public function testCreate()
+    public function testCreate(): void
     {
         $this->metadata->expects($this->once())
             ->method('getNewInstance')
@@ -361,7 +361,7 @@ class AddressRepositoryTest extends TestCase
         string $attributeCode,
         array $attributeValue,
         string $expected
-    ) {
+    ): void {
         $orderAddress = $this->getMockBuilder(OrderAddress::class)
             ->disableOriginalConstructor()
             ->setMethods(['getEntityId', 'hasData', 'getData', 'setData'])
@@ -435,7 +435,7 @@ class AddressRepositoryTest extends TestCase
                     'line1',
                     'line2',
                 ],
-                'line1'.PHP_EOL.'line2',
+                'line1' . PHP_EOL . 'line2',
             ],
         ];
 

@@ -16,7 +16,7 @@ class Notifications implements \Magento\Framework\Notification\MessageInterface
      * Store manager object
      *
      * @var \Magento\Store\Model\StoreManagerInterface
-     * @deprecated 100.1.3
+     * @deprecated 100.1.0
      */
     protected $storeManager;
 
@@ -36,7 +36,7 @@ class Notifications implements \Magento\Framework\Notification\MessageInterface
      * Stores with invalid display settings
      *
      * @var array
-     * @deprecated 100.1.3
+     * @deprecated 100.1.0
      * @see \Magento\Tax\Model\System\Message\Notification\RoundingErrors
      */
     protected $storesWithInvalidDisplaySettings;
@@ -45,7 +45,7 @@ class Notifications implements \Magento\Framework\Notification\MessageInterface
      * Websites with invalid discount settings
      *
      * @var array
-     * @deprecated 100.1.3
+     * @deprecated 100.1.0
      * @see \Magento\Tax\Model\System\Message\Notification\DiscountErrors
      */
     protected $storesWithInvalidDiscountSettings;
@@ -89,11 +89,12 @@ class Notifications implements \Magento\Framework\Notification\MessageInterface
      */
     public function getIdentity()
     {
+        // phpcs:ignore Magento2.Security.InsecureFunction
         return md5('TAX_NOTIFICATION');
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function isDisplayed()
     {
@@ -106,7 +107,7 @@ class Notifications implements \Magento\Framework\Notification\MessageInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getText()
     {
@@ -216,6 +217,7 @@ class Notifications implements \Magento\Framework\Notification\MessageInterface
 
     /**
      * Return list of store names which have not compatible tax calculation type and price display settings.
+     *
      * Return true if settings are wrong for default store.
      *
      * @return array
@@ -237,6 +239,7 @@ class Notifications implements \Magento\Framework\Notification\MessageInterface
 
     /**
      * Return list of store names where tax discount settings are compatible.
+     *
      * Return true if settings are wrong for default store.
      *
      * @return array

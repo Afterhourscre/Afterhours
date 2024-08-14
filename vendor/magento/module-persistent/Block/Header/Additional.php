@@ -66,7 +66,7 @@ class Additional extends \Magento\Framework\View\Element\Html\Link
         Json $jsonSerializer = null,
         Data $persistentHelper = null
     ) {
-        $this->isScopePrivate = true;
+        $this->_isScopePrivate = true;
         $this->_customerViewHelper = $customerViewHelper;
         $this->_persistentSessionHelper = $persistentSessionHelper;
         $this->customerRepository = $customerRepository;
@@ -87,9 +87,11 @@ class Additional extends \Magento\Framework\View\Element\Html\Link
     }
 
     /**
+     * Get customer id.
+     *
      * @return int
      */
-    public function getCustomerId()
+    public function getCustomerId(): int
     {
         return $this->_persistentSessionHelper->getSession()->getCustomerId();
     }
@@ -99,13 +101,12 @@ class Additional extends \Magento\Framework\View\Element\Html\Link
      *
      * @return string
      */
-    public function getConfig()
+    public function getConfig(): string
     {
-        return
-            $this->jsonSerializer->serialize(
-                [
-                    'expirationLifetime' => $this->persistentHelper->getLifeTime(),
-                ]
-            );
+        return $this->jsonSerializer->serialize(
+            [
+                'expirationLifetime' => $this->persistentHelper->getLifeTime(),
+            ]
+        );
     }
 }

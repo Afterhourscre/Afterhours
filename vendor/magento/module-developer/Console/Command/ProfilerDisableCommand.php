@@ -6,30 +6,23 @@
 
 namespace Magento\Developer\Console\Command;
 
+use InvalidArgumentException;
+use Magento\Framework\Console\Cli;
 use Magento\Framework\Filesystem\Io\File;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-/**
- * CLI Command to disable Magento profiler.
- */
 class ProfilerDisableCommand extends Command
 {
     /**
-     * Profiler flag file
+     * Profiler flag file path
      */
-    const PROFILER_FLAG_FILE = 'var/profiler.flag';
+    public const PROFILER_FLAG_FILE = 'var/profiler.flag';
 
-    /**
-     * Command name
-     */
-    const COMMAND_NAME = 'dev:profiler:disable';
+    public const COMMAND_NAME = 'dev:profiler:disable';
 
-    /**
-     * Success message
-     */
-    const SUCCESS_MESSAGE = 'Profiler disabled.';
+    public const SUCCESS_MESSAGE = 'Profiler disabled.';
 
     /**
      * @var File
@@ -40,35 +33,39 @@ class ProfilerDisableCommand extends Command
      * Initialize dependencies.
      *
      * @param File $filesystem
-     * @param string|null $name The name of the command; passing null means it must be set in configure()
      * @internal param ConfigInterface $resourceConfig
      */
-    public function __construct(File $filesystem, $name = null)
+    public function __construct(File $filesystem)
     {
-        parent::__construct($name ?: self::COMMAND_NAME);
+        parent::__construct();
         $this->filesystem = $filesystem;
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected function configure()
     {
-        $this->setDescription('Disable the profiler.');
+        $this->setName(self::COMMAND_NAME)
+            ->setDescription('Disable the profiler.');
+
         parent::configure();
     }
 
     /**
-     * {@inheritdoc}
-     * @throws \InvalidArgumentException
+     * @inheritdoc
+     *
+     * @throws InvalidArgumentException
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->filesystem->rm(BP . '/' . self::PROFILER_FLAG_FILE);
         if (!$this->filesystem->fileExists(BP . '/' . self::PROFILER_FLAG_FILE)) {
             $output->writeln('<info>'. self::SUCCESS_MESSAGE . '</info>');
-            return;
+            return Cli::RETURN_SUCCESS;
         }
         $output->writeln('<error>Something went wrong while disabling the profiler.</error>');
+
+        return Cli::RETURN_FAILURE;
     }
 }

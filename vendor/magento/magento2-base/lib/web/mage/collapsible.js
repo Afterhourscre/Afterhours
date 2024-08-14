@@ -5,7 +5,8 @@
 
 define([
     'jquery',
-    'jquery/ui',
+    'jquery-ui-modules/widget',
+    'jquery-ui-modules/core',
     'jquery/jquery-storageapi',
     'mage/mage'
 ], function ($) {
@@ -14,8 +15,8 @@ define([
     var hideProps = {},
         showProps = {};
 
-    hideProps.height =  'hide';
-    showProps.height =  'show';
+    hideProps.height = 'hide';
+    showProps.height = 'show';
 
     $.widget('mage.collapsible', {
         options: {
@@ -51,7 +52,7 @@ define([
             this.icons = false;
 
             if (typeof this.options.icons === 'string') {
-                this.options.icons = $.parseJSON(this.options.icons);
+                this.options.icons = JSON.parse(this.options.icons);
             }
 
             this._processPanels();
@@ -62,6 +63,12 @@ define([
                 this._createIcons();
                 this.icons = true;
             }
+
+            this.element.on('dimensionsChanged', function (e) {
+                if (e.target && e.target.classList.contains('active')) {
+                    this._scrollToTopIfNotVisible();
+                }
+            }.bind(this));
 
             this._bind('click');
             this._trigger('created');
@@ -302,7 +309,7 @@ define([
 
             if (event) {
                 $.each(event.split(' '), function (index, eventName) {
-                    self.events[ eventName ] = '_eventHandler';
+                    self.events[eventName] = '_eventHandler';
                 });
             }
             this._off(this.trigger);
@@ -370,7 +377,7 @@ define([
             }
 
             if (typeof animate === 'string') {
-                animate = $.parseJSON(animate);
+                animate = JSON.parse(animate);
             }
             duration = duration || animate.duration;
             easing = animate.easing;
@@ -442,6 +449,8 @@ define([
 
         /**
          * Activate.
+         *
+         * @return void;
          */
         activate: function () {
             if (this.options.disabled) {
@@ -451,9 +460,6 @@ define([
             if (this.options.animate) {
                 this._animate(showProps);
             } else {
-                if (this.content.length) {
-                    this._scrollToTopIfVisible(this.content.get(0).parentElement);
-                }
                 this.content.show();
             }
             this._open();
@@ -536,12 +542,12 @@ define([
                     that.element.addClass(that.options.loadingClass);
                 }
                 that.content.attr('aria-busy', 'true');
-                that.xhr.success(function (response) {
+                that.xhr.done(function (response) {
                     setTimeout(function () {
                         that.content.html(response);
                     }, 1);
                 });
-                that.xhr.complete(function (jqXHR, status) {
+                that.xhr.always(function (jqXHR, status) {
                     setTimeout(function () {
                         if (status === 'abort') {
                             that.content.stop(false, true);
@@ -561,29 +567,35 @@ define([
         },
 
         /**
-         * @param {HTMLElement} elem
          * @private
          */
-        _scrollToTopIfVisible: function (elem) {
-            if (this._isElementOutOfViewport(elem)) {
-                elem.scrollIntoView();
+        _scrollToTopIfNotVisible: function () {
+            if (this._isElementOutOfViewport()) {
+                this.header[0].scrollIntoView();
             }
         },
 
         /**
-         * @param {HTMLElement} elem
          * @private
          * @return {Boolean}
          */
-        _isElementOutOfViewport: function (elem) {
-            var rect = elem.getBoundingClientRect();
+        _isElementOutOfViewport: function () {
+            var headerRect = this.header[0].getBoundingClientRect(),
+                contentRect = this.content.get().length ? this.content[0].getBoundingClientRect() : false,
+                headerOut,
+                contentOut;
 
-            return (
-                rect.left < 0 ||
-                rect.top < 0 ||
-                rect.right > window.innerWidth ||
-                rect.bottom > window.innerHeight
-            );
+            headerOut = headerRect.bottom - headerRect.height < 0 ||
+                headerRect.right - headerRect.width < 0 ||
+                headerRect.left + headerRect.width > window.innerWidth ||
+                headerRect.top + headerRect.height > window.innerHeight;
+
+            contentOut = contentRect ? contentRect.bottom - contentRect.height < 0 ||
+                contentRect.right - contentRect.width < 0 ||
+                contentRect.left + contentRect.width > window.innerWidth ||
+                contentRect.top + contentRect.height > window.innerHeight : false;
+
+            return headerOut ? headerOut : contentOut;
         }
     });
 

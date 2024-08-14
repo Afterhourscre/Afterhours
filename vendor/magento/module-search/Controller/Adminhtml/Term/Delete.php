@@ -5,23 +5,18 @@
  */
 namespace Magento\Search\Controller\Adminhtml\Term;
 
-use Magento\Framework\Exception\NotFoundException;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Search\Controller\Adminhtml\Term as TermController;
 use Magento\Framework\Controller\ResultFactory;
 
-class Delete extends TermController
+class Delete extends TermController implements HttpPostActionInterface
 {
     /**
      * @return \Magento\Backend\Model\View\Result\Redirect
-     * @throws NotFoundException
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new NotFoundException(__('Page not found'));
-        }
-
-        $id = (int)$this->getRequest()->getParam('id');
+        $id = $this->getRequest()->getParam('id');
         /** @var \Magento\Backend\Model\View\Result\Redirect $redirectResult */
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
         if ($id) {

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /*
  * This file is part of Composer.
@@ -13,11 +13,12 @@
 namespace Composer;
 
 use Composer\Json\JsonFile;
-use Composer\Spdx\SpdxLicenses;
 use Composer\CaBundle\CaBundle;
+use Composer\Pcre\Preg;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Process\Process;
 use Seld\PharUtils\Timestamps;
+use Seld\PharUtils\Linter;
 
 /**
  * The Compiler class compiles composer into a phar
@@ -27,123 +28,144 @@ use Seld\PharUtils\Timestamps;
  */
 class Compiler
 {
+    /** @var string */
     private $version;
+    /** @var string */
     private $branchAliasVersion = '';
+    /** @var \DateTime */
     private $versionDate;
 
     /**
      * Compiles composer into a single phar file
      *
-     * @param  string            $pharFile The full path to the file to create
+     * @param string $pharFile The full path to the file to create
+     *
      * @throws \RuntimeException
      */
-    public function compile($pharFile = 'composer.phar')
+    public function compile(string $pharFile = 'composer.phar'): void
     {
         if (file_exists($pharFile)) {
             unlink($pharFile);
         }
 
-        $process = new Process('git log --pretty="%H" -n1 HEAD', __DIR__);
-        if ($process->run() != 0) {
+        $process = new Process(['git', 'log', '--pretty=%H', '-n1', 'HEAD'], __DIR__);
+        if ($process->run() !== 0) {
             throw new \RuntimeException('Can\'t run git log. You must ensure to run compile from composer git repository clone and that git binary is available.');
         }
         $this->version = trim($process->getOutput());
 
-        $process = new Process('git log -n1 --pretty=%ci HEAD', __DIR__);
-        if ($process->run() != 0) {
+        $process = new Process(['git', 'log', '-n1', '--pretty=%ci', 'HEAD'], __DIR__);
+        if ($process->run() !== 0) {
             throw new \RuntimeException('Can\'t run git log. You must ensure to run compile from composer git repository clone and that git binary is available.');
         }
 
         $this->versionDate = new \DateTime(trim($process->getOutput()));
         $this->versionDate->setTimezone(new \DateTimeZone('UTC'));
 
-        $process = new Process('git describe --tags --exact-match HEAD');
-        if ($process->run() == 0) {
+        $process = new Process(['git', 'describe', '--tags', '--exact-match', 'HEAD'], __DIR__);
+        if ($process->run() === 0) {
             $this->version = trim($process->getOutput());
         } else {
-            // get branch-alias defined in composer.json for dev-master (if any)
+            // get branch-alias defined in composer.json for dev-main (if any)
             $localConfig = __DIR__.'/../../composer.json';
             $file = new JsonFile($localConfig);
             $localConfig = $file->read();
-            if (isset($localConfig['extra']['branch-alias']['dev-master'])) {
-                $this->branchAliasVersion = $localConfig['extra']['branch-alias']['dev-master'];
+            if (isset($localConfig['extra']['branch-alias']['dev-main'])) {
+                $this->branchAliasVersion = $localConfig['extra']['branch-alias']['dev-main'];
             }
         }
 
         $phar = new \Phar($pharFile, 0, 'composer.phar');
-        $phar->setSignatureAlgorithm(\Phar::SHA1);
+        $phar->setSignatureAlgorithm(\Phar::SHA512);
 
         $phar->startBuffering();
 
-        $finderSort = function ($a, $b) {
+        $finderSort = static function ($a, $b): int {
             return strcmp(strtr($a->getRealPath(), '\\', '/'), strtr($b->getRealPath(), '\\', '/'));
         };
 
+        // Add Composer sources
         $finder = new Finder();
         $finder->files()
             ->ignoreVCS(true)
             ->name('*.php')
             ->notName('Compiler.php')
             ->notName('ClassLoader.php')
+            ->notName('InstalledVersions.php')
             ->in(__DIR__.'/..')
             ->sort($finderSort)
         ;
-
         foreach ($finder as $file) {
             $this->addFile($phar, $file);
         }
+        // Add runtime utilities separately to make sure they retains the docblocks as these will get copied into projects
         $this->addFile($phar, new \SplFileInfo(__DIR__ . '/Autoload/ClassLoader.php'), false);
+        $this->addFile($phar, new \SplFileInfo(__DIR__ . '/InstalledVersions.php'), false);
 
+        // Add Composer resources
         $finder = new Finder();
         $finder->files()
-            ->name('*.json')
             ->in(__DIR__.'/../../res')
-            ->in(SpdxLicenses::getResourcesDir())
             ->sort($finderSort)
         ;
-
         foreach ($finder as $file) {
             $this->addFile($phar, $file, false);
         }
-        $this->addFile($phar, new \SplFileInfo(__DIR__ . '/../../vendor/seld/cli-prompt/res/hiddeninput.exe'), false);
 
+        // Add vendor files
         $finder = new Finder();
         $finder->files()
             ->ignoreVCS(true)
-            ->name('*.php')
-            ->name('LICENSE')
+            ->notPath('/\/(composer\.(json|lock)|[A-Z]+\.md(?:own)?|\.gitignore|appveyor.yml|phpunit\.xml\.dist|phpstan\.neon\.dist|phpstan-config\.neon|phpstan-baseline\.neon)$/')
+            ->notPath('/bin\/(jsonlint|validate-json|simple-phpunit|phpstan|phpstan\.phar)(\.bat)?$/')
+            ->notPath('justinrainbow/json-schema/demo/')
+            ->notPath('justinrainbow/json-schema/dist/')
+            ->notPath('composer/LICENSE')
             ->exclude('Tests')
             ->exclude('tests')
             ->exclude('docs')
-            ->in(__DIR__.'/../../vendor/symfony/')
-            ->in(__DIR__.'/../../vendor/seld/jsonlint/')
-            ->in(__DIR__.'/../../vendor/seld/cli-prompt/')
-            ->in(__DIR__.'/../../vendor/justinrainbow/json-schema/')
-            ->in(__DIR__.'/../../vendor/composer/spdx-licenses/')
-            ->in(__DIR__.'/../../vendor/composer/semver/')
-            ->in(__DIR__.'/../../vendor/composer/ca-bundle/')
-            ->in(__DIR__.'/../../vendor/psr/')
+            ->in(__DIR__.'/../../vendor/')
             ->sort($finderSort)
         ;
 
+        $extraFiles = [];
+        foreach ([
+            __DIR__ . '/../../vendor/composer/installed.json',
+            __DIR__ . '/../../vendor/composer/spdx-licenses/res/spdx-exceptions.json',
+            __DIR__ . '/../../vendor/composer/spdx-licenses/res/spdx-licenses.json',
+            CaBundle::getBundledCaBundlePath(),
+            __DIR__ . '/../../vendor/symfony/console/Resources/bin/hiddeninput.exe',
+            __DIR__ . '/../../vendor/symfony/console/Resources/completion.bash',
+        ] as $file) {
+            $extraFiles[$file] = realpath($file);
+            if (!file_exists($file)) {
+                throw new \RuntimeException('Extra file listed is missing from the filesystem: '.$file);
+            }
+        }
+        $unexpectedFiles = [];
+
         foreach ($finder as $file) {
-            $this->addFile($phar, $file);
+            if (false !== ($index = array_search($file->getRealPath(), $extraFiles, true))) {
+                unset($extraFiles[$index]);
+            } elseif (!Preg::isMatch('{(^LICENSE$|\.php$)}', $file->getFilename())) {
+                $unexpectedFiles[] = (string) $file;
+            }
+
+            if (Preg::isMatch('{\.php[\d.]*$}', $file->getFilename())) {
+                $this->addFile($phar, $file);
+            } else {
+                $this->addFile($phar, $file, false);
+            }
         }
 
-        $this->addFile($phar, new \SplFileInfo(__DIR__.'/../../vendor/autoload.php'));
-        $this->addFile($phar, new \SplFileInfo(__DIR__.'/../../vendor/composer/autoload_namespaces.php'));
-        $this->addFile($phar, new \SplFileInfo(__DIR__.'/../../vendor/composer/autoload_psr4.php'));
-        $this->addFile($phar, new \SplFileInfo(__DIR__.'/../../vendor/composer/autoload_classmap.php'));
-        $this->addFile($phar, new \SplFileInfo(__DIR__.'/../../vendor/composer/autoload_files.php'));
-        $this->addFile($phar, new \SplFileInfo(__DIR__.'/../../vendor/composer/autoload_real.php'));
-        $this->addFile($phar, new \SplFileInfo(__DIR__.'/../../vendor/composer/autoload_static.php'));
-        if (file_exists(__DIR__.'/../../vendor/composer/include_paths.php')) {
-            $this->addFile($phar, new \SplFileInfo(__DIR__.'/../../vendor/composer/include_paths.php'));
+        if (count($extraFiles) > 0) {
+            throw new \RuntimeException('These files were expected but not added to the phar, they might be excluded or gone from the source package:'.PHP_EOL.var_export($extraFiles, true));
         }
-        $this->addFile($phar, new \SplFileInfo(__DIR__.'/../../vendor/composer/ClassLoader.php'));
+        if (count($unexpectedFiles) > 0) {
+            throw new \RuntimeException('These files were unexpectedly added to the phar, make sure they are excluded or listed in $extraFiles:'.PHP_EOL.var_export($unexpectedFiles, true));
+        }
 
-        $this->addFile($phar, new \SplFileInfo(CaBundle::getBundledCaBundlePath()), false);
-
+        // Add bin/composer
         $this->addComposerBin($phar);
 
         // Stubs
@@ -161,33 +183,58 @@ class Compiler
         // re-sign the phar with reproducible timestamp / signature
         $util = new Timestamps($pharFile);
         $util->updateTimestamps($this->versionDate);
-        $util->save($pharFile, \Phar::SHA1);
+        $util->save($pharFile, \Phar::SHA512);
+
+        Linter::lint($pharFile, [
+            'vendor/symfony/console/Attribute/AsCommand.php',
+            'vendor/symfony/polyfill-intl-grapheme/bootstrap80.php',
+            'vendor/symfony/polyfill-intl-normalizer/bootstrap80.php',
+            'vendor/symfony/polyfill-mbstring/bootstrap80.php',
+            'vendor/symfony/polyfill-php73/Resources/stubs/JsonException.php',
+            'vendor/symfony/service-contracts/Attribute/SubscribedService.php',
+        ]);
     }
 
-    private function addFile($phar, $file, $strip = true)
+    private function getRelativeFilePath(\SplFileInfo $file): string
     {
-        $path = strtr(str_replace(dirname(dirname(__DIR__)).DIRECTORY_SEPARATOR, '', $file->getRealPath()), '\\', '/');
+        $realPath = $file->getRealPath();
+        $pathPrefix = dirname(__DIR__, 2).DIRECTORY_SEPARATOR;
 
-        $content = file_get_contents($file);
+        $pos = strpos($realPath, $pathPrefix);
+        $relativePath = ($pos !== false) ? substr_replace($realPath, '', $pos, strlen($pathPrefix)) : $realPath;
+
+        return strtr($relativePath, '\\', '/');
+    }
+
+    private function addFile(\Phar $phar, \SplFileInfo $file, bool $strip = true): void
+    {
+        $path = $this->getRelativeFilePath($file);
+        $content = file_get_contents((string) $file);
         if ($strip) {
             $content = $this->stripWhitespace($content);
-        } elseif ('LICENSE' === basename($file)) {
+        } elseif ('LICENSE' === $file->getFilename()) {
             $content = "\n".$content."\n";
         }
 
         if ($path === 'src/Composer/Composer.php') {
-            $content = str_replace('@package_version@', $this->version, $content);
-            $content = str_replace('@package_branch_alias_version@', $this->branchAliasVersion, $content);
-            $content = str_replace('@release_date@', $this->versionDate->format('Y-m-d H:i:s'), $content);
+            $content = strtr(
+                $content,
+                [
+                    '@package_version@' => $this->version,
+                    '@package_branch_alias_version@' => $this->branchAliasVersion,
+                    '@release_date@' => $this->versionDate->format('Y-m-d H:i:s'),
+                ]
+            );
+            $content = Preg::replace('{SOURCE_VERSION = \'[^\']+\';}', 'SOURCE_VERSION = \'\';', $content);
         }
 
         $phar->addFromString($path, $content);
     }
 
-    private function addComposerBin($phar)
+    private function addComposerBin(\Phar $phar): void
     {
         $content = file_get_contents(__DIR__.'/../../bin/composer');
-        $content = preg_replace('{^#!/usr/bin/env php\s*}', '', $content);
+        $content = Preg::replace('{^#!/usr/bin/env php\s*}', '', $content);
         $phar->addFromString('bin/composer', $content);
     }
 
@@ -197,7 +244,7 @@ class Compiler
      * @param  string $source A PHP string
      * @return string The PHP string with the whitespace removed
      */
-    private function stripWhitespace($source)
+    private function stripWhitespace(string $source): string
     {
         if (!function_exists('token_get_all')) {
             return $source;
@@ -207,15 +254,15 @@ class Compiler
         foreach (token_get_all($source) as $token) {
             if (is_string($token)) {
                 $output .= $token;
-            } elseif (in_array($token[0], array(T_COMMENT, T_DOC_COMMENT))) {
+            } elseif (in_array($token[0], [T_COMMENT, T_DOC_COMMENT])) {
                 $output .= str_repeat("\n", substr_count($token[1], "\n"));
             } elseif (T_WHITESPACE === $token[0]) {
                 // reduce wide spaces
-                $whitespace = preg_replace('{[ \t]+}', ' ', $token[1]);
+                $whitespace = Preg::replace('{[ \t]+}', ' ', $token[1]);
                 // normalize newlines to \n
-                $whitespace = preg_replace('{(?:\r\n|\r|\n)}', "\n", $whitespace);
+                $whitespace = Preg::replace('{(?:\r\n|\r|\n)}', "\n", $whitespace);
                 // trim leading spaces
-                $whitespace = preg_replace('{\n +}', "\n", $whitespace);
+                $whitespace = Preg::replace('{\n +}', "\n", $whitespace);
                 $output .= $whitespace;
             } else {
                 $output .= $token[1];
@@ -225,7 +272,7 @@ class Compiler
         return $output;
     }
 
-    private function getStub()
+    private function getStub(): string
     {
         $stub = <<<'EOF'
 #!/usr/bin/env php
@@ -241,7 +288,7 @@ class Compiler
  */
 
 // Avoid APC causing random fatal errors per https://github.com/composer/composer/issues/264
-if (extension_loaded('apc') && ini_get('apc.enable_cli') && ini_get('apc.cache_by_default')) {
+if (extension_loaded('apc') && filter_var(ini_get('apc.enable_cli'), FILTER_VALIDATE_BOOLEAN) && filter_var(ini_get('apc.cache_by_default'), FILTER_VALIDATE_BOOLEAN)) {
     if (version_compare(phpversion('apc'), '3.0.12', '>=')) {
         ini_set('apc.cache_by_default', 0);
     } else {
@@ -250,13 +297,18 @@ if (extension_loaded('apc') && ini_get('apc.enable_cli') && ini_get('apc.cache_b
     }
 }
 
+if (!class_exists('Phar')) {
+    echo 'PHP\'s phar extension is missing. Composer requires it to run. Enable the extension or recompile php without --disable-phar then try again.' . PHP_EOL;
+    exit(1);
+}
+
 Phar::mapPhar('composer.phar');
 
 EOF;
 
         // add warning once the phar is older than 60 days
-        if (preg_match('{^[a-f0-9]+$}', $this->version)) {
-            $warningTime = $this->versionDate->format('U') + 60 * 86400;
+        if (Preg::isMatch('{^[a-f0-9]+$}', $this->version)) {
+            $warningTime = ((int) $this->versionDate->format('U')) + 60 * 86400;
             $stub .= "define('COMPOSER_DEV_WARNING_TIME', $warningTime);\n";
         }
 

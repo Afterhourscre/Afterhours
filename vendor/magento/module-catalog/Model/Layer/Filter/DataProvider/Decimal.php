@@ -109,7 +109,7 @@ class Decimal
      *
      * @param int $range
      * @param FilterInterface $filter
-     * @return mixed
+     * @return array
      */
     public function getRangeItemCounts($range, FilterInterface $filter)
     {

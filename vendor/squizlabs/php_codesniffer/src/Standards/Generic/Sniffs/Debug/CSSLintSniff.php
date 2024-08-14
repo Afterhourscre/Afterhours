@@ -4,14 +4,17 @@
  *
  * @author    Roman Levishchenko <index.0h@gmail.com>
  * @copyright 2013-2014 Roman Levishchenko
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ *
+ * @deprecated 3.9.0
  */
 
 namespace PHP_CodeSniffer\Standards\Generic\Sniffs\Debug;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
-use PHP_CodeSniffer\Files\File;
 use PHP_CodeSniffer\Config;
+use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
+use PHP_CodeSniffer\Util\Common;
 
 class CSSLintSniff implements Sniff
 {
@@ -21,17 +24,17 @@ class CSSLintSniff implements Sniff
      *
      * @var array
      */
-    public $supportedTokenizers = array('CSS');
+    public $supportedTokenizers = ['CSS'];
 
 
     /**
      * Returns the token types that this sniff is interested in.
      *
-     * @return int[]
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(T_OPEN_TAG);
+        return [T_OPEN_TAG];
 
     }//end register()
 
@@ -43,28 +46,28 @@ class CSSLintSniff implements Sniff
      * @param int                         $stackPtr  The position in the stack where
      *                                               the token was found.
      *
-     * @return void
+     * @return int
      */
     public function process(File $phpcsFile, $stackPtr)
     {
         $csslintPath = Config::getExecutablePath('csslint');
         if ($csslintPath === null) {
-            return;
+            return $phpcsFile->numTokens;
         }
 
         $fileName = $phpcsFile->getFilename();
 
-        $cmd = escapeshellcmd($csslintPath).' '.escapeshellarg($fileName).' 2>&1';
+        $cmd = Common::escapeshellcmd($csslintPath).' '.escapeshellarg($fileName).' 2>&1';
         exec($cmd, $output, $retval);
 
         if (is_array($output) === false) {
-            return;
+            return $phpcsFile->numTokens;
         }
 
         $count = count($output);
 
         for ($i = 0; $i < $count; $i++) {
-            $matches    = array();
+            $matches    = [];
             $numMatches = preg_match(
                 '/(error|warning) at line (\d+)/',
                 $output[$i],
@@ -87,7 +90,7 @@ class CSSLintSniff implements Sniff
         }//end for
 
         // Ignore the rest of the file.
-        return ($phpcsFile->numTokens + 1);
+        return $phpcsFile->numTokens;
 
     }//end process()
 

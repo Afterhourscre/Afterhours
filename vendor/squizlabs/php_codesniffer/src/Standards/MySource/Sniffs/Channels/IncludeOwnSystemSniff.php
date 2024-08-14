@@ -4,7 +4,9 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ *
+ * @deprecated 3.9.0
  */
 
 namespace PHP_CodeSniffer\Standards\MySource\Sniffs\Channels;
@@ -19,11 +21,11 @@ class IncludeOwnSystemSniff implements Sniff
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(T_DOUBLE_COLON);
+        return [T_DOUBLE_COLON];
 
     }//end register()
 
@@ -40,7 +42,7 @@ class IncludeOwnSystemSniff implements Sniff
     public function process(File $phpcsFile, $stackPtr)
     {
         $fileName = $phpcsFile->getFilename();
-        $matches  = array();
+        $matches  = [];
         if (preg_match('|/systems/(.*)/([^/]+)?actions.inc$|i', $fileName, $matches) === 0) {
             // Not an actions file.
             return;
@@ -67,7 +69,7 @@ class IncludeOwnSystemSniff implements Sniff
 
         if ($included === strtolower($ownClass)) {
             $error = "You do not need to include \"%s\" from within the system's own actions file";
-            $data  = array($ownClass);
+            $data  = [$ownClass];
             $phpcsFile->addError($error, $stackPtr, 'NotRequired', $data);
         }
 
@@ -82,7 +84,7 @@ class IncludeOwnSystemSniff implements Sniff
      * @param int                         $stackPtr  The position in the tokens array of the
      *                                               potentially included class.
      *
-     * @return string
+     * @return bool
      */
     protected function getIncludedClassFromToken(
         $phpcsFile,

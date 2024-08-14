@@ -131,6 +131,7 @@ define([
                 uid: uid,
                 noticeId: 'notice-' + uid,
                 errorId: 'error-' + uid,
+                tooltipId: 'tooltip-' + uid,
                 inputName: utils.serializeName(name.join('.')),
                 valueUpdate: valueUpdate
             });
@@ -412,7 +413,7 @@ define([
             this.bubble('error', message);
 
             //TODO: Implement proper result propagation for form
-            if (!isValid) {
+            if (this.source && !isValid) {
                 this.source.set('params.invalid', true);
             }
 

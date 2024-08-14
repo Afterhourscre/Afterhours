@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of PHP CS Fixer.
  *
@@ -15,21 +17,19 @@ namespace PhpCsFixer\Fixer\Phpdoc;
 use PhpCsFixer\AbstractProxyFixer;
 use PhpCsFixer\FixerDefinition\CodeSample;
 use PhpCsFixer\FixerDefinition\FixerDefinition;
+use PhpCsFixer\FixerDefinition\FixerDefinitionInterface;
 
 /**
- * @author Graham Campbell <graham@alt-three.com>
+ * @author Graham Campbell <hello@gjcampbell.co.uk>
  * @author Dariusz Rumiński <dariusz.ruminski@gmail.com>
  */
 final class PhpdocNoAccessFixer extends AbstractProxyFixer
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function getDefinition()
+    public function getDefinition(): FixerDefinitionInterface
     {
         return new FixerDefinition(
             '`@access` annotations should be omitted from PHPDoc.',
-            array(
+            [
                 new CodeSample(
                     '<?php
 class Foo
@@ -39,20 +39,33 @@ class Foo
      * @access private
      */
     private $bar;
-}'
+}
+'
                 ),
-            )
+            ]
         );
     }
 
     /**
      * {@inheritdoc}
+     *
+     * Must run before NoEmptyPhpdocFixer, PhpdocAlignFixer, PhpdocSeparationFixer, PhpdocTrimFixer.
+     * Must run after AlignMultilineCommentFixer, CommentToPhpdocFixer, PhpdocIndentFixer, PhpdocScalarFixer, PhpdocToCommentFixer, PhpdocTypesFixer.
      */
-    protected function createProxyFixer()
+    public function getPriority(): int
+    {
+        return parent::getPriority();
+    }
+
+    protected function createProxyFixers(): array
     {
         $fixer = new GeneralPhpdocAnnotationRemoveFixer();
-        $fixer->configure(array('annotations' => array('access')));
+        $fixer->configure(
+            ['annotations' => ['access'],
+                'case_sensitive' => true,
+            ]
+        );
 
-        return $fixer;
+        return [$fixer];
     }
 }

@@ -9,84 +9,96 @@ namespace Magento\Sales\Test\Unit\Model\Order\Webapi;
 
 use Magento\Sales\Api\Data\OrderItemInterface;
 use Magento\Sales\Block\Adminhtml\Items\Column\DefaultColumn;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Sales\Block\Order\Item\Renderer\DefaultRenderer;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 use Magento\Sales\Model\Order\Webapi\ChangeOutputArray;
 
 /**
- * Test for Magento\Sales\Model\Order\Webapi\ChangeOutputArray class.
+ * Test for \Magento\Sales\Model\Order\Webapi\ChangeOutputArray class
  */
-class ChangeOutputArrayTest extends \PHPUnit\Framework\TestCase
+class ChangeOutputArrayTest extends TestCase
 {
     /**
-     * @var DefaultColumn|\PHPUnit_Framework_MockObject_MockObject
+     * @var ChangeOutputArray
+     */
+    private $changeOutputArray;
+
+    /**
+     * @var DefaultColumn|MockObject
      */
     private $priceRendererMock;
 
     /**
-     * @var DefaultRenderer|\PHPUnit_Framework_MockObject_MockObject
+     * @var DefaultRenderer|MockObject
      */
     private $defaultRendererMock;
 
-    /**
-     * @var ObjectManager
-     */
-    private $objectManager;
-
-    /**
-     * @var ChangeOutputArray
-     */
-    private $model;
-
-    /**
-     * @inheritdoc
-     */
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->objectManager = new ObjectManager($this);
-
         $this->priceRendererMock = $this->createMock(DefaultColumn::class);
         $this->defaultRendererMock = $this->createMock(DefaultRenderer::class);
-
-        $this->model = $this->objectManager->getObject(
-            ChangeOutputArray::class,
-            [
-                'priceRenderer' => $this->priceRendererMock,
-                'defaultRenderer' => $this->defaultRendererMock,
-            ]
-        );
+        $this->changeOutputArray = new ChangeOutputArray($this->priceRendererMock, $this->defaultRendererMock);
     }
 
     /**
-     * @return void
+     * @dataProvider negativeTotals
      */
-    public function testExecute()
+    public function testNoNegativeValue($totals, $expected)
     {
-        $expectedResult = [
-            OrderItemInterface::ROW_TOTAL => 10,
-            OrderItemInterface::BASE_ROW_TOTAL => 10,
-            OrderItemInterface::ROW_TOTAL_INCL_TAX => 11,
-            OrderItemInterface::BASE_ROW_TOTAL_INCL_TAX => 11,
+        $this->priceRendererMock->expects($this->once())
+            ->method('getTotalAmount')
+            ->willReturn($totals['totalAmount']);
+        $this->priceRendererMock->expects($this->once())
+            ->method('getBaseTotalAmount')
+            ->willReturn($totals['baseTotalAmount']);
+        $this->defaultRendererMock->expects($this->once())
+            ->method('getTotalAmount')
+            ->willReturn($totals['totalAmountIncTax']);
+        $dataObjectMock = $this->getMockForAbstractClass(OrderItemInterface::class);
+        $dataObjectMock->expects($this->once())
+            ->method('getBaseRowTotal')
+            ->willReturn($totals['baseRowTotal']);
+        $dataObjectMock->expects($this->once())
+            ->method('getBaseTaxAmount')
+            ->willReturn($totals['baseTaxAmount']);
+        $dataObjectMock->expects($this->once())
+            ->method('getBaseDiscountTaxCompensationAmount')
+            ->willReturn($totals['baseDiscountTaxCompensationAmount']);
+        $dataObjectMock->expects($this->once())
+            ->method('getBaseWeeeTaxAppliedAmount')
+            ->willReturn($totals['baseWeeeTaxAppliedAmount']);
+        $dataObjectMock->expects($this->once())
+            ->method('getBaseDiscountAmount')
+            ->willReturn($totals['baseDiscountAmount']);
+        $this->assertEquals($expected, $this->changeOutputArray->execute($dataObjectMock, []));
+    }
+
+    /**
+     * Data provider for testNoNegativeValue
+     * @return array
+     */
+    public function negativeTotals()
+    {
+        return [
+            [
+                'totals' => [
+                    'totalAmount' => -1.14,
+                    'baseTotalAmount' => -1.14,
+                    'totalAmountIncTax' => -8.8817841970013E-16,
+                    'baseRowTotal' => 4.7600,
+                    'baseTaxAmount' => 0.0000,
+                    'baseDiscountTaxCompensationAmount' => 1.1400,
+                    'baseWeeeTaxAppliedAmount' => null,
+                    'baseDiscountAmount' => 5.9000
+                ],
+                'expected' => [
+                    OrderItemInterface::ROW_TOTAL => 0,
+                    OrderItemInterface::BASE_ROW_TOTAL => 0,
+                    OrderItemInterface::ROW_TOTAL_INCL_TAX => 0,
+                    OrderItemInterface::BASE_ROW_TOTAL_INCL_TAX => 0
+                ]
+            ]
         ];
-        $orderItemInterfaceMock = $this->createMock(OrderItemInterface::class);
-
-        $this->priceRendererMock->expects($this->once())
-            ->method('getTotalAmount')
-            ->with($orderItemInterfaceMock)
-            ->willReturn(10);
-        $this->priceRendererMock->expects($this->once())
-            ->method('getBaseTotalAmount')
-            ->with($orderItemInterfaceMock)
-            ->willReturn(10);
-        $this->defaultRendererMock->expects($this->once())
-            ->method('getTotalAmount')
-            ->with($orderItemInterfaceMock)
-            ->willReturn(11);
-        $this->defaultRendererMock->expects($this->once())
-            ->method('getBaseTotalAmount')
-            ->with($orderItemInterfaceMock)
-            ->willReturn(11);
-
-        $this->assertEquals($expectedResult, $this->model->execute($orderItemInterfaceMock, []));
     }
 }

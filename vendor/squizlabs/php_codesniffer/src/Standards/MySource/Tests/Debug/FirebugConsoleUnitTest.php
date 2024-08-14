@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\MySource\Tests\Debug;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class FirebugConsoleUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the FirebugConsole sniff.
+ *
+ * @covers PHP_CodeSniffer\Standards\MySource\Sniffs\Debug\FirebugConsoleSniff
+ */
+final class FirebugConsoleUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,20 +30,20 @@ class FirebugConsoleUnitTest extends AbstractSniffUnitTest
      *
      * @return array<int, int>
      */
-    public function getErrorList($testFile='FirebugConsoleUnitTest.js')
+    public function getErrorList($testFile='')
     {
         if ($testFile !== 'FirebugConsoleUnitTest.js') {
-            return array();
+            return [];
         }
 
-        return array(
-                1 => 1,
-                2 => 1,
-                3 => 1,
-                5 => 1,
-                6 => 1,
-                8 => 1,
-               );
+        return [
+            1 => 1,
+            2 => 1,
+            3 => 1,
+            5 => 1,
+            6 => 1,
+            8 => 1,
+        ];
 
     }//end getErrorList()
 
@@ -53,7 +58,7 @@ class FirebugConsoleUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

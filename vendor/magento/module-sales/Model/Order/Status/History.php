@@ -142,7 +142,7 @@ class History extends AbstractModel implements OrderStatusHistoryInterface
      */
     public function getStatusLabel()
     {
-        if ($this->getOrder() && $this->getStatus() !== null) {
+        if ($this->getOrder()) {
             return $this->getOrder()->getConfig()->getStatusLabel($this->getStatus());
         }
         return null;

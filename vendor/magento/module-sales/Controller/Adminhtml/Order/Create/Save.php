@@ -6,16 +6,15 @@
 
 namespace Magento\Sales\Controller\Adminhtml\Order\Create;
 
-use Magento\Framework\Exception\NotFoundException;
+use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
 use Magento\Framework\Exception\PaymentException;
 
-class Save extends \Magento\Sales\Controller\Adminhtml\Order\Create
+class Save extends \Magento\Sales\Controller\Adminhtml\Order\Create implements HttpPostActionInterface
 {
     /**
      * Saving quote and create order
      *
      * @return \Magento\Framework\Controller\ResultInterface
-     * @throws NotFoundException
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
@@ -23,10 +22,6 @@ class Save extends \Magento\Sales\Controller\Adminhtml\Order\Create
     {
         $path = 'sales/*/';
         $pathParams = [];
-
-        if (!$this->getRequest()->isPost()) {
-            throw new NotFoundException(__('Page not found'));
-        }
 
         try {
             // check if the creation of a new customer is allowed

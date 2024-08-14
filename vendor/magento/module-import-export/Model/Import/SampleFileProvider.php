@@ -7,43 +7,40 @@ declare(strict_types=1);
 
 namespace Magento\ImportExport\Model\Import;
 
-use Magento\Framework\Component\ComponentRegistrar;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Component\ComponentRegistrar;
 use Magento\Framework\Filesystem\Directory\ReadInterface;
-use Magento\Framework\Filesystem\Directory\ReadFactory;
 
 /**
- * Import sample file provider model.
- *
+ * Import Sample File Provider model.
  * This class support only *.csv.
  */
 class SampleFileProvider
 {
     /**
      * Associate an import entity to its module, e.g ['entity_name' => 'module_name']
-     *
      * @var array
      */
     private $samples;
 
     /**
-     * @var ComponentRegistrar
+     * @var \Magento\Framework\Component\ComponentRegistrar
      */
     private $componentRegistrar;
 
     /**
-     * @var ReadFactory
+     * @var \Magento\Framework\Filesystem\Directory\ReadFactory
      */
     private $readFactory;
 
     /**
-     * @param ReadFactory $readFactory
+     * @param \Magento\Framework\Filesystem\Directory\ReadFactory $readFactory
      * @param ComponentRegistrar $componentRegistrar
      * @param array $samples
      */
     public function __construct(
-        ReadFactory $readFactory,
-        ComponentRegistrar $componentRegistrar,
+        \Magento\Framework\Filesystem\Directory\ReadFactory $readFactory,
+        \Magento\Framework\Component\ComponentRegistrar $componentRegistrar,
         array $samples = []
     ) {
         $this->readFactory = $readFactory;
@@ -52,24 +49,27 @@ class SampleFileProvider
     }
 
     /**
-     * Returns the size for the given file associated to an import entity.
+     * Returns the Size for the given file associated to an Import entity
      *
      * @param string $entityName
+     * @throws NoSuchEntityException
      * @return int|null
      */
     public function getSize(string $entityName)
     {
         $directoryRead = $this->getDirectoryRead($entityName);
         $filePath = $this->getPath($entityName);
-        $fileSize = $directoryRead->stat($filePath)['size'] ?? null;
+        $fileSize = isset($directoryRead->stat($filePath)['size'])
+            ? $directoryRead->stat($filePath)['size'] : null;
 
         return $fileSize;
     }
 
     /**
-     * Returns content for the given file associated to an import entity.
+     * Returns Content for the given file associated to an Import entity
      *
      * @param string $entityName
+     * @throws NoSuchEntityException
      * @return string
      */
     public function getFileContents(string $entityName): string
@@ -81,14 +81,16 @@ class SampleFileProvider
     }
 
     /**
-     * @param string $entityName
-     * @return string
+     * @return string $entityName
      * @throws NoSuchEntityException
      */
     private function getPath(string $entityName): string
     {
+        $moduleName = $this->getModuleName($entityName);
         $directoryRead = $this->getDirectoryRead($entityName);
-        $fileAbsolutePath = 'Files/Sample/' . $entityName . '.csv';
+        $moduleDir = $this->componentRegistrar->getPath(ComponentRegistrar::MODULE, $moduleName);
+        $fileAbsolutePath = $moduleDir . '/Files/Sample/' . $entityName . '.csv';
+
         $filePath = $directoryRead->getRelativePath($fileAbsolutePath);
 
         if (!$directoryRead->isFile($filePath)) {

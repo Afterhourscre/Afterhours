@@ -11,6 +11,9 @@
  */
 namespace Magento\Catalog\Block\Adminhtml\Product\Edit\Tab\Attributes;
 
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Json\Helper\Data as JsonHelper;
+
 /**
  * Admin product attribute search block
  */
@@ -39,17 +42,20 @@ class Search extends \Magento\Backend\Block\Widget
      * @param \Magento\Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory $collectionFactory
      * @param \Magento\Framework\Registry $registry
      * @param array $data
+     * @param JsonHelper|null $jsonHelper
      */
     public function __construct(
         \Magento\Backend\Block\Template\Context $context,
         \Magento\Framework\DB\Helper $resourceHelper,
         \Magento\Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory $collectionFactory,
         \Magento\Framework\Registry $registry,
-        array $data = []
+        array $data = [],
+        ?JsonHelper $jsonHelper = null
     ) {
         $this->_resourceHelper = $resourceHelper;
         $this->_collectionFactory = $collectionFactory;
         $this->_coreRegistry = $registry;
+        $data['jsonHelper'] = $jsonHelper ?? ObjectManager::getInstance()->get(JsonHelper::class);
         parent::__construct($context, $data);
     }
 
@@ -87,7 +93,6 @@ class Search extends \Magento\Backend\Block\Widget
      * @param string $labelPart
      * @param int $templateId
      * @return array
-     * @SuppressWarnings(PHPMD.RequestAwareBlockMethod)
      */
     public function getSuggestedAttributes($labelPart, $templateId = null)
     {
@@ -101,9 +106,7 @@ class Search extends \Magento\Backend\Block\Widget
             ['like' => $escapedLabelPart]
         );
 
-        $paramTemplateId = $this->getRequest()->getParam('template_id');
-        $paramTemplateId = is_int($paramTemplateId) ? $paramTemplateId : null;
-        $collection->setExcludeSetFilter($templateId ?: $paramTemplateId)->setPageSize(20);
+        $collection->setExcludeSetFilter($templateId ?: $this->getRequest()->getParam('template_id'))->setPageSize(20);
 
         $result = [];
         foreach ($collection->getItems() as $attribute) {

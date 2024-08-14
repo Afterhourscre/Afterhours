@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of PHP CS Fixer.
  *
@@ -28,46 +30,43 @@ use PhpCsFixer\Tokenizer\Tokens;
  */
 final class UseTransformer extends AbstractTransformer
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function getCustomTokens()
+    public function getPriority(): int
     {
-        return array(CT::T_USE_TRAIT, CT::T_USE_LAMBDA);
+        // Should run after CurlyBraceTransformer and before TypeColonTransformer
+        return -5;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getRequiredPhpVersionId()
+    public function getRequiredPhpVersionId(): int
     {
-        return 50300;
+        return 5_03_00;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function process(Tokens $tokens, Token $token, $index)
+    public function process(Tokens $tokens, Token $token, int $index): void
     {
         if ($token->isGivenKind(T_USE) && $this->isUseForLambda($tokens, $index)) {
-            $tokens[$index] = new Token(array(CT::T_USE_LAMBDA, $token->getContent()));
-        }
+            $tokens[$index] = new Token([CT::T_USE_LAMBDA, $token->getContent()]);
 
-        if (!$token->isClassy()) {
             return;
         }
 
-        $prevTokenIndex = $tokens->getPrevMeaningfulToken($index);
-        $prevToken = null === $prevTokenIndex ? null : $tokens[$prevTokenIndex];
+        // Only search inside class/trait body for `T_USE` for traits.
+        // Cannot import traits inside interfaces or anywhere else
 
-        if ($prevToken->isGivenKind(T_DOUBLE_COLON)) {
+        $classTypes = [T_TRAIT];
+
+        if (\defined('T_ENUM')) { // @TODO: drop condition when PHP 8.1+ is required
+            $classTypes[] = T_ENUM;
+        }
+
+        if ($token->isGivenKind(T_CLASS)) {
+            if ($tokens[$tokens->getPrevMeaningfulToken($index)]->isGivenKind(T_DOUBLE_COLON)) {
+                return;
+            }
+        } elseif (!$token->isGivenKind($classTypes)) {
             return;
         }
 
-        // Skip whole class braces content.
-        // That way we can skip whole tokens in class declaration, therefore skip `T_USE` for traits.
-
-        $index = $tokens->getNextTokenOfKind($index, array('{'));
+        $index = $tokens->getNextTokenOfKind($index, ['{']);
         $innerLimit = $tokens->findBlockEnd(Tokens::BLOCK_TYPE_CURLY_BRACE, $index);
 
         while ($index < $innerLimit) {
@@ -78,22 +77,22 @@ final class UseTransformer extends AbstractTransformer
             }
 
             if ($this->isUseForLambda($tokens, $index)) {
-                $tokens[$index] = new Token(array(CT::T_USE_LAMBDA, $token->getContent()));
+                $tokens[$index] = new Token([CT::T_USE_LAMBDA, $token->getContent()]);
             } else {
-                $tokens[$index] = new Token(array(CT::T_USE_TRAIT, $token->getContent()));
+                $tokens[$index] = new Token([CT::T_USE_TRAIT, $token->getContent()]);
             }
         }
     }
 
+    public function getCustomTokens(): array
+    {
+        return [CT::T_USE_TRAIT, CT::T_USE_LAMBDA];
+    }
+
     /**
      * Check if token under given index is `use` statement for lambda function.
-     *
-     * @param Tokens $tokens
-     * @param int    $index
-     *
-     * @return bool
      */
-    private function isUseForLambda(Tokens $tokens, $index)
+    private function isUseForLambda(Tokens $tokens, int $index): bool
     {
         $nextToken = $tokens[$tokens->getNextMeaningfulToken($index)];
 

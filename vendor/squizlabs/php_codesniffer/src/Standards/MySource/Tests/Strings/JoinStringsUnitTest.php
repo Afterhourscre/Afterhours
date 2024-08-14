@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\MySource\Tests\Strings;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class JoinStringsUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the JoinStrings sniff.
+ *
+ * @covers PHP_CodeSniffer\Standards\MySource\Sniffs\Strings\JoinStringsSniff
+ */
+final class JoinStringsUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,21 +30,21 @@ class JoinStringsUnitTest extends AbstractSniffUnitTest
      *
      * @return array<int, int>
      */
-    public function getErrorList($testFile='JoinStringsUnitTest.js')
+    public function getErrorList($testFile='')
     {
         if ($testFile !== 'JoinStringsUnitTest.js') {
-            return array();
+            return [];
         }
 
-        return array(
-                6  => 1,
-                7  => 1,
-                8  => 2,
-                9  => 2,
-                10 => 2,
-                12 => 2,
-                15 => 1,
-               );
+        return [
+            6  => 1,
+            7  => 1,
+            8  => 2,
+            9  => 2,
+            10 => 2,
+            12 => 2,
+            15 => 1,
+        ];
 
     }//end getErrorList()
 
@@ -54,7 +59,7 @@ class JoinStringsUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

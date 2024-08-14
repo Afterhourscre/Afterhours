@@ -1,15 +1,17 @@
 <?php
 /**
- * Routes configuration model
- *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Framework\App\Route;
 
+use Magento\Framework\ObjectManager\ResetAfterRequestInterface;
 use Magento\Framework\Serialize\SerializerInterface;
 
-class Config implements ConfigInterface
+/**
+ * Routes configuration model
+ */
+class Config implements ConfigInterface, ResetAfterRequestInterface
 {
     /**
      * @var \Magento\Framework\App\Route\Config\Reader
@@ -37,12 +39,12 @@ class Config implements ConfigInterface
     protected $_areaList;
 
     /**
-     * @var array
+     * @var array|null
      */
     protected $_routes;
 
     /**
-     * @var SerializerInterface
+     * @var SerializerInterface|null
      */
     private $serializer;
 
@@ -68,6 +70,15 @@ class Config implements ConfigInterface
     }
 
     /**
+     * @inheritDoc
+     */
+    public function _resetState(): void
+    {
+        $this->_routes = null;
+        $this->serializer = null;
+    }
+
+    /**
      * Fetch routes from configs by area code and router id
      *
      * @param string $scope
@@ -90,7 +101,7 @@ class Config implements ConfigInterface
         }
 
         $routers = $this->_reader->read($scope);
-        $routes = $routers[$this->_areaList->getDefaultRouter($scope)]['routes'];
+        $routes = $routers[$this->_areaList->getDefaultRouter($scope)]['routes'] ?? null;
         $routesData = $this->getSerializer()->serialize($routes);
         $this->_cache->save($routesData, $cacheId);
         $this->_routes[$scope] = $routes;
@@ -101,7 +112,7 @@ class Config implements ConfigInterface
      * Retrieve route front name
      *
      * @param string $routeId
-     * @param null $scope
+     * @param null|string $scope
      * @return string
      */
     public function getRouteFrontName($routeId, $scope = null)
@@ -111,6 +122,8 @@ class Config implements ConfigInterface
     }
 
     /**
+     * @inheritdoc
+     *
      * @param string $frontName
      * @param string $scope
      * @return bool|int|string
@@ -127,6 +140,8 @@ class Config implements ConfigInterface
     }
 
     /**
+     * @inheritdoc
+     *
      * @param string $frontName
      * @param string $scope
      * @return string[]
@@ -149,7 +164,6 @@ class Config implements ConfigInterface
      * Get serializer
      *
      * @return \Magento\Framework\Serialize\SerializerInterface
-     * @deprecated 100.2.0
      */
     private function getSerializer()
     {

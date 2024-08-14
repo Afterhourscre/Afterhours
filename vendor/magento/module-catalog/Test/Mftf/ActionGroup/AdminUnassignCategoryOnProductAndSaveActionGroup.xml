@@ -15,8 +15,8 @@
         <!-- on edit Product page catalog/product/edit/id/{{product_id}}/ -->
         <click selector="{{AdminProductFormSection.unselectCategories(categoryName)}}" stepKey="clearCategory"/>
         <waitForPageLoad stepKey="waitForDelete"/>
-        <click selector="{{AdminProductFormActionSection.saveButton}}" stepKey="clickSave"/>
+        <click selector="{{AdminProductFormSection.save}}" stepKey="clickSave"/>
         <waitForPageLoad stepKey="waitForSavingProduct"/>
-        <see userInput="You saved the product." selector="{{AdminMessagesSection.successMessage}}" stepKey="seeSuccessMessage"/>
+        <see userInput="You saved the product." selector="{{CatalogProductsSection.messageSuccessSavedProduct}}" stepKey="seeSuccessMessage"/>
     </actionGroup>
 </actionGroups>

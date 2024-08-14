@@ -5,9 +5,18 @@
  */
 namespace Magento\Catalog\Model\ResourceModel;
 
+use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Model\Attribute\ScopeOverriddenValue;
 use Magento\Catalog\Model\ResourceModel\Product\Website\Link as ProductWebsiteLink;
+use Magento\Eav\Api\AttributeManagementInterface;
 use Magento\Framework\App\ObjectManager;
 use Magento\Catalog\Model\Indexer\Category\Product\TableMaintainer;
+use Magento\Catalog\Model\Product as ProductEntity;
+use Magento\Eav\Model\Entity\Attribute\UniqueValidationInterface;
+use Magento\Framework\DataObject;
+use Magento\Framework\EntityManager\EntityManager;
+use Magento\Framework\Model\AbstractModel;
+use Magento\Framework\ObjectManager\ResetAfterRequestInterface;
 
 /**
  * Product entity resource model
@@ -15,9 +24,10 @@ use Magento\Catalog\Model\Indexer\Category\Product\TableMaintainer;
  * @api
  * @SuppressWarnings(PHPMD.LongVariable)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * phpcs:disable Magento2.Annotation.MethodAnnotationStructure
  * @since 100.0.2
  */
-class Product extends AbstractResource
+class Product extends AbstractResource implements ResetAfterRequestInterface
 {
     /**
      * Product to website linkage table
@@ -34,16 +44,12 @@ class Product extends AbstractResource
     protected $_productCategoryTable;
 
     /**
-     * Catalog category
-     *
      * @var Category
      */
     protected $_catalogCategory;
 
     /**
-     * Category collection factory
-     *
-     * @var \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory
+     * @var Category\CollectionFactory
      */
     protected $_categoryCollectionFactory;
 
@@ -63,7 +69,7 @@ class Product extends AbstractResource
     protected $typeFactory;
 
     /**
-     * @var \Magento\Framework\EntityManager\EntityManager
+     * @var EntityManager
      * @since 101.0.0
      */
     protected $entityManager;
@@ -80,7 +86,7 @@ class Product extends AbstractResource
     protected $availableCategoryIdsCache = [];
 
     /**
-     * @var \Magento\Catalog\Model\ResourceModel\Product\CategoryLink
+     * @var Product\CategoryLink
      */
     private $productCategoryLink;
 
@@ -88,6 +94,21 @@ class Product extends AbstractResource
      * @var TableMaintainer
      */
     private $tableMaintainer;
+
+    /**
+     * @var AttributeManagementInterface
+     */
+    private $eavAttributeManagement;
+
+    /**
+     * @var MediaImageDeleteProcessor
+     */
+    private $mediaImageDeleteProcessor;
+
+    /**
+     * @var ScopeOverriddenValue
+     */
+    private $scopeOverriddenValue;
 
     /**
      * @param \Magento\Eav\Model\Entity\Context $context
@@ -101,21 +122,28 @@ class Product extends AbstractResource
      * @param \Magento\Catalog\Model\Product\Attribute\DefaultAttributes $defaultAttributes
      * @param array $data
      * @param TableMaintainer|null $tableMaintainer
-     *
+     * @param UniqueValidationInterface|null $uniqueValidator
+     * @param AttributeManagementInterface|null $eavAttributeManagement
+     * @param MediaImageDeleteProcessor|null $mediaImageDeleteProcessor
+     * @param ScopeOverriddenValue|null $scopeOverriddenValue
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
         \Magento\Eav\Model\Entity\Context $context,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Catalog\Model\Factory $modelFactory,
-        \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $categoryCollectionFactory,
+        Category\CollectionFactory $categoryCollectionFactory,
         Category $catalogCategory,
         \Magento\Framework\Event\ManagerInterface $eventManager,
         \Magento\Eav\Model\Entity\Attribute\SetFactory $setFactory,
         \Magento\Eav\Model\Entity\TypeFactory $typeFactory,
         \Magento\Catalog\Model\Product\Attribute\DefaultAttributes $defaultAttributes,
         $data = [],
-        TableMaintainer $tableMaintainer = null
+        TableMaintainer $tableMaintainer = null,
+        UniqueValidationInterface $uniqueValidator = null,
+        AttributeManagementInterface $eavAttributeManagement = null,
+        ?MediaImageDeleteProcessor $mediaImageDeleteProcessor = null,
+        ?ScopeOverriddenValue $scopeOverriddenValue = null
     ) {
         $this->_categoryCollectionFactory = $categoryCollectionFactory;
         $this->_catalogCategory = $catalogCategory;
@@ -127,10 +155,17 @@ class Product extends AbstractResource
             $context,
             $storeManager,
             $modelFactory,
-            $data
+            $data,
+            $uniqueValidator
         );
         $this->connectionName  = 'catalog';
         $this->tableMaintainer = $tableMaintainer ?: ObjectManager::getInstance()->get(TableMaintainer::class);
+        $this->eavAttributeManagement = $eavAttributeManagement
+            ?? ObjectManager::getInstance()->get(AttributeManagementInterface::class);
+        $this->mediaImageDeleteProcessor = $mediaImageDeleteProcessor
+            ?? ObjectManager::getInstance()->get(MediaImageDeleteProcessor::class);
+        $this->scopeOverriddenValue = $scopeOverriddenValue
+            ?? ObjectManager::getInstance()->get(ScopeOverriddenValue::class);
     }
 
     /**
@@ -163,7 +198,7 @@ class Product extends AbstractResource
     /**
      * Product Category table name getter
      *
-     * @deprecated 101.1.0
+     * @deprecated 102.0.0
      * @return string
      */
     public function getProductCategoryTable()
@@ -187,7 +222,7 @@ class Product extends AbstractResource
     /**
      * Retrieve product website identifiers
      *
-     * @deprecated 101.1.0
+     * @deprecated 102.0.0
      * @param \Magento\Catalog\Model\Product|int $product
      * @return array
      */
@@ -210,12 +245,16 @@ class Product extends AbstractResource
      */
     public function getWebsiteIdsByProductIds($productIds)
     {
+        if (!is_array($productIds) || empty($productIds)) {
+            return [];
+        }
         $select = $this->getConnection()->select()->from(
             $this->getProductWebsiteTable(),
             ['product_id', 'website_id']
         )->where(
             'product_id IN (?)',
-            $productIds
+            $productIds,
+            \Zend_Db::INT_TYPE
         );
         $productsWebsites = [];
         foreach ($this->getConnection()->fetchAll($select) as $productInfo) {
@@ -232,7 +271,7 @@ class Product extends AbstractResource
     /**
      * Retrieve product category identifiers
      *
-     * @param \Magento\Catalog\Model\Product $product
+     * @param  \Magento\Catalog\Model\Product $product
      * @return array
      */
     public function getCategoryIds($product)
@@ -244,7 +283,7 @@ class Product extends AbstractResource
     /**
      * Get product identifier by sku
      *
-     * @param string $sku
+     * @param  string $sku
      * @return int|false
      */
     public function getIdBySku($sku)
@@ -261,10 +300,10 @@ class Product extends AbstractResource
     /**
      * Process product data before save
      *
-     * @param \Magento\Framework\DataObject $object
+     * @param DataObject $object
      * @return $this
      */
-    protected function _beforeSave(\Magento\Framework\DataObject $object)
+    protected function _beforeSave(DataObject $object)
     {
         $self = parent::_beforeSave($object);
         /**
@@ -279,13 +318,72 @@ class Product extends AbstractResource
     /**
      * Save data related with product
      *
-     * @param \Magento\Framework\DataObject $product
+     * @param DataObject $product
      * @return $this
      */
-    protected function _afterSave(\Magento\Framework\DataObject $product)
+    protected function _afterSave(DataObject $product)
     {
+        $this->removeNotInSetAttributeValues($product);
         $this->_saveWebsiteIds($product)->_saveCategories($product);
+        $this->scopeOverriddenValue->clearAttributesValues(ProductInterface::class, $product);
         return parent::_afterSave($product);
+    }
+
+    /**
+     * Remove attribute values that absent in product attribute set
+     *
+     * @param DataObject $product
+     * @return DataObject
+     */
+    private function removeNotInSetAttributeValues(DataObject $product): DataObject
+    {
+        $oldAttributeSetId = $product->getOrigData(ProductEntity::ATTRIBUTE_SET_ID);
+        if ($oldAttributeSetId && $product->dataHasChangedFor(ProductEntity::ATTRIBUTE_SET_ID)) {
+            $newAttributes = $product->getAttributes();
+            $newAttributesCodes = array_keys($newAttributes);
+            $oldAttributes = $this->eavAttributeManagement->getAttributes(
+                ProductEntity::ENTITY,
+                $oldAttributeSetId
+            );
+            $oldAttributesCodes = [];
+            foreach ($oldAttributes as $oldAttribute) {
+                $oldAttributesCodes[] = $oldAttribute->getAttributecode();
+            }
+            $notInSetAttributeCodes = array_diff($oldAttributesCodes, $newAttributesCodes);
+            if (!empty($notInSetAttributeCodes)) {
+                $this->deleteSelectedEntityAttributeRows($product, $notInSetAttributeCodes);
+            }
+        }
+
+        return $product;
+    }
+
+    /**
+     * Clear selected entity attribute rows
+     *
+     * @param DataObject $product
+     * @param array $attributeCodes
+     * @return void
+     */
+    private function deleteSelectedEntityAttributeRows(DataObject $product, array $attributeCodes): void
+    {
+        $backendTables = [];
+        foreach ($attributeCodes as $attributeCode) {
+            $attribute = $this->getAttribute($attributeCode);
+            $backendTable = $attribute->getBackendTable();
+            if (!$attribute->isStatic() && $backendTable) {
+                $backendTables[$backendTable][] = $attribute->getId();
+            }
+        }
+
+        $entityIdField = $this->getLinkField();
+        $entityId = $product->getData($entityIdField);
+        foreach ($backendTables as $backendTable => $attributes) {
+            $connection = $this->getConnection();
+            $where = $connection->quoteInto('attribute_id IN (?)', $attributes, \Zend_Db::INT_TYPE);
+            $where .= $connection->quoteInto(" AND {$entityIdField} = ?", $entityId);
+            $connection->delete($backendTable, $where);
+        }
     }
 
     /**
@@ -304,7 +402,7 @@ class Product extends AbstractResource
     /**
      * Save product website relations
      *
-     * @deprecated 101.1.0
+     * @deprecated 102.0.0
      * @param \Magento\Catalog\Model\Product $product
      * @return $this
      */
@@ -330,12 +428,12 @@ class Product extends AbstractResource
     /**
      * Save product category relations
      *
-     * @param \Magento\Framework\DataObject $object
+     * @param DataObject $object
      * @return $this
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     * @deprecated 101.1.0
+     * @deprecated 102.0.0
      */
-    protected function _saveCategories(\Magento\Framework\DataObject $object)
+    protected function _saveCategories(DataObject $object)
     {
         return $this;
     }
@@ -344,11 +442,11 @@ class Product extends AbstractResource
      * Get collection of product categories
      *
      * @param \Magento\Catalog\Model\Product $product
-     * @return \Magento\Catalog\Model\ResourceModel\Category\Collection
+     * @return Category\Collection
      */
     public function getCategoryCollection($product)
     {
-        /** @var \Magento\Catalog\Model\ResourceModel\Category\Collection $collection */
+        /** @var Category\Collection $collection */
         $collection = $this->_categoryCollectionFactory->create();
         $collection->joinField(
             'product_id',
@@ -375,6 +473,7 @@ class Product extends AbstractResource
         // fetching all parent IDs, including those are higher on the tree
         $entityId = (int)$object->getEntityId();
         if (!isset($this->availableCategoryIdsCache[$entityId])) {
+            $unionTables = [];
             foreach ($this->_storeManager->getStores() as $store) {
                 $unionTables[] = $this->getAvailableInCategoriesSelect(
                     $entityId,
@@ -424,18 +523,26 @@ class Product extends AbstractResource
     /**
      * Check availability display product in category
      *
-     * @param \Magento\Catalog\Model\Product $product
+     * @param \Magento\Catalog\Model\Product|int $product
      * @param int $categoryId
      * @return string
      */
     public function canBeShowInCategory($product, $categoryId)
     {
+        if ($product instanceof \Magento\Catalog\Model\Product) {
+            $productId = $product->getEntityId();
+            $storeId = $product->getStoreId();
+        } else {
+            $productId = $product;
+            $storeId = $this->_storeManager->getStore()->getId();
+        }
+
         $select = $this->getConnection()->select()->from(
-            $this->tableMaintainer->getMainTable($product->getStoreId()),
+            $this->tableMaintainer->getMainTable($storeId),
             'product_id'
         )->where(
             'product_id = ?',
-            (int)$product->getEntityId()
+            (int)$productId
         )->where(
             'category_id = ?',
             (int)$categoryId
@@ -511,7 +618,8 @@ class Product extends AbstractResource
             ['entity_id', 'sku']
         )->where(
             'entity_id IN (?)',
-            $productIds
+            $productIds,
+            \Zend_Db::INT_TYPE
         );
         return $this->getConnection()->fetchAll($select);
     }
@@ -534,9 +642,23 @@ class Product extends AbstractResource
 
         $result = [];
         foreach ($this->getConnection()->fetchAll($select) as $row) {
-            $result[$row['sku']] = $row['entity_id'];
+            $result[$this->getResultKey($row['sku'], $productSkuList)] = $row['entity_id'];
         }
         return $result;
+    }
+
+    /**
+     * Return correct key for result array in getProductIdsBySku
+     * Allows for different case sku to be passed in search array
+     * with original cased sku to be passed back in result array
+     *
+     * @param string $sku
+     * @param array $productSkuList
+     * @return string
+     */
+    private function getResultKey(string $sku, array $productSkuList): string
+    {
+        return in_array(strtolower($sku), array_map('strtolower', $productSkuList)) ? $sku : '';
     }
 
     /**
@@ -575,7 +697,9 @@ class Product extends AbstractResource
     }
 
     /**
-     * @inheritdoc
+     * @inheritDoc
+     *
+     * @param ProductEntity|object $object
      */
     public function validate($object)
     {
@@ -592,7 +716,7 @@ class Product extends AbstractResource
     /**
      * Reset firstly loaded attributes
      *
-     * @param \Magento\Framework\Model\AbstractModel $object
+     * @param AbstractModel $object
      * @param integer $entityId
      * @param array|null $attributes
      * @return $this
@@ -645,35 +769,35 @@ class Product extends AbstractResource
     /**
      * Save entity's attributes into the object's resource
      *
-     * @param  \Magento\Framework\Model\AbstractModel $object
+     * @param AbstractModel $object
      * @return $this
      * @throws \Exception
      * @since 101.0.0
      */
-    public function save(\Magento\Framework\Model\AbstractModel $object)
+    public function save(AbstractModel $object)
     {
         $this->getEntityManager()->save($object);
         return $this;
     }
 
     /**
-     * Retrieve entity manager object
+     * Retrieve entity manager.
      *
-     * @return \Magento\Framework\EntityManager\EntityManager
+     * @return EntityManager
      */
     private function getEntityManager()
     {
         if (null === $this->entityManager) {
-            $this->entityManager = \Magento\Framework\App\ObjectManager::getInstance()
-                ->get(\Magento\Framework\EntityManager\EntityManager::class);
+            $this->entityManager = ObjectManager::getInstance()
+                ->get(EntityManager::class);
         }
         return $this->entityManager;
     }
 
     /**
-     * Retrieve ProductWebsiteLink object
+     * Retrieve ProductWebsiteLink instance.
      *
-     * @deprecated 101.1.0
+     * @deprecated 102.0.0
      * @return ProductWebsiteLink
      */
     private function getProductWebsiteLink()
@@ -682,31 +806,57 @@ class Product extends AbstractResource
     }
 
     /**
-     * Retrieve CategoryLink object
+     * Retrieve CategoryLink instance.
      *
-     * @deprecated 101.1.0
-     * @return \Magento\Catalog\Model\ResourceModel\Product\CategoryLink
+     * @deprecated 102.0.0
+     * @return Product\CategoryLink
      */
     private function getProductCategoryLink()
     {
         if (null === $this->productCategoryLink) {
-            $this->productCategoryLink = \Magento\Framework\App\ObjectManager::getInstance()
-                ->get(\Magento\Catalog\Model\ResourceModel\Product\CategoryLink::class);
+            $this->productCategoryLink = ObjectManager::getInstance()
+                ->get(Product\CategoryLink::class);
         }
         return $this->productCategoryLink;
     }
 
     /**
      * Extends parent method to be appropriate for product.
+     *
      * Store id is required to correctly identify attribute value we are working with.
      *
      * @inheritdoc
-     * @since 101.1.0
+     * @since 102.0.0
      */
     protected function getAttributeRow($entity, $object, $attribute)
     {
         $data = parent::getAttributeRow($entity, $object, $attribute);
         $data['store_id'] = $object->getStoreId();
         return $data;
+    }
+
+    /**
+     * After delete entity process
+     *
+     * @param DataObject $object
+     * @return $this
+     */
+    protected function _afterDelete(DataObject $object)
+    {
+        $this->mediaImageDeleteProcessor->execute($object);
+        return parent::_afterDelete($object);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function _resetState(): void
+    {
+        parent::_resetState();
+        $this->availableCategoryIdsCache = [];
+        $this->_type = null;
+        $this->_entityTable = null;
+        $this->_entityIdField = null;
+        $this->linkIdField = null;
     }
 }

@@ -1,29 +1,27 @@
 <?php
 /**
- * Proxy generator
- *
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\Framework\ObjectManager\Code\Generator;
 
-/**
- * Class Proxy
- *
- * @package Magento\Framework\ObjectManager\Code\Generator
- */
+use Magento\Framework\GetReflectionMethodReturnTypeValueTrait;
+
 class Proxy extends \Magento\Framework\Code\Generator\EntityAbstract
 {
+    use GetReflectionMethodReturnTypeValueTrait;
+
     /**
      * Entity type
      */
-    const ENTITY_TYPE = 'proxy';
+    public const ENTITY_TYPE = 'proxy';
 
     /**
      * Marker interface
      */
-    const NON_INTERCEPTABLE_INTERFACE = \Magento\Framework\ObjectManager\NoninterceptableInterface::class;
+    public const NON_INTERCEPTABLE_INTERFACE = \Magento\Framework\ObjectManager\NoninterceptableInterface::class;
 
     /**
      * Returns default result class name
@@ -73,6 +71,7 @@ class Proxy extends \Magento\Framework\Code\Generator\EntityAbstract
                 'tags' => [['name' => 'var', 'description' => 'bool']],
             ],
         ];
+
         return $properties;
     }
 
@@ -99,8 +98,16 @@ class Proxy extends \Magento\Framework\Code\Generator\EntityAbstract
         ];
         $methods[] = [
             'name' => '__clone',
-            'body' => "\$this->_subject = clone \$this->_getSubject();",
+            'body' => "if (\$this->_subject) {\n" .
+                "    \$this->_subject = clone \$this->_getSubject();\n" .
+                "}\n",
             'docblock' => ['shortDescription' => 'Clone proxied instance'],
+        ];
+
+        $methods[] = [
+            'name' => '__debugInfo',
+            'body' => "return ['i' => \$this->_subject];",
+            'docblock' => ['shortDescription' => 'Debug proxied instance'],
         ];
 
         $methods[] = [
@@ -128,10 +135,20 @@ class Proxy extends \Magento\Framework\Code\Generator\EntityAbstract
                 )
                 && !in_array(
                     $method->getName(),
-                    ['__sleep', '__wakeup', '__clone']
+                    ['__sleep', '__wakeup', '__clone', '__debugInfo', '_resetState']
                 )
             ) {
                 $methods[] = $this->_getMethodInfo($method);
+            }
+            if ($method->getName() === '_resetState') {
+                $methods[] = [
+                    'name' => '_resetState',
+                    'returnType' => 'void',
+                    'body' => "if (\$this->_subject) {\n" .
+                        "    \$this->_subject->_resetState(); \n" .
+                        "}\n",
+                    'docblock' => ['shortDescription' => 'Reset state of proxied instance'],
+                ];
             }
         }
 
@@ -154,6 +171,7 @@ class Proxy extends \Magento\Framework\Code\Generator\EntityAbstract
             $this->_classGenerator->setExtendedClass($typeName);
             $this->_classGenerator->setImplementedInterfaces(['\\' . self::NON_INTERCEPTABLE_INTERFACE]);
         }
+
         return parent::_generateCode();
     }
 
@@ -173,7 +191,7 @@ class Proxy extends \Magento\Framework\Code\Generator\EntityAbstract
             $parameters[] = $this->_getMethodParameterInfo($parameter);
         }
 
-        $returnTypeValue = $this->getReturnTypeValue($method->getReturnType());
+        $returnTypeValue = $this->getReturnTypeValue($method);
         $methodInfo = [
             'name' => $method->getName(),
             'parameters' => $parameters,
@@ -269,26 +287,7 @@ class Proxy extends \Magento\Framework\Code\Generator\EntityAbstract
                 $result = false;
             }
         }
+
         return $result;
-    }
-
-    /**
-     * Returns return type
-     *
-     * @param mixed $returnType
-     * @return null|string
-     */
-    private function getReturnTypeValue($returnType)
-    {
-        $returnTypeValue = null;
-        if ($returnType) {
-            $returnTypeName = (string)$returnType;
-            $returnTypeValue = ($returnType->allowsNull() ? '?' : '');
-            $returnTypeValue .= ($returnTypeName === 'self')
-                ? $this->getSourceClassName()
-                : $returnTypeName;
-        }
-
-        return $returnTypeValue;
     }
 }

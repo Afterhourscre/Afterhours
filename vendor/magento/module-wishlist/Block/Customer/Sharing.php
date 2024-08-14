@@ -4,16 +4,13 @@
  * See COPYING.txt for license details.
  */
 
-/**
- * Wishlist customer sharing block
- *
- * @author     Magento Core Team <core@magentocommerce.com>
- */
 namespace Magento\Wishlist\Block\Customer;
 
 use Magento\Captcha\Block\Captcha;
 
 /**
+ * Wishlist customer sharing block
+ *
  * @api
  * @since 100.0.2
  */

@@ -5,10 +5,12 @@
  */
 ?>
 <?php
+// phpcs:disable Magento2.PHP.ShortEchoSyntax.ShortEchoTag
+
 /** @var $block \Magento\Ui\Block\Wrapper */
 ?>
 
-<?= /* @noEscape */ $block->renderApp(
+<?php /* @noEscape */ echo $block->renderApp(
     [
         'listing' => [
             'displayMode' => 'grid'
@@ -17,5 +19,4 @@
             'imageCode' => 'recently_viewed_products_images_names_widget'
         ]
     ]
-); ?>
-<?php
+);

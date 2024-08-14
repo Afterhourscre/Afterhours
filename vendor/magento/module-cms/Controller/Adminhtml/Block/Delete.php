@@ -6,20 +6,17 @@
  */
 namespace Magento\Cms\Controller\Adminhtml\Block;
 
-class Delete extends \Magento\Cms\Controller\Adminhtml\Block
+use Magento\Framework\App\Action\HttpPostActionInterface;
+
+class Delete extends \Magento\Cms\Controller\Adminhtml\Block implements HttpPostActionInterface
 {
     /**
      * Delete action
      *
      * @return \Magento\Framework\Controller\ResultInterface
-     * @throws \Magento\Framework\Exception\NotFoundException
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new \Magento\Framework\Exception\NotFoundException(__('Page not found.'));
-        }
-
         /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
         $resultRedirect = $this->resultRedirectFactory->create();
         // check if we know what should be deleted

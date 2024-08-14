@@ -6,13 +6,16 @@
 namespace Magento\Sales\Controller\Guest;
 
 use Magento\Framework\App\Action;
-use Magento\Framework\App\ObjectManager;
-use Magento\Framework\Data\Form\FormKey\Validator;
+use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Sales\Helper\Guest as GuestHelper;
 use Magento\Framework\View\Result\PageFactory;
 use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
 
-class View extends Action\Action
+/**
+ * Guest order view action.
+ */
+class View extends Action\Action implements HttpPostActionInterface, HttpGetActionInterface
 {
     /**
      * @var \Magento\Sales\Helper\Guest
@@ -25,40 +28,25 @@ class View extends Action\Action
     protected $resultPageFactory;
 
     /**
-     * @var Validator
-     */
-    private $formKeyValidator;
-
-    /**
      * @param \Magento\Framework\App\Action\Context $context
-     * @param GuestHelper $guestHelper
-     * @param PageFactory $resultPageFactory
-     * @param Validator|null $formKeyValidator
+     * @param \Magento\Sales\Helper\Guest $guestHelper
+     * @param \Magento\Framework\View\Result\PageFactory $resultPageFactory
      */
     public function __construct(
         Action\Context $context,
         GuestHelper $guestHelper,
-        PageFactory $resultPageFactory,
-        Validator $formKeyValidator = null
+        PageFactory $resultPageFactory
     ) {
         $this->guestHelper = $guestHelper;
         $this->resultPageFactory = $resultPageFactory;
-        $this->formKeyValidator = $formKeyValidator ?? ObjectManager::getInstance()->get(Validator::class);
         parent::__construct($context);
     }
 
     /**
-     * @return \Magento\Framework\Controller\ResultInterface
-     * @throws \Magento\Framework\Exception\NotFoundException
+     * @inheritdoc
      */
     public function execute()
     {
-        if ($this->getRequest()->isPost()) {
-            if (!$this->formKeyValidator->validate($this->getRequest())) {
-                return $this->resultRedirectFactory->create()->setPath('*/*/form/');
-            }
-        }
-
         $result = $this->guestHelper->loadValidOrder($this->getRequest());
         if ($result instanceof ResultInterface) {
             return $result;

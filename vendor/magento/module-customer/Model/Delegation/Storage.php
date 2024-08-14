@@ -89,10 +89,8 @@ class Storage
      *
      * @return void
      */
-    public function storeNewOperation(
-        CustomerInterface $customer,
-        array $delegatedData
-    ) {
+    public function storeNewOperation(CustomerInterface $customer, array $delegatedData): void
+    {
         /** @var Customer $customer */
         $customerData = $customer->__toArray();
         $addressesData = [];
@@ -125,7 +123,7 @@ class Storage
             $this->logger->error($exception);
             $serialized = null;
         }
-        if (!$serialized) {
+        if ($serialized === null) {
             return null;
         }
 

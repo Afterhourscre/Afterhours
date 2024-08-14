@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Tests\Commenting;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class LongConditionClosingCommentUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the LongConditionClosingComment sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\LongConditionClosingCommentSniff
+ */
+final class LongConditionClosingCommentUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,58 +30,60 @@ class LongConditionClosingCommentUnitTest extends AbstractSniffUnitTest
      *
      * @return array<int, int>
      */
-    public function getErrorList($testFile='LongConditionClosingCommentUnitTest.inc')
+    public function getErrorList($testFile='')
     {
         switch ($testFile) {
         case 'LongConditionClosingCommentUnitTest.inc':
-            return array(
-                    49  => 1,
-                    99  => 1,
-                    146 => 1,
-                    192 => 1,
-                    215 => 1,
-                    238 => 1,
-                    261 => 1,
-                    286 => 1,
-                    309 => 1,
-                    332 => 1,
-                    355 => 1,
-                    378 => 1,
-                    493 => 1,
-                    531 => 1,
-                    536 => 1,
-                    540 => 1,
-                    562 => 1,
-                    601 => 1,
-                    629 => 1,
-                    663 => 1,
-                    765 => 1,
-                    798 => 1,
-                    811 => 1,
-                    897 => 1,
-                    931 => 1,
-                    962 => 1,
-                   );
-            break;
+            return [
+                49   => 1,
+                99   => 1,
+                146  => 1,
+                192  => 1,
+                215  => 1,
+                238  => 1,
+                261  => 1,
+                286  => 1,
+                309  => 1,
+                332  => 1,
+                355  => 1,
+                378  => 1,
+                493  => 1,
+                531  => 1,
+                536  => 1,
+                540  => 1,
+                562  => 1,
+                601  => 1,
+                629  => 1,
+                663  => 1,
+                765  => 1,
+                798  => 1,
+                811  => 1,
+                897  => 1,
+                931  => 1,
+                962  => 1,
+                985  => 2,
+                1008 => 1,
+                1032 => 1,
+            ];
+
         case 'LongConditionClosingCommentUnitTest.js':
-            return array(
-                    47  => 1,
-                    97  => 1,
-                    144 => 1,
-                    190 => 1,
-                    213 => 1,
-                    238 => 1,
-                    261 => 1,
-                    284 => 1,
-                    307 => 1,
-                    401 => 1,
-                    439 => 1,
-                    444 => 1,
-                   );
-            break;
+            return [
+                47  => 1,
+                97  => 1,
+                144 => 1,
+                190 => 1,
+                213 => 1,
+                238 => 1,
+                261 => 1,
+                284 => 1,
+                307 => 1,
+                401 => 1,
+                439 => 1,
+                444 => 1,
+            ];
+
         default:
-            return array();
-            break;
+            return [];
         }//end switch
 
     }//end getErrorList()
@@ -92,7 +99,7 @@ class LongConditionClosingCommentUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

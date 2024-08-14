@@ -31,29 +31,30 @@ class Generator extends AbstractSchemaGenerator
     /**
      * Error response schema
      */
-    const ERROR_SCHEMA = '#/definitions/error-response';
+    private const ERROR_SCHEMA = '#/definitions/error-response';
+
+    private const UNAUTHORIZED_DESCRIPTION = '401 Unauthorized';
+
+    protected const ARRAY_SIGNIFIER = '[0]';
 
     /**
-     * Unauthorized description
+     * Wrapper node for XML requests
      */
-    const UNAUTHORIZED_DESCRIPTION = '401 Unauthorized';
-
-    /** Array signifier */
-    const ARRAY_SIGNIFIER = '[0]';
+    private const XML_SCHEMA_PARAMWRAPPER = 'request';
 
     /**
      * Swagger factory instance.
      *
      * @var SwaggerFactory
      */
-    protected $swaggerFactory;
+    protected SwaggerFactory $swaggerFactory;
 
     /**
      * Magento product metadata
      *
      * @var ProductMetadataInterface
      */
-    protected $productMetadata;
+    protected ProductMetadataInterface $productMetadata;
 
     /**
      * A map of Tags
@@ -67,7 +68,7 @@ class Generator extends AbstractSchemaGenerator
      *
      * @var array
      */
-    protected $tags = [];
+    protected array $tags = [];
 
     /**
      * A map of definition
@@ -81,7 +82,7 @@ class Generator extends AbstractSchemaGenerator
      * Note: definitionName is converted from class name
      * @var array
      */
-    protected $definitions = [];
+    protected array $definitions = [];
 
     /**
      * List of simple parameter types not to be processed by the definitions generator
@@ -89,7 +90,7 @@ class Generator extends AbstractSchemaGenerator
      *
      * @var string[]
      */
-    protected $simpleTypeList = [
+    protected array $simpleTypeList = [
         'bool'                              => 'boolean',
         'boolean'                           => 'boolean',
         'int'                               => 'integer',
@@ -107,7 +108,7 @@ class Generator extends AbstractSchemaGenerator
      *
      * @param \Magento\Webapi\Model\Cache\Type\Webapi $cache
      * @param \Magento\Framework\Reflection\TypeProcessor $typeProcessor
-     * @param \Magento\Framework\Webapi\CustomAttributeTypeLocatorInterface $customAttributeTypeLocator
+     * @param \Magento\Framework\Webapi\CustomAttribute\ServiceTypeListInterface $serviceTypeList
      * @param \Magento\Webapi\Model\ServiceMetadata $serviceMetadata
      * @param Authorization $authorization
      * @param SwaggerFactory $swaggerFactory
@@ -116,7 +117,7 @@ class Generator extends AbstractSchemaGenerator
     public function __construct(
         \Magento\Webapi\Model\Cache\Type\Webapi $cache,
         \Magento\Framework\Reflection\TypeProcessor $typeProcessor,
-        \Magento\Framework\Webapi\CustomAttributeTypeLocatorInterface $customAttributeTypeLocator,
+        \Magento\Framework\Webapi\CustomAttribute\ServiceTypeListInterface $serviceTypeList,
         \Magento\Webapi\Model\ServiceMetadata $serviceMetadata,
         Authorization $authorization,
         SwaggerFactory $swaggerFactory,
@@ -127,7 +128,7 @@ class Generator extends AbstractSchemaGenerator
         parent::__construct(
             $cache,
             $typeProcessor,
-            $customAttributeTypeLocator,
+            $serviceTypeList,
             $serviceMetadata,
             $authorization
         );
@@ -164,7 +165,7 @@ class Generator extends AbstractSchemaGenerator
                     $swagger->addPath(
                         $this->convertPathParams($uri),
                         $httpOperation,
-                        $this->generatePathInfo($httpOperation, $httpMethodData, $serviceName)
+                        $this->generatePathInfo($httpOperation, $httpMethodData, $serviceName, $uri)
                     );
                 }
             }
@@ -225,15 +226,15 @@ class Generator extends AbstractSchemaGenerator
      * @param string $methodName
      * @param array $httpMethodData
      * @param string $tagName
+     * @param string $uri
      * @return array
      */
-    protected function generatePathInfo($methodName, $httpMethodData, $tagName)
+    protected function generatePathInfo(string $methodName, array $httpMethodData, string $tagName, string $uri): array
     {
         $methodData = $httpMethodData[Converter::KEY_METHOD];
+        $uri = ucwords(str_replace(['/{', '}/', '{', '}'], '/', $uri), "/");
 
-        $operationId = $this->typeProcessor->getOperationName($tagName, $methodData[Converter::KEY_METHOD]);
-        $operationId .= ucfirst($methodName);
-
+        $operationId = ucfirst($methodName) . str_replace(['/', '-'], '', $uri);
         $pathInfo = [
             'tags' => [$tagName],
             'description' => $methodData['documentation'],
@@ -326,10 +327,10 @@ class Generator extends AbstractSchemaGenerator
             if (!isset($parameterInfo['type'])) {
                 return [];
             }
-            $description = isset($parameterInfo['documentation']) ? $parameterInfo['documentation'] : null;
+            $description = $parameterInfo['documentation'] ?? null;
 
             /** Get location of parameter */
-            if (strpos($httpMethodData['uri'], '{' . $parameterName . '}') !== false) {
+            if (strpos($httpMethodData['uri'], (string) ('{' . $parameterName . '}')) !== false) {
                 $parameters[] = $this->generateMethodPathParameter($parameterName, $parameterInfo, $description);
             } elseif (strtoupper($httpMethodData['httpOperation']) === 'GET') {
                 $parameters = $this->generateMethodQueryParameters(
@@ -431,11 +432,11 @@ class Generator extends AbstractSchemaGenerator
             if (!empty($description)) {
                 $result['description'] = $description;
             }
-            $trimedTypeName = rtrim($typeName, '[]');
+            $trimedTypeName = $typeName !== null ? rtrim($typeName, '[]') : '';
             if ($simpleType = $this->getSimpleType($trimedTypeName)) {
                 $result['items'] = ['type' => $simpleType];
             } else {
-                if (strpos($typeName, '[]') !== false) {
+                if ($typeName && strpos($typeName, '[]') !== false) {
                     $result['items'] = ['$ref' => $this->getDefinitionReference($trimedTypeName)];
                 } else {
                     $result = ['$ref' => $this->getDefinitionReference($trimedTypeName)];
@@ -658,7 +659,7 @@ class Generator extends AbstractSchemaGenerator
      */
     protected function addCustomAttributeTypes()
     {
-        foreach ($this->customAttributeTypeLocator->getAllServiceDataInterfaces() as $customAttributeClass) {
+        foreach ($this->serviceTypeList->getDataTypes() as $customAttributeClass) {
             $this->typeProcessor->register($customAttributeClass);
         }
     }
@@ -707,14 +708,14 @@ class Generator extends AbstractSchemaGenerator
             // Primitive type or array of primitive types
             return [
                 $this->handlePrimitive($name, $prefix) => [
-                    'type' => substr($type, -2) === '[]' ? $type : $this->getSimpleType($type),
+                    'type' => ($type && substr($type, -2) === '[]') ? $type : $this->getSimpleType($type),
                     'description' => $description
                 ]
             ];
         }
         if ($this->typeProcessor->isArrayType($type)) {
             // Array of complex type
-            $arrayType = substr($type, 0, -2);
+            $arrayType = $type !== null ? substr($type, 0, -2) : '';
             return $this->handleComplex($name, $arrayType, $prefix, true);
         } else {
             // Complex type
@@ -733,25 +734,27 @@ class Generator extends AbstractSchemaGenerator
      */
     private function handleComplex($name, $type, $prefix, $isArray)
     {
-        $parameters = $this->typeProcessor->getTypeData($type)['parameters'];
+        $typeData = $this->typeProcessor->getTypeData($type);
+        $parameters = $typeData['parameters'] ?? [];
         $queryNames = [];
         foreach ($parameters as $subParameterName => $subParameterInfo) {
             $subParameterType = $subParameterInfo['type'];
-            $subParameterDescription = isset($subParameterInfo['documentation'])
-                ? $subParameterInfo['documentation']
-                : null;
+            $subParameterDescription = $subParameterInfo['documentation'] ?? null;
             $subPrefix = $prefix
                 ? $prefix . '[' . $name . ']'
                 : $name;
             if ($isArray) {
                 $subPrefix .= self::ARRAY_SIGNIFIER;
             }
-            $queryNames = array_merge(
-                $queryNames,
-                $this->getQueryParamNames($subParameterName, $subParameterType, $subParameterDescription, $subPrefix)
+            $queryNames[] = $this->getQueryParamNames(
+                $subParameterName,
+                $subParameterType,
+                $subParameterDescription,
+                $subPrefix
             );
         }
-        return $queryNames;
+
+        return array_merge([], ...$queryNames);
     }
 
     /**
@@ -779,8 +782,8 @@ class Generator extends AbstractSchemaGenerator
         $parts = explode('/', $uri);
         $count = count($parts);
         for ($i=0; $i < $count; $i++) {
-            if (strpos($parts[$i], ':') === 0) {
-                $parts[$i] = '{' . substr($parts[$i], 1) . '}';
+            if (strpos($parts[$i] ?? '', ':') === 0) {
+                $parts[$i] = '{' . substr($parts[$i] ?? '', 1) . '}';
             }
         }
         return implode('/', $parts);
@@ -878,7 +881,7 @@ class Generator extends AbstractSchemaGenerator
             $bodySchema['xml'] = [];
         }
         if (!isset($bodySchema['xml']['name']) || empty($bodySchema['xml']['name'])) {
-            $bodySchema['xml']['name'] = 'request';
+            $bodySchema['xml']['name'] = self::XML_SCHEMA_PARAMWRAPPER;
         }
 
         return $bodySchema;

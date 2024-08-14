@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of PHP CS Fixer.
  *
@@ -26,31 +28,17 @@ use PhpCsFixer\Tokenizer\Tokens;
  */
 final class ClassConstantTransformer extends AbstractTransformer
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function getCustomTokens()
+    public function getRequiredPhpVersionId(): int
     {
-        return array(CT::T_CLASS_CONSTANT);
+        return 5_05_00;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getRequiredPhpVersionId()
+    public function process(Tokens $tokens, Token $token, int $index): void
     {
-        return 50500;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function process(Tokens $tokens, Token $token, $index)
-    {
-        if (!$token->equalsAny(array(
-            array(T_CLASS, 'class'),
-            array(T_STRING, 'class'),
-        ), false)) {
+        if (!$token->equalsAny([
+            [T_CLASS, 'class'],
+            [T_STRING, 'class'],
+        ], false)) {
             return;
         }
 
@@ -58,7 +46,12 @@ final class ClassConstantTransformer extends AbstractTransformer
         $prevToken = $tokens[$prevIndex];
 
         if ($prevToken->isGivenKind(T_DOUBLE_COLON)) {
-            $tokens[$index] = new Token(array(CT::T_CLASS_CONSTANT, $token->getContent()));
+            $tokens[$index] = new Token([CT::T_CLASS_CONSTANT, $token->getContent()]);
         }
+    }
+
+    public function getCustomTokens(): array
+    {
+        return [CT::T_CLASS_CONSTANT];
     }
 }

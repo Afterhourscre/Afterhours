@@ -324,10 +324,14 @@ class OrdersFixture extends Fixture
         $entityId++;
         while ($entityId <= $requestedOrders) {
             $batchNumber++;
+            // phpcs:ignore Magento2.Functions.DiscouragedFunction
             $productCount = [
+                // mt_rand() here is not for cryptographic use.
+                // phpcs:disable Magento2.Security.InsecureFunction
                 Type::TYPE_SIMPLE => mt_rand($orderSimpleCountFrom, $orderSimpleCountTo),
                 Configurable::TYPE_CODE => mt_rand($orderConfigurableCountFrom, $orderConfigurableCountTo),
                 self::BIG_CONFIGURABLE_TYPE => mt_rand($orderBigConfigurableCountFrom, $orderBigConfigurableCountTo)
+                // phpcs:enable
             ];
             $order = [
                 '%itemsPerOrder%' => array_sum($productCount),
@@ -474,6 +478,7 @@ class OrdersFixture extends Fixture
     private function prepareQueryTemplates()
     {
         $fileName = __DIR__ . DIRECTORY_SEPARATOR . "_files" . DIRECTORY_SEPARATOR . "orders_fixture_data.json";
+        // phpcs:ignore Magento2.Functions.DiscouragedFunction
         $templateData = json_decode(file_get_contents(realpath($fileName)), true);
         foreach ($templateData as $table => $template) {
             if (isset($template['_table'])) {
@@ -512,6 +517,7 @@ class OrdersFixture extends Fixture
                 $connection->beginTransaction();
             }
 
+            // phpcs:ignore Magento2.SQL.RawQuery
             $this->queryTemplates[$table] = "INSERT INTO `{$tableName}` ({$fields}) VALUES ({$values}){$querySuffix};";
             $this->resourceConnections[$table] = $connection;
         }
@@ -561,6 +567,7 @@ class OrdersFixture extends Fixture
         /** @var \Magento\Framework\Model\ResourceModel\Db\VersionControl\AbstractDb $resource */
         $resource = $this->fixtureModel->getObjectManager()->get($resourceName);
         $connection = $resource->getConnection();
+        // phpcs:ignore Magento2.SQL.RawQuery
         return (int)$connection->query("SELECT MAX(`{$column}`) FROM `{$tableName}`;")->fetchColumn(0);
     }
 
@@ -571,7 +578,7 @@ class OrdersFixture extends Fixture
      * @param string $typeId
      * @param int $limit
      * @return array
-     * @throws \Exception
+     * @throws \RuntimeException
      */
     private function getProductIds(\Magento\Store\Api\Data\StoreInterface $store, $typeId, $limit = null)
     {
@@ -591,7 +598,7 @@ class OrdersFixture extends Fixture
         }
         $ids = $productCollection->getAllIds($limit);
         if ($limit && count($ids) < $limit) {
-            throw new \Exception('Not enough products of type: ' . $typeId);
+            throw new \RuntimeException('Not enough products of type: ' . $typeId);
         }
         return $ids;
     }

@@ -3,73 +3,82 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\SalesRule\Test\Unit\Model\Rule\Condition;
 
+use Magento\Backend\Helper\Data;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\ProductCategoryList;
+use Magento\Catalog\Model\ProductFactory;
+use Magento\Catalog\Model\ResourceModel\Product;
 use Magento\Directory\Model\CurrencyFactory;
+use Magento\Eav\Model\Config;
+use Magento\Eav\Model\Entity\AbstractEntity;
+use Magento\Eav\Model\Entity\AttributeLoaderInterface;
+use Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\Collection;
 use Magento\Framework\App\ScopeResolverInterface;
-use \Magento\Framework\DB\Adapter\AdapterInterface;
-use \Magento\Framework\DB\Select;
+use Magento\Framework\DB\Adapter\AdapterInterface;
+use Magento\Framework\DB\Select;
 use Magento\Framework\Locale\Format;
+use Magento\Framework\Locale\FormatInterface;
 use Magento\Framework\Locale\ResolverInterface;
+use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Magento\Quote\Model\Quote\Item\AbstractItem;
-use \Magento\Rule\Model\Condition\Context;
-use \Magento\Backend\Helper\Data;
-use \Magento\Eav\Model\Config;
-use \Magento\Catalog\Model\ProductFactory;
-use \Magento\Catalog\Api\ProductRepositoryInterface;
-use \Magento\Eav\Model\Entity\AbstractEntity;
-use \Magento\Catalog\Model\ResourceModel\Product;
-use \Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\Collection;
-use \Magento\Framework\Locale\FormatInterface;
-use \Magento\Eav\Model\Entity\AttributeLoaderInterface;
-use \Magento\SalesRule\Model\Rule\Condition\Product as SalesRuleProduct;
+use Magento\Rule\Model\Condition\Context;
+use Magento\SalesRule\Model\Rule\Condition\Product as SalesRuleProduct;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class ProductTest extends \PHPUnit\Framework\TestCase
+class ProductTest extends TestCase
 {
+    private const STUB_CATEGORY_ID = 5;
     /** @var SalesRuleProduct */
     protected $model;
 
-    /** @var Context|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var Context|MockObject */
     protected $contextMock;
 
-    /** @var Data|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var Data|MockObject */
     protected $backendHelperMock;
 
-    /** @var Config|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var Config|MockObject */
     protected $configMock;
 
-    /** @var ProductFactory|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var ProductFactory|MockObject */
     protected $productFactoryMock;
 
-    /** @var ProductRepositoryInterface|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var ProductRepositoryInterface|MockObject */
     protected $productRepositoryMock;
 
-    /** @var Product|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var Product|MockObject */
     protected $productMock;
 
-    /** @var Collection|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var Collection|MockObject */
     protected $collectionMock;
 
-    /** @var FormatInterface|\PHPUnit_Framework_MockObject_MockObject */
-    protected $formatMock;
+    /** @var FormatInterface */
+    protected $format;
 
-    /** @var AttributeLoaderInterface|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var AttributeLoaderInterface|MockObject */
     protected $attributeLoaderInterfaceMock;
 
-    /** @var AdapterInterface|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var AdapterInterface|MockObject */
     protected $adapterInterfaceMock;
 
-    /** @var Select|\PHPUnit_Framework_MockObject_MockObject */
+    /** @var Select|MockObject */
     protected $selectMock;
+
+    /** @var MockObject|ProductCategoryList */
+    private $productCategoryListMock;
 
     /**
      * Setup the test
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->contextMock = $this->getMockBuilder(Context::class)
             ->disableOriginalConstructor()
@@ -87,7 +96,7 @@ class ProductTest extends \PHPUnit\Framework\TestCase
             ->getMockForAbstractClass();
         $this->attributeLoaderInterfaceMock = $this->getMockBuilder(AbstractEntity::class)
             ->disableOriginalConstructor()
-            ->setMethods(['getAttributesByCode'])
+            ->onlyMethods(['getAttributesByCode'])
             ->getMock();
         $this->attributeLoaderInterfaceMock
             ->expects($this->any())
@@ -95,7 +104,7 @@ class ProductTest extends \PHPUnit\Framework\TestCase
             ->willReturn([]);
         $this->selectMock = $this->getMockBuilder(Select::class)
             ->disableOriginalConstructor()
-            ->setMethods(['distinct', 'from', 'where'])
+            ->onlyMethods(['distinct', 'from', 'where'])
             ->getMock();
         $this->selectMock
             ->expects($this->any())
@@ -108,7 +117,7 @@ class ProductTest extends \PHPUnit\Framework\TestCase
             ->willReturnSelf();
         $this->adapterInterfaceMock = $this->getMockBuilder(AdapterInterface::class)
             ->disableOriginalConstructor()
-            ->setMethods(['fetchCol', 'select'])
+            ->onlyMethods(['fetchCol', 'select'])
             ->getMockForAbstractClass();
         $this->adapterInterfaceMock
             ->expects($this->any())
@@ -116,7 +125,7 @@ class ProductTest extends \PHPUnit\Framework\TestCase
             ->willReturn($this->selectMock);
         $this->productMock = $this->getMockBuilder(Product::class)
             ->disableOriginalConstructor()
-            ->setMethods(['loadAllAttributes', 'getConnection', 'getTable'])
+            ->onlyMethods(['loadAllAttributes', 'getConnection', 'getTable'])
             ->getMock();
         $this->productMock
             ->expects($this->any())
@@ -134,10 +143,20 @@ class ProductTest extends \PHPUnit\Framework\TestCase
         $this->collectionMock = $this->getMockBuilder(Collection::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->formatMock = new Format(
-            $this->getMockBuilder(ScopeResolverInterface::class)->disableOriginalConstructor()->getMock(),
-            $this->getMockBuilder(ResolverInterface::class)->disableOriginalConstructor()->getMock(),
-            $this->getMockBuilder(CurrencyFactory::class)->disableOriginalConstructor()->getMock()
+        $this->productCategoryListMock = $this->getMockBuilder(ProductCategoryList::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getCategoryIds'])
+            ->getMock();
+        $this->format = new Format(
+            $this->getMockBuilder(ScopeResolverInterface::class)
+                ->disableOriginalConstructor()
+                ->getMockForAbstractClass(),
+            $this->getMockBuilder(ResolverInterface::class)
+                ->disableOriginalConstructor()
+                ->getMockForAbstractClass(),
+            $this->getMockBuilder(CurrencyFactory::class)
+                ->disableOriginalConstructor()
+                ->getMock()
         );
 
         $this->model = new SalesRuleProduct(
@@ -148,14 +167,16 @@ class ProductTest extends \PHPUnit\Framework\TestCase
             $this->productRepositoryMock,
             $this->productMock,
             $this->collectionMock,
-            $this->formatMock
+            $this->format,
+            [],
+            $this->productCategoryListMock
         );
     }
 
     /**
      * @return array
      */
-    public function getValueElementChooserUrlDataProvider()
+    public static function getValueElementChooserUrlDataProvider()
     {
         return [
             'category_ids_without_js_object' => [
@@ -207,36 +228,34 @@ class ProductTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($url, $this->model->getValueElementChooserUrl());
     }
 
-    public function testValidateCategoriesIgnoresVisibility()
+    /**
+     * test ValidateCategoriesIgnoresVisibility
+     */
+    public function testValidateCategoriesIgnoresVisibility(): void
     {
-        /* @var \Magento\Catalog\Model\Product|\PHPUnit_Framework_MockObject_MockObject $product */
+        /* @var \Magento\Catalog\Model\Product|MockObject $product */
         $product = $this->getMockBuilder(\Magento\Catalog\Model\Product::class)
             ->disableOriginalConstructor()
-            ->setMethods(['getAttribute', 'getId', 'setQuoteItemQty', 'setQuoteItemPrice'])
+            ->onlyMethods(['getId'])
+            ->addMethods(['getAttribute', 'setQuoteItemQty', 'setQuoteItemPrice'])
             ->getMock();
         $product
-            ->expects($this->any())
             ->method('setQuoteItemQty')
             ->willReturnSelf();
         $product
-            ->expects($this->any())
             ->method('setQuoteItemPrice')
             ->willReturnSelf();
-        /* @var AbstractItem|\PHPUnit_Framework_MockObject_MockObject $item */
+        /* @var AbstractItem|MockObject $item */
         $item = $this->getMockBuilder(AbstractItem::class)
             ->disableOriginalConstructor()
-            ->setMethods(['getProduct'])
+            ->onlyMethods(['getProduct'])
             ->getMockForAbstractClass();
         $item->expects($this->any())
             ->method('getProduct')
             ->willReturn($product);
         $this->model->setAttribute('category_ids');
-
-        $this->selectMock
-            ->expects($this->once())
-            ->method('where')
-            ->with($this->logicalNot($this->stringContains('visibility')), $this->anything(), $this->anything());
-
+        $this->productCategoryListMock->method('getCategoryIds')
+            ->willReturn([self::STUB_CATEGORY_ID]);
         $this->model->validate($item);
     }
 
@@ -244,24 +263,25 @@ class ProductTest extends \PHPUnit\Framework\TestCase
      * @param boolean $isValid
      * @param string $conditionValue
      * @param string $operator
-     * @param double $productPrice
+     * @param string $productPrice
      * @dataProvider localisationProvider
      */
-    public function testQuoteLocaleFormatPrice($isValid, $conditionValue, $operator = '>=', $productPrice = 2000.00)
+    public function testQuoteLocaleFormatPrice($isValid, $conditionValue, $operator = '>=', $productPrice = '2000.00')
     {
-        $attr = $this->getMockBuilder(\Magento\Framework\Model\ResourceModel\Db\AbstractDb::class)
+        $attr = $this->getMockBuilder(AbstractDb::class)
             ->disableOriginalConstructor()
-            ->setMethods(['getAttribute'])
+            ->addMethods(['getAttribute'])
             ->getMockForAbstractClass();
 
         $attr->expects($this->any())
             ->method('getAttribute')
             ->willReturn('');
 
-        /* @var \Magento\Catalog\Model\Product|\PHPUnit_Framework_MockObject_MockObject $product */
+        /* @var \Magento\Catalog\Model\Product|MockObject $product */
         $product = $this->getMockBuilder(\Magento\Catalog\Model\Product::class)
             ->disableOriginalConstructor()
-            ->setMethods(['setQuoteItemPrice', 'getResource', 'hasData', 'getData',])
+            ->addMethods(['setQuoteItemPrice'])
+            ->onlyMethods(['getResource', 'hasData', 'getData'])
             ->getMock();
 
         $product->expects($this->any())
@@ -281,10 +301,10 @@ class ProductTest extends \PHPUnit\Framework\TestCase
             ->with('quote_item_price')
             ->willReturn($productPrice);
 
-        /* @var AbstractItem|\PHPUnit_Framework_MockObject_MockObject $item */
+        /* @var AbstractItem|MockObject $item */
         $item = $this->getMockBuilder(AbstractItem::class)
             ->disableOriginalConstructor()
-            ->setMethods(['getPrice', 'getProduct',])
+            ->onlyMethods(['getPrice', 'getProduct'])
             ->getMockForAbstractClass();
 
         $item->expects($this->any())
@@ -306,7 +326,7 @@ class ProductTest extends \PHPUnit\Framework\TestCase
      *
      * @return array
      */
-    public function localisationProvider(): array
+    public static function localisationProvider(): array
     {
         return [
             'number' => [true, 500.01],

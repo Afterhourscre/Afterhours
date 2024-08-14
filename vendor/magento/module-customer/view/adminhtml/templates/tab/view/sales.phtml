@@ -47,23 +47,23 @@ $singleStoreMode = $block->isSingleStoreMode();
                             <?php if ($_row->getStoreId() == 0) : ?>
                                 <td colspan="3"><?= $block->escapeHtml($_row->getStoreName()) ?></td>
                             <?php else : ?>
-                    <tr<?= ($_i++ % 2 ? ' class="even"' : '') ?>>
-                            <?php if (!$_websiteRow) : ?>
-                                <td rowspan="<?= $block->escapeHtmlAttr($block->getWebsiteCount($_websiteId)) ?>"><?= $block->escapeHtml($_row->getWebsiteName()) ?></td>
-                                <?php $_websiteRow = true; ?>
+                                <tr<?= ($_i++ % 2 ? ' class="even"' : '') ?>>
+                                <?php if (!$_websiteRow) : ?>
+                                    <td rowspan="<?= $block->escapeHtmlAttr($block->getWebsiteCount($_websiteId)) ?>"><?= $block->escapeHtml($_row->getWebsiteName()) ?></td>
+                                    <?php $_websiteRow = true; ?>
                                 <?php endif; ?>
-                            <?php if (!$_groupRow) : ?>
-                                <td rowspan="<?= count($_stores) ?>"><?= $block->escapeHtml($_row->getGroupName()) ?></td>
-                                <?php $_groupRow = true; ?>
+                                <?php if (!$_groupRow) : ?>
+                                    <td rowspan="<?= count($_stores) ?>"><?= $block->escapeHtml($_row->getGroupName()) ?></td>
+                                    <?php $_groupRow = true; ?>
                                 <?php endif; ?>
-                            <td><?= $block->escapeHtml($_row->getStoreName()) ?></td>
+                                <td><?= $block->escapeHtml($_row->getStoreName()) ?></td>
                             <?php endif; ?>
                         <?php else : ?>
-                    <tr>
+                            <tr>
                         <?php endif; ?>
-                    <td><?= $block->escapeHtml($block->formatCurrency($_row->getLifetime(), $_row->getWebsiteId())) ?></td>
-                    <td><?= $block->escapeHtml($block->formatCurrency($_row->getAvgsale(), $_row->getWebsiteId())) ?></td>
-                    </tr>
+                        <td><?= $block->escapeHtml($block->formatCurrency($_row->getLifetime(), $_row->getWebsiteId())) ?></td>
+                        <td><?= $block->escapeHtml($block->formatCurrency($_row->getAvgsale(), $_row->getWebsiteId())) ?></td>
+                        </tr>
                     <?php endforeach; ?>
                 <?php endforeach; ?>
             <?php endforeach; ?>

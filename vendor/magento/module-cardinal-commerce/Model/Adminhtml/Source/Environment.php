@@ -12,8 +12,8 @@ namespace Magento\CardinalCommerce\Model\Adminhtml\Source;
  */
 class Environment implements \Magento\Framework\Data\OptionSourceInterface
 {
-    const ENVIRONMENT_PRODUCTION = 'production';
-    const ENVIRONMENT_SANDBOX = 'sandbox';
+    private const ENVIRONMENT_PRODUCTION = 'production';
+    private const ENVIRONMENT_SANDBOX = 'sandbox';
 
     /**
      * Possible environment types

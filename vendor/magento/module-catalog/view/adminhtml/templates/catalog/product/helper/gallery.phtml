@@ -4,20 +4,34 @@
  * See COPYING.txt for license details.
  */
 
-// phpcs:disable Magento2.Templates.ThisInTemplate.FoundThis
-
+// phpcs:disable PHPCompatibility.Miscellaneous.RemovedAlternativePHPTags.MaybeASPOpenTagFound
 /** @var $block \Magento\Catalog\Block\Adminhtml\Product\Helper\Form\Gallery\Content */
+/** @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer */
 $elementName = $block->getElement()->getName() . '[images]';
 $formName = $block->getFormName();
+$isEditEnabled = $block->isEditEnabled();
+
+/** @var \Magento\Framework\Json\Helper\Data $jsonHelper */
+$jsonHelper = $block->getData('jsonHelper');
+
+$message = 'Restricted admin is allowed to perform actions with images or videos, ' .
+    'only when the admin has rights to all websites which the product is assigned to.';
 ?>
+
+<div class="row">
+    <?php if (!$isEditEnabled): ?>
+        <span> <?= /* @noEscape */ $message ?></span>
+    <?php endif; ?>
+</div>
+
 <div id="<?= $block->getHtmlId() ?>"
-     class="gallery"
+     class="gallery <?= $isEditEnabled ? '' : ' disabled' ?>"
      data-mage-init='{"productGallery":{"template":"#<?= $block->getHtmlId() ?>-template"}}'
      data-parent-component="<?= $block->escapeHtml($block->getData('config/parentComponent')) ?>"
      data-images="<?= $block->escapeHtml($block->getImagesJson()) ?>"
-     data-types="<?= $block->escapeHtml($this->helper(Magento\Framework\Json\Helper\Data::class)->jsonEncode($block->getImageTypes())) ?>"
+     data-types="<?= $block->escapeHtml($jsonHelper->jsonEncode($block->getImageTypes())) ?>"
 >
-    <?php if (!$block->getElement()->getReadonly()) {?>
+    <?php if (!$block->getElement()->getReadonly() && $isEditEnabled) {?>
         <div class="image image-placeholder">
             <?= $block->getUploaderHtml() ?>
             <div class="product-image-wrapper">
@@ -35,7 +49,7 @@ $formName = $block->getFormName();
                type="hidden"
                value="<?= $block->escapeHtmlAttr($typeData['value']) ?>"/>
         <?php
-} ?>
+    } ?>
 
     <script id="<?= $block->getHtmlId() ?>-template" type="text/x-magento-template">
         <div class="image item<% if (data.disabled == 1) { %> hidden-for-front<% } %>"
@@ -59,7 +73,7 @@ $formName = $block->getFormName();
                    value="<%- data.label %>"/>
             <input type="hidden"
                    name="<?= $block->escapeHtmlAttr($elementName) ?>[<%- data.file_id %>][disabled]"
-                   data-form-part="<?= $block->escapeHtmlAttr(formName) ?>"
+                   data-form-part="<?= $block->escapeHtmlAttr($formName) ?>"
                    value="<%- data.disabled %>"/>
             <input type="hidden"
                    name="<?= $block->escapeHtmlAttr($elementName) ?>[<%- data.file_id %>][media_type]"
@@ -136,7 +150,9 @@ $formName = $block->getFormName();
                             <textarea data-role="image-description"
                                       rows="3"
                                       class="admin__control-textarea"
-                                      name="<?= $block->escapeHtmlAttr($elementName) ?>[<%- data.file_id %>][label]"><%- data.label %></textarea>
+                                      name="<?= $block->escapeHtmlAttr($elementName)
+                                        ?>[<%- data.file_id %>][label]"><%- data.label %>
+                            </textarea>
                       </div>
                 </div>
 
@@ -147,7 +163,7 @@ $formName = $block->getFormName();
                     <div class="admin__field-control">
                         <ul class="multiselect-alt">
                             <?php
-                            foreach ($block->getMediaAttributes() as $attribute) :
+                            foreach ($block->getMediaAttributes() as $attribute):
                                 ?>
                                 <li class="item">
                                     <label>
@@ -180,7 +196,8 @@ $formName = $block->getFormName();
                     <label class="admin__field-label">
                         <span><?= $block->escapeHtml(__('Image Resolution')) ?></span>
                     </label>
-                    <div class="admin__field-value" data-message="<?= $block->escapeHtmlAttr(__('{width}^{height} px')) ?>"></div>
+                    <div class="admin__field-value"
+                         data-message="<?= $block->escapeHtmlAttr(__('{width}^{height} px')) ?>"></div>
                 </div>
 
                 <div class="admin__field field-image-hide">
@@ -206,6 +223,4 @@ $formName = $block->getFormName();
     </script>
     <?= $block->getChildHtml('new-video') ?>
 </div>
-<script>
-    jQuery('body').trigger('contentUpdated');
-</script>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', [], "jQuery('body').trigger('contentUpdated');", false) ?>

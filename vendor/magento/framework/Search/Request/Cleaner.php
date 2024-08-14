@@ -3,31 +3,34 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
 namespace Magento\Framework\Search\Request;
 
 use Magento\Framework\Exception\StateException;
-use Magento\Framework\Search\Request\Aggregation\StatusInterface as AggregationStatus;
+use Magento\Framework\ObjectManager\ResetAfterRequestInterface;
 use Magento\Framework\Phrase;
+use Magento\Framework\Search\Request\Aggregation\StatusInterface as AggregationStatus;
 
 /**
  * @api
+ * @since 100.0.2
  */
-class Cleaner
+class Cleaner implements ResetAfterRequestInterface
 {
     /**
      * @var array
      */
-    private $requestData;
+    private $requestData = [];
 
     /**
      * @var array
      */
-    private $mappedQueries;
+    private $mappedQueries = [];
 
     /**
      * @var array
      */
-    private $mappedFilters;
+    private $mappedFilters = [];
 
     /**
      * @var AggregationStatus
@@ -60,7 +63,9 @@ class Cleaner
         $this->clear();
 
         if (empty($requestData['queries']) && empty($requestData['filters'])) {
-            throw new EmptyRequestDataException(new Phrase('Request query and filters are not set'));
+            throw new EmptyRequestDataException(
+                new Phrase("The request query and filters aren't set. Verify the query and filters and try again.")
+            );
         }
 
         return $requestData;
@@ -79,10 +84,11 @@ class Cleaner
     private function cleanQuery($queryName)
     {
         if (!isset($this->requestData['queries'][$queryName])) {
+            // phpcs:ignore Magento2.Exceptions.DirectThrow
             throw new \Exception('Query ' . $queryName . ' does not exist');
         } elseif (in_array($queryName, $this->mappedQueries)) {
             throw new StateException(
-                new Phrase('Cycle found. Query %1 already used in request hierarchy', [$queryName])
+                new Phrase('A cycle was found. The "%1" query is already used in the request hierarchy.', [$queryName])
             );
         }
         $this->mappedQueries[] = $queryName;
@@ -115,6 +121,7 @@ class Cleaner
                         unset($this->requestData['queries'][$queryName]);
                     }
                 } else {
+                    // phpcs:ignore Magento2.Exceptions.DirectThrow
                     throw new \Exception('Reference is not provided');
                 }
                 break;
@@ -127,6 +134,8 @@ class Cleaner
      * Clean aggregations if we don't need to process them
      *
      * @return void
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * phpcs:disable Generic.Metrics.NestingLevel
      */
     private function cleanAggregations()
     {
@@ -136,7 +145,16 @@ class Cleaner
             if (array_key_exists('aggregations', $this->requestData) && is_array($this->requestData['aggregations'])) {
                 foreach ($this->requestData['aggregations'] as $aggregationName => $aggregationValue) {
                     switch ($aggregationValue['type']) {
-                        case 'dynamicBucket':
+                        case BucketInterface::TYPE_TERM:
+                            foreach ($aggregationValue['parameter'] ?? [] as $key => $parameter) {
+                                if (is_string($parameter['value'])
+                                    && preg_match('/^\$(.+)\$$/si', $parameter['value'])
+                                ) {
+                                    unset($this->requestData['aggregations'][$aggregationName]['parameter'][$key]);
+                                }
+                            }
+                            break;
+                        case BucketInterface::TYPE_DYNAMIC:
                             if (is_string($aggregationValue['method'])
                                 && preg_match('/^\$(.+)\$$/si', $aggregationValue['method'])
                             ) {
@@ -160,10 +178,14 @@ class Cleaner
     private function cleanFilter($filterName)
     {
         if (!isset($this->requestData['filters'][$filterName])) {
+            // phpcs:ignore Magento2.Exceptions.DirectThrow
             throw new \Exception('Filter ' . $filterName . ' does not exist');
         } elseif (in_array($filterName, $this->mappedFilters)) {
             throw new StateException(
-                new Phrase('Cycle found. Filter %1 already used in request hierarchy', [$filterName])
+                new Phrase(
+                    'A cycle was found. The "%1" filter is already used in the request hierarchy.',
+                    [$filterName]
+                )
             );
         }
         $this->mappedFilters[] = $filterName;
@@ -244,5 +266,13 @@ class Cleaner
         $this->mappedQueries = [];
         $this->mappedFilters = [];
         $this->requestData = [];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function _resetState(): void
+    {
+        $this->clear();
     }
 }

@@ -5,7 +5,9 @@
  */
 namespace Magento\Bundle\Block\Adminhtml\Sales\Order\Items;
 
+use Magento\Catalog\Helper\Data as CatalogHelper;
 use Magento\Catalog\Model\Product\Type\AbstractType;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Serialize\Serializer\Json;
 
 /**
@@ -17,7 +19,7 @@ use Magento\Framework\Serialize\Serializer\Json;
 class Renderer extends \Magento\Sales\Block\Adminhtml\Items\Renderer\DefaultRenderer
 {
     /**
-     * Serializer
+     * Serializer interface instance.
      *
      * @var Json
      */
@@ -30,6 +32,7 @@ class Renderer extends \Magento\Sales\Block\Adminhtml\Items\Renderer\DefaultRend
      * @param \Magento\Framework\Registry $registry
      * @param array $data
      * @param \Magento\Framework\Serialize\Serializer\Json $serializer
+     * @param CatalogHelper|null $catalogHelper
      */
     public function __construct(
         \Magento\Backend\Block\Template\Context $context,
@@ -37,11 +40,11 @@ class Renderer extends \Magento\Sales\Block\Adminhtml\Items\Renderer\DefaultRend
         \Magento\CatalogInventory\Api\StockConfigurationInterface $stockConfiguration,
         \Magento\Framework\Registry $registry,
         array $data = [],
-        Json $serializer = null
+        Json $serializer = null,
+        ?CatalogHelper $catalogHelper = null
     ) {
-        $this->serializer = $serializer ?: \Magento\Framework\App\ObjectManager::getInstance()
-            ->get(Json::class);
-
+        $this->serializer = $serializer ?: ObjectManager::getInstance()->get(Json::class);
+        $data['catalogHelper'] = $catalogHelper ?? ObjectManager::getInstance()->get(CatalogHelper::class);
         parent::__construct($context, $stockRegistry, $stockConfiguration, $registry, $data);
     }
 
@@ -51,7 +54,7 @@ class Renderer extends \Magento\Sales\Block\Adminhtml\Items\Renderer\DefaultRend
      * @param string $value
      * @param int $length
      * @param string $etc
-     * @param string &$remainder
+     * @param string $remainder
      * @param bool $breakWords
      * @return string
      */
@@ -83,6 +86,7 @@ class Renderer extends \Magento\Sales\Block\Adminhtml\Items\Renderer\DefaultRend
         }
 
         if ($items) {
+            $itemsArray[$item->getOrderItem()->getId()][$item->getOrderItemId()] = $item;
             foreach ($items as $value) {
                 $parentItem = $value->getOrderItem()->getParentItem();
                 if ($parentItem) {
@@ -100,6 +104,8 @@ class Renderer extends \Magento\Sales\Block\Adminhtml\Items\Renderer\DefaultRend
     }
 
     /**
+     * Check if item can be shipped separately
+     *
      * @param mixed $item
      * @return bool
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
@@ -136,6 +142,8 @@ class Renderer extends \Magento\Sales\Block\Adminhtml\Items\Renderer\DefaultRend
     }
 
     /**
+     * Check if child items calculated
+     *
      * @param mixed $item
      * @return bool
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
@@ -174,6 +182,8 @@ class Renderer extends \Magento\Sales\Block\Adminhtml\Items\Renderer\DefaultRend
     }
 
     /**
+     * Retrieve selection attributes values
+     *
      * @param mixed $item
      * @return mixed|null
      */
@@ -191,6 +201,8 @@ class Renderer extends \Magento\Sales\Block\Adminhtml\Items\Renderer\DefaultRend
     }
 
     /**
+     * Retrieve order item options array
+     *
      * @return array
      */
     public function getOrderOptions()
@@ -212,6 +224,8 @@ class Renderer extends \Magento\Sales\Block\Adminhtml\Items\Renderer\DefaultRend
     }
 
     /**
+     * Retrieve order item
+     *
      * @return mixed
      */
     public function getOrderItem()
@@ -223,6 +237,8 @@ class Renderer extends \Magento\Sales\Block\Adminhtml\Items\Renderer\DefaultRend
     }
 
     /**
+     * Get html info for item
+     *
      * @param mixed $item
      * @return string
      */
@@ -232,7 +248,7 @@ class Renderer extends \Magento\Sales\Block\Adminhtml\Items\Renderer\DefaultRend
         if (!$this->isShipmentSeparately($item)) {
             $attributes = $this->getSelectionAttributes($item);
             if ($attributes) {
-                $result = sprintf('%d', $attributes['qty']) . ' x ' . $result;
+                $result = (float) $attributes['qty'] . ' x ' . $result;
             }
         }
         if (!$this->isChildCalculated($item)) {
@@ -245,6 +261,8 @@ class Renderer extends \Magento\Sales\Block\Adminhtml\Items\Renderer\DefaultRend
     }
 
     /**
+     * Check if we can show price info for this item
+     *
      * @param object $item
      * @return bool
      */

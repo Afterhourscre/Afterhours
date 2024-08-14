@@ -9,12 +9,14 @@ use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\ConfigurableProduct\Api\OptionRepositoryInterface;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable as ResourceModelConfigurable;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\EntityManager\Operation\ExtensionInterface;
 use Magento\ConfigurableProduct\Api\Data\OptionInterface;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable\Attribute;
+use Magento\Catalog\Api\ProductRepositoryInterface;
 
 /**
- * Class SaveHandler
+ * Class SaveHandler to update configurable options
  */
 class SaveHandler implements ExtensionInterface
 {
@@ -29,20 +31,29 @@ class SaveHandler implements ExtensionInterface
     private $resourceModel;
 
     /**
-     * SaveHandler constructor
-     *
+     * @var ProductRepositoryInterface
+     */
+    private $productRepository;
+
+    /**
      * @param ResourceModelConfigurable $resourceModel
      * @param OptionRepositoryInterface $optionRepository
+     * @param ProductRepositoryInterface|null $productRepository
      */
     public function __construct(
         ResourceModelConfigurable $resourceModel,
-        OptionRepositoryInterface $optionRepository
+        OptionRepositoryInterface $optionRepository,
+        ?ProductRepositoryInterface $productRepository = null
     ) {
         $this->resourceModel = $resourceModel;
         $this->optionRepository = $optionRepository;
+        $this->productRepository =
+            $productRepository ?: ObjectManager::getInstance()->get(ProductRepositoryInterface::class);
     }
 
     /**
+     * Update product options
+     *
      * @param ProductInterface $entity
      * @param array $arguments
      * @return ProductInterface
@@ -59,6 +70,8 @@ class SaveHandler implements ExtensionInterface
             return $entity;
         }
 
+        // Refresh product in cache
+        $this->productRepository->get($entity->getSku(), false, null, true);
         if ($extensionAttributes->getConfigurableProductOptions() !== null) {
             $this->deleteConfigurableProductAttributes($entity);
         }
@@ -78,13 +91,13 @@ class SaveHandler implements ExtensionInterface
     }
 
     /**
-     * Save only newly created attributes for configurable product
+     * Save only newly created attributes for configurable product.
      *
      * @param ProductInterface $product
      * @param array $attributes
      * @return array
      */
-    private function saveConfigurableProductAttributes(ProductInterface $product, array $attributes)
+    private function saveConfigurableProductAttributes(ProductInterface $product, array $attributes): array
     {
         $ids = [];
         $existingAttributeIds = [];
@@ -100,16 +113,17 @@ class SaveHandler implements ExtensionInterface
                 $ids[] = $this->optionRepository->save($product->getSku(), $attribute);
             }
         }
+
         return $ids;
     }
 
     /**
-     * Remove product attributes which no longer used
+     * Remove product attributes which no longer used.
      *
      * @param ProductInterface $product
      * @return void
      */
-    private function deleteConfigurableProductAttributes(ProductInterface $product)
+    private function deleteConfigurableProductAttributes(ProductInterface $product): void
     {
         $newAttributeIds = [];
         foreach ($product->getExtensionAttributes()->getConfigurableProductOptions() as $option) {
@@ -125,19 +139,18 @@ class SaveHandler implements ExtensionInterface
     }
 
     /**
-     * Check if existing option is changed
+     * Check if existing option is changed.
      *
      * @param OptionInterface $option
      * @param Attribute $attribute
      * @return bool
      */
-    private function isOptionChanged(OptionInterface $option, Attribute $attribute)
+    private function isOptionChanged(OptionInterface $option, Attribute $attribute): bool
     {
-        if ($option->getLabel() == $attribute->getLabel()
-            && $option->getPosition() == $attribute->getPosition()
-        ) {
+        if ($option->getLabel() == $attribute->getLabel() && $option->getPosition() == $attribute->getPosition()) {
             return false;
         }
+
         return true;
     }
 }

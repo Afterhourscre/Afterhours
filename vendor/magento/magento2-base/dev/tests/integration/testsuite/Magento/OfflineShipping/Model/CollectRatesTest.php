@@ -29,6 +29,7 @@ class CollectRatesTest extends \Magento\Shipping\Model\CollectRatesAbstract
      * @magentoConfigFixture default_store carriers/flatrate/specificcountry UK
      * @magentoConfigFixture default_store carriers/flatrate/showmethod 1
      */
+    // phpcs:ignore Generic.CodeAnalysis.UselessOverridingMethod
     public function testCollectRatesWhenShippingCarrierIsAvailableAndNotApplicable()
     {
         parent::testCollectRatesWhenShippingCarrierIsAvailableAndNotApplicable();
@@ -40,6 +41,7 @@ class CollectRatesTest extends \Magento\Shipping\Model\CollectRatesAbstract
      * @magentoConfigFixture default_store carriers/flatrate/specificcountry UK
      * @magentoConfigFixture default_store carriers/flatrate/showmethod 1
      */
+    // phpcs:ignore Generic.CodeAnalysis.UselessOverridingMethod
     public function testCollectRatesWhenShippingCarrierIsNotAvailableAndNotApplicable()
     {
         parent::testCollectRatesWhenShippingCarrierIsNotAvailableAndNotApplicable();

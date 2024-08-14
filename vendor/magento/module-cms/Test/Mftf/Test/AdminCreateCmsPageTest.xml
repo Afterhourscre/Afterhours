@@ -7,40 +7,35 @@
 -->
 
 <tests xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="../../../../../../../dev/tests/acceptance/vendor/magento/magento2-functional-testing-framework/src/Magento/FunctionalTestingFramework/Test/etc/testSchema.xsd">
+        xsi:noNamespaceSchemaLocation="urn:magento:mftf:Test/etc/testSchema.xsd">
     <test name="AdminCreateCmsPageTest">
         <annotations>
-            <features value="CMS Page Creation"/>
+            <features value="Cms"/>
             <stories value="Create a CMS Page via the Admin"/>
-            <title value="Create a CMS Page"/>
-            <description value="You should be able to create a CMS Page via the Admin."/>
+            <title value="Admin should be able to create a CMS Page"/>
+            <description value="Admin should be able to create a CMS Page"/>
             <severity value="CRITICAL"/>
             <testCaseId value="MAGETWO-25580"/>
-            <group value="cms"/>
-            <skip>
-                <issueId value="MQE-282"/>
-            </skip>
+            <group value="Cms"/>
         </annotations>
+        <before>
+            <actionGroup ref="AdminDisableWYSIWYGActionGroup" stepKey="disableWYSYWYG"/>
+            <actionGroup ref="AdminLoginActionGroup" stepKey="loginGetFromGeneralFile"/>
+            <comment userInput="BIC workaround" stepKey="disableWYSIWYG"/>
+        </before>
         <after>
-            <amOnPage url="admin/admin/auth/logout/" stepKey="amOnLogoutPage"/>
+            <actionGroup ref="AdminOpenCMSPagesGridActionGroup" stepKey="navigateToCmsPageGrid"/>
+            <actionGroup ref="ResetAdminDataGridToDefaultViewActionGroup" stepKey="clearGridFilters"/>
+            <actionGroup ref="DeletePageByUrlKeyActionGroup" stepKey="deletePage">
+                <argument name="UrlKey" value="{{_defaultCmsPage.identifier}}"/>
+            </actionGroup>
+            <actionGroup ref="AdminLogoutActionGroup" stepKey="adminLogout"/>
+            <actionGroup ref="AdminEnableWYSIWYGActionGroup" stepKey="enableWYSYWYG"/>
         </after>
-
-        <actionGroup ref="LoginAsAdmin" stepKey="loginAsAdmin1"/>
-        <amOnPage url="{{CmsPagesPage.url}}" stepKey="amOnPagePagesGrid"/>
-        <waitForPageLoad stepKey="waitForPageLoad1"/>
-        <click selector="{{CmsPagesPageActionsSection.addNewPage}}" stepKey="clickAddNewPage"/>
-        <fillField selector="{{CmsNewPagePageBasicFieldsSection.pageTitle}}" userInput="{{_defaultCmsPage.title}}" stepKey="fillFieldTitle"/>
-        <click selector="{{CmsNewPagePageContentSection.header}}" stepKey="clickExpandContent"/>
-        <fillField selector="{{CmsNewPagePageContentSection.contentHeading}}" userInput="{{_defaultCmsPage.content_heading}}" stepKey="fillFieldContentHeading"/>
-        <!-- As of 2017/11/15, this test is failing here (Jenkins only, works locally). See MQE-282. -->
-        <fillField selector="{{CmsNewPagePageContentSection.content}}" userInput="{{_defaultCmsPage.content}}" stepKey="fillFieldContent"/>
-        <click selector="{{CmsNewPagePageSeoSection.header}}" stepKey="clickExpandSearchEngineOptimisation"/>
-        <fillField selector="{{CmsNewPagePageSeoSection.urlKey}}" userInput="{{_defaultCmsPage.identifier}}" stepKey="fillFieldUrlKey"/>
-        <click selector="{{CmsNewPagePageActionsSection.savePage}}" stepKey="clickSavePage"/>
-        <see userInput="You saved the page." stepKey="seeSuccessMessage"/>
-        <amOnPage url="{{_defaultCmsPage.identifier}}" stepKey="amOnPageTestPage"/>
-        <waitForPageLoad stepKey="waitForPageLoad2"/>
-        <see userInput="{{_defaultCmsPage.content_heading}}" stepKey="seeContentHeading"/>
-        <see userInput="{{_defaultCmsPage.content}}" stepKey="seeContent"/>
+        <actionGroup ref="AdminOpenCMSPagesGridActionGroup" stepKey="navigateToCmsPageGrid"/>
+        <actionGroup ref="CreateNewPageWithBasicValues" stepKey="createNewPageWithBasicValues"/>
+        <actionGroup ref="SaveCmsPageActionGroup" stepKey="clickSaveCmsPageButton"/>
+        <actionGroup ref="VerifyCreatedCmsPage" stepKey="verifyCmsPage"/>
+        <comment userInput="BIC workaround" stepKey="deletePage"/>
     </test>
 </tests>

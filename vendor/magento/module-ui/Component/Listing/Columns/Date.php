@@ -15,7 +15,7 @@ use Magento\Framework\View\Element\UiComponentFactory;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 
 /**
- * Date format column.
+ * Date format column
  *
  * @api
  * @since 100.0.2
@@ -77,20 +77,23 @@ class Date extends Column
 
     /**
      * @inheritdoc
+     * @since 101.1.1
      */
     public function prepare()
     {
         $config = $this->getData('config');
-        $config['filter'] = [
-            'filterType' => 'dateRange',
-            'templates' => [
-                'date' => [
-                    'options' => [
-                        'dateFormat' => $this->timezone->getDateFormatWithLongYear(),
-                    ],
-                ],
-            ],
-        ];
+        if (isset($config['filter'])) {
+            $config['filter'] = [
+                'filterType' => 'dateRange',
+                'templates' => [
+                    'date' => [
+                        'options' => [
+                            'dateFormat' => $config['dateFormat'] ?? $this->timezone->getDateFormatWithLongYear()
+                        ]
+                    ]
+                ]
+            ];
+        }
 
         $localeData = $this->dataBundle->get($this->locale);
         /** @var \ResourceBundle $monthsData */
@@ -124,7 +127,9 @@ class Date extends Column
     {
         if (isset($dataSource['data']['items'])) {
             foreach ($dataSource['data']['items'] as & $item) {
-                if (isset($item[$this->getData('name')])) {
+                if (isset($item[$this->getData('name')])
+                    && $item[$this->getData('name')] !== "0000-00-00 00:00:00"
+                ) {
                     $date = $this->timezone->date(new \DateTime($item[$this->getData('name')]));
                     $timezone = isset($this->getConfiguration()['timezone'])
                         ? $this->booleanUtils->convert($this->getConfiguration()['timezone'])

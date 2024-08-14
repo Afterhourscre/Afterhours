@@ -3,6 +3,7 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
 namespace Magento\User\Controller\Adminhtml;
 
 use Magento\Framework\App\Request\Http as HttpRequest;
@@ -20,7 +21,7 @@ class UserTest extends \Magento\TestFramework\TestCase\AbstractBackendController
     {
         $this->dispatch('backend/admin/user/index');
         $response = $this->getResponse()->getBody();
-        $this->assertContains('Users', $response);
+        $this->assertStringContainsString('Users', $response);
         $this->assertEquals(
             1,
             \Magento\TestFramework\Helper\Xpath::getElementsCountForXpath(
@@ -86,7 +87,11 @@ class UserTest extends \Magento\TestFramework\TestCase\AbstractBackendController
             ]
         );
         $this->dispatch('backend/admin/user/save');
-        $this->assertSessionMessages($this->equalTo(['You have entered an invalid password for current user.']));
+        $this->assertSessionMessages(
+            $this->equalTo(
+                ['The password entered for the current user is invalid. Verify the password and try again.']
+            )
+        );
         $this->assertRedirect($this->stringContains('backend/admin/user/edit'));
     }
 
@@ -148,7 +153,10 @@ class UserTest extends \Magento\TestFramework\TestCase\AbstractBackendController
     }
 
     /**
-     * Verify password change properly updates fields when the request is valid
+     * Verify password change properly updates fields when the request is valid.
+     *
+     * @param array $postData
+     * @param bool $isPasswordCorrect
      *
      * @magentoDbIsolation enabled
      * @dataProvider saveActionPasswordChangeDataProvider
@@ -206,6 +214,7 @@ class UserTest extends \Magento\TestFramework\TestCase\AbstractBackendController
             ];
             $data[] = [$postData, $passwordPair['is_correct']];
         }
+
         return $data;
     }
 
@@ -244,8 +253,8 @@ class UserTest extends \Magento\TestFramework\TestCase\AbstractBackendController
         $this->dispatch('backend/admin/user/edit');
         $response = $this->getResponse()->getBody();
         //check "User Information" header and fieldset
-        $this->assertContains('data-ui-id="adminhtml-user-edit-tabs-title"', $response);
-        $this->assertContains('User Information', $response);
+        $this->assertStringContainsString('data-ui-id="adminhtml-user-edit-tabs-title"', $response);
+        $this->assertStringContainsString('User Information', $response);
         $this->assertEquals(
             1,
             \Magento\TestFramework\Helper\Xpath::getElementsCountForXpath(
@@ -318,7 +327,10 @@ class UserTest extends \Magento\TestFramework\TestCase\AbstractBackendController
         $this->dispatch('backend/admin/user/validate');
         $body = $this->getResponse()->getBody();
 
-        $this->assertContains('{"error":1,"html_message":', $body);
-        $this->assertContains("'-domain.cim' is not a valid hostname for email address 'example@-domain.cim", $body);
+        $this->assertStringContainsString('{"error":1,"html_message":', $body);
+        $this->assertStringContainsString(
+            "'-domain.cim' is not a valid hostname for email address 'example@-domain.cim",
+            $body
+        );
     }
 }

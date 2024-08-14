@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Generic\Tests\Files;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class EndFileNoNewlineUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the EndFileNoNewline sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Generic\Sniffs\Files\EndFileNoNewlineSniff
+ */
+final class EndFileNoNewlineUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -32,24 +37,16 @@ class EndFileNoNewlineUnitTest extends AbstractSniffUnitTest
         case 'EndFileNoNewlineUnitTest.1.css':
         case 'EndFileNoNewlineUnitTest.1.js':
         case 'EndFileNoNewlineUnitTest.2.inc':
-            return array(3 => 1);
+            return [3 => 1];
         case 'EndFileNoNewlineUnitTest.2.css':
         case 'EndFileNoNewlineUnitTest.2.js':
-            return array(2 => 1);
-        case 'EndFileNoNewlineUnitTest.5.inc':
-            // HHVM just removes the entire comment token, as if it was never there.
-            if (defined('HHVM_VERSION') === true) {
-                return array(1 => 1);
-            }
-            return array();
         case 'EndFileNoNewlineUnitTest.6.inc':
-            // HHVM just removes the entire comment token, as if it was never there.
-            if (defined('HHVM_VERSION') === true) {
-                return array(1 => 1);
-            }
-            return array(2 => 1);
+            return [2 => 1];
+        case 'EndFileNoNewlineUnitTest.8.inc':
+        case 'EndFileNoNewlineUnitTest.9.inc':
+            return [1 => 1];
         default:
-            return array();
+            return [];
         }//end switch
 
     }//end getErrorList()
@@ -67,7 +64,7 @@ class EndFileNoNewlineUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList($testFile='')
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

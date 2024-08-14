@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /*
  * This file is part of Composer.
@@ -25,7 +25,7 @@ namespace Composer\Plugin\Capability;
 interface CommandProvider extends Capability
 {
     /**
-     * Retreives an array of commands
+     * Retrieves an array of commands
      *
      * @return \Composer\Command\BaseCommand[]
      */

@@ -6,15 +6,21 @@
  */
 namespace Magento\Catalog\Model\Product\Attribute;
 
-use Magento\Eav\Api\Data\AttributeInterface;
+use Laminas\Validator\Regex;
+use Magento\Catalog\Api\Data\EavAttributeInterface;
+use Magento\Eav\Model\Entity\Attribute;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\NoSuchEntityException;
 
 /**
+ * Product attribute repository
+ *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Repository implements \Magento\Catalog\Api\ProductAttributeRepositoryInterface
 {
+    private const FILTERABLE_ALLOWED_INPUT_TYPES = ['date', 'datetime', 'text', 'textarea', 'texteditor'];
+
     /**
      * @var \Magento\Catalog\Model\ResourceModel\Attribute
      */
@@ -78,7 +84,7 @@ class Repository implements \Magento\Catalog\Api\ProductAttributeRepositoryInter
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function get($attributeCode)
     {
@@ -89,7 +95,7 @@ class Repository implements \Magento\Catalog\Api\ProductAttributeRepositoryInter
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getList(\Magento\Framework\Api\SearchCriteriaInterface $searchCriteria)
     {
@@ -100,12 +106,33 @@ class Repository implements \Magento\Catalog\Api\ProductAttributeRepositoryInter
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function save(\Magento\Catalog\Api\Data\ProductAttributeInterface $attribute)
     {
+        if (in_array($attribute->getFrontendInput(), self::FILTERABLE_ALLOWED_INPUT_TYPES)) {
+            if ($attribute->getIsFilterable()) {
+                throw InputException::invalidFieldValue(
+                    EavAttributeInterface::IS_FILTERABLE,
+                    $attribute->getIsFilterable()
+                );
+            }
+
+            if ($attribute->getIsFilterableInSearch()) {
+                throw InputException::invalidFieldValue(
+                    EavAttributeInterface::IS_FILTERABLE_IN_SEARCH,
+                    $attribute->getIsFilterableInSearch()
+                );
+            }
+        }
+
+        $attribute->setEntityTypeId(
+            $this->eavConfig
+                ->getEntityType(\Magento\Catalog\Api\Data\ProductAttributeInterface::ENTITY_TYPE_CODE)
+                ->getId()
+        );
         if ($attribute->getAttributeId()) {
             $existingModel = $this->get($attribute->getAttributeCode());
 
@@ -118,9 +145,7 @@ class Repository implements \Magento\Catalog\Api\ProductAttributeRepositoryInter
             $attribute->setAttributeId($existingModel->getAttributeId());
             $attribute->setIsUserDefined($existingModel->getIsUserDefined());
             $attribute->setFrontendInput($existingModel->getFrontendInput());
-            if ($attribute->getIsUserDefined()) {
-                $this->processAttributeData($attribute);
-            }
+            $attribute->setBackendModel($existingModel->getBackendModel());
 
             $this->updateDefaultFrontendLabel($attribute, $existingModel);
         } else {
@@ -138,15 +163,18 @@ class Repository implements \Magento\Catalog\Api\ProductAttributeRepositoryInter
             $this->validateCode($attribute->getAttributeCode());
             $this->validateFrontendInput($attribute->getFrontendInput());
 
-            $this->processAttributeData($attribute);
-            $attribute->setEntityTypeId(
-                $this->eavConfig
-                    ->getEntityType(\Magento\Catalog\Api\Data\ProductAttributeInterface::ENTITY_TYPE_CODE)
-                    ->getId()
+            $attribute->setBackendType(
+                $attribute->getBackendTypeByInput($attribute->getFrontendInput())
+            );
+            $attribute->setSourceModel(
+                $this->productHelper->getAttributeSourceModelByInputType($attribute->getFrontendInput())
+            );
+            $attribute->setBackendModel(
+                $this->productHelper->getAttributeBackendModelByInputType($attribute->getFrontendInput())
             );
             $attribute->setIsUserDefined(1);
         }
-        if (!empty($attribute->getData(AttributeInterface::OPTIONS))) {
+        if (!empty($attribute->getData(EavAttributeInterface::OPTIONS))) {
             $options = [];
             $sortOrder = 0;
             $default = [];
@@ -175,7 +203,7 @@ class Repository implements \Magento\Catalog\Api\ProductAttributeRepositoryInter
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function delete(\Magento\Catalog\Api\Data\ProductAttributeInterface $attribute)
     {
@@ -184,7 +212,7 @@ class Repository implements \Magento\Catalog\Api\ProductAttributeRepositoryInter
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function deleteById($attributeCode)
     {
@@ -195,7 +223,7 @@ class Repository implements \Magento\Catalog\Api\ProductAttributeRepositoryInter
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function getCustomAttributesMetadata($dataObjectClassName = null)
@@ -211,11 +239,16 @@ class Repository implements \Magento\Catalog\Api\ProductAttributeRepositoryInter
      */
     protected function generateCode($label)
     {
-        $code = substr(preg_replace('/[^a-z_0-9]/', '_', $this->filterManager->translitUrl($label)), 0, 30);
-        $validatorAttrCode = new \Zend_Validate_Regex(['pattern' => '/^[a-z][a-z_0-9]{0,29}[a-z0-9]$/']);
+        $code = substr(
+            preg_replace('/[^a-z_0-9]/', '_', $this->filterManager->translitUrl($label)),
+            0,
+            Attribute::ATTRIBUTE_CODE_MAX_LENGTH
+        );
+        $validatorAttrCode = new Regex(['pattern' => '/^[a-z][a-z_0-9]{0,29}[a-z0-9]$/']);
         if (!$validatorAttrCode->isValid($code)) {
-            $code = 'attr_' . ($code ?: substr(md5(time()), 0, 8));
+            $code = 'attr_' . ($code ?: substr(hash('sha256', time()), 0, 8));
         }
+
         return $code;
     }
 
@@ -224,11 +257,13 @@ class Repository implements \Magento\Catalog\Api\ProductAttributeRepositoryInter
      *
      * @param string $code
      * @return void
-     * @throws \Magento\Framework\Exception\InputException
+     * @throws InputException
      */
     protected function validateCode($code)
     {
-        $validatorAttrCode = new \Zend_Validate_Regex(['pattern' => '/^[a-z][a-z_0-9]{0,30}$/']);
+        $validatorAttrCode = new Regex(
+            ['pattern' => '/^[a-z][a-z_0-9]{0,' . Attribute::ATTRIBUTE_CODE_MAX_LENGTH . '}$/']
+        );
         if (!$validatorAttrCode->isValid($code)) {
             throw InputException::invalidFieldValue('attribute_code', $code);
         }
@@ -239,7 +274,7 @@ class Repository implements \Magento\Catalog\Api\ProductAttributeRepositoryInter
      *
      * @param  string $frontendInput
      * @return void
-     * @throws \Magento\Framework\Exception\InputException
+     * @throws InputException
      */
     protected function validateFrontendInput($frontendInput)
     {
@@ -248,25 +283,6 @@ class Repository implements \Magento\Catalog\Api\ProductAttributeRepositoryInter
         if (!$validator->isValid($frontendInput)) {
             throw InputException::invalidFieldValue('frontend_input', $frontendInput);
         }
-    }
-
-    /**
-     * Process attribute data based on attribute frontend input type.
-     *
-     * @param \Magento\Catalog\Api\Data\ProductAttributeInterface $attribute
-     * @return void
-     */
-    private function processAttributeData(\Magento\Catalog\Api\Data\ProductAttributeInterface $attribute)
-    {
-        $attribute->setBackendType(
-            $attribute->getBackendTypeByInput($attribute->getFrontendInput())
-        );
-        $attribute->setSourceModel(
-            $this->productHelper->getAttributeSourceModelByInputType($attribute->getFrontendInput())
-        );
-        $attribute->setBackendModel(
-            $this->productHelper->getAttributeBackendModelByInputType($attribute->getFrontendInput())
-        );
     }
 
     /**

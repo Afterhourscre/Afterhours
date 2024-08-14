@@ -3,11 +3,17 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Customer\Test\Unit\Model\ResourceModel\Db\VersionControl;
 
 use Magento\Customer\Model\ResourceModel\Db\VersionControl\AddressSnapshot;
+use Magento\Framework\DataObject;
+use Magento\Framework\Model\ResourceModel\Db\VersionControl\Metadata;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class AddressSnapshotTest extends \PHPUnit\Framework\TestCase
+class AddressSnapshotTest extends TestCase
 {
     /**
      * @var AddressSnapshot
@@ -15,15 +21,16 @@ class AddressSnapshotTest extends \PHPUnit\Framework\TestCase
     private $model;
 
     /**
-     * @var \Magento\Framework\Model\ResourceModel\Db\VersionControl\Metadata|\PHPUnit_Framework_MockObject_MockObject
+     * @var Metadata|MockObject
      */
     private $metadataMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->metadataMock = $this->getMockBuilder(
-            \Magento\Framework\Model\ResourceModel\Db\VersionControl\Metadata::class
-        )->disableOriginalConstructor()->getMock();
+            Metadata::class
+        )->disableOriginalConstructor()
+            ->getMock();
 
         $this->model = new AddressSnapshot(
             $this->metadataMock
@@ -45,16 +52,15 @@ class AddressSnapshotTest extends \PHPUnit\Framework\TestCase
     ) {
         $entityId = 1;
 
-        $dataObjectMock = $this->getMockBuilder(\Magento\Framework\DataObject::class)
+        $dataObjectMock = $this->getMockBuilder(DataObject::class)
             ->disableOriginalConstructor()
-            ->setMethods([
+            ->addMethods([
                 'getId',
-                'getData',
-                'getDataByKey',
                 'getIsDefaultBilling',
                 'getIsDefaultShipping',
                 'getIsCustomerSaveTransaction',
             ])
+            ->onlyMethods(['getData', 'getDataByKey'])
             ->getMock();
 
         $dataObjectMock->expects($this->any())
@@ -90,7 +96,7 @@ class AddressSnapshotTest extends \PHPUnit\Framework\TestCase
     /**
      * @return array
      */
-    public function dataProviderIsModified()
+    public static function dataProviderIsModified()
     {
         return [
             [false, 1, 1, true],
@@ -102,12 +108,10 @@ class AddressSnapshotTest extends \PHPUnit\Framework\TestCase
 
     public function testIsModifiedBypass()
     {
-        $dataObjectMock = $this->getMockBuilder(\Magento\Framework\DataObject::class)
+        $dataObjectMock = $this->getMockBuilder(DataObject::class)
             ->disableOriginalConstructor()
-            ->setMethods([
-                'getId',
-                'getData',
-            ])
+            ->addMethods(['getId'])
+            ->onlyMethods(['getData'])
             ->getMock();
 
         $dataObjectMock->expects($this->any())
@@ -124,6 +128,6 @@ class AddressSnapshotTest extends \PHPUnit\Framework\TestCase
 
         $this->model->registerSnapshot($dataObjectMock);
 
-        $this->assertEquals(true, $this->model->isModified($dataObjectMock));
+        $this->assertTrue($this->model->isModified($dataObjectMock));
     }
 }

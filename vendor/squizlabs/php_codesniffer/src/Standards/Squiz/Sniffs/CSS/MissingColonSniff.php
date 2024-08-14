@@ -4,13 +4,15 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ *
+ * @deprecated 3.9.0
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Sniffs\CSS;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 
 class MissingColonSniff implements Sniff
 {
@@ -20,17 +22,17 @@ class MissingColonSniff implements Sniff
      *
      * @var array
      */
-    public $supportedTokenizers = array('CSS');
+    public $supportedTokenizers = ['CSS'];
 
 
     /**
      * Returns the token types that this sniff is interested in.
      *
-     * @return int[]
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(T_OPEN_CURLY_BRACKET);
+        return [T_OPEN_CURLY_BRACKET];
 
     }//end register()
 
@@ -46,10 +48,15 @@ class MissingColonSniff implements Sniff
      */
     public function process(File $phpcsFile, $stackPtr)
     {
-        $tokens   = $phpcsFile->getTokens();
+        $tokens = $phpcsFile->getTokens();
+
+        if (isset($tokens[$stackPtr]['bracket_closer']) === false) {
+            // Syntax error or live coding, bow out.
+            return;
+        }
+
         $lastLine = $tokens[$stackPtr]['line'];
         $end      = $tokens[$stackPtr]['bracket_closer'];
-        $endLine  = $tokens[$end]['line'];
 
         // Do not check nested style definitions as, for example, in @media style rules.
         $nested = $phpcsFile->findNext(T_OPEN_CURLY_BRACKET, ($stackPtr + 1), $end);

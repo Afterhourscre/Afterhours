@@ -80,13 +80,11 @@ class ExtensibleDataObjectConverter
                 }
             }
         }
-
         foreach ($dataObjectArray as $key => $value) {
             if (is_array($value)) {
                 $dataObjectArray[$key] = $this->processCustomAttributes($value, $skipAttributes);
             }
         }
-
         return $dataObjectArray;
     }
 

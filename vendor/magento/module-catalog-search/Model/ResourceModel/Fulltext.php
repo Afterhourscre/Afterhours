@@ -62,12 +62,34 @@ class Fulltext extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
      * Reset search results
      *
      * @return $this
+     * @deprecated 101.0.0 Not used anymore
+     * @see Fulltext::resetSearchResultsByStore
      */
     public function resetSearchResults()
     {
         $connection = $this->getConnection();
         $connection->update($this->getTable('search_query'), ['is_processed' => 0], ['is_processed != 0']);
         $this->_eventManager->dispatch('catalogsearch_reset_search_result');
+        return $this;
+    }
+
+    /**
+     * Reset search results by store
+     *
+     * @param int $storeId
+     * @return $this
+     * @since 101.0.0
+     */
+    public function resetSearchResultsByStore($storeId)
+    {
+        $storeId = (int) $storeId;
+        $connection = $this->getConnection();
+        $connection->update(
+            $this->getTable('search_query'),
+            ['is_processed' => 0],
+            ['is_processed != ?' => 0, 'store_id = ?' => $storeId]
+        );
+        $this->_eventManager->dispatch('catalogsearch_reset_search_result', ['store_id' => $storeId]);
         return $this;
     }
 
@@ -94,7 +116,8 @@ class Fulltext extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
                 ['cpe.entity_id']
             )->where(
                 'relation.child_id IN (?)',
-                $childIds
+                $childIds,
+                \Zend_Db::INT_TYPE
             );
 
         return $connection->fetchCol($select);

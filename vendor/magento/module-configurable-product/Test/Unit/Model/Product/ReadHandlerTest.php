@@ -3,18 +3,18 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\ConfigurableProduct\Test\Unit\Model\Product;
 
 use Magento\Catalog\Model\Product;
 use Magento\ConfigurableProduct\Helper\Product\Options\Loader;
 use Magento\ConfigurableProduct\Model\Product\ReadHandler;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-/**
- * Class ReadHandlerTest
- */
-class ReadHandlerTest extends \PHPUnit\Framework\TestCase
+class ReadHandlerTest extends TestCase
 {
     /**
      * @var ReadHandler
@@ -29,11 +29,11 @@ class ReadHandlerTest extends \PHPUnit\Framework\TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->optionLoader = $this->getMockBuilder(Loader::class)
             ->disableOriginalConstructor()
-            ->setMethods(['load'])
+            ->onlyMethods(['load'])
             ->getMock();
 
         $this->readHandler = new ReadHandler($this->optionLoader);
@@ -46,7 +46,7 @@ class ReadHandlerTest extends \PHPUnit\Framework\TestCase
     {
         $product = $this->getMockBuilder(Product::class)
             ->disableOriginalConstructor()
-            ->setMethods(['getTypeId', 'getExtensionAttributes'])
+            ->onlyMethods(['getTypeId', 'getExtensionAttributes'])
             ->getMock();
 
         $product->expects(static::once())
@@ -74,7 +74,7 @@ class ReadHandlerTest extends \PHPUnit\Framework\TestCase
 
         $product = $this->getMockBuilder(Product::class)
             ->disableOriginalConstructor()
-            ->setMethods([
+            ->onlyMethods([
                 'getTypeId', 'getId', 'getExtensionAttributes', 'setExtensionAttributes', 'getTypeInstance'
             ])
             ->getMock();
@@ -85,7 +85,7 @@ class ReadHandlerTest extends \PHPUnit\Framework\TestCase
 
         $extensionAttributes = $this->getMockBuilder(ProductExtensionAttributes::class)
             ->disableOriginalConstructor()
-            ->setMethods(['setConfigurableProductOptions', 'setConfigurableProductLinks'])
+            ->addMethods(['setConfigurableProductOptions', 'setConfigurableProductLinks'])
             ->getMockForAbstractClass();
 
         $product->expects(static::once())
@@ -99,7 +99,7 @@ class ReadHandlerTest extends \PHPUnit\Framework\TestCase
 
         $typeInstance = $this->getMockBuilder(Configurable::class)
             ->disableOriginalConstructor()
-            ->setMethods(['getChildrenIds'])
+            ->onlyMethods(['getChildrenIds'])
             ->getMock();
 
         $product->expects(static::once())

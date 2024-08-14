@@ -17,8 +17,8 @@
         <checkOption selector="{{AdminProductFormSection.selectCategory(categoryName)}}" stepKey="selectCategory"/>
         <click selector="{{AdminProductFormSection.done}}" stepKey="clickDone"/>
         <waitForPageLoad stepKey="waitForApplyCategory"/>
-        <click selector="{{AdminProductFormActionSection.saveButton}}" stepKey="clickSave"/>
+        <click selector="{{AdminProductFormSection.save}}" stepKey="clickSave"/>
         <waitForPageLoad stepKey="waitForSavingProduct"/>
-        <see userInput="You saved the product." selector="{{AdminMessagesSection.successMessage}}" stepKey="seeSuccessMessage"/>
+        <see userInput="You saved the product." selector="{{CatalogProductsSection.messageSuccessSavedProduct}}" stepKey="seeSuccessMessage"/>
     </actionGroup>
 </actionGroups>

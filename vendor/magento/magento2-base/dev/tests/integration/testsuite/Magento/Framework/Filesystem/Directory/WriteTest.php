@@ -7,15 +7,17 @@
  */
 namespace Magento\Framework\Filesystem\Directory;
 
+use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Exception\ValidatorException;
 use Magento\Framework\Filesystem\DriverPool;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Class ReadTest
  * Test for Magento\Framework\Filesystem\Directory\Read class
  */
-class WriteTest extends \PHPUnit\Framework\TestCase
+class WriteTest extends TestCase
 {
     /**
      * Test data to be cleaned
@@ -41,6 +43,8 @@ class WriteTest extends \PHPUnit\Framework\TestCase
      * @param string $basePath
      * @param int $permissions
      * @param string $path
+     * @throws FileSystemException
+     * @throws ValidatorException
      */
     public function testCreate($basePath, $permissions, $path)
     {
@@ -65,17 +69,30 @@ class WriteTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @param string $path
+     * Test for create outside
      *
-     * @return void
-     * @expectedException \Magento\Framework\Exception\ValidatorException
-     * @dataProvider pathDataProvider
+     * @throws FileSystemException
      */
-    public function testCreateOutside(string $path)
+    public function testCreateOutside()
     {
+        $exceptions = 0;
         $dir = $this->getDirectoryInstance('newDir1', 0777);
-
-        $dir->create($path);
+        try {
+            $dir->create('../../outsideDir');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->create('//./..///../outsideDir');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->create('\..\..\outsideDir');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        $this->assertEquals(3, $exceptions);
     }
 
     /**
@@ -83,6 +100,8 @@ class WriteTest extends \PHPUnit\Framework\TestCase
      *
      * @dataProvider deleteProvider
      * @param string $path
+     * @throws FileSystemException
+     * @throws ValidatorException
      */
     public function testDelete($path)
     {
@@ -104,29 +123,30 @@ class WriteTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @param string $path
+     * Test for delete outside
      *
-     * @return void
-     * @expectedException \Magento\Framework\Exception\ValidatorException
-     * @dataProvider pathDataProvider
+     * @throws FileSystemException
      */
-    public function testDeleteOutside(string $path)
+    public function testDeleteOutside()
     {
+        $exceptions = 0;
         $dir = $this->getDirectoryInstance('newDir1', 0777);
-
-        $dir->delete($path);
-    }
-
-    /**
-     * @return array
-     */
-    public function pathDataProvider(): array
-    {
-        return [
-            ['../../Directory'],
-            ['//./..///../Directory'],
-            ['\..\..\Directory'],
-        ];
+        try {
+            $dir->delete('../../Directory');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->delete('//./..///../Directory');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->delete('\..\..\Directory');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        $this->assertEquals(3, $exceptions);
     }
 
     /**
@@ -137,6 +157,8 @@ class WriteTest extends \PHPUnit\Framework\TestCase
      * @param int $permissions
      * @param string $name
      * @param string $newName
+     * @throws FileSystemException
+     * @throws ValidatorException
      */
     public function testRename($basePath, $permissions, $name, $newName)
     {
@@ -161,17 +183,33 @@ class WriteTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @param string $path
+     * Test for rename outside
      *
-     * @return void
-     * @expectedException \Magento\Framework\Exception\ValidatorException
-     * @dataProvider pathDataProvider
+     * @throws FileSystemException
      */
-    public function testRenameOutside(string $path)
+    public function testRenameOutside()
     {
+        $exceptions = 0;
         $dir = $this->getDirectoryInstance('newDir1', 0777);
-
-        $dir->renameFile($path . '/ReadTest.php', 'RenamedTest');
+        try {
+            $dir->renameFile('../../Directory/ReadTest.php', 'RenamedTest');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->renameFile(
+                '//./..///../Directory/ReadTest.php',
+                'RenamedTest'
+            );
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->renameFile('\..\..\Directory\ReadTest.php', 'RenamedTest');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        $this->assertEquals(3, $exceptions);
     }
 
     /**
@@ -183,6 +221,8 @@ class WriteTest extends \PHPUnit\Framework\TestCase
      * @param int $permission
      * @param string $name
      * @param string $newName
+     * @throws FileSystemException
+     * @throws ValidatorException
      */
     public function testRenameTargetDir($firstDir, $secondDir, $permission, $name, $newName)
     {
@@ -216,6 +256,8 @@ class WriteTest extends \PHPUnit\Framework\TestCase
      * @param int $permissions
      * @param string $name
      * @param string $newName
+     * @throws ValidatorException
+     * @throws FileSystemException
      */
     public function testCopy($basePath, $permissions, $name, $newName)
     {
@@ -241,32 +283,42 @@ class WriteTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @param string $path
+     * Test for copy outside
      *
-     * @return void
-     * @expectedException \Magento\Framework\Exception\ValidatorException
-     * @dataProvider pathDataProvider
+     * @throws FileSystemException|ValidatorException
      */
-    public function testCopyFromOutside(string $path)
+    public function testCopyOutside()
     {
-        $dir = $this->getDirectoryInstance('newDir1', 0777);
-
-        $dir->copyFile($path . '/ReadTest.php', 'CopiedTest');
-    }
-
-    /**
-     * @return void
-     * @expectedException \Magento\Framework\Exception\ValidatorException
-     */
-    public function testCopyToOutside()
-    {
+        $exceptions = 0;
         $dir = $this->getDirectoryInstance('newDir1', 0777);
         $dir->touch('test_file_for_copy_outside.txt');
-
-        $dir->copyFile(
-            'test_file_for_copy_outside.txt',
-            '../../Directory/copied_outside.txt'
-        );
+        try {
+            $dir->copyFile('../../Directory/ReadTest.php', 'CopiedTest');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->copyFile(
+                '//./..///../Directory/ReadTest.php',
+                'CopiedTest'
+            );
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->copyFile('\..\..\Directory\ReadTest.php', 'CopiedTest');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->copyFile(
+                'test_file_for_copy_outside.txt',
+                '../../Directory/copied_outside.txt'
+            );
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        $this->assertEquals(4, $exceptions);
     }
 
     /**
@@ -278,6 +330,8 @@ class WriteTest extends \PHPUnit\Framework\TestCase
      * @param int $permission
      * @param string $name
      * @param string $newName
+     * @throws FileSystemException
+     * @throws ValidatorException
      */
     public function testCopyTargetDir($firstDir, $secondDir, $permission, $name, $newName)
     {
@@ -307,6 +361,8 @@ class WriteTest extends \PHPUnit\Framework\TestCase
 
     /**
      * Test for changePermissions method
+     *
+     * @throws FileSystemException|ValidatorException
      */
     public function testChangePermissions()
     {
@@ -316,21 +372,36 @@ class WriteTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @param string $path
+     * Test for changePermissions outside
      *
-     * @return void
-     * @expectedException \Magento\Framework\Exception\ValidatorException
-     * @dataProvider pathDataProvider
+     * @throws FileSystemException
      */
-    public function testChangePermissionsOutside(string $path)
+    public function testChangePermissionsOutside()
     {
+        $exceptions = 0;
         $dir = $this->getDirectoryInstance('newDir1', 0777);
-
-        $dir->changePermissions($path, 0777);
+        try {
+            $dir->changePermissions('../../Directory', 0777);
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->changePermissions('//./..///../Directory', 0777);
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->changePermissions('\..\..\Directory', 0777);
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        $this->assertEquals(3, $exceptions);
     }
 
     /**
      * Test for changePermissionsRecursively method
+     *
+     * @throws FileSystemException|ValidatorException
      */
     public function testChangePermissionsRecursively()
     {
@@ -343,17 +414,30 @@ class WriteTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @param string $path
+     * Test for changePermissionsRecursively outside
      *
-     * @return void
-     * @expectedException \Magento\Framework\Exception\ValidatorException
-     * @dataProvider pathDataProvider
+     * @throws FileSystemException
      */
-    public function testChangePermissionsRecursivelyOutside(string $path)
+    public function testChangePermissionsRecursivelyOutside()
     {
+        $exceptions = 0;
         $dir = $this->getDirectoryInstance('newDir1', 0777);
-
-        $dir->changePermissionsRecursively($path, 0777, 0777);
+        try {
+            $dir->changePermissionsRecursively('../foo', 0777, 0777);
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->changePermissionsRecursively('//./..///foo', 0777, 0777);
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->changePermissionsRecursively('\..\foo', 0777, 0777);
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        $this->assertEquals(3, $exceptions);
     }
 
     /**
@@ -364,6 +448,8 @@ class WriteTest extends \PHPUnit\Framework\TestCase
      * @param int $permissions
      * @param string $path
      * @param int $time
+     * @throws FileSystemException
+     * @throws ValidatorException
      */
     public function testTouch($basePath, $permissions, $path, $time)
     {
@@ -387,21 +473,36 @@ class WriteTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @param string $path
+     * Test for touch outside
      *
-     * @return void
-     * @expectedException \Magento\Framework\Exception\ValidatorException
-     * @dataProvider pathDataProvider
+     * @throws FileSystemException
      */
-    public function testTouchOutside(string $path)
+    public function testTouchOutside()
     {
+        $exceptions = 0;
         $dir = $this->getDirectoryInstance('newDir1', 0777);
-
-        $dir->touch($path . '/foo.txt');
+        try {
+            $dir->touch('../../foo.tst');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->touch('//./..///../foo.tst');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->touch('\..\..\foo.tst');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        $this->assertEquals(3, $exceptions);
     }
 
     /**
      * Test isWritable method
+     *
+     * @throws FileSystemException|ValidatorException
      */
     public function testIsWritable()
     {
@@ -412,20 +513,30 @@ class WriteTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @return void
-     */
-    /**
-     * @param string $path
+     * Test isWritable method outside
      *
-     * @return void
-     * @expectedException \Magento\Framework\Exception\ValidatorException
-     * @dataProvider pathDataProvider
+     * @throws FileSystemException
      */
-    public function testIsWritableOutside(string $path)
+    public function testIsWritableOutside()
     {
+        $exceptions = 0;
         $dir = $this->getDirectoryInstance('newDir1', 0777);
-
-        $dir->isWritable($path);
+        try {
+            $dir->isWritable('../../Directory');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->isWritable('//./..///../Directory');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->isWritable('\..\..\Directory');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        $this->assertEquals(3, $exceptions);
     }
 
     /**
@@ -436,6 +547,8 @@ class WriteTest extends \PHPUnit\Framework\TestCase
      * @param int $permissions
      * @param string $path
      * @param string $mode
+     * @throws FileSystemException
+     * @throws ValidatorException
      */
     public function testOpenFile($basePath, $permissions, $path, $mode)
     {
@@ -459,17 +572,30 @@ class WriteTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @param string $path
+     * Test for openFile outside
      *
-     * @return void
-     * @expectedException \Magento\Framework\Exception\ValidatorException
-     * @dataProvider pathDataProvider
+     * @throws FileSystemException
      */
-    public function testOpenFileOutside(string $path)
+    public function testOpenFileOutside()
     {
+        $exceptions = 0;
         $dir = $this->getDirectoryInstance('newDir1', 0777);
-
-        $dir->openFile($path . '/ReadTest.php');
+        try {
+            $dir->openFile('../../Directory/ReadTest.php');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->openFile('//./..///../Directory/ReadTest.php');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->openFile('\..\..\Directory\ReadTest.php');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        $this->assertEquals(3, $exceptions);
     }
 
     /**
@@ -479,6 +605,8 @@ class WriteTest extends \PHPUnit\Framework\TestCase
      * @param string $path
      * @param string $content
      * @param string $extraContent
+     * @throws FileSystemException
+     * @throws ValidatorException
      */
     public function testWriteFile($path, $content, $extraContent)
     {
@@ -496,6 +624,8 @@ class WriteTest extends \PHPUnit\Framework\TestCase
      * @param string $path
      * @param string $content
      * @param string $extraContent
+     * @throws FileSystemException
+     * @throws ValidatorException
      */
     public function testWriteFileAppend($path, $content, $extraContent)
     {
@@ -517,23 +647,52 @@ class WriteTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @param string $path
+     * Test for writeFile outside
      *
-     * @return void
-     * @expectedException \Magento\Framework\Exception\ValidatorException
-     * @dataProvider pathDataProvider
+     * @throws FileSystemException
      */
-    public function testWriteFileOutside(string $path)
+    public function testWriteFileOutside()
     {
+        $exceptions = 0;
         $dir = $this->getDirectoryInstance('newDir1', 0777);
+        try {
+            $dir->writeFile('../../Directory/ReadTest.php', 'tst');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->writeFile('//./..///../Directory/ReadTest.php', 'tst');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        try {
+            $dir->writeFile('\..\..\Directory\ReadTest.php', 'tst');
+        } catch (ValidatorException $exception) {
+            $exceptions++;
+        }
+        $this->assertEquals(3, $exceptions);
+    }
 
-        $dir->writeFile($path . '/ReadTest.php', 'tst');
+    /**
+     * Test for invalidDeletePath
+     *
+     * @throws ValidatorException
+     */
+    public function testInvalidDeletePath()
+    {
+        $this->expectException(FileSystemException::class);
+        $directory = $this->getDirectoryInstance('newDir', 0777);
+        $invalidPath = 'invalidPath/../';
+        $directory->create($invalidPath);
+        $directory->delete($invalidPath);
     }
 
     /**
      * Tear down
+     *
+     * @throws ValidatorException|FileSystemException
      */
-    public function tearDown()
+    protected function tearDown(): void
     {
         /** @var Write $directory */
         foreach ($this->testDirectories as $directory) {
@@ -555,8 +714,8 @@ class WriteTest extends \PHPUnit\Framework\TestCase
     {
         $fullPath = __DIR__ . '/../_files/' . $path;
         $objectManager = Bootstrap::getObjectManager();
-        /** @var \Magento\Framework\Filesystem\Directory\WriteFactory $directoryFactory */
-        $directoryFactory = $objectManager->create(\Magento\Framework\Filesystem\Directory\WriteFactory::class);
+        /** @var WriteFactory $directoryFactory */
+        $directoryFactory = $objectManager->create(WriteFactory::class);
         $directory = $directoryFactory->create($fullPath, DriverPool::FILE, $permissions);
         $this->testDirectories[] = $directory;
         return $directory;

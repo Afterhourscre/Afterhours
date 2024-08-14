@@ -38,19 +38,42 @@
  *
  * @copyright 2008-2017 Manuel Pichler. All rights reserved.
  * @license http://www.opensource.org/licenses/bsd-license.php BSD License
+ *
  * @since 2.3
  */
 
 namespace PDepend\Source\Language\PHP;
+
+use PDepend\Source\AST\ASTClassFqnPostfix;
+use PDepend\Source\Tokenizer\Tokens;
 
 /**
  * Concrete parser implementation that supports features up to PHP version 5.5.
  *
  * @copyright 2008-2017 Manuel Pichler. All rights reserved.
  * @license http://www.opensource.org/licenses/bsd-license.php BSD License
+ *
  * @since 2.3
  */
 abstract class PHPParserVersion55 extends PHPParserVersion54
 {
+    /**
+     * Parses a full qualified class name postfix.
+     *
+     * parseFullQualifiedClassNamePostfix() exists since 2.0.0 and have been customized for PHP 5.5 since 2.6.0.
+     *
+     * @return ASTClassFqnPostfix
+     *
+     * @since 2.0.0
+     */
+    protected function parseFullQualifiedClassNamePostfix()
+    {
+        $this->tokenStack->push();
 
+        $this->consumeToken(Tokens::T_CLASS_FQN);
+
+        return $this->setNodePositionsAndReturn(
+            $this->builder->buildAstClassFqnPostfix()
+        );
+    }
 }

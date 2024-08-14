@@ -7,9 +7,10 @@ define([
     'jquery',
     'domReady',
     'consoleLogger',
-    'jquery/ui',
+    'Magento_PageCache/js/form-key-provider',
+    'jquery-ui-modules/widget',
     'mage/cookies'
-], function ($, domReady, consoleLogger) {
+], function ($, domReady, consoleLogger, formKeyInit) {
     'use strict';
 
     /**
@@ -36,20 +37,20 @@ define([
      * @returns {Array}
      */
     $.fn.comments = function () {
-        var elements = [];
+        var elements = [],
+            contents,
+            elementContents;
 
         /**
          * @param {jQuery} element - Comment holder
          */
         (function lookup(element) {
-            var iframeHostName,
-                contents,
-                elementContents;
+            var iframeHostName;
 
             // prevent cross origin iframe content reading
             if ($(element).prop('tagName') === 'IFRAME') {
                 iframeHostName = $('<a>').prop('href', $(element).prop('src'))
-                                             .prop('hostname');
+                    .prop('hostname');
 
                 if (window.location.hostname !== iframeHostName) {
                     return [];
@@ -57,18 +58,16 @@ define([
             }
 
             /**
-             * Rewrite jQuery contents method
+             * Rewrite jQuery contents().
              *
-             * @param {Object} el
-             * @returns {Object}
-             * @private
+             * @param {jQuery} elem
              */
-            contents = function (el) {
-                return $.map(el, function (elem) {
+            contents = function (elem) {
+                return $.map(elem, function (el) {
                     try {
-                        return $.nodeName(elem, 'iframe') ?
-                               elem.contentDocument || (elem.contentWindow ? elem.contentWindow.document : []) :
-                               $.merge([], elem.childNodes);
+                        return el.nodeName.toLowerCase() === 'iframe' ?
+                            el.contentDocument || (el.contentWindow ? el.contentWindow.document : []) :
+                            $.merge([], el.childNodes);
                     } catch (e) {
                         consoleLogger.error(e);
 
@@ -101,6 +100,7 @@ define([
 
     /**
      * FormKey Widget - this widget is generating from key, saves it to cookie and
+     * @deprecated see Magento/PageCache/view/frontend/web/js/form-key-provider.js
      */
     $.widget('mage.formKey', {
         options: {
@@ -114,11 +114,14 @@ define([
          * @private
          */
         _create: function () {
-            var formKey = $.mage.cookies.get('form_key');
+            var formKey = $.mage.cookies.get('form_key'),
+                options = {
+                    secure: window.cookiesConfig ? window.cookiesConfig.secure : false
+                };
 
             if (!formKey) {
                 formKey = generateRandomString(this.options.allowedCharacters, this.options.length);
-                $.mage.cookies.set('form_key', formKey);
+                $.mage.cookies.set('form_key', formKey, options);
             }
             $(this.options.inputSelector).val(formKey);
         }
@@ -297,8 +300,7 @@ define([
     });
 
     domReady(function () {
-        $('body')
-            .formKey();
+        formKeyInit();
     });
 
     return {

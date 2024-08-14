@@ -51,7 +51,7 @@ class UpgradeData implements UpgradeDataInterface
                 'source' => 'Magento\Eav\Model\Entity\Attribute\Source\Boolean',
                 'required' => false,
                 'sort_order' => 2,
-                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
+                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
                 'group' => 'WeltPixel Options'
             ]);
         }
@@ -65,7 +65,7 @@ class UpgradeData implements UpgradeDataInterface
 				    'default' => 'sectioned',
 				    'required' => false,
 				    'sort_order' => 1,
-				    'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
+				    'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
 				    'group' => 'WeltPixel Mega Menu Options'
 		    ]);
 
@@ -76,7 +76,7 @@ class UpgradeData implements UpgradeDataInterface
 				    'default' => '4',
 				    'required' => false,
 				    'sort_order' => 2,
-				    'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
+				    'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
 				    'wysiwyg_enabled' => false,
 				    'group' => 'WeltPixel Mega Menu Options',
 		    ]);
@@ -88,7 +88,7 @@ class UpgradeData implements UpgradeDataInterface
 				    'default' => 'auto',
 				    'required' => false,
 				    'sort_order' => 3,
-				    'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
+				    'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
 				    'wysiwyg_enabled' => false,
 				    'group' => 'WeltPixel Mega Menu Options',
 		    ]);
@@ -102,7 +102,7 @@ class UpgradeData implements UpgradeDataInterface
                 'input' => 'text',
                 'required' => false,
                 'sort_order' => 4,
-                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
+                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
                 'wysiwyg_enabled' => true,
                 'group' => 'WeltPixel Mega Menu Options',
             ]);
@@ -113,7 +113,7 @@ class UpgradeData implements UpgradeDataInterface
                 'input' => 'text',
                 'required' => false,
                 'sort_order' => 5,
-                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
+                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
                 'wysiwyg_enabled' => true,
                 'group' => 'WeltPixel Mega Menu Options',
             ]);
@@ -124,7 +124,7 @@ class UpgradeData implements UpgradeDataInterface
                 'input' => 'text',
                 'required' => false,
                 'sort_order' => 6,
-                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
+                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
                 'wysiwyg_enabled' => true,
                 'group' => 'WeltPixel Mega Menu Options',
             ]);
@@ -135,7 +135,7 @@ class UpgradeData implements UpgradeDataInterface
                 'input' => 'text',
                 'required' => false,
                 'sort_order' => 7,
-                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
+                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
                 'wysiwyg_enabled' => true,
                 'group' => 'WeltPixel Mega Menu Options',
             ]);
@@ -150,7 +150,7 @@ class UpgradeData implements UpgradeDataInterface
                 'default' => 'none',
                 'required' => false,
                 'sort_order' => 8,
-                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
+                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
                 'group' => 'WeltPixel Mega Menu Options'
             ]);
 
@@ -160,7 +160,7 @@ class UpgradeData implements UpgradeDataInterface
                 'input' => 'select',
                 'required' => false,
                 'sort_order' => 9,
-                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
+                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
                 'group' => 'WeltPixel Mega Menu Options'
             ]);
 
@@ -171,7 +171,7 @@ class UpgradeData implements UpgradeDataInterface
                 'default' => 'none',
                 'required' => false,
                 'sort_order' => 10,
-                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
+                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
                 'group' => 'WeltPixel Mega Menu Options'
             ]);
 
@@ -181,7 +181,7 @@ class UpgradeData implements UpgradeDataInterface
                 'input' => 'select',
                 'required' => false,
                 'sort_order' => 11,
-                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
+                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
                 'group' => 'WeltPixel Mega Menu Options'
             ]);
 
@@ -192,7 +192,7 @@ class UpgradeData implements UpgradeDataInterface
                 'default' => 'none',
                 'required' => false,
                 'sort_order' => 12,
-                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
+                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
                 'group' => 'WeltPixel Mega Menu Options'
             ]);
 
@@ -202,7 +202,7 @@ class UpgradeData implements UpgradeDataInterface
                 'input' => 'select',
                 'required' => false,
                 'sort_order' => 13,
-                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
+                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
                 'group' => 'WeltPixel Mega Menu Options'
             ]);
 
@@ -213,7 +213,7 @@ class UpgradeData implements UpgradeDataInterface
                 'default' => 'none',
                 'required' => false,
                 'sort_order' => 14,
-                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
+                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
                 'group' => 'WeltPixel Mega Menu Options'
             ]);
 
@@ -223,7 +223,7 @@ class UpgradeData implements UpgradeDataInterface
                 'input' => 'select',
                 'required' => false,
                 'sort_order' => 15,
-                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
+                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
                 'group' => 'WeltPixel Mega Menu Options'
             ]);
 
@@ -236,7 +236,7 @@ class UpgradeData implements UpgradeDataInterface
                 'input' => 'select',
                 'required' => false,
                 'sort_order' => 16,
-                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
+                'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
                 'wysiwyg_enabled' => false,
                 'is_html_allowed_on_front' => false,
                 'group' => 'WeltPixel Mega Menu Options',

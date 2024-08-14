@@ -37,7 +37,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
 {
-
     /** @var array */
     protected $_options = array(
         'cache_dir' => null,               // Path to cache files
@@ -46,7 +45,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
         'read_control' => false,           // Use a checksum to detect corrupt data
         'read_control_type' => 'crc32',    // If read_control is enabled, which checksum algorithm to use
         'hashed_directory_level' => 2,     // How many characters should be used to create sub-directories
-        'use_chmod' => FALSE,              // Do not use chmod on files and directories (should use umask() to control permissions)
+        'use_chmod' => false,              // Do not use chmod on files and directories (should use umask() to control permissions)
         'directory_mode' => 0770,          // Filesystem permissions for created directories (requires use_chmod)
         'file_mode' => 0660,               // Filesystem permissions for created files (requires use_chmod)
     );
@@ -74,7 +73,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
 
         // Auto-enable chmod if modes are specified.
         if (isset($options['directory_mode']) || isset($options['file_mode'])) {
-            $options['use_chmod'] = TRUE;
+            $options['use_chmod'] = true;
         }
 
         // Don't use parent constructor
@@ -116,7 +115,9 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
      */
     public function setDirectives($directives)
     {
-        if (!is_array($directives)) Zend_Cache::throwException('Directives parameter must be an array');
+        if (!is_array($directives)) {
+            Zend_Cache::throwException('Directives parameter must be an array');
+        }
         foreach ($directives as $name => $value) {
             if (!is_string($name)) {
                 Zend_Cache::throwException("Incorrect option name : $name");
@@ -142,11 +143,11 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
     {
         $file = $this->_file($id);
         $cache = $this->_getCache($file, true);
-        if ( ! $cache) {
+        if (! $cache) {
             return false;
         }
         list($metadatas, $data) = $cache;
-        if ( ! $doNotTestCacheValidity && (time() > $metadatas['expire'])) {
+        if (! $doNotTestCacheValidity && (time() > $metadatas['expire'])) {
             // ?? $this->remove($id);
             return false;
         }
@@ -278,7 +279,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
      */
     public function getIdsMatchingTags($tags = array())
     {
-        return $this->_getIdsByTags(Zend_Cache::CLEANING_MODE_MATCHING_TAG, $tags, FALSE);
+        return $this->_getIdsByTags(Zend_Cache::CLEANING_MODE_MATCHING_TAG, $tags, false);
     }
 
     /**
@@ -291,7 +292,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
      */
     public function getIdsNotMatchingTags($tags = array())
     {
-        return $this->_getIdsByTags(Zend_Cache::CLEANING_MODE_NOT_MATCHING_TAG, $tags, FALSE);
+        return $this->_getIdsByTags(Zend_Cache::CLEANING_MODE_NOT_MATCHING_TAG, $tags, false);
     }
 
     /**
@@ -304,7 +305,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
      */
     public function getIdsMatchingAnyTags($tags = array())
     {
-        return $this->_getIdsByTags(Zend_Cache::CLEANING_MODE_MATCHING_ANY_TAG, $tags, FALSE);
+        return $this->_getIdsByTags(Zend_Cache::CLEANING_MODE_MATCHING_ANY_TAG, $tags, false);
     }
 
     /**
@@ -322,7 +323,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
     {
         $metadatas = $this->_getCache($this->_file($id), false);
         if ($metadatas) {
-            $metadatas['tags'] = explode(',' ,$metadatas['tags']);
+            $metadatas['tags'] = explode(',', $metadatas['tags']);
         }
         return $metadatas;
     }
@@ -366,19 +367,28 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
         if (!is_file($file) || ! ($fd = @fopen($file, 'rb'))) {
             return false;
         }
-        if ($this->_options['file_locking']) flock($fd, LOCK_SH);
+        if ($this->_options['file_locking']) {
+            flock($fd, LOCK_SH);
+        }
         $metadata = fgets($fd);
-        if ( ! $metadata) {
-            if ($this->_options['file_locking']) flock($fd, LOCK_UN);
+        if (! $metadata) {
+            if ($this->_options['file_locking']) {
+                flock($fd, LOCK_UN);
+            }
             fclose($fd);
             return false;
         }
         if ($withData) {
             $data = stream_get_contents($fd);
         }
-        if ($this->_options['file_locking']) flock($fd, LOCK_UN);
+        if ($this->_options['file_locking']) {
+            flock($fd, LOCK_UN);
+        }
         fclose($fd);
-        $metadata = @unserialize(rtrim($metadata,"\n"));
+        $metadata = @unserialize(rtrim($metadata, "\n"), ['allowed_classes' => false]);
+        if ($metadata === false) {
+            return false;
+        }
         if ($withData) {
             return array($metadata, $data);
         }
@@ -424,15 +434,15 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
         $partsArray = array();
         $root = $this->_options['cache_dir'];
         $prefix = $this->_options['file_name_prefix'];
-        if ($this->_options['hashed_directory_level']>0) {
+        if ($this->_options['hashed_directory_level'] > 0) {
             $root .= $prefix . '--' . substr(md5($id), -$this->_options['hashed_directory_level']) . DIRECTORY_SEPARATOR;
             $partsArray[] = $root;
         }
-        if ($parts){
-         return $partsArray;
+        if ($parts) {
+            return $partsArray;
         }
         return $root;
-        
+
     }
 
     /**
@@ -459,12 +469,20 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
         if (!is_dir($dir)) {
             return false;
         }
+        if ($mode == 'all' && $dir === $this->_options['cache_dir']) {
+            $glob = glob($this->_tagFile('*'));
+            if ($glob !== false) {
+                foreach ($glob as $tagFile) {
+                    @unlink($tagFile);
+                }
+            }
+        }
         $result = true;
         $glob = @glob($dir . $this->_options['file_name_prefix'] . '--*');
         if ($glob === false) {
             return true;
         }
-        foreach ($glob as $file)  {
+        foreach ($glob as $file) {
             if (is_file($file)) {
                 if ($mode == Zend_Cache::CLEANING_MODE_ALL) {
                     $result = @unlink($file) && $result;
@@ -478,7 +496,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
                     continue;
                 }
                 $metadatas = $this->_getCache($file, false);
-                if ( ! $metadatas) {
+                if (! $metadatas) {
                     @unlink($file);
                     continue;
                 }
@@ -499,11 +517,6 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
                     // if mode=='all', we try to drop the structure too
                     @rmdir($file);
                 }
-            }
-        }
-        if ($mode == 'all') {
-            foreach (glob($this->_tagFile('*')) as $tagFile) {
-                @unlink($tagFile);
             }
         }
         return $result;
@@ -530,9 +543,8 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
     protected function _cleanNew($mode = Zend_Cache::CLEANING_MODE_ALL, $tags = array())
     {
         $result = true;
-        $ids = $this->_getIdsByTags($mode, $tags, TRUE);
-        switch($mode)
-        {
+        $ids = $this->_getIdsByTags($mode, $tags, true);
+        switch($mode) {
             case Zend_Cache::CLEANING_MODE_NOT_MATCHING_TAG:
             case Zend_Cache::CLEANING_MODE_MATCHING_TAG:
                 $this->_updateIdsTags($ids, $tags, 'diff');
@@ -561,7 +573,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
                 $ids = $this->getIds();
                 if ($tags) {
                     foreach ($tags as $tag) {
-                        if ( ! $ids) {
+                        if (! $ids) {
                             break; // early termination optimization
                         }
                         $ids = array_diff($ids, $this->_getTagIds($tag));
@@ -573,7 +585,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
                     $tag = array_shift($tags);
                     $ids = $this->_getTagIds($tag);
                     foreach ($tags as $tag) {
-                        if ( ! $ids) {
+                        if (! $ids) {
                             break; // early termination optimization
                         }
                         $ids = array_intersect($ids, $this->_getTagIds($tag));
@@ -584,16 +596,20 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
             case Zend_Cache::CLEANING_MODE_MATCHING_ANY_TAG:
                 foreach ($tags as $tag) {
                     $file = $this->_tagFile($tag);
-                    if ( ! is_file($file) || ! ($fd = @fopen($file, 'rb+'))) {
+                    if (! is_file($file) || ! ($fd = @fopen($file, 'rb+'))) {
                         continue;
                     }
-                    if ($this->_options['file_locking']) flock($fd, LOCK_EX);
-                    $ids = array_merge($ids,$this->_getTagIds($fd));
+                    if ($this->_options['file_locking']) {
+                        flock($fd, LOCK_EX);
+                    }
+                    $ids = array_merge($ids, $this->_getTagIds($fd));
                     if ($delete) {
                         fseek($fd, 0);
                         ftruncate($fd, 0);
                     }
-                    if ($this->_options['file_locking']) flock($fd, LOCK_UN);
+                    if ($this->_options['file_locking']) {
+                        flock($fd, LOCK_UN);
+                    }
                     fclose($fd);
                 }
                 $ids = array_unique($ids);
@@ -623,8 +639,8 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
     protected function _tagPath()
     {
         $path = $this->_options['cache_dir'] . DIRECTORY_SEPARATOR . $this->_options['file_name_prefix']. '-tags' . DIRECTORY_SEPARATOR;
-        if ( ! $this->_isTagDirChecked) {
-            if ( ! is_dir($path)) {
+        if (! $this->_isTagDirChecked) {
+            if (! is_dir($path)) {
                 if (@mkdir($path, $this->_options['use_chmod'] ? $this->_options['directory_mode'] : 0777) && $this->_options['use_chmod']) {
                     @chmod($path, $this->_options['directory_mode']); // see #ZF-320 (this line is required in some configurations)
                 }
@@ -647,7 +663,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
         } else {
             $ids = false;
         }
-        if( ! $ids) {
+        if(! $ids) {
             return array();
         }
         $ids = trim(substr($ids, 0, strrpos($ids, "\n")));
@@ -669,13 +685,15 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
         foreach($tags as $tag) {
             $file = $this->_tagFile($tag);
             if (file_exists($file)) {
-                if ($mode == 'diff' || (mt_rand(1,100) == 1 && filesize($file) > 4096)) {
+                if ($mode == 'diff' || (mt_rand(1, 100) == 1 && filesize($file) > 4096)) {
                     $file = $this->_tagFile($tag);
-                    if ( ! ($fd = @fopen($file, 'rb+'))) {
+                    if (! ($fd = @fopen($file, 'rb+'))) {
                         $result = false;
                         continue;
                     }
-                    if ($this->_options['file_locking']) flock($fd, LOCK_EX);
+                    if ($this->_options['file_locking']) {
+                        flock($fd, LOCK_EX);
+                    }
                     if ($mode == 'diff') {
                         $_ids = array_diff($this->_getTagIds($fd), $ids);
                     } else {
@@ -684,13 +702,14 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
                     fseek($fd, 0);
                     ftruncate($fd, 0);
                     $result = fwrite($fd, implode("\n", array_unique($_ids))."\n") && $result;
-                    if ($this->_options['file_locking']) flock($fd, LOCK_UN);
+                    if ($this->_options['file_locking']) {
+                        flock($fd, LOCK_UN);
+                    }
                     fclose($fd);
-                }
-                else {
+                } else {
                     $result = file_put_contents($file, implode("\n", $ids)."\n", FILE_APPEND | ($this->_options['file_locking'] ? LOCK_EX : 0)) && $result;
                 }
-            } else if ($mode == 'merge') {
+            } elseif ($mode == 'merge') {
                 $result = $this->_filePutContents($file, implode("\n", $ids)."\n") && $result;
             }
         }
@@ -721,7 +740,7 @@ class Cm_Cache_Backend_File extends Zend_Cache_Backend_File
      */
     protected function _recursiveMkdirAndChmod($id)
     {
-        if ($this->_options['hashed_directory_level'] <=0) {
+        if ($this->_options['hashed_directory_level'] <= 0) {
             return true;
         }
         $partsArray = $this->_path($id, true);

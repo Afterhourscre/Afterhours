@@ -9,9 +9,7 @@ declare(strict_types=1);
 namespace Magento\CatalogUrlRewrite\Plugin\Webapi\Controller\Rest;
 
 use Magento\Catalog\Api\ProductRepositoryInterface;
-use Magento\Catalog\Model\Product;
 use Magento\Framework\Webapi\Rest\Request as RestRequest;
-use Magento\Webapi\Controller\Rest\InputParamsResolver as InputParamsResolverController;
 
 /**
  * Plugin for InputParamsResolver
@@ -37,11 +35,11 @@ class InputParamsResolver
      * Add 'save_rewrites_history' param to the product data
      *
      * @see \Magento\CatalogUrlRewrite\Plugin\Catalog\Controller\Adminhtml\Product\Initialization\Helper
-     * @param InputParamsResolverController $subject
+     * @param \Magento\Webapi\Controller\Rest\InputParamsResolver $subject
      * @param array $result
      * @return array
      */
-    public function afterResolve(InputParamsResolverController $subject, array $result): array
+    public function afterResolve(\Magento\Webapi\Controller\Rest\InputParamsResolver $subject, array $result): array
     {
         $route = $subject->getRoute();
         $serviceMethodName = $route->getServiceMethod();
@@ -53,7 +51,7 @@ class InputParamsResolver
             foreach ($requestBodyParams['product']['custom_attributes'] as $attribute) {
                 if ($attribute['attribute_code'] === 'save_rewrites_history') {
                     foreach ($result as $resultItem) {
-                        if ($resultItem instanceof Product) {
+                        if ($resultItem instanceof \Magento\Catalog\Model\Product) {
                             $resultItem->setData('save_rewrites_history', (bool)$attribute['value']);
                             break 2;
                         }

@@ -3,10 +3,16 @@
  * See COPYING.txt for license details.
  */
 
-define([
-    'Magento_Customer/js/customer-data'
-], function (customerData) {
+define(['Magento_Customer/js/customer-data'], function (customerData) {
     'use strict';
 
-    customerData.reload(['cart'], false);
+    return function () {
+        var cartData = customerData.get('cart');
+
+        customerData.getInitCustomerData().done(function () {
+            if (cartData().items && cartData().items.length !== 0) {
+                customerData.reload(['cart'], false);
+            }
+        });
+    };
 });

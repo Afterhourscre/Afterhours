@@ -3,6 +3,8 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Payment\Test\Unit\Gateway\Validator;
 
 use Magento\Framework\ObjectManager\TMap;
@@ -11,8 +13,9 @@ use Magento\Payment\Gateway\Validator\ResultInterface;
 use Magento\Payment\Gateway\Validator\ResultInterfaceFactory;
 use Magento\Payment\Gateway\Validator\ValidatorComposite;
 use Magento\Payment\Gateway\Validator\ValidatorInterface;
+use PHPUnit\Framework\TestCase;
 
-class ValidatorCompositeTest extends \PHPUnit\Framework\TestCase
+class ValidatorCompositeTest extends TestCase
 {
     public function testValidate()
     {
@@ -35,9 +38,9 @@ class ValidatorCompositeTest extends \PHPUnit\Framework\TestCase
                 [
                     'array' => [
                         'validator1' => ValidatorInterface::class,
-                        'validator2' => ValidatorInterface::class,
+                        'validator2' => ValidatorInterface::class
                     ],
-                    'type' => ValidatorInterface::class,
+                    'type' => ValidatorInterface::class
                 ]
             )
             ->willReturn($tMap);
@@ -58,6 +61,9 @@ class ValidatorCompositeTest extends \PHPUnit\Framework\TestCase
         $resultFail->expects(static::once())
             ->method('getFailsDescription')
             ->willReturn(['Fail']);
+        $resultFail->expects(static::once())
+            ->method('getErrorCodes')
+            ->willReturn(['abc123']);
 
         $validator1->expects(static::once())
             ->method('validate')
@@ -79,7 +85,8 @@ class ValidatorCompositeTest extends \PHPUnit\Framework\TestCase
             ->with(
                 [
                     'isValid' => false,
-                    'failsDescription' => ['Fail']
+                    'failsDescription' => ['Fail'],
+                    'errorCodes' => ['abc123']
                 ]
             )
             ->willReturn($compositeResult);
@@ -95,9 +102,6 @@ class ValidatorCompositeTest extends \PHPUnit\Framework\TestCase
         static::assertSame($compositeResult, $validatorComposite->validate($validationSubject));
     }
 
-    /**
-     * @return void
-     */
     public function testValidateChainBreaksCorrectly()
     {
         $validationSubject = [];
@@ -137,6 +141,9 @@ class ValidatorCompositeTest extends \PHPUnit\Framework\TestCase
         $resultFail->expects($this->once())
             ->method('getFailsDescription')
             ->willReturn(['Fail']);
+        $resultFail->expects($this->once())
+            ->method('getErrorCodes')
+            ->willReturn(['abc123']);
 
         $validator1->expects($this->once())
             ->method('validate')
@@ -158,7 +165,8 @@ class ValidatorCompositeTest extends \PHPUnit\Framework\TestCase
             ->with(
                 [
                     'isValid' => false,
-                    'failsDescription' => ['Fail']
+                    'failsDescription' => ['Fail'],
+                    'errorCodes' => ['abc123']
                 ]
             )
             ->willReturn($compositeResult);

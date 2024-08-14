@@ -84,9 +84,9 @@ class QuoteGenerator
 
     /**
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \Magento\ConfigurableProduct\Api\OptionRepositoryInterface $optionRepository
      * @param \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory
      * @param \Magento\Catalog\Api\ProductRepositoryInterface $productRepository
+     * @param \Magento\ConfigurableProduct\Api\OptionRepositoryInterface $optionRepository
      * @param \Magento\ConfigurableProduct\Api\LinkManagementInterface $linkManagement
      * @param \Magento\Framework\Serialize\SerializerInterface $serializer
      * @param QuoteConfiguration $config
@@ -530,6 +530,7 @@ class QuoteGenerator
     private function prepareQueryTemplates()
     {
         $fileName = $this->config->getFixtureDataFilename();
+        // phpcs:ignore Magento2.Functions.DiscouragedFunction
         $templateData = json_decode(file_get_contents(realpath($fileName)), true);
         foreach ($templateData as $table => $template) {
             if (isset($template['_table'])) {
@@ -566,6 +567,7 @@ class QuoteGenerator
                 $connection->beginTransaction();
             }
 
+            // phpcs:ignore Magento2.SQL.RawQuery
             $this->queryTemplates[$table] = "INSERT INTO `{$tableName}` ({$fields}) VALUES ({$values}){$querySuffix};";
             $this->resourceConnections[$table] = $connection;
         }
@@ -581,7 +583,7 @@ class QuoteGenerator
      * @param array $replacements
      * @return void
      */
-    protected function query($table, ... $replacements)
+    protected function query($table, ...$replacements)
     {
         $query = $this->queryTemplates[$table];
         foreach ($replacements as $data) {
@@ -606,6 +608,7 @@ class QuoteGenerator
     {
         $tableName = $this->getTableName($tableName, $resourceName);
         $connection = $this->getConnection($resourceName);
+        // phpcs:ignore Magento2.SQL.RawQuery
         return (int)$connection->query("SELECT MAX(`{$column}`) FROM `{$tableName}`;")->fetchColumn(0);
     }
 
@@ -686,7 +689,7 @@ class QuoteGenerator
             foreach ($options as $option) {
                 $attributesInfo[] = [
                     "label" => $option->getLabel(),
-                    "value" => $option['options']['0']['label'],
+                    "value" => $option['options']['0']['label'] ?? null,
                     "option_id" => $option->getAttributeId(),
                     "option_value" => $option->getValues()[0]->getValueIndex()
                 ];

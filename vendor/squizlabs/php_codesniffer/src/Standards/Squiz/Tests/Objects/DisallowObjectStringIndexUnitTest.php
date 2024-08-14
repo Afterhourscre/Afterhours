@@ -4,14 +4,19 @@
  *
  * @author    Sertan Danis <sdanis@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Tests\Objects;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class DisallowObjectStringIndexUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the DisallowObjectStringIndex sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Squiz\Sniffs\Objects\DisallowObjectStringIndexSniff
+ */
+final class DisallowObjectStringIndexUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,18 +30,18 @@ class DisallowObjectStringIndexUnitTest extends AbstractSniffUnitTest
      *
      * @return array<int, int>
      */
-    public function getErrorList($testFile='DisallowObjectStringIndexUnitTest.js')
+    public function getErrorList($testFile='')
     {
         if ($testFile !== 'DisallowObjectStringIndexUnitTest.js') {
-            return array();
+            return [];
         }
 
-        return array(
-                13 => 1,
-                17 => 1,
-                25 => 1,
-                35 => 1,
-               );
+        return [
+            13 => 1,
+            17 => 1,
+            25 => 1,
+            35 => 1,
+        ];
 
     }//end getErrorList()
 
@@ -51,7 +56,7 @@ class DisallowObjectStringIndexUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

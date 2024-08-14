@@ -4,12 +4,12 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Tokenizers;
 
-use PHP_CodeSniffer\Util;
+use PHP_CodeSniffer\Util\Common;
 
 class Comment
 {
@@ -25,7 +25,7 @@ class Comment
      * @param string $eolChar  The EOL character to use for splitting strings.
      * @param int    $stackPtr The position of the first token in the file.
      *
-     * @return array
+     * @return array<int, array<string, string|int|array<int>>>
      */
     public function tokenizeString($string, $eolChar, $stackPtr)
     {
@@ -33,7 +33,7 @@ class Comment
             echo "\t\t*** START COMMENT TOKENIZING ***".PHP_EOL;
         }
 
-        $tokens   = array();
+        $tokens   = [];
         $numChars = strlen($string);
 
         /*
@@ -41,22 +41,29 @@ class Comment
             extra star when they are used for function and class comments.
         */
 
-        $char    = ($numChars - strlen(ltrim($string, '/*')));
-        $openTag = substr($string, 0, $char);
-        $string  = ltrim($string, '/*');
+        $char      = ($numChars - strlen(ltrim($string, '/*')));
+        $lastChars = substr($string, -2);
+        if ($char === $numChars && $lastChars === '*/') {
+            // Edge case: docblock without whitespace or contents.
+            $openTag = substr($string, 0, -2);
+            $string  = $lastChars;
+        } else {
+            $openTag = substr($string, 0, $char);
+            $string  = ltrim($string, '/*');
+        }
 
-        $tokens[$stackPtr] = array(
-                              'content'      => $openTag,
-                              'code'         => T_DOC_COMMENT_OPEN_TAG,
-                              'type'         => 'T_DOC_COMMENT_OPEN_TAG',
-                              'comment_tags' => array(),
-                             );
+        $tokens[$stackPtr] = [
+            'content'      => $openTag,
+            'code'         => T_DOC_COMMENT_OPEN_TAG,
+            'type'         => 'T_DOC_COMMENT_OPEN_TAG',
+            'comment_tags' => [],
+        ];
 
         $openPtr = $stackPtr;
         $stackPtr++;
 
         if (PHP_CODESNIFFER_VERBOSITY > 1) {
-            $content = Util\Common::prepareForOutput($openTag);
+            $content = Common::prepareForOutput($openTag);
             echo "\t\tCreate comment token: T_DOC_COMMENT_OPEN_TAG => $content".PHP_EOL;
         }
 
@@ -66,14 +73,15 @@ class Comment
             stack just before we return it.
         */
 
-        $closeTag = array(
-                     'content'        => substr($string, strlen(rtrim($string, '/*'))),
-                     'code'           => T_DOC_COMMENT_CLOSE_TAG,
-                     'type'           => 'T_DOC_COMMENT_CLOSE_TAG',
-                     'comment_opener' => $openPtr,
-                    );
+        $closeTag = [
+            'content'        => substr($string, strlen(rtrim($string, '/*'))),
+            'code'           => T_DOC_COMMENT_CLOSE_TAG,
+            'type'           => 'T_DOC_COMMENT_CLOSE_TAG',
+            'comment_opener' => $openPtr,
+        ];
 
         if ($closeTag['content'] === false) {
+            // In PHP < 8.0 substr() can return `false` instead of always returning a string.
             $closeTag['content'] = '';
         }
 
@@ -99,7 +107,7 @@ class Comment
                 $tokens[$stackPtr] = $space;
                 $stackPtr++;
                 if (PHP_CODESNIFFER_VERBOSITY > 1) {
-                    $content = Util\Common::prepareForOutput($space['content']);
+                    $content = Common::prepareForOutput($space['content']);
                     echo "\t\tCreate comment token: T_DOC_COMMENT_WHITESPACE => $content".PHP_EOL;
                 }
 
@@ -113,14 +121,14 @@ class Comment
                 continue;
             }
 
-            if ($string[$char] === '*') {
+            if ($lineNum > 0 && $string[$char] === '*') {
                 // This is a function or class doc block line.
                 $char++;
-                $tokens[$stackPtr] = array(
-                                      'content' => '*',
-                                      'code'    => T_DOC_COMMENT_STAR,
-                                      'type'    => 'T_DOC_COMMENT_STAR',
-                                     );
+                $tokens[$stackPtr] = [
+                    'content' => '*',
+                    'code'    => T_DOC_COMMENT_STAR,
+                    'type'    => 'T_DOC_COMMENT_STAR',
+                ];
 
                 $stackPtr++;
 
@@ -134,7 +142,7 @@ class Comment
             foreach ($lineTokens as $lineToken) {
                 $tokens[$stackPtr] = $lineToken;
                 if (PHP_CODESNIFFER_VERBOSITY > 1) {
-                    $content = Util\Common::prepareForOutput($lineToken['content']);
+                    $content = Common::prepareForOutput($lineToken['content']);
                     $type    = $lineToken['type'];
                     echo "\t\tCreate comment token: $type => $content".PHP_EOL;
                 }
@@ -150,7 +158,7 @@ class Comment
         $tokens[$stackPtr] = $closeTag;
         $tokens[$openPtr]['comment_closer'] = $stackPtr;
         if (PHP_CODESNIFFER_VERBOSITY > 1) {
-            $content = Util\Common::prepareForOutput($closeTag['content']);
+            $content = Common::prepareForOutput($closeTag['content']);
             echo "\t\tCreate comment token: T_DOC_COMMENT_CLOSE_TAG => $content".PHP_EOL;
         }
 
@@ -171,11 +179,11 @@ class Comment
      * @param int    $start   The position in the string to start processing.
      * @param int    $end     The position in the string to end processing.
      *
-     * @return array
+     * @return array<int, array<string, string|int>>
      */
     private function processLine($string, $eolChar, $start, $end)
     {
-        $tokens = array();
+        $tokens = [];
 
         // Collect content padding.
         $space = $this->collectWhitespace($string, $start, $end);
@@ -190,16 +198,18 @@ class Comment
 
         if ($string[$start] === '@') {
             // The content up until the first whitespace is the tag name.
-            $matches = array();
+            $matches = [];
             preg_match('/@[^\s]+/', $string, $matches, 0, $start);
-            if (isset($matches[0]) === true) {
+            if (isset($matches[0]) === true
+                && substr(strtolower($matches[0]), 0, 7) !== '@phpcs:'
+            ) {
                 $tagName  = $matches[0];
                 $start   += strlen($tagName);
-                $tokens[] = array(
-                             'content' => $tagName,
-                             'code'    => T_DOC_COMMENT_TAG,
-                             'type'    => 'T_DOC_COMMENT_TAG',
-                            );
+                $tokens[] = [
+                    'content' => $tagName,
+                    'code'    => T_DOC_COMMENT_TAG,
+                    'type'    => 'T_DOC_COMMENT_TAG',
+                ];
 
                 // Then there will be some whitespace.
                 $space = $this->collectWhitespace($string, $start, $end);
@@ -217,19 +227,19 @@ class Comment
         }
 
         if ($eol > $start) {
-            $tokens[] = array(
-                         'content' => substr($string, $start, ($eol - $start)),
-                         'code'    => T_DOC_COMMENT_STRING,
-                         'type'    => 'T_DOC_COMMENT_STRING',
-                        );
+            $tokens[] = [
+                'content' => substr($string, $start, ($eol - $start)),
+                'code'    => T_DOC_COMMENT_STRING,
+                'type'    => 'T_DOC_COMMENT_STRING',
+            ];
         }
 
         if ($eol !== $end) {
-            $tokens[] = array(
-                         'content' => substr($string, $eol, strlen($eolChar)),
-                         'code'    => T_DOC_COMMENT_WHITESPACE,
-                         'type'    => 'T_DOC_COMMENT_WHITESPACE',
-                        );
+            $tokens[] = [
+                'content' => substr($string, $eol, strlen($eolChar)),
+                'code'    => T_DOC_COMMENT_WHITESPACE,
+                'type'    => 'T_DOC_COMMENT_WHITESPACE',
+            ];
         }
 
         return $tokens;
@@ -244,7 +254,7 @@ class Comment
      * @param int    $start  The position in the string to start processing.
      * @param int    $end    The position in the string to end processing.
      *
-     * @return array|null
+     * @return array<string, string|int>|null
      */
     private function collectWhitespace($string, $start, $end)
     {
@@ -261,13 +271,11 @@ class Comment
             return null;
         }
 
-        $token = array(
-                  'content' => $space,
-                  'code'    => T_DOC_COMMENT_WHITESPACE,
-                  'type'    => 'T_DOC_COMMENT_WHITESPACE',
-                 );
-
-        return $token;
+        return [
+            'content' => $space,
+            'code'    => T_DOC_COMMENT_WHITESPACE,
+            'type'    => 'T_DOC_COMMENT_WHITESPACE',
+        ];
 
     }//end collectWhitespace()
 

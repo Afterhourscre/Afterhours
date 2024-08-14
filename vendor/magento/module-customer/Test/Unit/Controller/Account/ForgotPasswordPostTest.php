@@ -3,6 +3,8 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Customer\Test\Unit\Controller\Account;
 
 use Magento\Customer\Api\AccountManagementInterface;
@@ -13,15 +15,16 @@ use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\Request\Http as Request;
 use Magento\Framework\Controller\Result\Redirect as ResultRedirect;
 use Magento\Framework\Controller\Result\RedirectFactory as ResultRedirectFactory;
-use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Framework\Escaper;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Message\ManagerInterface;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class ForgotPasswordPostTest extends \PHPUnit\Framework\TestCase
+class ForgotPasswordPostTest extends TestCase
 {
     /**
      * @var ForgotPasswordPost
@@ -29,78 +32,65 @@ class ForgotPasswordPostTest extends \PHPUnit\Framework\TestCase
     protected $controller;
 
     /**
-     * @var Context | \PHPUnit_Framework_MockObject_MockObject
+     * @var Context|MockObject
      */
     protected $context;
 
     /**
-     * @var Session | \PHPUnit_Framework_MockObject_MockObject
+     * @var Session|MockObject
      */
     protected $session;
 
     /**
-     * @var AccountManagementInterface | \PHPUnit_Framework_MockObject_MockObject
+     * @var AccountManagementInterface|MockObject
      */
     protected $accountManagement;
 
     /**
-     * @var Escaper | \PHPUnit_Framework_MockObject_MockObject
+     * @var Escaper|MockObject
      */
     protected $escaper;
 
     /**
-     * @var ResultRedirect | \PHPUnit_Framework_MockObject_MockObject
+     * @var ResultRedirect|MockObject
      */
     protected $resultRedirect;
 
     /**
-     * @var ResultRedirectFactory | \PHPUnit_Framework_MockObject_MockObject
+     * @var ResultRedirectFactory|MockObject
      */
     protected $resultRedirectFactory;
 
     /**
-     * @var Request | \PHPUnit_Framework_MockObject_MockObject
+     * @var Request|MockObject
      */
     protected $request;
 
     /**
-     * @var ManagerInterface | \PHPUnit_Framework_MockObject_MockObject
+     * @var ManagerInterface|MockObject
      */
     protected $messageManager;
 
-    /**
-     * @var Validator|\PHPUnit_Framework_MockObject_MockObject
-     */
-    private $formKeyValidatorMock;
-
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->prepareContext();
 
-        $this->session = $this->getMockBuilder(\Magento\Customer\Model\Session::class)
+        $this->session = $this->getMockBuilder(Session::class)
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->accountManagement = $this->getMockBuilder(\Magento\Customer\Api\AccountManagementInterface::class)
+        $this->accountManagement = $this->getMockBuilder(AccountManagementInterface::class)
             ->getMockForAbstractClass();
 
-        $this->escaper = $this->getMockBuilder(\Magento\Framework\Escaper::class)
+        $this->escaper = $this->getMockBuilder(Escaper::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->formKeyValidatorMock = $this->createMock(Validator::class);
-
-        $this->request->expects($this->once())->method('isPost')->willReturn(true);
-        $this->formKeyValidatorMock->expects($this->once())
-            ->method('validate')
-            ->with($this->request)
-            ->willReturn(true);
 
         $this->controller = new ForgotPasswordPost(
             $this->context,
             $this->session,
             $this->accountManagement,
-            $this->escaper,
-            $this->formKeyValidatorMock
+            $this->escaper
         );
     }
 
@@ -157,6 +147,8 @@ class ForgotPasswordPostTest extends \PHPUnit\Framework\TestCase
             ->with('*/*/')
             ->willReturnSelf();
 
+        $this->session->expects($this->once())->method('destroy')->with(['send_expire_cookie']);
+
         $this->controller->execute();
     }
 
@@ -199,7 +191,7 @@ class ForgotPasswordPostTest extends \PHPUnit\Framework\TestCase
     public function testExecuteException()
     {
         $email = 'user1@example.com';
-        $exception = new \Exception(__('Exception'));
+        $exception = new \Exception('Exception');
 
         $this->request->expects($this->once())
             ->method('getPost')
@@ -236,16 +228,18 @@ class ForgotPasswordPostTest extends \PHPUnit\Framework\TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->context = $this->getMockBuilder(\Magento\Framework\App\Action\Context::class)
+        $this->context = $this->getMockBuilder(Context::class)
             ->disableOriginalConstructor()
             ->getMock();
 
         $this->request = $this->getMockBuilder(\Magento\Framework\App\Request\Http::class)
             ->disableOriginalConstructor()
-            ->setMethods(['getPost', 'isPost'])
+            ->setMethods([
+                'getPost',
+            ])
             ->getMock();
 
-        $this->messageManager = $this->getMockBuilder(\Magento\Framework\Message\ManagerInterface::class)
+        $this->messageManager = $this->getMockBuilder(ManagerInterface::class)
             ->getMockForAbstractClass();
 
         $this->resultRedirectFactory->expects($this->any())

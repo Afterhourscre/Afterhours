@@ -7,21 +7,26 @@
 -->
 
 <actionGroups xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="../../../../../../../dev/tests/acceptance/vendor/magento/magento2-functional-testing-framework/src/Magento/FunctionalTestingFramework/Test/etc/actionGroupSchema.xsd">
+              xsi:noNamespaceSchemaLocation="urn:magento:mftf:Test/etc/actionGroupSchema.xsd">
     <actionGroup name="DeleteCustomStoreActionGroup">
+        <annotations>
+            <description>Goes to the Admin Stores grid page. Deletes the provided Store Group Name.</description>
+        </annotations>
         <arguments>
             <argument name="storeGroupName" defaultValue="customStoreGroup.name"/>
         </arguments>
-        <amOnPage stepKey="amOnAdminSystemStorePage"  url="{{AdminSystemStorePage.url}}"/>
-        <conditionalClick stepKey="resetSearchFilter" selector="{{AdminStoresGridFilterSection.clearAll}}" dependentSelector="{{AdminStoresGridFilterSection.clearAll}}" visible="true"/>
-        <click selector="{{AdminStoresGridFilterSection.filters}}" stepKey="openStoresFilters"/>
-        <fillField stepKey="fillSearchStoreGroupField" selector="{{AdminStoresGridFilterSection.storeFilter}}" userInput="{{storeGroupName}}"/>
-        <click stepKey="clickSearchButton" selector="{{AdminStoresGridFilterSection.applyFilters}}"/>
-        <see stepKey="verifyThatCorrectStoreGroupFound" selector="{{AdminStoresGridSection.storeInFirstRow}}" userInput="{{storeGroupName}}"/>
-        <click stepKey="clickEditExistingStoreRow" selector="{{AdminStoresGridSection.storeInFirstRow}}"/>
+
+        <amOnPage url="{{AdminSystemStorePage.url}}" stepKey="amOnAdminSystemStorePage"/>
+        <click selector="{{AdminDataGridHeaderSection.clearFilters}}" stepKey="resetSearchFilter"/>
+        <fillField userInput="{{storeGroupName}}" selector="{{AdminStoresGridSection.storeGrpFilterTextField}}" stepKey="fillSearchStoreGroupField"/>
+        <click selector="{{AdminStoresGridSection.searchButton}}" stepKey="clickSearchButton"/>
+        <see userInput="{{storeGroupName}}" selector="{{AdminStoresGridSection.storeGrpNameInFirstRow}}" stepKey="verifyThatCorrectStoreGroupFound"/>
+        <click selector="{{AdminStoresGridSection.storeGrpNameInFirstRow}}" stepKey="clickEditExistingStoreRow"/>
         <waitForPageLoad stepKey="waitForStoreToLoad"/>
-        <click stepKey="clickDeleteStoreGroupButtonOnEditStorePage" selector="{{AdminStoresMainActionsSection.deleteButton}}"/>
-        <selectOption stepKey="setCreateDbBackupToNo" selector="{{AdminStoresDeleteStoreGroupSection.createDbBackup}}" userInput="No"/>
-        <click stepKey="clickDeleteStoreGroupButtonOnDeleteStorePage" selector="{{AdminStoresDeleteStoreGroupSection.deleteStoreGroupButton}}"/>
+        <click selector="{{AdminStoresMainActionsSection.deleteButton}}" stepKey="clickDeleteStoreGroupButtonOnEditStorePage"/>
+        <selectOption userInput="No" selector="{{AdminStoresDeleteStoreGroupSection.createDbBackup}}" stepKey="setCreateDbBackupToNo"/>
+        <click selector="{{AdminStoresDeleteStoreGroupSection.deleteStoreGroupButton}}" stepKey="clickDeleteStoreGroupButtonOnDeleteStorePage"/>
+        <waitForElementVisible selector="{{AdminMessagesSection.success}}" stepKey="waitForSuccessMessage"/>
+        <see selector="{{AdminMessagesSection.success}}" userInput="You deleted the store." stepKey="seeSuccessMessage"/>
     </actionGroup>
 </actionGroups>

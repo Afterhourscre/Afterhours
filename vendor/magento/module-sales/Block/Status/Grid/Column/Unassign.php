@@ -5,12 +5,35 @@
  */
 namespace Magento\Sales\Block\Status\Grid\Column;
 
+use Magento\Framework\App\ObjectManager;
+use \Magento\Backend\Block\Template\Context;
+use Magento\Framework\Serialize\Serializer\Json;
+
 /**
  * @api
  * @since 100.0.2
  */
 class Unassign extends \Magento\Backend\Block\Widget\Grid\Column
 {
+    /**
+     * @var Json
+     */
+    private $json;
+
+    /**
+     * @inheritDoc
+     *
+     * @param Json|null $json
+     */
+    public function __construct(
+        Context $context,
+        array $data = [],
+        ?Json $json = null
+    ) {
+        parent::__construct($context, $data);
+        $this->json = $json ?? ObjectManager::getInstance()->get(Json::class);
+    }
+
     /**
      * Add decorated action to column
      *
@@ -40,7 +63,7 @@ class Unassign extends \Magento\Backend\Block\Widget\Grid\Column
             $label = __('Unassign');
             $cell = '<a href="#" data-post="'
                 .$this->escapeHtmlAttr(
-                    \json_encode([
+                    $this->json->serialize([
                         'action' => $url,
                         'data' => ['status' => $row->getStatus(), 'state' => $row->getState()]
                     ])

@@ -9,7 +9,7 @@
  */
 $titleIdHtml = ($block->getTitleId()) ? ' id="' . $block->escapeHtmlAttr($block->getTitleId()) . '"' : '';
 $titleClass = ($block->getTitleClass()) ? ' ' . $block->getTitleClass() : '';
-$title = $block->escapeHtml($block->getPageTitle());
+$title = $block->getPageTitle();
 ?>
 
 <div class="page-title-wrapper<?= $block->escapeHtmlAttr($titleClass) ?>">

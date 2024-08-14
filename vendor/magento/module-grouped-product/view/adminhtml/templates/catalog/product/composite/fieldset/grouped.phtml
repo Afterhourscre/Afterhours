@@ -36,7 +36,7 @@
             <?php if ($_hasAssociatedProducts) : ?>
                 <?php $i = 0 ?>
                 <?php foreach ($_associatedProducts as $_item) : ?>
-                <tr class="<?= /* @noEscape */ ((++$i % 2) ? 'even' : 'odd') ?>">
+                <tr class="<?= $block->escapeHtmlAttr((++$i % 2) ? 'even' : 'odd') ?>">
                     <td class="col-id"><?= $block->escapeHtml($_item->getId()) ?></td>
                     <td class="col-sku"><?= $block->escapeHtml($_item->getSku()) ?></td>
                     <td class="col-name"><?= $block->escapeHtml($_item->getName()) ?></td>

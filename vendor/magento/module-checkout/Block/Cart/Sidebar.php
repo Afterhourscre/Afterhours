@@ -11,6 +11,7 @@ use Magento\Store\Model\ScopeInterface;
  * Cart sidebar block
  *
  * @api
+ * @since 100.0.2
  */
 class Sidebar extends AbstractCart
 {
@@ -67,7 +68,7 @@ class Sidebar extends AbstractCart
     }
 
     /**
-     * Returns minicart config.
+     * Returns minicart config
      *
      * @return array
      */
@@ -84,10 +85,13 @@ class Sidebar extends AbstractCart
             'websiteId' => $this->_storeManager->getStore()->getWebsiteId(),
             'maxItemsToDisplay' => $this->getMaxItemsToDisplay(),
             'storeId' => $this->_storeManager->getStore()->getId(),
+            'storeGroupId' => $this->_storeManager->getStore()->getStoreGroupId()
         ];
     }
 
     /**
+     * Get serialized config
+     *
      * @return string
      * @since 100.2.0
      */
@@ -97,13 +101,13 @@ class Sidebar extends AbstractCart
     }
 
     /**
+     * Get image html template
+     *
      * @return string
      */
     public function getImageHtmlTemplate()
     {
-        return $this->imageHelper->getFrame()
-            ? 'Magento_Catalog/product/image'
-            : 'Magento_Catalog/product/image_with_borders';
+        return 'Magento_Catalog/product/image_with_borders';
     }
 
     /**
@@ -215,6 +219,7 @@ class Sidebar extends AbstractCart
 
     /**
      * Returns maximum cart items to display
+     *
      * This setting regulates how many items will be displayed in minicart
      *
      * @return int

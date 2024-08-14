@@ -40,7 +40,7 @@ class Footer extends \Magento\Backend\Block\Template
     }
 
     /**
-     * @return void
+     * @inheritdoc
      */
     protected function _construct()
     {
@@ -56,5 +56,14 @@ class Footer extends \Magento\Backend\Block\Template
     public function getMagentoVersion()
     {
         return $this->productMetadata->getVersion();
+    }
+
+    /**
+     * @inheritdoc
+     * @since 101.0.0
+     */
+    protected function getCacheLifetime()
+    {
+        return 3600 * 24 * 10;
     }
 }

@@ -4,13 +4,13 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Sniffs\WhiteSpace;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Util\Tokens;
 
 class SemicolonSpacingSniff implements Sniff
@@ -21,20 +21,20 @@ class SemicolonSpacingSniff implements Sniff
      *
      * @var array
      */
-    public $supportedTokenizers = array(
-                                   'PHP',
-                                   'JS',
-                                  );
+    public $supportedTokenizers = [
+        'PHP',
+        'JS',
+    ];
 
 
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(T_SEMICOLON);
+        return [T_SEMICOLON];
 
     }//end register()
 
@@ -58,18 +58,42 @@ class SemicolonSpacingSniff implements Sniff
         }
 
         $nonSpace = $phpcsFile->findPrevious(Tokens::$emptyTokens, ($stackPtr - 2), null, true);
-        if ($tokens[$nonSpace]['code'] === T_SEMICOLON) {
+
+        // Detect whether this is a semicolon for a condition in a `for()` control structure.
+        $forCondition = false;
+        if (isset($tokens[$stackPtr]['nested_parenthesis']) === true) {
+            $nestedParens     = $tokens[$stackPtr]['nested_parenthesis'];
+            $closeParenthesis = end($nestedParens);
+
+            if (isset($tokens[$closeParenthesis]['parenthesis_owner']) === true) {
+                $owner = $tokens[$closeParenthesis]['parenthesis_owner'];
+
+                if ($tokens[$owner]['code'] === T_FOR) {
+                    $forCondition = true;
+                    $nonSpace     = $phpcsFile->findPrevious(T_WHITESPACE, ($stackPtr - 2), null, true);
+                }
+            }
+        }
+
+        if ($tokens[$nonSpace]['code'] === T_SEMICOLON
+            || ($forCondition === true && $nonSpace === $tokens[$owner]['parenthesis_opener'])
+            || (isset($tokens[$nonSpace]['scope_opener']) === true
+            && $tokens[$nonSpace]['scope_opener'] === $nonSpace)
+        ) {
             // Empty statement.
             return;
         }
 
         $expected = $tokens[$nonSpace]['content'].';';
         $found    = $phpcsFile->getTokensAsString($nonSpace, ($stackPtr - $nonSpace)).';';
+        $found    = str_replace("\n", '\n', $found);
+        $found    = str_replace("\r", '\r', $found);
+        $found    = str_replace("\t", '\t', $found);
         $error    = 'Space found before semicolon; expected "%s" but found "%s"';
-        $data     = array(
-                     $expected,
-                     $found,
-                    );
+        $data     = [
+            $expected,
+            $found,
+        ];
 
         $fix = $phpcsFile->addFixableError($error, $stackPtr, 'Incorrect', $data);
         if ($fix === true) {

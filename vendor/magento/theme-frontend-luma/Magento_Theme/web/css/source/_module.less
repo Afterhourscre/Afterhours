@@ -62,13 +62,6 @@
 //  Common
 //  _____________________________________________
 
-.page-wrapper {
-    .ie9 & {
-        .lib-css(background-color, @page__background-color);
-        min-height: 0;
-    }
-}
-
 & when (@media-common = true) {
     body {
         .lib-css(background-color, @page__background-color);
@@ -82,6 +75,14 @@
 
     .page-main {
         .lib-vendor-prefix-flex-grow(1);
+    }
+
+    .page-main {
+        > .page-title-wrapper {
+            .page-title {
+                hyphens: auto;
+            }
+        }
     }
 
     //
@@ -110,6 +111,10 @@
             > li {
                 font-size: @font-size__base;
                 margin: 0 0 0 15px;
+
+                &.customer-welcome {
+                    margin: 0 0 0 5px;
+                }
 
                 > a {
                     .lib-link(
@@ -143,6 +148,7 @@
 
         img {
             display: block;
+            height: auto;
         }
 
         .page-print & {
@@ -283,7 +289,7 @@
         text-align: center;
     }
 
-    .page-header,
+    .page-header .panel.wrapper,
     .page-footer {
         .switcher {
             .options {
@@ -325,7 +331,7 @@
             }
         }
     }
-    .page-header {
+    .page-header .panel.wrapper {
         .switcher {
             .options {
                 ul.dropdown {
@@ -365,6 +371,7 @@
         .widget.block {
             .lib-css(margin, @indent__base 0);
         }
+
         .links .widget.block {
             margin: 0;
         }
@@ -385,6 +392,10 @@
         .lib-css(background, @tooltip__background);
         border: @tooltip__border-width solid @tooltip__border-color;
         padding: 10px;
+    }
+
+    .cookie-status-message {
+        display: none;
     }
 }
 
@@ -451,7 +462,7 @@
     }
 }
 
-.media-width(@extremum, @break) when (@extremum = 'max') and (@break = @screen__s) {
+.media-width(@extremum, @break) when (@extremum = 'max') and (@break = @screen__m) {
     .logo {
         margin-bottom: 13px;
         margin-top: 4px;
@@ -467,6 +478,17 @@
         padding-top: 0;
         position: relative;
     }
+
+    .page-main {
+        [class^='cms-privacy-policy'] & {
+            padding-top: 41px;
+            position: relative;
+        }
+    }
+
+    .cms-content .data-table {
+        .lib-table-responsive();
+    }
 }
 
 //
@@ -477,12 +499,6 @@
     html,
     body {
         height: 100%; // Stretch screen area for sticky footer
-    }
-
-    body {
-        .ie9 & {
-            .lib-css(background-color, @copyright__background-color);
-        }
     }
 
     .navigation ul {

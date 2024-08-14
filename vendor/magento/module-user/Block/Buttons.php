@@ -6,6 +6,8 @@
 namespace Magento\User\Block;
 
 /**
+ * Buttons block
+ *
  * @api
  * @since 100.0.2
  */
@@ -33,8 +35,9 @@ class Buttons extends \Magento\Backend\Block\Template
     }
 
     /**
+     * Prepare layout
+     *
      * @return $this
-     * @SuppressWarnings(PHPMD.RequestAwareBlockMethod)
      */
     protected function _prepareLayout()
     {
@@ -86,6 +89,8 @@ class Buttons extends \Magento\Backend\Block\Template
     }
 
     /**
+     * Get back button html
+     *
      * @return string
      */
     public function getBackButtonHtml()
@@ -94,6 +99,8 @@ class Buttons extends \Magento\Backend\Block\Template
     }
 
     /**
+     * Get reset button html
+     *
      * @return string
      */
     public function getResetButtonHtml()
@@ -102,6 +109,8 @@ class Buttons extends \Magento\Backend\Block\Template
     }
 
     /**
+     * Get save button html
+     *
      * @return string
      */
     public function getSaveButtonHtml()
@@ -110,8 +119,9 @@ class Buttons extends \Magento\Backend\Block\Template
     }
 
     /**
+     * Get delete button html
+     *
      * @return string|void
-     * @SuppressWarnings(PHPMD.RequestAwareBlockMethod)
      */
     public function getDeleteButtonHtml()
     {
@@ -122,6 +132,8 @@ class Buttons extends \Magento\Backend\Block\Template
     }
 
     /**
+     * Get user
+     *
      * @return mixed
      */
     public function getUser()

@@ -12,18 +12,14 @@ use Magento\Framework\App\ObjectManager;
  * Rating resource model
  *
  * @api
- *
- * @author      Magento Core Team <core@magentocommerce.com>
  * @since 100.0.2
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Rating extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
 {
-    const RATING_STATUS_APPROVED = 'Approved';
+    public const RATING_STATUS_APPROVED = 'Approved';
 
     /**
-     * Store manager
-     *
      * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
@@ -42,6 +38,11 @@ class Rating extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
      * @var ScopeConfigInterface
      */
     private $scopeConfig;
+
+    /**
+     * @var Review\Summary
+     */
+    private $_reviewSummary;
 
     /**
      * @param \Magento\Framework\Model\ResourceModel\Db\Context $context
@@ -190,7 +191,7 @@ class Rating extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     }
 
     /**
-     * Process rating codes.
+     * Process rating codes
      *
      * @param \Magento\Framework\Model\AbstractModel $object
      * @return $this
@@ -215,7 +216,7 @@ class Rating extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     }
 
     /**
-     * Process rating stores.
+     * Process rating stores
      *
      * @param \Magento\Framework\Model\AbstractModel $object
      * @return $this
@@ -240,7 +241,7 @@ class Rating extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     }
 
     /**
-     * Delete rating data.
+     * Delete rating data
      *
      * @param int $ratingId
      * @param string $table
@@ -265,7 +266,7 @@ class Rating extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     }
 
     /**
-     * Insert rating data.
+     * Insert rating data
      *
      * @param string $table
      * @param array $data

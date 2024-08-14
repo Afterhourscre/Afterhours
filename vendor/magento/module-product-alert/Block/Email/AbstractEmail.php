@@ -3,22 +3,19 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-
 namespace Magento\ProductAlert\Block\Email;
 
 use Magento\Framework\Pricing\PriceCurrencyInterface;
 
 /**
  * Product Alert Abstract Email Block
- *
- * @author     Magento Core Team <core@magentocommerce.com>
  */
 abstract class AbstractEmail extends \Magento\Framework\View\Element\Template
 {
     /**
      * Product collection array
      *
-     * @var array
+     * @var \Magento\Catalog\Model\Product[]
      */
     protected $_products = [];
 
@@ -40,7 +37,7 @@ abstract class AbstractEmail extends \Magento\Framework\View\Element\Template
     protected $priceCurrency;
 
     /**
-     * @var \Magento\Catalog\Helper\Image
+     * @var \Magento\Catalog\Block\Product\ImageBuilder
      */
     protected $imageBuilder;
 
@@ -67,7 +64,7 @@ abstract class AbstractEmail extends \Magento\Framework\View\Element\Template
     /**
      * Filter malicious code before insert content to email
      *
-     * @param  string|array $content
+     * @param string|array $content
      * @return string|array
      */
     public function getFilteredContent($content)
@@ -112,9 +109,9 @@ abstract class AbstractEmail extends \Magento\Framework\View\Element\Template
      * Convert price from default currency to current currency
      *
      * @param float $price
-     * @param boolean $format             Format price to currency format
-     * @param boolean $includeContainer   Enclose into <span class="price"><span>
-     * @return float
+     * @param bool $format Format price to currency format
+     * @param bool $includeContainer Enclose into <span class="price"><span>
+     * @return float|string
      */
     public function formatPrice($price, $format = true, $includeContainer = true)
     {
@@ -147,7 +144,7 @@ abstract class AbstractEmail extends \Magento\Framework\View\Element\Template
     /**
      * Retrieve product collection array
      *
-     * @return array
+     * @return \Magento\Catalog\Model\Product[]
      */
     public function getProducts()
     {
@@ -165,6 +162,8 @@ abstract class AbstractEmail extends \Magento\Framework\View\Element\Template
     }
 
     /**
+     * Get Price Render
+     *
      * @return \Magento\Framework\Pricing\Render
      */
     protected function getPriceRender()
@@ -210,7 +209,7 @@ abstract class AbstractEmail extends \Magento\Framework\View\Element\Template
     }
 
     /**
-     * Retrieve product image
+     * Retrieve product image.
      *
      * @param \Magento\Catalog\Model\Product $product
      * @param string $imageId
@@ -219,9 +218,6 @@ abstract class AbstractEmail extends \Magento\Framework\View\Element\Template
      */
     public function getImage($product, $imageId, $attributes = [])
     {
-        return $this->imageBuilder->setProduct($product)
-            ->setImageId($imageId)
-            ->setAttributes($attributes)
-            ->create();
+        return $this->imageBuilder->create($product, $imageId, $attributes);
     }
 }

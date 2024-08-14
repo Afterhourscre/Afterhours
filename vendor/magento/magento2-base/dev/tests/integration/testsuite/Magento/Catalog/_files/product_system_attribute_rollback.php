@@ -15,6 +15,7 @@ try {
     /** @var $attribute \Magento\Eav\Api\Data\AttributeInterface */
     $attribute = $attributeRepository->get('test_attribute_code_333');
     $attributeRepository->save($attribute->setIsUserDefined(1));
+    // phpcs:ignore Magento2.CodeAnalysis.EmptyBlock.DetectedCatch
 } catch (NoSuchEntityException $e) {
 }
 /** @var \Magento\Framework\Registry $registry */
@@ -28,6 +29,7 @@ try {
     if ($attribute->getId()) {
         $attribute->delete();
     }
+    // phpcs:ignore Magento2.CodeAnalysis.EmptyBlock.DetectedCatch
 } catch (\Exception $e) {
 }
 

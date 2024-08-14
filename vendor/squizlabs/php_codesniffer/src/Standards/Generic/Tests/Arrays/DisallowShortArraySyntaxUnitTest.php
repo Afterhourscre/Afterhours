@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Generic\Tests\Arrays;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class DisallowShortArraySyntaxUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the DisallowShortArraySyntax sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Generic\Sniffs\Arrays\DisallowShortArraySyntaxSniff
+ */
+final class DisallowShortArraySyntaxUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,12 +30,12 @@ class DisallowShortArraySyntaxUnitTest extends AbstractSniffUnitTest
      */
     public function getErrorList()
     {
-        return array(
-                3 => 1,
-                5 => 1,
-                7 => 1,
-                8 => 1,
-               );
+        return [
+            3 => 1,
+            5 => 1,
+            7 => 1,
+            8 => 1,
+        ];
 
     }//end getErrorList()
 
@@ -45,7 +50,7 @@ class DisallowShortArraySyntaxUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

@@ -3,6 +3,9 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
+declare(strict_types=1);
+
 namespace Magento\Quote\Model\Quote\Address\Total;
 
 use Magento\Framework\Pricing\PriceCurrencyInterface;
@@ -38,6 +41,15 @@ class Shipping extends \Magento\Quote\Model\Quote\Address\Total\AbstractTotal
     }
 
     /**
+     * @inheritDoc
+     */
+    public function _resetState(): void
+    {
+        parent::_resetState();
+        $this->setCode('shipping');
+    }
+
+    /**
      * Collect totals information about shipping
      *
      * @param \Magento\Quote\Model\Quote $quote
@@ -68,15 +80,14 @@ class Shipping extends \Magento\Quote\Model\Quote\Address\Total\AbstractTotal
         $address->setItemQty($data['addressQty']);
         $address->setWeight($data['addressWeight']);
         $address->setFreeMethodWeight($data['freeMethodWeight']);
-        $addressFreeShipping = (bool)$address->getFreeShipping();
+
         $isFreeShipping = $this->freeShipping->isFreeShipping($quote, $shippingAssignment->getItems());
-        $address->setFreeShipping($isFreeShipping);
-        if (!$addressFreeShipping && $isFreeShipping) {
-            $data = $this->getAssignmentWeightData($address, $shippingAssignment->getItems());
-            $address->setItemQty($data['addressQty']);
-            $address->setWeight($data['addressWeight']);
-            $address->setFreeMethodWeight($data['freeMethodWeight']);
-        }
+        $address->setFreeShipping((int)$isFreeShipping);
+        // recalculate weights
+        $data = $this->getAssignmentWeightData($address, $shippingAssignment->getItems());
+        $address->setItemQty($data['addressQty']);
+        $address->setWeight($data['addressWeight']);
+        $address->setFreeMethodWeight($data['freeMethodWeight']);
 
         $address->collectShippingRates();
 
@@ -112,17 +123,21 @@ class Shipping extends \Magento\Quote\Model\Quote\Address\Total\AbstractTotal
      */
     public function fetch(\Magento\Quote\Model\Quote $quote, \Magento\Quote\Model\Quote\Address\Total $total)
     {
-        $amount = $total->getShippingAmount();
-        $shippingDescription = $total->getShippingDescription();
-        $title = ($shippingDescription)
-            ? __('Shipping & Handling (%1)', $shippingDescription)
-            : __('Shipping & Handling');
+        if (!$quote->getIsVirtual()) {
+            $amount = $total->getShippingAmount();
+            $shippingDescription = $total->getShippingDescription();
+            $title = ($shippingDescription)
+                ? __('Shipping & Handling (%1)', $shippingDescription)
+                : __('Shipping & Handling');
 
-        return [
-            'code' => $this->getCode(),
-            'title' => $title,
-            'value' => $amount
-        ];
+            return [
+                'code' => $this->getCode(),
+                'title' => $title,
+                'value' => $amount
+            ];
+        } else {
+            return [];
+        }
     }
 
     /**

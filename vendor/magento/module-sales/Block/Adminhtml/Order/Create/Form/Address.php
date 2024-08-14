@@ -8,32 +8,34 @@ namespace Magento\Sales\Block\Adminhtml\Order\Create\Form;
 use Magento\Backend\Model\Session\Quote;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Data\Form\Element\AbstractElement;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Pricing\PriceCurrencyInterface;
 use Magento\Customer\Api\Data\AddressInterface;
 use Magento\Eav\Model\AttributeDataFactory;
 
 /**
  * Order create address form
+ *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Address extends \Magento\Sales\Block\Adminhtml\Order\Create\Form\AbstractForm
 {
     /**
-     * Customer form factory
+     * Customer Metadata form factory
      *
      * @var \Magento\Customer\Model\Metadata\FormFactory
      */
     protected $_customerFormFactory;
 
     /**
-     * Json encoder
+     * Framework Json encoder
      *
      * @var \Magento\Framework\Json\EncoderInterface
      */
     protected $_jsonEncoder;
 
     /**
-     * Directory helper
+     * Directory helper Data
      *
      * @var \Magento\Directory\Helper\Data
      */
@@ -47,28 +49,28 @@ class Address extends \Magento\Sales\Block\Adminhtml\Order\Create\Form\AbstractF
     protected $options;
 
     /**
-     * Address service
+     * Address service - AddressRepositoryInterface
      *
      * @var \Magento\Customer\Api\AddressRepositoryInterface
      */
     protected $addressService;
 
     /**
-     * Address helper
+     * Customer Address helper
      *
      * @var \Magento\Customer\Helper\Address
      */
     protected $_addressHelper;
 
     /**
-     * Search criteria builder
+     * Search criteria builder for getList calls
      *
      * @var \Magento\Framework\Api\SearchCriteriaBuilder
      */
     protected $searchCriteriaBuilder;
 
     /**
-     * Filter builder
+     * Filter builder for getList calls
      *
      * @var \Magento\Framework\Api\FilterBuilder
      */
@@ -138,6 +140,7 @@ class Address extends \Magento\Sales\Block\Adminhtml\Order\Create\Form\AbstractF
         $this->searchCriteriaBuilder = $criteriaBuilder;
         $this->filterBuilder = $filterBuilder;
         $this->addressMapper = $addressMapper;
+        $this->backendQuoteSession = $sessionQuote;
         parent::__construct(
             $context,
             $sessionQuote,
@@ -215,25 +218,38 @@ class Address extends \Magento\Sales\Block\Adminhtml\Order\Create\Form\AbstractF
      * Prepare Form and add elements to form
      *
      * @return $this
-     *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @throws LocalizedException
      */
     protected function _prepareForm()
     {
+        $storeId = $this->getAddressStoreId();
+        $this->_storeManager->setCurrentStore($storeId);
+
         $fieldset = $this->_form->addFieldset('main', ['no_container' => true]);
 
         $addressForm = $this->_customerFormFactory->create('customer_address', 'adminhtml_customer_address');
         $attributes = $addressForm->getAttributes();
+        uasort(
+            $attributes,
+            function ($attr1, $attr2) {
+                return $attr1->getSortOrder() <=> $attr2->getSortOrder();
+            }
+        );
         $this->_addAttributesToForm($attributes, $fieldset);
 
         $prefixElement = $this->_form->getElement('prefix');
         if ($prefixElement) {
             $prefixOptions = $this->options->getNamePrefixOptions($this->getStore());
             if (!empty($prefixOptions)) {
+                $mappedPrefixOptions = [];
+                foreach ($prefixOptions as $prefix) {
+                    $mappedPrefixOptions[$prefix] = $prefix;
+                }
                 $fieldset->removeField($prefixElement->getId());
                 $prefixField = $fieldset->addField($prefixElement->getId(), 'select', $prefixElement->getData(), '^');
-                $prefixField->setValues($prefixOptions);
+                $prefixField->setValues($mappedPrefixOptions);
                 if ($this->getAddressId()) {
                     $prefixField->addElementValues($this->getAddress()->getPrefix());
                 }
@@ -265,21 +281,24 @@ class Address extends \Magento\Sales\Block\Adminhtml\Order\Create\Form\AbstractF
 
         $this->_form->setValues($this->getFormValues());
 
-        if ($this->_form->getElement('country_id')->getValue()) {
-            $countryId = $this->_form->getElement('country_id')->getValue();
-            $this->_form->getElement('country_id')->setValue(null);
-            foreach ($this->_form->getElement('country_id')->getValues() as $country) {
+        $countryElement = $this->_form->getElement('country_id');
+
+        $this->processCountryOptions($countryElement);
+
+        if ($countryElement->getValue()) {
+            $countryId = $countryElement->getValue();
+            $countryElement->setValue(null);
+            foreach ($countryElement->getValues() as $country) {
                 if ($country['value'] == $countryId) {
-                    $this->_form->getElement('country_id')->setValue($countryId);
+                    $countryElement->setValue($countryId);
                 }
             }
         }
-        if ($this->_form->getElement('country_id')->getValue() === null) {
-            $this->_form->getElement('country_id')->setValue(
+        if ($countryElement->getValue() === null) {
+            $countryElement->setValue(
                 $this->directoryHelper->getDefaultCountry($this->getStore())
             );
         }
-        $this->processCountryOptions($this->_form->getElement('country_id'));
         // Set custom renderer for VAT field if needed
         $vatIdElement = $this->_form->getElement('vat_id');
         if ($vatIdElement && $this->getDisplayVatValidationButton() !== false) {
@@ -296,18 +315,14 @@ class Address extends \Magento\Sales\Block\Adminhtml\Order\Create\Form\AbstractF
     }
 
     /**
-     * @param \Magento\Framework\Data\Form\Element\AbstractElement $countryElement
-     * @param string|int $storeId
+     * Process country options.
      *
+     * @param \Magento\Framework\Data\Form\Element\AbstractElement $countryElement
      * @return void
      */
-    protected function processCountryOptions(
-        \Magento\Framework\Data\Form\Element\AbstractElement $countryElement,
-        $storeId = null
-    ) {
-        if ($storeId === null) {
-            $storeId = $this->getBackendQuoteSession()->getStoreId();
-        }
+    private function processCountryOptions(\Magento\Framework\Data\Form\Element\AbstractElement $countryElement)
+    {
+        $storeId = $this->getAddressStoreId();
         $options = $this->getCountriesCollection()
             ->loadByStore($storeId)
             ->toOptionArray();
@@ -316,8 +331,10 @@ class Address extends \Magento\Sales\Block\Adminhtml\Order\Create\Form\AbstractF
     }
 
     /**
-     * Retrieve Directiry Countries collection
+     * Retrieve Directory Countries collection
+     *
      * @deprecated 100.1.3
+     * @see MAGETWO-711174: Introduce deprecated and since doc blocks.
      * @return \Magento\Directory\Model\ResourceModel\Country\Collection
      */
     private function getCountriesCollection()
@@ -332,7 +349,9 @@ class Address extends \Magento\Sales\Block\Adminhtml\Order\Create\Form\AbstractF
 
     /**
      * Retrieve Backend Quote Session
+     *
      * @deprecated 100.1.3
+     * @see MAGETWO-711174: Introduce deprecated and since doc blocks.
      * @return Quote
      */
     private function getBackendQuoteSession()
@@ -383,5 +402,29 @@ class Address extends \Magento\Sales\Block\Adminhtml\Order\Create\Form\AbstractF
         }
 
         return $this->escapeHtml($result);
+    }
+
+    /**
+     * Return address store id.
+     *
+     * @return int
+     */
+    protected function getAddressStoreId()
+    {
+        return $this->getBackendQuoteSession()->getStoreId();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function _getAdditionalFormElementTypes()
+    {
+        return array_merge(
+            parent::_getAdditionalFormElementTypes(),
+            [
+                'file' => \Magento\Customer\Block\Adminhtml\Form\Element\Address\File::class,
+                'image' => \Magento\Customer\Block\Adminhtml\Form\Element\Address\Image::class,
+            ]
+        );
     }
 }

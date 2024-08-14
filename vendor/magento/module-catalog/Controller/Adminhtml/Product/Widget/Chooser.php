@@ -5,13 +5,13 @@
  */
 namespace Magento\Catalog\Controller\Adminhtml\Product\Widget;
 
-use Magento\Framework\Exception\NotFoundException;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\ObjectManager;
 
 /**
- * Chooser Product container Action.
+ * Controller to build Chooser container.
  */
-class Chooser extends \Magento\Backend\App\Action
+class Chooser extends \Magento\Backend\App\Action implements HttpPostActionInterface
 {
     /**
      * Authorization level of a basic admin session
@@ -55,14 +55,9 @@ class Chooser extends \Magento\Backend\App\Action
      * Chooser Source action.
      *
      * @return \Magento\Framework\Controller\Result\Raw
-     * @throws NotFoundException
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new NotFoundException(__('Page not found.'));
-        }
-
         $uniqId = $this->getRequest()->getParam('uniq_id');
         $massAction = $this->getRequest()->getParam('use_massaction', false);
         $productTypeId = $this->getRequest()->getParam('product_type_id', null);

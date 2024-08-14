@@ -11,6 +11,8 @@
  */
 namespace Magento\Framework\Backup\Filesystem\Iterator;
 
+use Iterator;
+
 class Filter extends \FilterIterator
 {
     /**
@@ -23,10 +25,10 @@ class Filter extends \FilterIterator
     /**
      * Constructor
      *
-     * @param \Iterator $iterator
+     * @param Iterator $iterator
      * @param array $filters list of files to skip
      */
-    public function __construct(\Iterator $iterator, array $filters)
+    public function __construct(Iterator $iterator, array $filters)
     {
         parent::__construct($iterator);
         $this->_filters = $filters;
@@ -37,17 +39,18 @@ class Filter extends \FilterIterator
      *
      * @return bool
      */
+    #[\ReturnTypeWillChange]
     public function accept()
     {
-        $current = str_replace('\\', '/', $this->current()->__toString());
-        $currentFilename = str_replace('\\', '/', $this->current()->getFilename());
+        $current = str_replace('\\', '/', $this->current()->__toString() ?? '');
+        $currentFilename = str_replace('\\', '/', $this->current()->getFilename() ?? '');
 
         if ($currentFilename == '.' || $currentFilename == '..') {
             return false;
         }
 
         foreach ($this->_filters as $filter) {
-            $filter = str_replace('\\', '/', $filter);
+            $filter = $filter !== null ? str_replace('\\', '/', $filter) : '';
             if (false !== strpos($current, $filter)) {
                 return false;
             }

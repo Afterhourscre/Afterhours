@@ -12,7 +12,6 @@ use Magento\Framework\App\ObjectManager;
  * Clone model for media images related config fields
  *
  * @SuppressWarnings(PHPMD.LongVariable)
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Image extends \Magento\Framework\App\Config\Value
 {
@@ -85,7 +84,6 @@ class Image extends \Magento\Framework\App\Config\Value
         $prefixes = [];
 
         foreach ($collection as $attribute) {
-            /* @var $attribute \Magento\Eav\Model\Entity\Attribute */
             $prefixes[] = [
                 'field' => $attribute->getAttributeCode() . '_',
                 'label' => $this->escaper->escapeHtml($attribute->getFrontend()->getLabel()),

@@ -12,6 +12,7 @@ use Magento\Framework\Encryption\EncryptorInterface;
 use MageCloud\CloudflareManager\Helper\Data as HelperData;
 use MageCloud\CloudflareManager\Model\Serializer;
 use Magento\Framework\App\ObjectManager;
+use Laminas\Http\Response as LaminasResponse;
 
 /**
  * API manager for Cloudflare service
@@ -266,6 +267,8 @@ class ApiManager extends \Magento\Framework\DataObject
      *
      * @return $this
      */
+   
+
     public function sendRequest()
     {
         $response = $this->getResponse();
@@ -295,7 +298,7 @@ class ApiManager extends \Magento\Framework\DataObject
                 ]);
                 return $this;
             }
-            $result = \Zend_Http_Response::fromString($result);
+            $result = LaminasResponse::fromString($result);
             $responseBody = $result->getBody();
             if (!is_string($responseBody)) {
                 $this->setResponse([
@@ -314,6 +317,7 @@ class ApiManager extends \Magento\Framework\DataObject
 
         return $this;
     }
+
 
     /**
      * @param $errors

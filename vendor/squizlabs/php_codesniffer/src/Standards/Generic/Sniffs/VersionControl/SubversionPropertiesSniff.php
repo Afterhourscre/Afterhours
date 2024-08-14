@@ -4,14 +4,14 @@
  *
  * @author    Jack Bates <ms419@freezone.co.uk>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Generic\Sniffs\VersionControl;
 
 use PHP_CodeSniffer\Exceptions\RuntimeException;
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 
 class SubversionPropertiesSniff implements Sniff
 {
@@ -25,20 +25,20 @@ class SubversionPropertiesSniff implements Sniff
      *
      * @var array
      */
-    protected $properties = array(
-                             'svn:keywords'  => 'Author Id Revision',
-                             'svn:eol-style' => 'native',
-                            );
+    protected $properties = [
+        'svn:keywords'  => 'Author Id Revision',
+        'svn:eol-style' => 'native',
+    ];
 
 
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(T_OPEN_TAG);
+        return [T_OPEN_TAG];
 
     }//end register()
 
@@ -50,17 +50,15 @@ class SubversionPropertiesSniff implements Sniff
      * @param int                         $stackPtr  The position of the current token
      *                                               in the stack passed in $tokens.
      *
-     * @return void
+     * @return int
      */
     public function process(File $phpcsFile, $stackPtr)
     {
-        $tokens = $phpcsFile->getTokens();
-
-        $path       = $phpcsFile->getFileName();
+        $path       = $phpcsFile->getFilename();
         $properties = $this->getProperties($path);
         if ($properties === null) {
             // Not under version control.
-            return ($phpcsFile->numTokens + 1);
+            return $phpcsFile->numTokens;
         }
 
         $allProperties = ($properties + $this->properties);
@@ -69,10 +67,10 @@ class SubversionPropertiesSniff implements Sniff
                 && isset($this->properties[$key]) === false
             ) {
                 $error = 'Unexpected Subversion property "%s" = "%s"';
-                $data  = array(
-                          $key,
-                          $properties[$key],
-                         );
+                $data  = [
+                    $key,
+                    $properties[$key],
+                ];
                 $phpcsFile->addError($error, $stackPtr, 'Unexpected', $data);
                 continue;
             }
@@ -81,10 +79,10 @@ class SubversionPropertiesSniff implements Sniff
                 && isset($this->properties[$key]) === true
             ) {
                 $error = 'Missing Subversion property "%s" = "%s"';
-                $data  = array(
-                          $key,
-                          $this->properties[$key],
-                         );
+                $data  = [
+                    $key,
+                    $this->properties[$key],
+                ];
                 $phpcsFile->addError($error, $stackPtr, 'Missing', $data);
                 continue;
             }
@@ -93,17 +91,17 @@ class SubversionPropertiesSniff implements Sniff
                 && $properties[$key] !== $this->properties[$key]
             ) {
                 $error = 'Subversion property "%s" = "%s" does not match "%s"';
-                $data  = array(
-                          $key,
-                          $properties[$key],
-                          $this->properties[$key],
-                         );
+                $data  = [
+                    $key,
+                    $properties[$key],
+                    $this->properties[$key],
+                ];
                 $phpcsFile->addError($error, $stackPtr, 'NoMatch', $data);
             }
         }//end foreach
 
         // Ignore the rest of the file.
-        return ($phpcsFile->numTokens + 1);
+        return $phpcsFile->numTokens;
 
     }//end process()
 
@@ -115,15 +113,15 @@ class SubversionPropertiesSniff implements Sniff
      *
      * @param string $path The path to return Subversion properties on.
      *
-     * @return array
+     * @return array|null
      * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If Subversion properties file could
      *                                                      not be opened.
      */
     protected function getProperties($path)
     {
-        $properties = array();
+        $properties = [];
 
-        $paths   = array();
+        $paths   = [];
         $paths[] = dirname($path).'/.svn/props/'.basename($path).'.svn-work';
         $paths[] = dirname($path).'/.svn/prop-base/'.basename($path).'.svn-base';
 

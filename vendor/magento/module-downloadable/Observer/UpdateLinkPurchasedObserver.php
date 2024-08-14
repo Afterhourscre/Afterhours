@@ -9,6 +9,7 @@ namespace Magento\Downloadable\Observer;
 
 use Magento\Downloadable\Model\ResourceModel\Link\Purchased\Collection as PurchasedCollection;
 use Magento\Downloadable\Model\ResourceModel\Link\Purchased\CollectionFactory;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 
@@ -18,6 +19,13 @@ use Magento\Framework\Event\ObserverInterface;
 class UpdateLinkPurchasedObserver implements ObserverInterface
 {
     /**
+     * Core store config
+     *
+     * @var ScopeConfigInterface
+     */
+    private $scopeConfig;
+
+    /**
      * Purchased links collection factory
      *
      * @var CollectionFactory
@@ -25,11 +33,14 @@ class UpdateLinkPurchasedObserver implements ObserverInterface
     private $purchasedCollectionFactory;
 
     /**
+     * @param ScopeConfigInterface $scopeConfig
      * @param CollectionFactory $purchasedCollectionFactory
      */
     public function __construct(
+        ScopeConfigInterface $scopeConfig,
         CollectionFactory $purchasedCollectionFactory
     ) {
+        $this->scopeConfig = $scopeConfig;
         $this->purchasedCollectionFactory = $purchasedCollectionFactory;
     }
 
@@ -63,9 +74,11 @@ class UpdateLinkPurchasedObserver implements ObserverInterface
      */
     private function getPurchasedCollection(int $orderId): PurchasedCollection
     {
-        return $this->purchasedCollectionFactory->create()->addFieldToFilter(
+        $purchasedCollection = $this->purchasedCollectionFactory->create()->addFieldToFilter(
             'order_id',
             ['eq' => $orderId]
         );
+
+        return $purchasedCollection;
     }
 }

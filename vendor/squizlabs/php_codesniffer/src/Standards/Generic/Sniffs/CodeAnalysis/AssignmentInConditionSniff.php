@@ -8,18 +8,17 @@
  *
  * @author    Juliette Reinders Folmer <phpcs_nospam@adviesenzo.nl>
  * @copyright 2017 Juliette Reinders Folmer. All rights reserved.
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Generic\Sniffs\CodeAnalysis;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Util\Tokens;
 
 class AssignmentInConditionSniff implements Sniff
 {
-
 
     /**
      * Assignment tokens to trigger on.
@@ -28,20 +27,20 @@ class AssignmentInConditionSniff implements Sniff
      *
      * @var array
      */
-    protected $assignmentTokens = array();
+    protected $assignmentTokens = [];
 
     /**
      * The tokens that indicate the start of a condition.
      *
      * @var array
      */
-    protected $conditionStartTokens = array();
+    protected $conditionStartTokens = [];
 
 
     /**
      * Registers the tokens that this sniff wants to listen for.
      *
-     * @return int[]
+     * @return array<int|string>
      */
     public function register()
     {
@@ -54,14 +53,15 @@ class AssignmentInConditionSniff implements Sniff
 
         $this->conditionStartTokens = $starters;
 
-        return array(
-                T_IF,
-                T_ELSEIF,
-                T_FOR,
-                T_SWITCH,
-                T_CASE,
-                T_WHILE,
-               );
+        return [
+            T_IF,
+            T_ELSEIF,
+            T_FOR,
+            T_SWITCH,
+            T_CASE,
+            T_WHILE,
+            T_MATCH,
+        ];
 
     }//end register()
 
@@ -150,10 +150,15 @@ class AssignmentInConditionSniff implements Sniff
             }
 
             if ($hasVariable === true) {
+                $errorCode = 'Found';
+                if ($token['code'] === T_WHILE) {
+                    $errorCode = 'FoundInWhileCondition';
+                }
+
                 $phpcsFile->addWarning(
                     'Variable assignment found within a condition. Did you mean to do a comparison ?',
                     $hasAssignment,
-                    'Found'
+                    $errorCode
                 );
             }
 

@@ -7,9 +7,14 @@
 //  Main elements -> Actions bar -> Store Switcher
 //  _____________________________________________
 
-//  ToDo UI: Consist old styles, should be changed with new design
+//  ToDo UI:  Consist old styles, should be changed with new design
 
 .store-switcher {
+    color: @text__color;
+    float: left;
+    font-size: round(@font-size__base - .1rem, 1);
+    margin-top: .59rem;
+
     .admin__action-dropdown {
         background-color: @page-main-actions__background-color;
         margin-left: .5em;
@@ -111,12 +116,6 @@
             }
         }
     }
-
-    color: @text__color; // ToDo UI: Delete with admin scope
-    float: left;
-    font-size: round(@font-size__base - .1rem, 1);
-    margin-top: .59rem;
-
 }
 
 .store-switcher-label {
@@ -236,7 +235,7 @@
 .store-view {
     &:not(.store-switcher) {
         float: left;
-        margin-top: 13px;
+        margin-top: 1.10rem;
     }
 
     .store-switcher-label {

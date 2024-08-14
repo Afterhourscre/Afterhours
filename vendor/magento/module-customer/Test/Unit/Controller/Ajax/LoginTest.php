@@ -3,6 +3,7 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Magento\Customer\Test\Unit\Controller\Ajax;
 
@@ -27,12 +28,13 @@ use Magento\Framework\Stdlib\Cookie\CookieMetadata;
 use Magento\Framework\Stdlib\Cookie\CookieMetadataFactory;
 use Magento\Framework\Stdlib\CookieManagerInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class LoginTest extends \PHPUnit\Framework\TestCase
+class LoginTest extends TestCase
 {
     /**
      * @var Login
@@ -102,24 +104,20 @@ class LoginTest extends \PHPUnit\Framework\TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->request = $this->getMockBuilder(Http::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->response = $this->createPartialMock(
-            ResponseInterface::class,
-            ['setRedirect', 'sendResponse', 'representJson', 'setHttpResponseCode']
-        );
-        $this->customerSession = $this->createPartialMock(Session::class, [
-                'isLoggedIn',
-                'getLastCustomerId',
-                'getBeforeAuthUrl',
-                'setBeforeAuthUrl',
-                'setCustomerDataAsLoggedIn',
-                'regenerateId',
-                'getData'
-            ]);
+        $this->response = $this->getMockBuilder(ResponseInterface::class)
+            ->addMethods(['setRedirect', 'representJson', 'setHttpResponseCode'])
+            ->onlyMethods(['sendResponse'])
+            ->getMockForAbstractClass();
+        $this->customerSession = $this->getMockBuilder(Session::class)
+            ->addMethods(['getLastCustomerId', 'getBeforeAuthUrl'])
+            ->onlyMethods(['isLoggedIn', 'setBeforeAuthUrl', 'setCustomerDataAsLoggedIn', 'regenerateId', 'getData'])
+            ->disableOriginalConstructor()
+            ->getMock();
         $this->objectManager = $this->createPartialMock(FakeObjectManager::class, ['get']);
         $this->accountManagement = $this->createPartialMock(AccountManagement::class, ['authenticate']);
 
@@ -139,9 +137,6 @@ class LoginTest extends \PHPUnit\Framework\TestCase
         $this->cookieMetadataFactory = $this->getMockBuilder(CookieMetadataFactory::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->cookieMetadata = $this->getMockBuilder(CookieMetadata::class)
-            ->disableOriginalConstructor()
-            ->getMock();
 
         $this->resultRaw = $this->getMockBuilder(Raw::class)
             ->disableOriginalConstructor()
@@ -155,7 +150,7 @@ class LoginTest extends \PHPUnit\Framework\TestCase
 
         /** @var Context|MockObject $context */
         $context = $this->createMock(Context::class);
-        $this->redirect = $this->createMock(RedirectInterface::class);
+        $this->redirect = $this->getMockForAbstractClass(RedirectInterface::class);
         $context->method('getRedirect')
             ->willReturn($this->redirect);
         $context->method('getRequest')
@@ -182,7 +177,7 @@ class LoginTest extends \PHPUnit\Framework\TestCase
     /**
      * Checks successful login.
      */
-    public function testLogin()
+    public function testLogin(): void
     {
         $jsonRequest = '{"username":"customer@example.com", "password":"password"}';
         $loginSuccessResponse = '{"errors": false, "message":"Login successful."}';
@@ -235,7 +230,7 @@ class LoginTest extends \PHPUnit\Framework\TestCase
     /**
      * Checks unsuccessful login.
      */
-    public function testLoginFailure()
+    public function testLoginFailure(): void
     {
         $jsonRequest = '{"username":"invalid@example.com", "password":"invalid"}';
         $loginFailureResponse = '{"message":"Invalid login or password."}';
@@ -259,14 +254,10 @@ class LoginTest extends \PHPUnit\Framework\TestCase
             ->with($customer);
         $this->customerSession->expects(self::never())
             ->method('regenerateId');
-        $this->customerSession->method('getData')
-            ->with('user_login_show_captcha')
-            ->willReturn(false);
 
         $result = [
             'errors' => true,
-            'message' => __('Invalid login or password.'),
-            'captcha' => false
+            'message' => __('Invalid login or password.')
         ];
         $this->resultJson->method('setData')
             ->with($result)
@@ -280,7 +271,7 @@ class LoginTest extends \PHPUnit\Framework\TestCase
      *
      * @param string $jsonRequest
      */
-    private function withRequest(string $jsonRequest)
+    private function withRequest(string $jsonRequest): void
     {
         $this->request->method('getContent')
             ->willReturn($jsonRequest);
@@ -295,7 +286,7 @@ class LoginTest extends \PHPUnit\Framework\TestCase
     /**
      * Emulates cookie manager behavior.
      */
-    private function withCookieManager()
+    private function withCookieManager(): void
     {
         $this->cookieManager->method('getCookie')
             ->with('mage-cache-sessid')
@@ -316,10 +307,10 @@ class LoginTest extends \PHPUnit\Framework\TestCase
     /**
      * Emulates config behavior.
      */
-    private function withScopeConfig()
+    private function withScopeConfig(): void
     {
         /** @var ScopeConfigInterface|MockObject $scopeConfig */
-        $scopeConfig = $this->createMock(ScopeConfigInterface::class);
+        $scopeConfig = $this->getMockForAbstractClass(ScopeConfigInterface::class);
         $this->controller->setScopeConfig($scopeConfig);
         $scopeConfig->method('getValue')
             ->with('customer/startup/redirect_dashboard')

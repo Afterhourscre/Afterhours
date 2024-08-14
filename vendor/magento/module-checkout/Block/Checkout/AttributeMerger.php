@@ -10,9 +10,15 @@ use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Helper\Address as AddressHelper;
 use Magento\Customer\Model\Session;
 use Magento\Directory\Helper\Data as DirectoryHelper;
+use Magento\Directory\Model\AllowedCountries;
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 
 /**
  * Fields attribute merger.
+ *
+ * @SuppressWarnings(PHPMD.CookieAndSessionMisuse)
  */
 class AttributeMerger
 {
@@ -89,22 +95,31 @@ class AttributeMerger
     private $topCountryCodes;
 
     /**
+     * @var AllowedCountries|null
+     */
+    private $allowedCountryReader;
+
+    /**
      * @param AddressHelper $addressHelper
      * @param Session $customerSession
      * @param CustomerRepository $customerRepository
      * @param DirectoryHelper $directoryHelper
+     * @param AllowedCountries $allowedCountryReader
      */
     public function __construct(
         AddressHelper $addressHelper,
         Session $customerSession,
         CustomerRepository $customerRepository,
-        DirectoryHelper $directoryHelper
+        DirectoryHelper $directoryHelper,
+        ?AllowedCountries $allowedCountryReader = null
     ) {
         $this->addressHelper = $addressHelper;
         $this->customerSession = $customerSession;
         $this->customerRepository = $customerRepository;
         $this->directoryHelper = $directoryHelper;
         $this->topCountryCodes = $directoryHelper->getTopCountryCodes();
+        $this->allowedCountryReader =
+            $allowedCountryReader ?: ObjectManager::getInstance()->get(AllowedCountries::class);
     }
 
     /**
@@ -285,6 +300,7 @@ class AttributeMerger
                 'dataScope' => $lineIndex,
                 'provider' => $providerName,
                 'validation' => $isFirstLine
+                    // phpcs:ignore Magento2.Performance.ForeachArrayMerge
                     ? array_merge(
                         ['required-entry' => (bool)$attributeConfig['required']],
                         $attributeConfig['validation']
@@ -318,12 +334,18 @@ class AttributeMerger
      * Returns default attribute value.
      *
      * @param string $attributeCode
+     * @throws NoSuchEntityException
+     * @throws LocalizedException
      * @return null|string
      */
-    protected function getDefaultValue($attributeCode)
+    protected function getDefaultValue($attributeCode): ?string
     {
         if ($attributeCode === 'country_id') {
-            return $this->directoryHelper->getDefaultCountry();
+            $defaultCountryId = $this->directoryHelper->getDefaultCountry();
+            if (!in_array($defaultCountryId, $this->allowedCountryReader->getAllowedCountries())) {
+                $defaultCountryId = null;
+            }
+            return $defaultCountryId;
         }
 
         $customer = $this->getCustomer();
@@ -356,9 +378,11 @@ class AttributeMerger
     /**
      * Returns logged customer.
      *
+     * @throws NoSuchEntityException
+     * @throws LocalizedException
      * @return CustomerInterface|null
      */
-    protected function getCustomer()
+    protected function getCustomer(): ?CustomerInterface
     {
         if (!$this->customer) {
             if ($this->customerSession->isLoggedIn()) {
@@ -373,14 +397,14 @@ class AttributeMerger
     /**
      * Retrieve field options from attribute configuration
      *
-     * @param string $attributeCode
+     * @param mixed $attributeCode
      * @param array $attributeConfig
      * @return array
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     protected function getFieldOptions($attributeCode, array $attributeConfig)
     {
-        return isset($attributeConfig['options']) ? $attributeConfig['options'] : [];
+        return $attributeConfig['options'] ?? [];
     }
 
     /**
@@ -388,7 +412,7 @@ class AttributeMerger
      *
      * @param array $countryOptions
      * @return array
-     * @deprecated 100.2.0
+     * @deprecated 100.1.7
      */
     protected function orderCountryOptions(array $countryOptions)
     {

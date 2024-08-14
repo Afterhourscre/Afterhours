@@ -13,17 +13,32 @@ use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address;
 use Magento\Quote\Model\Quote\Item;
 use Magento\Store\Api\Data\StoreInterface;
-use Magento\Store\Model\StoreManagerInterface;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-class FreeShippingTest extends \PHPUnit\Framework\TestCase
+/**
+ * Test for Magento\OfflineShipping\Model\Quote\Address\FreeShipping class.
+ */
+class FreeShippingTest extends TestCase
 {
+    /**
+     * @var int
+     */
     private static $websiteId = 1;
 
+    /**
+     * @var int
+     */
     private static $customerGroupId = 2;
 
+    /**
+     * @var int
+     */
     private static $couponCode = 3;
 
+    /**
+     * @var int
+     */
     private static $storeId = 1;
 
     /**
@@ -32,22 +47,15 @@ class FreeShippingTest extends \PHPUnit\Framework\TestCase
     private $model;
 
     /**
-     * @var MockObject|StoreManagerInterface
-     */
-    private $storeManager;
-
-    /**
      * @var MockObject|Calculator
      */
     private $calculator;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->storeManager = $this->createMock(StoreManagerInterface::class);
         $this->calculator = $this->createMock(Calculator::class);
 
         $this->model = new FreeShipping(
-            $this->storeManager,
             $this->calculator
         );
     }
@@ -70,19 +78,21 @@ class FreeShippingTest extends \PHPUnit\Framework\TestCase
         $sItem = $this->getItem($quote);
         $items = [$fItem, $sItem];
 
-        $this->calculator->method('init')
-            ->with(self::$websiteId, self::$customerGroupId, self::$couponCode);
+        $this->calculator->method('initFromQuote')
+            ->with($this->getQuote($this->getShippingAddress()));
         $this->calculator->method('processFreeShipping')
             ->withConsecutive(
                 [$fItem],
                 [$sItem]
             )
-            ->willReturnCallback(function () use ($fItem, $sItem, $addressFree, $fItemFree, $sItemFree) {
-                // emulate behavior of cart rule calculator
-                $fItem->getAddress()->setFreeShipping($addressFree);
-                $fItem->setFreeShipping($fItemFree);
-                $sItem->setFreeShipping($sItemFree);
-            });
+            ->willReturnCallback(
+                function () use ($fItem, $sItem, $addressFree, $fItemFree, $sItemFree) {
+                    // emulate behavior of cart rule calculator
+                    $fItem->getAddress()->setFreeShipping($addressFree);
+                    $fItem->setFreeShipping($fItemFree);
+                    $sItem->setFreeShipping($sItemFree);
+                }
+            );
 
         $actual = $this->model->isFreeShipping($quote, $items);
         self::assertEquals($expected, $actual);
@@ -111,10 +121,7 @@ class FreeShippingTest extends \PHPUnit\Framework\TestCase
     {
         $store = $this->getMockBuilder(StoreInterface::class)
             ->disableOriginalConstructor()
-            ->getMock();
-        $this->storeManager->method('getStore')
-            ->with(self::$storeId)
-            ->willReturn($store);
+            ->getMockForAbstractClass();
 
         $store->method('getWebsiteId')
             ->willReturn(self::$websiteId);
@@ -133,8 +140,11 @@ class FreeShippingTest extends \PHPUnit\Framework\TestCase
             ->disableOriginalConstructor()
             ->setMethods(
                 [
-                    'getCouponCode', 'getCustomerGroupId', 'getShippingAddress', 'getStoreId', 'getItemsQty',
-                    'getVirtualItemsQty'
+                    'getCouponCode',
+                    'getCustomerGroupId',
+                    'getShippingAddress',
+                    'getStoreId',
+                    'isVirtual'
                 ]
             )
             ->getMock();
@@ -147,10 +157,8 @@ class FreeShippingTest extends \PHPUnit\Framework\TestCase
             ->willReturn(self::$couponCode);
         $quote->method('getShippingAddress')
             ->willReturn($address);
-        $quote->method('getItemsQty')
-            ->willReturn(2);
-        $quote->method('getVirtualItemsQty')
-            ->willReturn(0);
+        $quote->method('isVirtual')
+            ->willReturn(false);
 
         return $quote;
     }

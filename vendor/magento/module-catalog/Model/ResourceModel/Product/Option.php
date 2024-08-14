@@ -8,6 +8,7 @@ namespace Magento\Catalog\Model\ResourceModel\Product;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Framework\DataObject;
 use Magento\Framework\Model\AbstractModel;
+use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
 
 /**
@@ -113,7 +114,7 @@ class Option extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
                 \Magento\Store\Model\ScopeInterface::SCOPE_STORE
             );
 
-            if ((int)$object->getStoreId() !== Store::DEFAULT_STORE_ID && $scope === Store::PRICE_SCOPE_WEBSITE) {
+            if ($object->getStoreId() != '0' && $scope == Store::PRICE_SCOPE_WEBSITE) {
                 $storeIds = $this->_storeManager->getStore($object->getStoreId())->getWebsite()->getStoreIds();
                 if (empty($storeIds)) {
                     return $this;
@@ -122,7 +123,7 @@ class Option extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
                     $newPrice = $this->calculateStorePrice($object, $storeId);
                     $this->savePriceByStore($object, (int)$storeId, $newPrice);
                 }
-            } elseif ($scope === Store::PRICE_SCOPE_WEBSITE && $object->getData('scope', 'price')) {
+            } elseif ($scope == Store::PRICE_SCOPE_WEBSITE && $object->getData('scope', 'price')) {
                 $this->getConnection()->delete(
                     $this->getTable('catalog_product_option_price'),
                     ['option_id = ?' => $object->getId(), 'store_id  = ?' => $object->getStoreId()]
@@ -140,11 +141,11 @@ class Option extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
      * @param int $storeId
      * @param float|null $newPrice
      */
-    private function savePriceByStore(AbstractModel $object, int $storeId, float $newPrice = null)
+    private function savePriceByStore(AbstractModel $object, int $storeId, float $newPrice = null): void
     {
         $priceTable = $this->getTable('catalog_product_option_price');
         $connection = $this->getConnection();
-        $price = $newPrice ?? $object->getPrice();
+        $price = $newPrice === null ? $object->getPrice() : $newPrice;
 
         $statement = $connection->select()->from($priceTable, 'option_id')
             ->where('option_id = ?', $object->getId())
@@ -165,7 +166,7 @@ class Option extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
             );
             $connection->insert($priceTable, $data);
         } else {
-            // skip to update the default price when the price is saving on other store
+            // skip to update the default price when the store price is saving
             if ($storeId === Store::DEFAULT_STORE_ID && (int)$object->getStoreId() !== $storeId) {
                 return;
             }
@@ -201,13 +202,15 @@ class Option extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     private function calculateStorePrice(AbstractModel $object, int $storeId): float
     {
         $price = $object->getPrice();
-        if ($object->getPriceType() === 'fixed') {
-            $baseCurrency = $this->_config->getValue(
+        if ($object->getPriceType() == 'fixed') {
+            $website  = $this->_storeManager->getStore($storeId)->getWebsite();
+            $websiteBaseCurrency = $this->_config->getValue(
                 \Magento\Directory\Model\Currency::XML_PATH_CURRENCY_BASE,
-                'default'
+                ScopeInterface::SCOPE_WEBSITE,
+                $website
             );
             $storeCurrency = $this->_storeManager->getStore($storeId)->getBaseCurrencyCode();
-            $rate = $this->_currencyFactory->create()->load($baseCurrency)->getRate($storeCurrency);
+            $rate = $this->_currencyFactory->create()->load($websiteBaseCurrency)->getRate($storeCurrency);
             $price = $object->getPrice() * ($rate ?: 1);
         }
 
@@ -227,7 +230,7 @@ class Option extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
         $titleTableName = $this->getTable('catalog_product_option_title');
         foreach ([Store::DEFAULT_STORE_ID, $object->getStoreId()] as $storeId) {
             $existInCurrentStore = $this->getColFromOptionTable($titleTableName, (int)$object->getId(), (int)$storeId);
-            $existInDefaultStore = (int)$storeId === Store::DEFAULT_STORE_ID ?
+            $existInDefaultStore = (int)$storeId == Store::DEFAULT_STORE_ID ?
                 $existInCurrentStore :
                 $this->getColFromOptionTable(
                     $titleTableName,
@@ -238,7 +241,7 @@ class Option extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
             if ($object->getTitle()) {
                 $isDeleteStoreTitle = (bool)$object->getData('is_delete_store_title');
                 if ($existInCurrentStore) {
-                    if ($isDeleteStoreTitle && (int)$storeId !== Store::DEFAULT_STORE_ID) {
+                    if ($isDeleteStoreTitle && (int)$storeId != Store::DEFAULT_STORE_ID) {
                         $connection->delete($titleTableName, ['option_title_id = ?' => $existInCurrentStore]);
                     } elseif ($object->getStoreId() == $storeId) {
                         $data = $this->_prepareDataForTable(

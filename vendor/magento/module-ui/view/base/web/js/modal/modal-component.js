@@ -93,7 +93,7 @@ define([
          * @returns {Object} Chainable.
          */
         initModalEvents: function () {
-            this.options.keyEventHandlers.escapeKey = this[this.onCancel].bind(this);
+            this.options.keyEventHandlers.escapeKey = this.options.outerClickHandler = this[this.onCancel].bind(this);
 
             return this;
         },
@@ -229,8 +229,12 @@ define([
          * Validate everything validatable in modal
          */
         validate: function (elem) {
+            if (typeof elem === 'undefined') {
+                return;
+            }
+
             if (typeof elem.validate === 'function') {
-                this.valid = this.valid & elem.validate().valid;
+                this.valid &= elem.validate().valid;
             } else if (elem.elems) {
                 elem.elems().forEach(this.validate, this);
             }

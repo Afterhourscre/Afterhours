@@ -18,7 +18,6 @@ use Magento\Framework\Stdlib\Parameters;
  * @api
  * @author     Magento Core Team <core@magentocommerce.com>
  * @since 100.0.2
- * @SuppressWarnings(PHPMD.RequestAwareBlockMethod)
  */
 class Grid extends \Magento\Backend\Block\Widget\Grid
 {
@@ -136,8 +135,8 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
             $data = $this->parameters->toArray();
 
             if (!isset($data['report_from'])) {
-                // getting all reports from 2001 year
-                $date = (new \DateTime())->setTimestamp(mktime(0, 0, 0, 1, 1, 2001));
+                // Get records for the past month
+                $date = new \DateTime('-1 month');
                 $data['report_from'] = $this->_localeDate->formatDateTime(
                     $date,
                     \IntlDateFormatter::SHORT,
@@ -146,7 +145,6 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
             }
 
             if (!isset($data['report_to'])) {
-                // getting all reports from 2001 year
                 $date = new \DateTime();
                 $data['report_to'] = $this->_localeDate->formatDateTime(
                     $date,
@@ -211,7 +209,7 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
         } elseif ($this->getRequest()->getParam('website')) {
             $storeIds = $this->_storeManager->getWebsite($this->getRequest()->getParam('website'))->getStoreIds();
         } elseif ($this->getRequest()->getParam('group')) {
-            $storeIds = $storeIds = $this->_storeManager->getGroup(
+            $storeIds = $this->_storeManager->getGroup(
                 $this->getRequest()->getParam('group')
             )->getStoreIds();
         }
@@ -259,8 +257,8 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
 
     /**
      * Return visibility of store switcher
-     * @codeCoverageIgnore
      *
+     * @codeCoverageIgnore
      * @return bool
      * @SuppressWarnings(PHPMD.BooleanGetMethodName)
      */
@@ -271,8 +269,8 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
 
     /**
      * Return store switcher html
-     * @codeCoverageIgnore
      *
+     * @codeCoverageIgnore
      * @return string
      */
     public function getStoreSwitcherHtml()
@@ -294,8 +292,8 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
 
     /**
      * Return visibility of date filter
-     * @codeCoverageIgnore
      *
+     * @codeCoverageIgnore
      * @return bool
      * @SuppressWarnings(PHPMD.BooleanGetMethodName)
      */
@@ -306,8 +304,8 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
 
     /**
      * Return date filter html
-     * @codeCoverageIgnore
      *
+     * @codeCoverageIgnore
      * @return string
      */
     public function getDateFilterHtml()
@@ -337,8 +335,8 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
 
     /**
      * Return refresh button html
-     * @codeCoverageIgnore
      *
+     * @codeCoverageIgnore
      * @return string
      */
     public function getRefreshButtonHtml()
@@ -390,8 +388,8 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
 
     /**
      * Return sub-report rows count
-     * @codeCoverageIgnore
      *
+     * @codeCoverageIgnore
      * @return int
      */
     public function getSubReportSize()

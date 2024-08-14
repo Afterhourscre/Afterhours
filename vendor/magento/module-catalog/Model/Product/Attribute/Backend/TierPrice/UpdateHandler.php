@@ -3,6 +3,8 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Catalog\Model\Product\Attribute\Backend\TierPrice;
 
 use Magento\Catalog\Api\Data\ProductInterface;
@@ -70,6 +72,8 @@ class UpdateHandler extends AbstractHandler
     }
 
     /**
+     * Perform action on relation/extension attribute.
+     *
      * @param \Magento\Catalog\Api\Data\ProductInterface|object $entity
      * @param array $arguments
      * @return \Magento\Catalog\Api\Data\ProductInterface|object
@@ -119,13 +123,13 @@ class UpdateHandler extends AbstractHandler
      *
      * @param array $valuesToUpdate
      * @param array $oldValues
-     * @return boolean
+     * @return bool
      */
     private function updateValues(array $valuesToUpdate, array $oldValues): bool
     {
         $isChanged = false;
         foreach ($valuesToUpdate as $key => $value) {
-            if ((!empty($value['value'])
+            if ((($value['value'])!== null
                     && (float)$oldValues[$key]['price'] !== $this->localeFormat->getNumber($value['value'])
                 ) || $this->getPercentage($oldValues[$key]) !== $this->getPercentage($value)
             ) {
@@ -145,7 +149,7 @@ class UpdateHandler extends AbstractHandler
     }
 
     /**
-     * Insert new tier prices for processed product.
+     * Insert new tier prices for processed product
      *
      * @param int $productId
      * @param array $valuesToInsert
@@ -169,7 +173,7 @@ class UpdateHandler extends AbstractHandler
     }
 
     /**
-     * Delete tier price values for processed product.
+     * Delete tier price values for processed product
      *
      * @param int $productId
      * @param array $valuesToDelete
@@ -187,7 +191,7 @@ class UpdateHandler extends AbstractHandler
     }
 
     /**
-     * Get generated price key based on price data.
+     * Get generated price key based on price data
      *
      * @param array $priceData
      * @return string
@@ -204,7 +208,7 @@ class UpdateHandler extends AbstractHandler
     }
 
     /**
-     * Check by id is website global.
+     * Check by id is website global
      *
      * @param int $websiteId
      * @return bool
@@ -220,7 +224,7 @@ class UpdateHandler extends AbstractHandler
      * @param array|null $origPrices
      * @return array
      */
-    private function prepareOldTierPriceToCompare($origPrices): array
+    private function prepareOldTierPriceToCompare(?array $origPrices): array
     {
         $old = [];
         if (is_array($origPrices)) {
@@ -241,7 +245,7 @@ class UpdateHandler extends AbstractHandler
      * @return array
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    private function prepareNewDataForSave($priceRows, $isGlobal = true): array
+    private function prepareNewDataForSave(array $priceRows, bool $isGlobal = true): array
     {
         $new = [];
         $priceRows = array_filter($priceRows);

@@ -16,15 +16,15 @@ class TreeTest extends \PHPUnit\Framework\TestCase
     /**
      * @var \Magento\UrlRewrite\Block\Catalog\Category\Tree
      */
-    private $treeBlock;
+    private $_treeBlock;
 
     /**
      * Set up
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
-        $this->treeBlock = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->get(
+        $this->_treeBlock = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->get(
             \Magento\Framework\View\LayoutInterface::class
         )->createBlock(
             \Magento\UrlRewrite\Block\Catalog\Category\Tree::class
@@ -39,10 +39,9 @@ class TreeTest extends \PHPUnit\Framework\TestCase
      */
     public function testGetTreeArray()
     {
-        $tree = $this->treeBlock->getTreeArray();
-        $this->assertEquals(false, $tree['is_active']);
+        $tree = $this->_treeBlock->getTreeArray();
         $this->assertEquals('Root', (string)$tree['name']);
-        $this->assertEquals(true, $tree['expanded']);
+        $this->assertTrue($tree['expanded']);
         $this->assertCount(1, $tree['children']);
     }
 
@@ -54,12 +53,12 @@ class TreeTest extends \PHPUnit\Framework\TestCase
      */
     public function testGetTreeArrayApostropheReplaced()
     {
-        $tree = $this->treeBlock->getTreeArray(523);
+        $tree = $this->_treeBlock->getTreeArray();
 
-        $this->assertNotContains('\'', $tree[0]['name']);
+        $this->assertStringNotContainsString('\'', $tree['children'][0]['children'][0]['children'][0]['name']);
         $this->assertEquals(
             '&#039;Category 6&#039;',
-            $tree[0]['name']
+            $tree['children'][0]['children'][0]['children'][0]['name']
         );
     }
 
@@ -71,12 +70,12 @@ class TreeTest extends \PHPUnit\Framework\TestCase
      */
     public function testGetTreeArrayDoubleQuotesReplaced()
     {
-        $tree = $this->treeBlock->getTreeArray(523);
+        $tree = $this->_treeBlock->getTreeArray();
 
-        $this->assertNotContains('\"', $tree[0]['name']);
+        $this->assertStringNotContainsString('\"', $tree['children'][0]['children'][0]['children'][0]['name']);
         $this->assertEquals(
             '&quot;Category 6&quot;',
-            $tree[0]['name']
+            $tree['children'][0]['children'][0]['children'][0]['name']
         );
     }
 
@@ -88,7 +87,7 @@ class TreeTest extends \PHPUnit\Framework\TestCase
         $row = new \Magento\Framework\DataObject(['id' => 1]);
         $this->assertStringStartsWith(
             'http://localhost/index.php',
-            $this->treeBlock->getLoadTreeUrl($row),
+            $this->_treeBlock->getLoadTreeUrl($row),
             'Tree load URL is invalid'
         );
     }
@@ -98,7 +97,7 @@ class TreeTest extends \PHPUnit\Framework\TestCase
      */
     public function testGetCategoryCollection()
     {
-        $collection = $this->treeBlock->getCategoryCollection();
+        $collection = $this->_treeBlock->getCategoryCollection();
         $this->assertInstanceOf(\Magento\Catalog\Model\ResourceModel\Category\Collection::class, $collection);
     }
 }

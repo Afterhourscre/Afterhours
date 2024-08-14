@@ -4,6 +4,8 @@
  * See COPYING.txt for license details.
  */
 
+declare(strict_types=1);
+
 namespace Magento\ConfigurableProduct\Model\Product\Type\Configurable\Variations;
 
 /**
@@ -37,6 +39,9 @@ class Prices
         $finalPrice = $priceInfo->getPrice('final_price');
 
         return [
+            'baseOldPrice' => [
+                'amount' => $this->localeFormat->getNumber($regularPrice->getAmount()->getBaseAmount()),
+            ],
             'oldPrice' => [
                 'amount' => $this->localeFormat->getNumber($regularPrice->getAmount()->getValue()),
             ],

@@ -14,35 +14,32 @@ use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order\CustomerAssignment;
 use Magento\Sales\Observer\AssignOrderToCustomerObserver;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use PHPUnit_Framework_MockObject_MockObject;
 
-/**
- * Class AssignOrderToCustomerObserverTest
- */
 class AssignOrderToCustomerObserverTest extends TestCase
 {
     /** @var AssignOrderToCustomerObserver */
     protected $sut;
 
-    /** @var OrderRepositoryInterface|PHPUnit_Framework_MockObject_MockObject */
+    /** @var OrderRepositoryInterface|MockObject */
     protected $orderRepositoryMock;
 
-    /** @var CustomerAssignment | PHPUnit_Framework_MockObject_MockObject */
+    /** @var CustomerAssignment|MockObject */
     protected $assignmentMock;
 
     /**
      * Set Up
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->orderRepositoryMock = $this->getMockBuilder(OrderRepositoryInterface::class)
             ->disableOriginalConstructor()
-            ->getMock();
+            ->getMockForAbstractClass();
 
         $this->assignmentMock =  $this->getMockBuilder(CustomerAssignment::class)
-        ->disableOriginalConstructor()
-        ->getMock();
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $this->sut = new AssignOrderToCustomerObserver($this->orderRepositoryMock, $this->assignmentMock);
     }
@@ -51,54 +48,42 @@ class AssignOrderToCustomerObserverTest extends TestCase
      * Test assigning order to customer after issuing guest order
      *
      * @dataProvider getCustomerIds
+     * @param null|int $orderCustomerId
      * @param null|int $customerId
-     * @param null|int $customerOrderId
      * @return void
      */
-    public function testAssignOrderToCustomerAfterGuestOrder($customerId, $customerOrderId)
+    public function testAssignOrderToCustomerAfterGuestOrder($orderCustomerId, $customerId)
     {
         $orderId = 1;
-        /** @var Observer|PHPUnit_Framework_MockObject_MockObject $observerMock */
+        /** @var Observer|MockObject $observerMock */
         $observerMock = $this->createMock(Observer::class);
-        /** @var Event|PHPUnit_Framework_MockObject_MockObject $eventMock */
-        $eventMock = $this->getMockBuilder(Event::class)->disableOriginalConstructor()
+        /** @var Event|MockObject $eventMock */
+        $eventMock = $this->getMockBuilder(Event::class)
+            ->disableOriginalConstructor()
             ->setMethods(['getData'])
             ->getMock();
-        /** @var CustomerInterface|PHPUnit_Framework_MockObject_MockObject $customerMock */
-        $customerMock = $this->getMockBuilder(CustomerInterface::class)
-            ->disableOriginalConstructor()
-            ->getMockForAbstractClass();
-        $customerMock->expects($this->any())
-            ->method('getId')
-            ->willReturn($customerId);
-        /** @var OrderInterface|PHPUnit_Framework_MockObject_MockObject $orderMock */
+        /** @var CustomerInterface|MockObject $customerMock */
+        $customerMock = $this->getMockForAbstractClass(CustomerInterface::class);
+        /** @var OrderInterface|MockObject $orderMock */
         $orderMock = $this->getMockBuilder(OrderInterface::class)
             ->disableOriginalConstructor()
             ->getMockForAbstractClass();
         $observerMock->expects($this->once())->method('getEvent')->willReturn($eventMock);
         $eventMock->expects($this->any())->method('getData')
-            ->willReturnMap([
-                ['delegate_data', null, ['__sales_assign_order_id' => $orderId]],
-                ['customer_data_object', null, $customerMock]
-            ]);
-        $orderMock->expects($this->any())->method('getCustomerId')->willReturn($customerOrderId);
+            ->willReturnMap(
+                [
+                    ['delegate_data', null, ['__sales_assign_order_id' => $orderId]],
+                    ['customer_data_object', null, $customerMock]
+                ]
+            );
+        $orderMock->expects($this->once())->method('getCustomerId')->willReturn($orderCustomerId);
         $this->orderRepositoryMock->expects($this->once())->method('get')->with($orderId)
             ->willReturn($orderMock);
 
-        if (!$customerOrderId && $customerId) {
-            $orderMock->expects($this->once())->method('setCustomerId')->willReturn($orderMock);
-            $orderMock->expects($this->once())->method('setCustomerIsGuest')->willReturn($orderMock);
-            $orderMock->expects($this->once())->method('setCustomerEmail')->willReturn($orderMock);
-            $orderMock->expects($this->once())->method('setCustomerFirstname')->willReturn($orderMock);
-            $orderMock->expects($this->once())->method('setCustomerLastname')->willReturn($orderMock);
-            $orderMock->expects($this->once())->method('setCustomerMiddlename')->willReturn($orderMock);
-            $orderMock->expects($this->once())->method('setCustomerPrefix')->willReturn($orderMock);
-            $orderMock->expects($this->once())->method('setCustomerSuffix')->willReturn($orderMock);
-            $orderMock->expects($this->once())->method('setCustomerGroupId')->willReturn($orderMock);
-
+        if (!$orderCustomerId) {
+            $customerMock->expects($this->once())->method('getId')->willReturn($customerId);
             $this->assignmentMock->expects($this->once())->method('execute')->with($orderMock, $customerMock);
             $this->sut->execute($observerMock);
-
             return;
         }
 
@@ -111,11 +96,10 @@ class AssignOrderToCustomerObserverTest extends TestCase
      *
      * @return array
      */
-    public function getCustomerIds(): array
+    public function getCustomerIds()
     {
         return [
-            [null, null],
-            [1, null],
+            [null, 1],
             [1, 1],
         ];
     }

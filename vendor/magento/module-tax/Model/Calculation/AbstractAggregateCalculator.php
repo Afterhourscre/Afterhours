@@ -13,7 +13,7 @@ use Magento\Tax\Api\Data\QuoteDetailsItemInterface;
 abstract class AbstractAggregateCalculator extends AbstractCalculator
 {
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected function calculateWithTaxInPrice(QuoteDetailsItemInterface $item, $quantity, $round = true)
     {
@@ -21,7 +21,7 @@ abstract class AbstractAggregateCalculator extends AbstractCalculator
             $this->taxClassManagement->getTaxClassId($item->getTaxClassKey())
         );
         $rate = $this->calculationTool->getRate($taxRateRequest);
-        $storeRate = $storeRate = $this->calculationTool->getStoreRate($taxRateRequest, $this->storeId);
+        $storeRate = $this->calculationTool->getStoreRate($taxRateRequest, $this->storeId);
 
         $discountTaxCompensationAmount = 0;
         $applyTaxAfterDiscount = $this->config->applyTaxAfterDiscount($this->storeId);
@@ -89,7 +89,7 @@ abstract class AbstractAggregateCalculator extends AbstractCalculator
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected function calculateWithTaxNotInPrice(QuoteDetailsItemInterface $item, $quantity, $round = true)
     {

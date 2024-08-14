@@ -1,14 +1,12 @@
-# Zend_Cache backend using Redis with full support for tags
-
-This Zend_Cache backend allows you to use a Redis server as a central cache storage. Tags are fully supported
-without the use of TwoLevels cache so this backend is great for use on a single machine or in a cluster.
+This `Zend_Cache` backend allows you to use a Redis server as a central cache storage. Tags are fully supported
+without the use of `TwoLevels` cache so this backend is great for use on a single machine or in a cluster.
 Works with any Zend Framework project including all versions of Magento!
 
-## FEATURES
+# FEATURES
 
  - Uses the [phpredis PECL extension](https://github.com/nicolasff/phpredis) for best performance (requires **master** branch or tagged version newer than Aug 19 2011).
  - Falls back to standalone PHP if phpredis isn't available using the [Credis](https://github.com/colinmollenhour/credis) library.
- - Tagging is fully supported, implemented using the Redis "set" and "hash" datatypes for efficient tag management.
+ - Tagging is fully supported, implemented using the Redis "set" and "hash" data types for efficient tag management.
  - Key expiration is handled automatically by Redis.
  - Supports unix socket connection for even better performance on a single machine.
  - Supports configurable compression for memory savings. Can choose between gzip, lzf and snappy and can change configuration without flushing cache.
@@ -16,21 +14,37 @@ Works with any Zend Framework project including all versions of Magento!
  - Supports a configurable "auto expiry lifetime" which, if set, will be used as the TTL when the key otherwise wouldn't expire. In combination with "auto expiry refresh on load" offers a more sane cache management strategy for Magento's `Enterprise_PageCache` module.
  - __Unit tested!__
 
-## INSTALLATION (Magento)
+# REQUIREMENTS
 
- 1. Install [redis](http://redis.io/download) (2.4+ required)
- 2. Install [phpredis](https://github.com/nicolasff/phpredis) (optional)
+As this backend uses [Credis](https://github.com/colinmollenhour/credis) there are no additional requirements, but for improved performance you can install [phpredis](https://github.com/nicolasff/phpredis) which is a compiled extension.
 
    * For 2.4 support you must use the "master" branch or a tagged version newer than Aug 19, 2011.
    * phpredis is optional, but it is much faster than standalone mode
    * phpredis does not support setting read timeouts at the moment (see pull request #260). If you receive read errors (“read error on connection”), this
      might be the reason.
 
- 3. Install this module using [modman](https://github.com/colinmollenhour/modman):
+# INSTALLATION
 
-    * `modman clone https://github.com/colinmollenhour/Cm_Cache_Backend_Redis`
+Add the package as a dependency to your project with Composer.
 
- 4. Edit app/etc/local.xml to configure:
+```shell
+composer require colinmollenhour/cache-backend-redis
+```
+
+### modman
+
+It is not the recommended method, but you may install via [modman](https://github.com/colinmollenhour/modman):
+
+```shell
+modman clone https://github.com/colinmollenhour/Cm_Cache_Backend_Redis
+```
+
+# CONFIGURATION
+
+These examples assume you are using Magento, but the configuration can just be passed to the constructor as a PHP
+array with the same key names as seen in the examples.
+
+Edit `app/etc/local.xml` to configure:
 
         <!-- This is a child node of config/global -->
         <cache>
@@ -74,8 +88,6 @@ Works with any Zend Framework project including all versions of Magento!
 
 ## High Availability and Load Balancing Support
 
-There are two supported methods of achieving High Availability and Load Balancing with Cm_Cache_Backend_Redis.
-
 ### Redis Sentinel
 
 You may achieve high availability and load balancing using [Redis Sentinel](http://redis.io/topics/sentinel). To enable use of Redis Sentinel the `server`
@@ -116,13 +128,31 @@ Example configuration:
           <backend_options>
             <server>tcp://redis-master:6379</server>
             <load_from_slave>tcp://redis-slaves:6379</load_from_slave>
+            <master_write_only>0</master_write_only>  <!-- Use 1 to prevent reads from master -->
             <timeout>0.5</timeout>
           </backend_options>
         </cache>
 
-## ElastiCache
+### Static Configuration
 
-The following example configuration lets you use ElastiCache Redis (cluster mode disabled) where the writes are sent to the Primary node and reads are sent to the replicas. This lets you distribute the read traffic between the different nodes.  
+You may also statically specify the master and slave servers by passing either an array to `load_from_slave` or a string
+with multiple addresses separated by a comma.
+
+        <!-- This is a child node of config/global -->
+        <cache>
+          <backend>Cm_Cache_Backend_Redis</backend>
+          <backend_options>
+            <server>tcp://redis-master:6379</server>
+            <load_from_slave>tcp://redis-slave1:6379,tcp://redis-slave2:6379</load_from_slave>
+            <master_write_only>0</master_write_only>  <!-- Use 1 to prevent reads from master -->
+            <timeout>0.5</timeout>
+          </backend_options>
+        </cache>
+
+### ElastiCache
+
+The following example configuration lets you use ElastiCache Redis (cluster mode disabled) where the writes are sent to
+the Primary node and reads are sent to the replicas. This lets you distribute the read traffic between the different nodes.  
 
 The instructions to find the primary and read replica endpoints are [here](http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/Endpoints.html#Endpoints.Find.Redis).
 
@@ -130,35 +160,31 @@ The instructions to find the primary and read replica endpoints are [here](http:
         <backend_options>
           <server>primary-endpoint.0001.euw1.cache.amazonaws.com</server>
           <port>6379</port>
-          <database>0</database>        <!-- Make sure database is 0 -->
-          .
-          . <!-- Other settings -->
-          .
-          <cluster>
-            <master>
-              <node-001>
-                <server>primary-endpoint.0001.euw1.cache.amazonaws.com</server>
-                <port>6379</port>
-              </node-001>
-            </master>
-            <slave>
-              <node-001>
-                <server>replica-endpoint-1.jwbaun.0001.euw1.cache.amazonaws.com</server>
-                <port>6379</port>
-              </node-001>
-              <node-002>
-                <server>replica-endpoint-2.jwbaun.0001.euw1.cache.amazonaws.com</server>
-                <port>6379</port>
-              </node-002>
-            </slave>
-          </cluster>
+          <database>0</database>                    <!-- Make sure database is 0 -->
+          <master_write_only>1</master_write_only>
+          <load_from_slave>
+            <node-001>
+              <server>replica-endpoint-1.jwbaun.0001.euw1.cache.amazonaws.com</server>
+              <port>6379</port>
+            </node-001>
+            <node-002>
+              <server>replica-endpoint-2.jwbaun.0001.euw1.cache.amazonaws.com</server>
+              <port>6379</port>
+            </node-002>
+          </load_from_slave>
         </backend_options>
 
-## RELATED / TUNING
+#### DEPRECATION NOTICE
 
- - The recommended "maxmemory-policy" is "volatile-lru". All tag metadata is non-volatile so it is
+Previously the ElastiCache config instructions suggested setting up a `<cluster>` node but this functionality was flawed
+and is no longer supported. The config is still parsed and loaded for backwards-compatibility but chooses a random slave
+to read from rather than using md5 hash of the keys. 
+
+# TUNING
+
+ - The recommended "maxmemory-policy" is "volatile-lru". All tag metadata is non-volatile, so it is
    recommended to use key expirations unless non-volatile keys are absolutely necessary so that tag
-   data cannot get evicted. So, be sure that the "maxmemory" is high enough to accommodate all of
+   data cannot get evicted. So, be sure that the "maxmemory" is high enough to accommodate all
    the tag data and non-volatile data with enough room left for the volatile key data as well.
  - Automatic cleaning is optional and not recommended since it is slow and uses lots of memory.
  - Occasional (e.g. once a day) garbage collection is recommended if the entire cache is infrequently cleared and
@@ -174,7 +200,9 @@ The instructions to find the primary and read replica endpoints are [here](http:
  - Monitor your redis cache statistics with my modified [munin plugin](https://gist.github.com/1177716).
  - Enable persistent connections. Make sure that if you have multiple configurations connecting the persistent
    string is unique for each configuration so that "select" commands don't cause conflicts.
- - Use the `stats.php` script to inspect your cache to find oversized or wasteful cache tags.
+ - Increase your server's `lua-time-limit` if you are getting "BUSY" errors. This setting can also cause Redis Sentinel
+   to invoke fail-overs when you would probably prefer to let the Lua script finish and have clients wait a little longer. 
+ - Use the `stats.php` script to inspect your cache to find over-sized or wasteful cache tags.
 
 ### Example Garbage Collection Script (Magento)
 
@@ -187,20 +215,27 @@ The instructions to find the primary and read replica endpoints are [here](http:
     // uncomment this for Magento Enterprise Edition
     // Enterprise_PageCache_Model_Cache::getCacheInstance()->getFrontend()->getBackend()->clean('old');
 
-## Release Notes
 
- - March 2017: Added support for Redis Sentinel and loading from slaves. Thanks @Xon for the help!
- - Sometime in 2013: Ceased updating these release notes...
- - November 19, 2012: Added read_timeout option. (Feature only supported in standalone mode, will be supported by phpredis when pull request #260 is merged)
- - October 29, 2012: Added support for persistent connections. (Thanks samm-git!)
- - October 12, 2012: Improved memory usage and efficiency of garbage collection and updated recommendation.
- - September 17, 2012: Added connect_retries option (default: 1) to prevent errors from random connection failures.
- - July 10, 2012: Added password authentication support.
- - Mar 1, 2012: Using latest Credis_Client which adds auto-reconnect for standalone mode.
- - Feb 15, 2012: Changed from using separate keys for data, tags and mtime to a single hash per key.
- - Nov 10, 2011: Changed from using phpredis and redisent to Credis (which wraps phpredis). Implemented pipelining.
+# DEVELOPMENT
+
+Please feel free to send Pull Requests to give back your improvements to the community!
+
+You can run the unit tests locally with just Docker installed using a simple alias:
+
+```shell
+alias cm-cache-backend-redis='docker run --rm -it -e REDIS_SERVER=host.docker.internal -u $(id -u):$(id -g) -v ${COMPOSER_HOME:-$HOME/.composer}:/tmp -v $(pwd):/app --workdir /app cm-cache-backend-redis'
+docker build . -t cm-cache-backend-redis
+```
+
+Then start a Redis server, install Composer dependencies and run tests like so: 
+```shell
+  docker run --rm -d -p 6379 --name cm-cache-backend-redis redis
+  cm-cache-backend-redis composer install
+  cm-cache-backend-redis composer run-script test
+  cm-cache-backend-redis composer run-script php-cs-fixer -- --dry-run
+```
 
 ```
-@copyright  Copyright (c) 2012 Colin Mollenhour (http://colin.mollenhour.com)
+@copyright  Copyright (c) 2022 Colin Mollenhour
 This project is licensed under the "New BSD" license (see source).
 ```

@@ -25,7 +25,7 @@ class UnionExpression extends Expression
     /**
      * @var string
      */
-    private $pattern;
+    protected $pattern;
 
     /**
      * @param Select[] $parts
@@ -52,11 +52,10 @@ class UnionExpression extends Expression
                 $parts[] = $part;
             }
         }
-        $sql = implode($parts, $this->type);
+        $sql = implode($this->type, $parts);
         if ($this->pattern) {
             return sprintf($this->pattern, $sql);
         }
-
         return $sql;
     }
 }

@@ -6,9 +6,9 @@
  */
 namespace Magento\Widget\Controller\Adminhtml\Widget;
 
-use Magento\Framework\App\ObjectManager;
+use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
 
-class BuildWidget extends \Magento\Backend\App\Action
+class BuildWidget extends \Magento\Backend\App\Action implements HttpPostActionInterface
 {
     /**
      * Authorization level of a basic admin session
@@ -21,24 +21,14 @@ class BuildWidget extends \Magento\Backend\App\Action
     protected $_widget;
 
     /**
-     * @var \Magento\Framework\Serialize\SerializerInterface
-     */
-    private $serializer;
-
-    /**
      * @param \Magento\Backend\App\Action\Context $context
      * @param \Magento\Widget\Model\Widget $widget
-     * @param \Magento\Framework\Serialize\SerializerInterface|null $serializer
      */
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
-        \Magento\Widget\Model\Widget $widget,
-        \Magento\Framework\Serialize\SerializerInterface $serializer = null
+        \Magento\Widget\Model\Widget $widget
     ) {
         $this->_widget = $widget;
-        $this->serializer = $serializer ?: ObjectManager::getInstance()->get(
-            \Magento\Framework\Serialize\SerializerInterface::class
-        );
         parent::__construct($context);
     }
 
@@ -49,13 +39,6 @@ class BuildWidget extends \Magento\Backend\App\Action
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            $this->getResponse()->representJson(
-                $this->serializer->serialize(['error' => true, 'message' => 'Invalid request'])
-            );
-            return;
-        }
-
         $type = $this->getRequest()->getPost('widget_type');
         $params = $this->getRequest()->getPost('parameters', []);
         $asIs = $this->getRequest()->getPost('as_is');

@@ -13,21 +13,23 @@
  */
 namespace Magento\Catalog\Block\Adminhtml\Product\Helper\Form\Gallery;
 
+use Magento\Catalog\Helper\Image;
+use Magento\Framework\App\ObjectManager;
 use Magento\Backend\Block\Media\Uploader;
+use Magento\Framework\Json\Helper\Data as JsonHelper;
 use Magento\Framework\View\Element\AbstractBlock;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Exception\FileSystemException;
-use Magento\Framework\App\ObjectManager;
-use Magento\Backend\Block\DataProviders\UploadConfig as ImageUploadConfigDataProvider;
+use Magento\Backend\Block\DataProviders\ImageUploadConfig as ImageUploadConfigDataProvider;
 use Magento\MediaStorage\Helper\File\Storage\Database;
 
+/**
+ * Block for gallery content.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ */
 class Content extends \Magento\Backend\Block\Widget
 {
-    /**
-     * @var ImageUploadConfigDataProvider
-     */
-    private $imageUploadConfigDataProvider;
-
     /**
      * @var string
      */
@@ -44,9 +46,14 @@ class Content extends \Magento\Backend\Block\Widget
     protected $_jsonEncoder;
 
     /**
-     * @var \Magento\Catalog\Helper\Image
+     * @var Image
      */
     private $imageHelper;
+
+    /**
+     * @var ImageUploadConfigDataProvider
+     */
+    private $imageUploadConfigDataProvider;
 
     /**
      * @var Database
@@ -60,6 +67,8 @@ class Content extends \Magento\Backend\Block\Widget
      * @param array $data
      * @param ImageUploadConfigDataProvider $imageUploadConfigDataProvider
      * @param Database $fileStorageDatabase
+     * @param JsonHelper|null $jsonHelper
+     * @param Image|null $imageHelper
      */
     public function __construct(
         \Magento\Backend\Block\Template\Context $context,
@@ -67,18 +76,24 @@ class Content extends \Magento\Backend\Block\Widget
         \Magento\Catalog\Model\Product\Media\Config $mediaConfig,
         array $data = [],
         ImageUploadConfigDataProvider $imageUploadConfigDataProvider = null,
-        Database $fileStorageDatabase = null
+        Database $fileStorageDatabase = null,
+        ?JsonHelper $jsonHelper = null,
+        ?Image $imageHelper = null
     ) {
         $this->_jsonEncoder = $jsonEncoder;
         $this->_mediaConfig = $mediaConfig;
+        $data['jsonHelper'] = $jsonHelper ?? ObjectManager::getInstance()->get(JsonHelper::class);
         parent::__construct($context, $data);
         $this->imageUploadConfigDataProvider = $imageUploadConfigDataProvider
             ?: ObjectManager::getInstance()->get(ImageUploadConfigDataProvider::class);
         $this->fileStorageDatabase = $fileStorageDatabase
             ?: ObjectManager::getInstance()->get(Database::class);
+        $this->imageHelper = $imageHelper ?: ObjectManager::getInstance()->get(Image::class);
     }
 
     /**
+     * Prepare layout.
+     *
      * @return AbstractBlock
      */
     protected function _prepareLayout()
@@ -90,7 +105,7 @@ class Content extends \Magento\Backend\Block\Widget
         );
 
         $this->getUploader()->getConfig()->setUrl(
-            $this->_urlBuilder->addSessionParam()->getUrl('catalog/product_gallery/upload')
+            $this->_urlBuilder->getUrl('catalog/product_gallery/upload')
         )->setFileField(
             'image'
         )->setFilters(
@@ -128,6 +143,8 @@ class Content extends \Magento\Backend\Block\Widget
     }
 
     /**
+     * Returns js object name
+     *
      * @return string
      */
     public function getJsObjectName()
@@ -136,6 +153,8 @@ class Content extends \Magento\Backend\Block\Widget
     }
 
     /**
+     * Returns buttons for add image action.
+     *
      * @return string
      */
     public function getAddImagesButton()
@@ -149,6 +168,8 @@ class Content extends \Magento\Backend\Block\Widget
     }
 
     /**
+     * Returns image json
+     *
      * @return string
      */
     public function getImagesJson()
@@ -174,7 +195,7 @@ class Content extends \Magento\Backend\Block\Widget
                     $fileHandler = $mediaDir->stat($this->_mediaConfig->getMediaPath($image['file']));
                     $image['size'] = $fileHandler['size'];
                 } catch (FileSystemException $e) {
-                    $image['url'] = $this->getImageHelper()->getDefaultPlaceholderUrl('small_image');
+                    $image['url'] = $this->imageHelper->getDefaultPlaceholderUrl('small_image');
                     $image['size'] = 0;
                     $this->_logger->warning($e);
                 }
@@ -192,15 +213,27 @@ class Content extends \Magento\Backend\Block\Widget
      */
     private function sortImagesByPosition($images)
     {
-        if (is_array($images)) {
-            usort($images, function ($imageA, $imageB) {
-                return ($imageA['position'] < $imageB['position']) ? -1 : 1;
-            });
+        $nullPositions = [];
+        foreach ($images as $index => $image) {
+            if ($image['position'] === null) {
+                $nullPositions[] = $image;
+                unset($images[$index]);
+            }
         }
-        return $images;
+        if (is_array($images) && !empty($images)) {
+            usort(
+                $images,
+                function ($imageA, $imageB) {
+                    return ($imageA['position'] < $imageB['position']) ? -1 : 1;
+                }
+            );
+        }
+        return array_merge($images, $nullPositions);
     }
 
     /**
+     * Returns image values json
+     *
      * @return string
      */
     public function getImagesValuesJson()
@@ -275,15 +308,14 @@ class Content extends \Magento\Backend\Block\Widget
     }
 
     /**
-     * @return \Magento\Catalog\Helper\Image
-     * @deprecated 101.0.3
+     * Flag if gallery content editing is enabled.
+     *
+     * Is enabled by default, exposed to interceptors to add custom logic
+     *
+     * @return bool
      */
-    private function getImageHelper()
+    public function isEditEnabled() : bool
     {
-        if ($this->imageHelper === null) {
-            $this->imageHelper = \Magento\Framework\App\ObjectManager::getInstance()
-                ->get(\Magento\Catalog\Helper\Image::class);
-        }
-        return $this->imageHelper;
+        return true;
     }
 }

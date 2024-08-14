@@ -5,10 +5,10 @@
  */
 namespace Magento\Framework\Code\GeneratorTest;
 
-use Zend\Code\Generator\ClassGenerator;
+use Laminas\Code\Generator\ClassGenerator;
 
 /**
- * Class  SourceClassWithNamespace
+ * phpcs:ignoreFile
  */
 class SourceClassWithNamespace extends ParentClassWithNamespace
 {
@@ -28,7 +28,7 @@ class SourceClassWithNamespace extends ParentClassWithNamespace
     /**
      * Public child method
      *
-     * @param \Zend\Code\Generator\ClassGenerator $classGenerator
+     * @param \Laminas\Code\Generator\ClassGenerator $classGenerator
      * @param string $param1
      * @param string $param2
      * @param string $param3
@@ -49,7 +49,7 @@ class SourceClassWithNamespace extends ParentClassWithNamespace
     /**
      * Public child method with reference
      *
-     * @param \Zend\Code\Generator\ClassGenerator $classGenerator
+     * @param \Laminas\Code\Generator\ClassGenerator $classGenerator
      * @param string $param1
      * @param array $array
      *
@@ -62,7 +62,7 @@ class SourceClassWithNamespace extends ParentClassWithNamespace
     /**
      * Protected child method
      *
-     * @param \Zend\Code\Generator\ClassGenerator $classGenerator
+     * @param \Laminas\Code\Generator\ClassGenerator $classGenerator
      * @param string $param1
      * @param string $param2
      * @param string $param3
@@ -80,7 +80,7 @@ class SourceClassWithNamespace extends ParentClassWithNamespace
     /**
      * Private child method
      *
-     * @param \Zend\Code\Generator\ClassGenerator $classGenerator
+     * @param \Laminas\Code\Generator\ClassGenerator $classGenerator
      * @param string $param1
      * @param string $param2
      * @param string $param3
@@ -115,11 +115,44 @@ class SourceClassWithNamespace extends ParentClassWithNamespace
 
     /**
      * Test method
-     *
-     * @SuppressWarnings(PHPMD.FinalImplementation) Suppressed as is a fixture but not a real code
      */
     final public function publicChildFinal()
     {
+    }
+
+    /**
+     * Test method
+     *
+     * @param mixed $arg1
+     * @param string $arg2
+     * @param int|null $arg3
+     * @param int|null $arg4
+     *
+     * @return void
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
+    public function public71(
+        $arg1,
+        string $arg2,
+        ?int $arg3,
+        ?int $arg4 = null
+    ): void {
+    }
+
+    /**
+     * Test method
+     *
+     * @param \DateTime|null $arg1
+     * @param mixed $arg2
+     *
+     * @return null|string
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
+    public function public71Another(?\DateTime $arg1, $arg2 = false): ?string
+    {
+        // phpstan:ignore
     }
 
     /**
@@ -132,5 +165,6 @@ class SourceClassWithNamespace extends ParentClassWithNamespace
      */
     public function publicWithSelf($arg = false): self
     {
+        // phpstan:ignore
     }
 }

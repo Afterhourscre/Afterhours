@@ -8,6 +8,7 @@ namespace Magento\Sales\Controller\Adminhtml\Order\Create;
 use Magento\Backend\Model\Session\Quote;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\App\Request\Http;
 use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Message\MessageInterface;
@@ -18,7 +19,7 @@ use Magento\Sales\Model\Service\OrderService;
 use Magento\TestFramework\Mail\Template\TransportBuilderMock;
 use Magento\TestFramework\TestCase\AbstractBackendController;
 use PHPUnit\Framework\Constraint\StringContains;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use PHPUnit\Framework\MockObject\MockObject as MockObject;
 
 /**
  * Class test backend order save.
@@ -51,7 +52,7 @@ class SaveTest extends AbstractBackendController
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->transportBuilder = $this->_objectManager->get(TransportBuilderMock::class);
@@ -67,6 +68,14 @@ class SaveTest extends AbstractBackendController
      */
     public function testExecuteWithPaymentOperation()
     {
+        /** @var OrderService|MockObject $orderService */
+        $orderService = $this->getMockBuilder(OrderService::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $orderService->method('place')
+            ->willThrowException(new LocalizedException(__('Transaction has been declined.')));
+        $this->_objectManager->addSharedInstance($orderService, OrderService::class);
+
         $quote = $this->getQuote('2000000001');
         $session = $this->_objectManager->get(Quote::class);
         $session->setQuoteId($quote->getId());
@@ -78,16 +87,8 @@ class SaveTest extends AbstractBackendController
                 'email' => $email,
             ]
         ];
-        $this->getRequest()->setMethod('POST');
+        $this->getRequest()->setMethod(Http::METHOD_POST);
         $this->getRequest()->setPostValue(['order' => $data]);
-
-        /** @var OrderService|MockObject $orderService */
-        $orderService = $this->getMockBuilder(OrderService::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $orderService->method('place')
-            ->willThrowException(new LocalizedException(__('Transaction has been declined.')));
-        $this->_objectManager->addSharedInstance($orderService, OrderService::class);
 
         $this->dispatch('backend/sales/order_create/save');
         $this->assertSessionMessages(
@@ -111,7 +112,7 @@ class SaveTest extends AbstractBackendController
      *
      * @return void
      */
-    public function testSendEmailOnOrderSave()
+    public function testSendEmailOnOrderSave(): void
     {
         $this->prepareRequest(['send_confirmation' => true]);
         $this->dispatch('backend/sales/order_create/save');
@@ -145,12 +146,37 @@ class SaveTest extends AbstractBackendController
     }
 
     /**
+     * @magentoDbIsolation enabled
+     * @magentoDataFixture Magento/Sales/_files/guest_quote_with_addresses.php
+     *
+     * @return void
+     */
+    public function testNotSendEmailOnOrderSave(): void
+    {
+        $this->prepareRequest();
+        $this->dispatch('backend/sales/order_create/save');
+        $this->assertSessionMessages(
+            $this->equalTo([(string)__('You created the order.')]),
+            MessageInterface::TYPE_SUCCESS
+        );
+
+        $this->assertRedirect($this->stringContains('sales/order/view/'));
+
+        $orderId = $this->getOrderId();
+        if ($orderId === false) {
+            $this->fail('Order is not created.');
+        }
+
+        $this->assertNull($this->transportBuilder->getSentMessage());
+    }
+
+    /**
      * Gets quote by reserved order id.
      *
      * @param string $reservedOrderId
      * @return \Magento\Quote\Api\Data\CartInterface
      */
-    private function getQuote($reservedOrderId)
+    private function getQuote(string $reservedOrderId): \Magento\Quote\Api\Data\CartInterface
     {
         /** @var SearchCriteriaBuilder $searchCriteriaBuilder */
         $searchCriteriaBuilder = $this->_objectManager->get(SearchCriteriaBuilder::class);
@@ -160,6 +186,7 @@ class SaveTest extends AbstractBackendController
         /** @var CartRepositoryInterface $quoteRepository */
         $quoteRepository = $this->_objectManager->get(CartRepositoryInterface::class);
         $items = $quoteRepository->getList($searchCriteria)->getItems();
+
         return array_pop($items);
     }
 
@@ -200,7 +227,7 @@ class SaveTest extends AbstractBackendController
      * @param array $params
      * @return void
      */
-    private function prepareRequest(array $params = [])
+    private function prepareRequest(array $params = []): void
     {
         $quote = $this->getQuote('guest_quote');
         $session = $this->_objectManager->get(Quote::class);

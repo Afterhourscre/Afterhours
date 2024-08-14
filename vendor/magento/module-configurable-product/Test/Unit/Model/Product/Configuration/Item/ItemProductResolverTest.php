@@ -14,55 +14,34 @@ use Magento\Catalog\Model\Product\Configuration\Item\Option\OptionInterface;
 use Magento\ConfigurableProduct\Model\Product\Configuration\Item\ItemProductResolver;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Quote\Model\Quote\Item\Option;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-/**
- * ItemProductResolver test
- */
 class ItemProductResolverTest extends TestCase
 {
-    /**
-     * @var ItemProductResolver
-     */
+    /** @var ItemProductResolver */
     private $model;
-
-    /**
-     * @var ItemInterface | \PHPUnit_Framework_MockObject_MockObject
-     */
+    /** @var ItemInterface | MockObject */
     private $item;
-
-    /**
-     * @var Product | \PHPUnit_Framework_MockObject_MockObject
-     */
+    /** @var Product | MockObject */
     private $parentProduct;
-
-    /**
-     * @var  ScopeConfigInterface | \PHPUnit_Framework_MockObject_MockObject
-     */
+    /** @var  ScopeConfigInterface | MockObject */
     private $scopeConfig;
-
-    /**
-     * @var OptionInterface | \PHPUnit_Framework_MockObject_MockObject
-     */
+    /** @var OptionInterface | MockObject */
     private $option;
-
-    /**
-     * @var Product | \PHPUnit_Framework_MockObject_MockObject
-     */
+    /** @var Product | MockObject */
     private $childProduct;
 
     /**
      * Set up method
-     *
-     * @return void
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->scopeConfig = $this->getMockBuilder(ScopeConfigInterface::class)
             ->disableOriginalConstructor()
-            ->getMock();
+            ->getMockForAbstractClass();
 
         $this->parentProduct = $this->getMockBuilder(Product::class)
             ->disableOriginalConstructor()
@@ -88,7 +67,7 @@ class ItemProductResolverTest extends TestCase
 
         $this->item = $this->getMockBuilder(ItemInterface::class)
             ->disableOriginalConstructor()
-            ->getMock();
+            ->getMockForAbstractClass();
 
         $this->item
             ->expects($this->once())
@@ -100,12 +79,14 @@ class ItemProductResolverTest extends TestCase
 
     /**
      * Test for deleted child product from configurable product
-     *
-     * @return void
      */
-    public function testGetFinalProductChildIsNull()
+    public function testGetFinalProductChildIsNull(): void
     {
-        $this->item->method('getOptionByCode')
+        $this->scopeConfig->expects($this->never())->method('getValue');
+        $this->childProduct->expects($this->never())->method('getData');
+
+        $this->item->expects($this->once())
+            ->method('getOptionByCode')
             ->willReturn(null);
 
         $finalProduct = $this->model->getFinalProduct($this->item);
@@ -122,17 +103,20 @@ class ItemProductResolverTest extends TestCase
      * @param string $expectedSku
      * @param string $scopeValue
      * @param string | null $thumbnail
-     * @return void
      */
-    public function testGetFinalProductChild($expectedSku, $scopeValue, $thumbnail)
+    public function testGetFinalProductChild($expectedSku, $scopeValue, $thumbnail): void
     {
-        $this->item->method('getOptionByCode')
+        $this->item->expects($this->once())
+            ->method('getOptionByCode')
             ->willReturn($this->option);
 
-        $this->childProduct->method('getData')
+        $this->childProduct
+            ->expects($this->once())
+            ->method('getData')
             ->willReturn($thumbnail);
 
-        $this->scopeConfig->method('getValue')
+        $this->scopeConfig->expects($this->once())
+            ->method('getValue')
             ->willReturn($scopeValue);
 
         $finalProduct = $this->model->getFinalProduct($this->item);
@@ -140,8 +124,7 @@ class ItemProductResolverTest extends TestCase
     }
 
     /**
-     * Data provider for scope test
-     *
+     * Dataprovider for scope test
      * @return array
      */
     public function provideScopeConfig(): array

@@ -3,27 +3,32 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Sitemap\Controller\Adminhtml\Sitemap;
 
 use Magento\Backend\App\Action\Context;
+use Magento\Backend\Model\View\Result\Redirect;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Controller;
-use Magento\Framework\Exception\NotFoundException;
+use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\Filesystem;
 use Magento\Framework\Validator\StringLength;
 use Magento\MediaStorage\Model\File\Validator\AvailablePath;
+use Magento\Sitemap\Controller\Adminhtml\Sitemap;
+use Magento\Sitemap\Helper\Data;
 use Magento\Sitemap\Model\SitemapFactory;
 
 /**
  * Save sitemap controller.
- *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class Save extends \Magento\Sitemap\Controller\Adminhtml\Sitemap
+class Save extends Sitemap implements HttpPostActionInterface
 {
     /**
      * Maximum length of sitemap filename
      */
-    const MAX_FILENAME_LENGTH = 32;
+    public const MAX_FILENAME_LENGTH = 32;
 
     /**
      * @var StringLength
@@ -36,12 +41,12 @@ class Save extends \Magento\Sitemap\Controller\Adminhtml\Sitemap
     private $pathValidator;
 
     /**
-     * @var \Magento\Sitemap\Helper\Data
+     * @var Data
      */
     private $sitemapHelper;
 
     /**
-     * @var \Magento\Framework\Filesystem
+     * @var Filesystem
      */
     private $filesystem;
 
@@ -51,27 +56,28 @@ class Save extends \Magento\Sitemap\Controller\Adminhtml\Sitemap
     private $sitemapFactory;
 
     /**
+     * Save constructor.
      * @param Context $context
-     * @param StringLength|null $stringValidator
-     * @param AvailablePath|null $pathValidator
-     * @param \Magento\Sitemap\Helper\Data|null $sitemapHelper
-     * @param \Magento\Framework\Filesystem|null $filesystem
-     * @param SitemapFactory|null $sitemapFactory
+     * @param StringLength $stringValidator
+     * @param AvailablePath $pathValidator
+     * @param Data $sitemapHelper
+     * @param Filesystem $filesystem
+     * @param SitemapFactory $sitemapFactory
      */
     public function __construct(
         Context $context,
-        StringLength $stringValidator = null,
-        AvailablePath $pathValidator = null,
-        \Magento\Sitemap\Helper\Data $sitemapHelper = null,
-        \Magento\Framework\Filesystem $filesystem = null,
-        SitemapFactory $sitemapFactory = null
+        StringLength $stringValidator,
+        AvailablePath $pathValidator,
+        Data $sitemapHelper,
+        Filesystem $filesystem,
+        SitemapFactory $sitemapFactory
     ) {
         parent::__construct($context);
-        $this->stringValidator = $stringValidator ?: $this->_objectManager->get(StringLength::class);
-        $this->pathValidator = $pathValidator ?: $this->_objectManager->get(AvailablePath::class);
-        $this->sitemapHelper = $sitemapHelper ?: $this->_objectManager->get(\Magento\Sitemap\Helper\Data::class);
-        $this->filesystem = $filesystem ?: $this->_objectManager->get(\Magento\Framework\Filesystem::class);
-        $this->sitemapFactory = $sitemapFactory ?: $this->_objectManager->get(SitemapFactory::class);
+        $this->stringValidator = $stringValidator;
+        $this->pathValidator = $pathValidator;
+        $this->sitemapHelper = $sitemapHelper;
+        $this->filesystem = $filesystem;
+        $this->sitemapFactory = $sitemapFactory;
     }
 
     /**
@@ -79,6 +85,7 @@ class Save extends \Magento\Sitemap\Controller\Adminhtml\Sitemap
      *
      * @param array $data
      * @return bool
+     * @throws \Exception
      */
     protected function validatePath(array $data)
     {
@@ -92,7 +99,6 @@ class Save extends \Magento\Sitemap\Controller\Adminhtml\Sitemap
                 }
                 // save data in session
                 $this->_session->setFormData($data);
-
                 // redirect to edit form
                 return false;
             }
@@ -105,12 +111,10 @@ class Save extends \Magento\Sitemap\Controller\Adminhtml\Sitemap
                 }
                 // save data in session
                 $this->_session->setFormData($data);
-
                 // redirect to edit form
                 return false;
             }
         }
-
         return true;
     }
 
@@ -118,12 +122,13 @@ class Save extends \Magento\Sitemap\Controller\Adminhtml\Sitemap
      * Clear sitemap
      *
      * @param \Magento\Sitemap\Model\Sitemap $model
+     *
      * @return void
      */
     protected function clearSiteMap(\Magento\Sitemap\Model\Sitemap $model)
     {
-        /** @var \Magento\Framework\Filesystem $directory */
-        $directory = $this->filesystem->getDirectoryWrite(DirectoryList::ROOT);
+        /** @var Filesystem $directory */
+        $directory = $this->filesystem->getDirectoryWrite(DirectoryList::PUB);
 
         if ($this->getRequest()->getParam('sitemap_id')) {
             $model->load($this->getRequest()->getParam('sitemap_id'));
@@ -158,7 +163,6 @@ class Save extends \Magento\Sitemap\Controller\Adminhtml\Sitemap
             $this->messageManager->addSuccessMessage(__('You saved the sitemap.'));
             // clear previously saved data from session
             $this->_session->setFormData(false);
-
             return $model->getId();
         } catch (\Exception $e) {
             // display error message
@@ -166,7 +170,6 @@ class Save extends \Magento\Sitemap\Controller\Adminhtml\Sitemap
             // save data in session
             $this->_session->setFormData($data);
         }
-
         return false;
     }
 
@@ -174,28 +177,26 @@ class Save extends \Magento\Sitemap\Controller\Adminhtml\Sitemap
      * Get result after saving data
      *
      * @param string|bool $id
-     * @return \Magento\Framework\Controller\ResultInterface
+     * @return ResultInterface
      */
     protected function getResult($id)
     {
-        /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
+        /** @var Redirect $resultRedirect */
         $resultRedirect = $this->resultFactory->create(Controller\ResultFactory::TYPE_REDIRECT);
+
         if ($id) {
             // check if 'Save and Continue'
             if ($this->getRequest()->getParam('back')) {
                 $resultRedirect->setPath('adminhtml/*/edit', ['sitemap_id' => $id]);
-
                 return $resultRedirect;
             }
             // go to grid or forward to generate action
             if ($this->getRequest()->getParam('generate')) {
                 $this->getRequest()->setParam('sitemap_id', $id);
-
                 return $this->resultFactory->create(Controller\ResultFactory::TYPE_FORWARD)
                     ->forward('generate');
             }
             $resultRedirect->setPath('adminhtml/*/');
-
             return $resultRedirect;
         }
         $resultRedirect->setPath(
@@ -209,18 +210,13 @@ class Save extends \Magento\Sitemap\Controller\Adminhtml\Sitemap
     /**
      * Save action
      *
-     * @return \Magento\Backend\Model\View\Result\Redirect
-     * @throws NotFoundException
+     * @return Redirect
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new NotFoundException(__('Page not found'));
-        }
-
         // check if data sent
         $data = $this->getRequest()->getPostValue();
-        /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
+        /** @var Redirect $resultRedirect */
         $resultRedirect = $this->resultFactory->create(Controller\ResultFactory::TYPE_REDIRECT);
         if ($data) {
             if (!$this->validatePath($data)) {
@@ -228,14 +224,11 @@ class Save extends \Magento\Sitemap\Controller\Adminhtml\Sitemap
                     'adminhtml/*/edit',
                     ['sitemap_id' => $this->getRequest()->getParam('sitemap_id')]
                 );
-
                 return $resultRedirect;
             }
-
             return $this->getResult($this->saveData($data));
         }
         $resultRedirect->setPath('adminhtml/*/');
-
         return $resultRedirect;
     }
 }

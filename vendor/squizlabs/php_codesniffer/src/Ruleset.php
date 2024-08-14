@@ -6,13 +6,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer;
 
-use PHP_CodeSniffer\Util;
 use PHP_CodeSniffer\Exceptions\RuntimeException;
+use PHP_CodeSniffer\Sniffs\DeprecatedSniff;
+use PHP_CodeSniffer\Util\Common;
+use PHP_CodeSniffer\Util\Standards;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use ReflectionClass;
+use stdClass;
 
 class Ruleset
 {
@@ -37,7 +43,7 @@ class Ruleset
      *
      * @var string[]
      */
-    public $paths = array();
+    public $paths = [];
 
     /**
      * A list of regular expressions used to ignore specific sniffs for files and folders.
@@ -46,9 +52,9 @@ class Ruleset
      * The key is the regular expression and the value is the type
      * of ignore pattern (absolute or relative).
      *
-     * @var array<string, string>
+     * @var array<string, array>
      */
-    public $ignorePatterns = array();
+    public $ignorePatterns = [];
 
     /**
      * A list of regular expressions used to include specific sniffs for files and folders.
@@ -59,7 +65,7 @@ class Ruleset
      *
      * @var array<string, array<string, string>>
      */
-    public $includePatterns = array();
+    public $includePatterns = [];
 
     /**
      * An array of sniff objects that are being used to check files.
@@ -67,9 +73,9 @@ class Ruleset
      * The key is the fully qualified name of the sniff class
      * and the value is the sniff object.
      *
-     * @var array<string, \PHP_CodeSniffer\Sniff>
+     * @var array<string, \PHP_CodeSniffer\Sniffs\Sniff>
      */
-    public $sniffs = array();
+    public $sniffs = [];
 
     /**
      * A mapping of sniff codes to fully qualified class names.
@@ -79,7 +85,7 @@ class Ruleset
      *
      * @var array<string, string>
      */
-    public $sniffCodes = array();
+    public $sniffCodes = [];
 
     /**
      * An array of token types and the sniffs that are listening for them.
@@ -87,9 +93,9 @@ class Ruleset
      * The key is the token name being listened for and the value
      * is the sniff object.
      *
-     * @var array<int, \PHP_CodeSniffer\Sniff>
+     * @var array<int, array<string, array<string, mixed>>>
      */
-    public $tokenListeners = array();
+    public $tokenListeners = [];
 
     /**
      * An array of rules from the ruleset.xml file.
@@ -99,14 +105,14 @@ class Ruleset
      *
      * @var array<string, mixed>
      */
-    public $ruleset = array();
+    public $ruleset = [];
 
     /**
      * The directories that the processed rulesets are in.
      *
      * @var string[]
      */
-    protected $rulesetDirs = array();
+    protected $rulesetDirs = [];
 
     /**
      * The config data for the run.
@@ -115,6 +121,16 @@ class Ruleset
      */
     private $config = null;
 
+    /**
+     * An array of the names of sniffs which have been marked as deprecated.
+     *
+     * The key is the sniff code and the value
+     * is the fully qualified name of the sniff class.
+     *
+     * @var array<string, string>
+     */
+    private $deprecatedSniffs = [];
+
 
     /**
      * Initialise the ruleset that the run will use.
@@ -122,29 +138,24 @@ class Ruleset
      * @param \PHP_CodeSniffer\Config $config The config data for the run.
      *
      * @return void
+     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If no sniffs were registered.
      */
     public function __construct(Config $config)
     {
-        // Ignore sniff restrictions if caching is on.
-        $restrictions = array();
-        $exclusions   = array();
-        if ($config->cache === false) {
-            $restrictions = $config->sniffs;
-            $exclusions   = $config->exclude;
-        }
-
         $this->config = $config;
-        $sniffs       = array();
+        $restrictions = $config->sniffs;
+        $exclusions   = $config->exclude;
+        $sniffs       = [];
 
-        $standardPaths = array();
+        $standardPaths = [];
         foreach ($config->standards as $standard) {
-            $installed = Util\Standards::getInstalledStandardPath($standard);
+            $installed = Standards::getInstalledStandardPath($standard);
             if ($installed === null) {
-                $standard = Util\Common::realpath($standard);
+                $standard = Common::realpath($standard);
                 if (is_dir($standard) === true
-                    && is_file(Util\Common::realpath($standard.DIRECTORY_SEPARATOR.'ruleset.xml')) === true
+                    && is_file(Common::realpath($standard.DIRECTORY_SEPARATOR.'ruleset.xml')) === true
                 ) {
-                    $standard = Util\Common::realpath($standard.DIRECTORY_SEPARATOR.'ruleset.xml');
+                    $standard = Common::realpath($standard.DIRECTORY_SEPARATOR.'ruleset.xml');
                 }
             } else {
                 $standard = $installed;
@@ -161,8 +172,7 @@ class Ruleset
                     $this->name .= ', ';
                 }
 
-                $this->name   .= $standardName;
-                $this->paths[] = $standard;
+                $this->name .= $standardName;
 
                 // Allow autoloading of custom files inside this standard.
                 if (isset($ruleset['namespace']) === true) {
@@ -175,9 +185,11 @@ class Ruleset
             }
 
             if (defined('PHP_CODESNIFFER_IN_TESTS') === true && empty($restrictions) === false) {
-                // Unit tests use one standard and one sniff at a time.
+                // In unit tests, only register the sniffs that the test wants and not the entire standard.
                 try {
-                    $sniffs = $this->expandRulesetReference($restrictions[0], dirname($standard));
+                    foreach ($restrictions as $restriction) {
+                        $sniffs = array_merge($sniffs, $this->expandRulesetReference($restriction, dirname($standard)));
+                    }
                 } catch (RuntimeException $e) {
                     // Sniff reference could not be expanded, which probably means this
                     // is an installed standard. Let the unit test system take care of
@@ -198,14 +210,20 @@ class Ruleset
             $sniffs = array_merge($sniffs, $this->processRuleset($standard));
         }//end foreach
 
-        $sniffRestrictions = array();
+        // Ignore sniff restrictions if caching is on.
+        if ($config->cache === true) {
+            $restrictions = [];
+            $exclusions   = [];
+        }
+
+        $sniffRestrictions = [];
         foreach ($restrictions as $sniffCode) {
             $parts     = explode('.', strtolower($sniffCode));
             $sniffName = $parts[0].'\sniffs\\'.$parts[1].'\\'.$parts[2].'sniff';
             $sniffRestrictions[$sniffName] = true;
         }
 
-        $sniffExclusions = array();
+        $sniffExclusions = [];
         foreach ($exclusions as $sniffCode) {
             $parts     = explode('.', strtolower($sniffCode));
             $sniffName = $parts[0].'\sniffs\\'.$parts[1].'\\'.$parts[2].'sniff';
@@ -235,21 +253,24 @@ class Ruleset
     public function explain()
     {
         $sniffs = array_keys($this->sniffCodes);
-        sort($sniffs);
+        sort($sniffs, (SORT_NATURAL | SORT_FLAG_CASE));
 
-        ob_start();
+        $sniffCount = count($sniffs);
 
-        $lastStandard = null;
-        $lastCount    = '';
-        $sniffCount   = count($sniffs);
-
-        // Add a dummy entry to the end so we loop
-        // one last time and clear the output buffer.
+        // Add a dummy entry to the end so we loop one last time
+        // and echo out the collected info about the last standard.
         $sniffs[] = '';
 
-        echo PHP_EOL."The $this->name standard contains $sniffCount sniffs".PHP_EOL;
+        $summaryLine = PHP_EOL."The $this->name standard contains 1 sniff".PHP_EOL;
+        if ($sniffCount !== 1) {
+            $summaryLine = str_replace('1 sniff', "$sniffCount sniffs", $summaryLine);
+        }
 
-        ob_start();
+        echo $summaryLine;
+
+        $lastStandard     = null;
+        $lastCount        = 0;
+        $sniffsInStandard = [];
 
         foreach ($sniffs as $i => $sniff) {
             if ($i === $sniffCount) {
@@ -261,35 +282,183 @@ class Ruleset
                 }
             }
 
+            // Reached the first item in the next standard.
+            // Echo out the info collected from the previous standard.
             if ($currentStandard !== $lastStandard) {
-                $sniffList = ob_get_contents();
-                ob_end_clean();
-
-                echo PHP_EOL.$lastStandard.' ('.$lastCount.' sniff';
+                $subTitle = $lastStandard.' ('.$lastCount.' sniff';
                 if ($lastCount > 1) {
-                    echo 's';
+                    $subTitle .= 's';
                 }
 
-                echo ')'.PHP_EOL;
-                echo str_repeat('-', (strlen($lastStandard.$lastCount) + 10));
-                echo PHP_EOL;
-                echo $sniffList;
+                $subTitle .= ')';
 
-                $lastStandard = $currentStandard;
-                $lastCount    = 0;
+                echo PHP_EOL.$subTitle.PHP_EOL;
+                echo str_repeat('-', strlen($subTitle)).PHP_EOL;
+                echo '  '.implode(PHP_EOL.'  ', $sniffsInStandard).PHP_EOL;
+
+                $lastStandard     = $currentStandard;
+                $lastCount        = 0;
+                $sniffsInStandard = [];
 
                 if ($currentStandard === null) {
                     break;
                 }
-
-                ob_start();
             }//end if
 
-            echo '  '.$sniff.PHP_EOL;
-            $lastCount++;
+            if (isset($this->deprecatedSniffs[$sniff]) === true) {
+                $sniff .= ' *';
+            }
+
+            $sniffsInStandard[] = $sniff;
+            ++$lastCount;
         }//end foreach
 
+        if (count($this->deprecatedSniffs) > 0) {
+            echo PHP_EOL.'* Sniffs marked with an asterix are deprecated.'.PHP_EOL;
+        }
+
     }//end explain()
+
+
+    /**
+     * Checks whether any deprecated sniffs were registered via the ruleset.
+     *
+     * @return bool
+     */
+    public function hasSniffDeprecations()
+    {
+        return (count($this->deprecatedSniffs) > 0);
+
+    }//end hasSniffDeprecations()
+
+
+    /**
+     * Prints an information block about deprecated sniffs being used.
+     *
+     * @return void
+     *
+     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException When the interface implementation is faulty.
+     */
+    public function showSniffDeprecations()
+    {
+        if ($this->hasSniffDeprecations() === false) {
+            return;
+        }
+
+        // Don't show deprecation notices in quiet mode, in explain mode
+        // or when the documentation is being shown.
+        // Documentation and explain will mark a sniff as deprecated natively
+        // and also call the Ruleset multiple times which would lead to duplicate
+        // display of the deprecation messages.
+        if ($this->config->quiet === true
+            || $this->config->explain === true
+            || $this->config->generator !== null
+        ) {
+            return;
+        }
+
+        $reportWidth = $this->config->reportWidth;
+        // Message takes report width minus the leading dash + two spaces, minus a one space gutter at the end.
+        $maxMessageWidth = ($reportWidth - 4);
+        $maxActualWidth  = 0;
+
+        ksort($this->deprecatedSniffs, (SORT_NATURAL | SORT_FLAG_CASE));
+
+        $messages        = [];
+        $messageTemplate = 'This sniff has been deprecated since %s and will be removed in %s. %s';
+        $errorTemplate   = 'The %s::%s() method must return a %sstring, received %s';
+
+        foreach ($this->deprecatedSniffs as $sniffCode => $className) {
+            if (isset($this->sniffs[$className]) === false) {
+                // Should only be possible in test situations, but some extra defensive coding is never a bad thing.
+                continue;
+            }
+
+            // Verify the interface was implemented correctly.
+            // Unfortunately can't be safeguarded via type declarations yet.
+            $deprecatedSince = $this->sniffs[$className]->getDeprecationVersion();
+            if (is_string($deprecatedSince) === false) {
+                throw new RuntimeException(
+                    sprintf($errorTemplate, $className, 'getDeprecationVersion', 'non-empty ', gettype($deprecatedSince))
+                );
+            }
+
+            if ($deprecatedSince === '') {
+                throw new RuntimeException(
+                    sprintf($errorTemplate, $className, 'getDeprecationVersion', 'non-empty ', '""')
+                );
+            }
+
+            $removedIn = $this->sniffs[$className]->getRemovalVersion();
+            if (is_string($removedIn) === false) {
+                throw new RuntimeException(
+                    sprintf($errorTemplate, $className, 'getRemovalVersion', 'non-empty ', gettype($removedIn))
+                );
+            }
+
+            if ($removedIn === '') {
+                throw new RuntimeException(
+                    sprintf($errorTemplate, $className, 'getRemovalVersion', 'non-empty ', '""')
+                );
+            }
+
+            $customMessage = $this->sniffs[$className]->getDeprecationMessage();
+            if (is_string($customMessage) === false) {
+                throw new RuntimeException(
+                    sprintf($errorTemplate, $className, 'getDeprecationMessage', '', gettype($customMessage))
+                );
+            }
+
+            // Truncate the error code if there is not enough report width.
+            if (strlen($sniffCode) > $maxMessageWidth) {
+                $sniffCode = substr($sniffCode, 0, ($maxMessageWidth - 3)).'...';
+            }
+
+            $message        = '-  '."\033[36m".$sniffCode."\033[0m".PHP_EOL;
+            $maxActualWidth = max($maxActualWidth, strlen($sniffCode));
+
+            // Normalize new line characters in custom message.
+            $customMessage = preg_replace('`\R`', PHP_EOL, $customMessage);
+
+            $notice         = trim(sprintf($messageTemplate, $deprecatedSince, $removedIn, $customMessage));
+            $maxActualWidth = max($maxActualWidth, min(strlen($notice), $maxMessageWidth));
+            $wrapped        = wordwrap($notice, $maxMessageWidth, PHP_EOL);
+            $message       .= '   '.implode(PHP_EOL.'   ', explode(PHP_EOL, $wrapped));
+
+            $messages[] = $message;
+        }//end foreach
+
+        if (count($messages) === 0) {
+            return;
+        }
+
+        $summaryLine = "WARNING: The $this->name standard uses 1 deprecated sniff";
+        $sniffCount  = count($messages);
+        if ($sniffCount !== 1) {
+            $summaryLine = str_replace('1 deprecated sniff', "$sniffCount deprecated sniffs", $summaryLine);
+        }
+
+        $maxActualWidth = max($maxActualWidth, min(strlen($summaryLine), $maxMessageWidth));
+
+        $summaryLine = wordwrap($summaryLine, $reportWidth, PHP_EOL);
+        if ($this->config->colors === true) {
+            echo "\033[33m".$summaryLine."\033[0m".PHP_EOL;
+        } else {
+            echo $summaryLine.PHP_EOL;
+        }
+
+        $messages = implode(PHP_EOL, $messages);
+        if ($this->config->colors === false) {
+            $messages = Common::stripColors($messages);
+        }
+
+        echo str_repeat('-', min(($maxActualWidth + 4), $reportWidth)).PHP_EOL;
+        echo $messages;
+
+        $closer = wordwrap('Deprecated sniffs are still run, but will stop working at some point in the future.', $reportWidth, PHP_EOL);
+        echo PHP_EOL.PHP_EOL.$closer.PHP_EOL.PHP_EOL;
+
+    }//end showSniffDeprecations()
 
 
     /**
@@ -303,25 +472,37 @@ class Ruleset
      *                            is only used for debug output.
      *
      * @return string[]
-     * @throws RuntimeException If the ruleset path is invalid.
+     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException - If the ruleset path is invalid.
+     *                                                      - If a specified autoload file could not be found.
      */
     public function processRuleset($rulesetPath, $depth=0)
     {
-        $rulesetPath = Util\Common::realpath($rulesetPath);
+        $rulesetPath = Common::realpath($rulesetPath);
         if (PHP_CODESNIFFER_VERBOSITY > 1) {
             echo str_repeat("\t", $depth);
-            echo 'Processing ruleset '.Util\Common::stripBasepath($rulesetPath, $this->config->basepath).PHP_EOL;
+            echo 'Processing ruleset '.Common::stripBasepath($rulesetPath, $this->config->basepath).PHP_EOL;
         }
 
-        $ruleset = @simplexml_load_string(file_get_contents($rulesetPath));
+        libxml_use_internal_errors(true);
+        $ruleset = simplexml_load_string(file_get_contents($rulesetPath));
         if ($ruleset === false) {
-            throw new RuntimeException("Ruleset $rulesetPath is not valid");
+            $errorMsg = "Ruleset $rulesetPath is not valid".PHP_EOL;
+            $errors   = libxml_get_errors();
+            foreach ($errors as $error) {
+                $errorMsg .= '- On line '.$error->line.', column '.$error->column.': '.$error->message;
+            }
+
+            libxml_clear_errors();
+            throw new RuntimeException($errorMsg);
         }
 
-        $ownSniffs      = array();
-        $includedSniffs = array();
-        $excludedSniffs = array();
+        libxml_use_internal_errors(false);
 
+        $ownSniffs      = [];
+        $includedSniffs = [];
+        $excludedSniffs = [];
+
+        $this->paths[]       = $rulesetPath;
         $rulesetDir          = dirname($rulesetPath);
         $this->rulesetDirs[] = $rulesetDir;
 
@@ -329,24 +510,26 @@ class Ruleset
         if (is_dir($sniffDir) === true) {
             if (PHP_CODESNIFFER_VERBOSITY > 1) {
                 echo str_repeat("\t", $depth);
-                echo "\tAdding sniff files from ".Util\Common::stripBasepath($sniffDir, $this->config->basepath).' directory'.PHP_EOL;
+                echo "\tAdding sniff files from ".Common::stripBasepath($sniffDir, $this->config->basepath).' directory'.PHP_EOL;
             }
 
             $ownSniffs = $this->expandSniffDirectory($sniffDir, $depth);
         }
 
-        // Included custom autoloaders.
+        // Include custom autoloaders.
         foreach ($ruleset->{'autoload'} as $autoload) {
             if ($this->shouldProcessElement($autoload) === false) {
                 continue;
             }
 
             $autoloadPath = (string) $autoload;
-            if (is_file($autoloadPath) === false) {
-                $autoloadPath = Util\Common::realPath(dirname($rulesetPath).DIRECTORY_SEPARATOR.$autoloadPath);
-            }
 
-            if ($autoloadPath === false) {
+            // Try relative autoload paths first.
+            $relativePath = Common::realPath(dirname($rulesetPath).DIRECTORY_SEPARATOR.$autoloadPath);
+
+            if ($relativePath !== false && is_file($relativePath) === true) {
+                $autoloadPath = $relativePath;
+            } else if (is_file($autoloadPath) === false) {
                 throw new RuntimeException('The specified autoload file "'.$autoload.'" does not exist');
             }
 
@@ -388,7 +571,11 @@ class Ruleset
             $includedSniffs = array_merge($includedSniffs, $expandedSniffs);
 
             $parts = explode('.', $rule['ref']);
-            if (count($parts) === 4) {
+            if (count($parts) === 4
+                && $parts[0] !== ''
+                && $parts[1] !== ''
+                && $parts[2] !== ''
+            ) {
                 $sniffCode = $parts[0].'.'.$parts[1].'.'.$parts[2];
                 if (isset($this->ruleset[$sniffCode]['severity']) === true
                     && $this->ruleset[$sniffCode]['severity'] === 0
@@ -404,7 +591,7 @@ class Ruleset
                     }
                 } else if (empty($newSniffs) === false) {
                     $newSniff = $newSniffs[0];
-                    if (in_array($newSniff, $ownSniffs) === false) {
+                    if (in_array($newSniff, $ownSniffs, true) === false) {
                         // Including a sniff that hasn't been included higher up, but
                         // only including a single message from it. So turn off all messages in
                         // the sniff, except this one.
@@ -451,7 +638,7 @@ class Ruleset
                     } else {
                         $excludedSniffs = array_merge(
                             $excludedSniffs,
-                            $this->expandRulesetReference($exclude['name'], $rulesetDir, ($depth + 1))
+                            $this->expandRulesetReference((string) $exclude['name'], $rulesetDir, ($depth + 1))
                         );
                     }
                 }//end foreach
@@ -461,7 +648,7 @@ class Ruleset
         }//end foreach
 
         // Process custom command line arguments.
-        $cliArgs = array();
+        $cliArgs = [];
         foreach ($ruleset->{'arg'} as $arg) {
             if ($this->shouldProcessElement($arg) === false) {
                 continue;
@@ -528,7 +715,7 @@ class Ruleset
             // Change the directory so all relative paths are worked
             // out based on the location of the ruleset instead of
             // the location of the user.
-            $inPhar = Util\Common::isPharFile($rulesetDir);
+            $inPhar = Common::isPharFile($rulesetDir);
             if ($inPhar === false) {
                 $currentDir = getcwd();
                 chdir($rulesetDir);
@@ -570,12 +757,12 @@ class Ruleset
 
         // Merge our own sniff list with our externally included
         // sniff list, but filter out any excluded sniffs.
-        $files = array();
+        $files = [];
         foreach ($includedSniffs as $sniff) {
-            if (in_array($sniff, $excludedSniffs) === true) {
+            if (in_array($sniff, $excludedSniffs, true) === true) {
                 continue;
             } else {
-                $files[] = Util\Common::realpath($sniff);
+                $files[] = Common::realpath($sniff);
             }
         }
 
@@ -595,10 +782,10 @@ class Ruleset
      */
     private function expandSniffDirectory($directory, $depth=0)
     {
-        $sniffs = array();
+        $sniffs = [];
 
-        $rdi = new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::FOLLOW_SYMLINKS);
-        $di  = new \RecursiveIteratorIterator($rdi, 0, \RecursiveIteratorIterator::CATCH_GET_CHILD);
+        $rdi = new RecursiveDirectoryIterator($directory, RecursiveDirectoryIterator::FOLLOW_SYMLINKS);
+        $di  = new RecursiveIteratorIterator($rdi, 0, RecursiveIteratorIterator::CATCH_GET_CHILD);
 
         $dirLen = strlen($directory);
 
@@ -633,7 +820,7 @@ class Ruleset
 
             if (PHP_CODESNIFFER_VERBOSITY > 1) {
                 echo str_repeat("\t", $depth);
-                echo "\t\t=> ".Util\Common::stripBasepath($path, $this->config->basepath).PHP_EOL;
+                echo "\t\t=> ".Common::stripBasepath($path, $this->config->basepath).PHP_EOL;
             }
 
             $sniffs[] = $path;
@@ -654,7 +841,7 @@ class Ruleset
      *                           is only used for debug output.
      *
      * @return array
-     * @throws RuntimeException If the reference is invalid.
+     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If the reference is invalid.
      */
     private function expandRulesetReference($ref, $rulesetDir, $depth=0)
     {
@@ -666,7 +853,7 @@ class Ruleset
                 echo "\t\t* ignoring internal sniff code *".PHP_EOL;
             }
 
-            return array();
+            return [];
         }
 
         // As sniffs can't begin with a full stop, assume references in
@@ -674,12 +861,12 @@ class Ruleset
         // to absolute paths. If this fails, let the reference run through
         // the normal checks and have it fail as normal.
         if (substr($ref, 0, 1) === '.') {
-            $realpath = Util\Common::realpath($rulesetDir.'/'.$ref);
+            $realpath = Common::realpath($rulesetDir.'/'.$ref);
             if ($realpath !== false) {
                 $ref = $realpath;
                 if (PHP_CODESNIFFER_VERBOSITY > 1) {
                     echo str_repeat("\t", $depth);
-                    echo "\t\t=> ".Util\Common::stripBasepath($ref, $this->config->basepath).PHP_EOL;
+                    echo "\t\t=> ".Common::stripBasepath($ref, $this->config->basepath).PHP_EOL;
                 }
             }
         }
@@ -687,12 +874,12 @@ class Ruleset
         // As sniffs can't begin with a tilde, assume references in
         // this format are relative to the user's home directory.
         if (substr($ref, 0, 2) === '~/') {
-            $realpath = Util\Common::realpath($ref);
+            $realpath = Common::realpath($ref);
             if ($realpath !== false) {
                 $ref = $realpath;
                 if (PHP_CODESNIFFER_VERBOSITY > 1) {
                     echo str_repeat("\t", $depth);
-                    echo "\t\t=> ".Util\Common::stripBasepath($ref, $this->config->basepath).PHP_EOL;
+                    echo "\t\t=> ".Common::stripBasepath($ref, $this->config->basepath).PHP_EOL;
                 }
             }
         }
@@ -701,15 +888,15 @@ class Ruleset
             if (substr($ref, -9) === 'Sniff.php') {
                 // A single external sniff.
                 $this->rulesetDirs[] = dirname(dirname(dirname($ref)));
-                return array($ref);
+                return [$ref];
             }
         } else {
             // See if this is a whole standard being referenced.
-            $path = Util\Standards::getInstalledStandardPath($ref);
-            if (Util\Common::isPharFile($path) === true && strpos($path, 'ruleset.xml') === false) {
+            $path = Standards::getInstalledStandardPath($ref);
+            if ($path !== null && Common::isPharFile($path) === true && strpos($path, 'ruleset.xml') === false) {
                 // If the ruleset exists inside the phar file, use it.
                 if (file_exists($path.DIRECTORY_SEPARATOR.'ruleset.xml') === true) {
-                    $path = $path.DIRECTORY_SEPARATOR.'ruleset.xml';
+                    $path .= DIRECTORY_SEPARATOR.'ruleset.xml';
                 } else {
                     $path = null;
                 }
@@ -719,7 +906,7 @@ class Ruleset
                 $ref = $path;
                 if (PHP_CODESNIFFER_VERBOSITY > 1) {
                     echo str_repeat("\t", $depth);
-                    echo "\t\t=> ".Util\Common::stripBasepath($ref, $this->config->basepath).PHP_EOL;
+                    echo "\t\t=> ".Common::stripBasepath($ref, $this->config->basepath).PHP_EOL;
                 }
             } else if (is_dir($ref) === false) {
                 // Work out the sniff path.
@@ -743,16 +930,16 @@ class Ruleset
                 }
 
                 $newRef  = false;
-                $stdPath = Util\Standards::getInstalledStandardPath($stdName);
+                $stdPath = Standards::getInstalledStandardPath($stdName);
                 if ($stdPath !== null && $path !== '') {
-                    if (Util\Common::isPharFile($stdPath) === true
+                    if (Common::isPharFile($stdPath) === true
                         && strpos($stdPath, 'ruleset.xml') === false
                     ) {
                         // Phar files can only return the directory,
                         // since ruleset can be omitted if building one standard.
-                        $newRef = Util\Common::realpath($stdPath.$path);
+                        $newRef = Common::realpath($stdPath.$path);
                     } else {
-                        $newRef = Util\Common::realpath(dirname($stdPath).$path);
+                        $newRef = Common::realpath(dirname($stdPath).$path);
                     }
                 }
 
@@ -767,7 +954,7 @@ class Ruleset
                             continue;
                         }
 
-                        $newRef = Util\Common::realpath($dir.$path);
+                        $newRef = Common::realpath($dir.$path);
 
                         if ($newRef !== false) {
                             $ref = $newRef;
@@ -779,7 +966,7 @@ class Ruleset
 
                 if (PHP_CODESNIFFER_VERBOSITY > 1) {
                     echo str_repeat("\t", $depth);
-                    echo "\t\t=> ".Util\Common::stripBasepath($ref, $this->config->basepath).PHP_EOL;
+                    echo "\t\t=> ".Common::stripBasepath($ref, $this->config->basepath).PHP_EOL;
                 }
             }//end if
         }//end if
@@ -812,7 +999,7 @@ class Ruleset
 
             if (substr($ref, -9) === 'Sniff.php') {
                 // A single sniff.
-                return array($ref);
+                return [$ref];
             } else {
                 // Assume an external ruleset.xml file.
                 if (PHP_CODESNIFFER_VERBOSITY > 1) {
@@ -830,24 +1017,33 @@ class Ruleset
     /**
      * Processes a rule from a ruleset XML file, overriding built-in defaults.
      *
-     * @param SimpleXMLElement $rule      The rule object from a ruleset XML file.
-     * @param string[]         $newSniffs An array of sniffs that got included by this rule.
-     * @param int              $depth     How many nested processing steps we are in.
-     *                                    This is only used for debug output.
+     * @param \SimpleXMLElement $rule      The rule object from a ruleset XML file.
+     * @param string[]          $newSniffs An array of sniffs that got included by this rule.
+     * @param int               $depth     How many nested processing steps we are in.
+     *                                     This is only used for debug output.
      *
      * @return void
-     * @throws RuntimeException If rule settings are invalid.
+     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If rule settings are invalid.
      */
     private function processRule($rule, $newSniffs, $depth=0)
     {
         $ref  = (string) $rule['ref'];
-        $todo = array($ref);
+        $todo = [$ref];
 
-        $parts = explode('.', $ref);
-        if (count($parts) <= 2) {
-            // We are processing a standard or a category of sniffs.
+        $parts      = explode('.', $ref);
+        $partsCount = count($parts);
+        if ($partsCount <= 2
+            || $partsCount > count(array_filter($parts))
+            || in_array($ref, $newSniffs) === true
+        ) {
+            // We are processing a standard, a category of sniffs or a relative path inclusion.
             foreach ($newSniffs as $sniffFile) {
-                $parts         = explode(DIRECTORY_SEPARATOR, $sniffFile);
+                $parts = explode(DIRECTORY_SEPARATOR, $sniffFile);
+                if (count($parts) === 1 && DIRECTORY_SEPARATOR === '\\') {
+                    // Path using forward slashes while running on Windows.
+                    $parts = explode('/', $sniffFile);
+                }
+
                 $sniffName     = array_pop($parts);
                 $sniffCategory = array_pop($parts);
                 array_pop($parts);
@@ -862,7 +1058,7 @@ class Ruleset
                 && $this->shouldProcessElement($rule->severity) === true
             ) {
                 if (isset($this->ruleset[$code]) === false) {
-                    $this->ruleset[$code] = array();
+                    $this->ruleset[$code] = [];
                 }
 
                 $this->ruleset[$code]['severity'] = (int) $rule->severity;
@@ -882,7 +1078,7 @@ class Ruleset
                 && $this->shouldProcessElement($rule->type) === true
             ) {
                 if (isset($this->ruleset[$code]) === false) {
-                    $this->ruleset[$code] = array();
+                    $this->ruleset[$code] = [];
                 }
 
                 $type = strtolower((string) $rule->type);
@@ -907,7 +1103,7 @@ class Ruleset
                 && $this->shouldProcessElement($rule->message) === true
             ) {
                 if (isset($this->ruleset[$code]) === false) {
-                    $this->ruleset[$code] = array();
+                    $this->ruleset[$code] = [];
                 }
 
                 $this->ruleset[$code]['message'] = (string) $rule->message;
@@ -926,40 +1122,75 @@ class Ruleset
             if (isset($rule->properties) === true
                 && $this->shouldProcessElement($rule->properties) === true
             ) {
+                $propertyScope = 'standard';
+                if ($code === $ref || substr($ref, -9) === 'Sniff.php') {
+                    $propertyScope = 'sniff';
+                }
+
                 foreach ($rule->properties->property as $prop) {
                     if ($this->shouldProcessElement($prop) === false) {
                         continue;
                     }
 
                     if (isset($this->ruleset[$code]) === false) {
-                        $this->ruleset[$code] = array(
-                                                 'properties' => array(),
-                                                );
+                        $this->ruleset[$code] = [
+                            'properties' => [],
+                        ];
                     } else if (isset($this->ruleset[$code]['properties']) === false) {
-                        $this->ruleset[$code]['properties'] = array();
+                        $this->ruleset[$code]['properties'] = [];
                     }
 
                     $name = (string) $prop['name'];
                     if (isset($prop['type']) === true
                         && (string) $prop['type'] === 'array'
                     ) {
-                        $value  = (string) $prop['value'];
-                        $values = array();
-                        foreach (explode(',', $value) as $val) {
-                            $v = '';
-
-                            list($k,$v) = explode('=>', $val.'=>');
-                            if ($v !== '') {
-                                $values[$k] = $v;
-                            } else {
-                                $values[] = $k;
-                            }
+                        $values = [];
+                        if (isset($prop['extend']) === true
+                            && (string) $prop['extend'] === 'true'
+                            && isset($this->ruleset[$code]['properties'][$name]['value']) === true
+                        ) {
+                            $values = $this->ruleset[$code]['properties'][$name]['value'];
                         }
 
-                        $this->ruleset[$code]['properties'][$name] = $values;
+                        if (isset($prop->element) === true) {
+                            $printValue = '';
+                            foreach ($prop->element as $element) {
+                                if ($this->shouldProcessElement($element) === false) {
+                                    continue;
+                                }
+
+                                $value = (string) $element['value'];
+                                if (isset($element['key']) === true) {
+                                    $key          = (string) $element['key'];
+                                    $values[$key] = $value;
+                                    $printValue  .= $key.'=>'.$value.',';
+                                } else {
+                                    $values[]    = $value;
+                                    $printValue .= $value.',';
+                                }
+                            }
+
+                            $printValue = rtrim($printValue, ',');
+                        } else {
+                            $value      = (string) $prop['value'];
+                            $printValue = $value;
+                            foreach (explode(',', $value) as $val) {
+                                list($k, $v) = explode('=>', $val.'=>');
+                                if ($v !== '') {
+                                    $values[trim($k)] = trim($v);
+                                } else {
+                                    $values[] = trim($k);
+                                }
+                            }
+                        }//end if
+
+                        $this->ruleset[$code]['properties'][$name] = [
+                            'value' => $values,
+                            'scope' => $propertyScope,
+                        ];
                         if (PHP_CODESNIFFER_VERBOSITY > 1) {
                             echo str_repeat("\t", $depth);
-                            echo "\t\t=> array property \"$name\" set to \"$value\"";
+                            echo "\t\t=> array property \"$name\" set to \"$printValue\"";
                             if ($code !== $ref) {
                                 echo " for $code";
                             }
@@ -967,7 +1198,10 @@ class Ruleset
                             echo PHP_EOL;
                         }
                     } else {
-                        $this->ruleset[$code]['properties'][$name] = (string) $prop['value'];
+                        $this->ruleset[$code]['properties'][$name] = [
+                            'value' => (string) $prop['value'],
+                            'scope' => $propertyScope,
+                        ];
                         if (PHP_CODESNIFFER_VERBOSITY > 1) {
                             echo str_repeat("\t", $depth);
                             echo "\t\t=> property \"$name\" set to \"".(string) $prop['value'].'"';
@@ -988,7 +1222,7 @@ class Ruleset
                 }
 
                 if (isset($this->ignorePatterns[$code]) === false) {
-                    $this->ignorePatterns[$code] = array();
+                    $this->ignorePatterns[$code] = [];
                 }
 
                 if (isset($pattern['type']) === false) {
@@ -1014,7 +1248,7 @@ class Ruleset
                 }
 
                 if (isset($this->includePatterns[$code]) === false) {
-                    $this->includePatterns[$code] = array();
+                    $this->includePatterns[$code] = [];
                 }
 
                 if (isset($pattern['type']) === false) {
@@ -1040,7 +1274,7 @@ class Ruleset
     /**
      * Determine if an element should be processed or ignored.
      *
-     * @param SimpleXMLElement $element An object from a ruleset XML file.
+     * @param \SimpleXMLElement $element An object from a ruleset XML file.
      *
      * @return bool
      */
@@ -1085,7 +1319,7 @@ class Ruleset
      */
     public function registerSniffs($files, $restrictions, $exclusions)
     {
-        $listeners = array();
+        $listeners = [];
 
         foreach ($files as $file) {
             // Work out where the position of /StandardName/Sniffs/... is
@@ -1101,7 +1335,7 @@ class Ruleset
             }
 
             $className   = Autoload::loadFile($file);
-            $compareName = Util\Common::cleanSniffClass($className);
+            $compareName = Common::cleanSniffClass($className);
 
             // If they have specified a list of sniffs to restrict to, check
             // to see if this sniff is allowed.
@@ -1120,7 +1354,7 @@ class Ruleset
             }
 
             // Skip abstract classes.
-            $reflection = new \ReflectionClass($className);
+            $reflection = new ReflectionClass($className);
             if ($reflection->isAbstract() === true) {
                 continue;
             }
@@ -1138,38 +1372,42 @@ class Ruleset
 
 
     /**
-     * Populates the array of PHP_CodeSniffer_Sniff's for this file.
+     * Populates the array of PHP_CodeSniffer_Sniff objects for this file.
      *
      * @return void
-     * @throws RuntimeException If sniff registration fails.
+     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If sniff registration fails.
      */
     public function populateTokenListeners()
     {
         // Construct a list of listeners indexed by token being listened for.
-        $this->tokenListeners = array();
+        $this->tokenListeners = [];
 
         foreach ($this->sniffs as $sniffClass => $sniffObject) {
             $this->sniffs[$sniffClass] = null;
             $this->sniffs[$sniffClass] = new $sniffClass();
 
-            $sniffCode = Util\Common::getSniffCode($sniffClass);
+            $sniffCode = Common::getSniffCode($sniffClass);
             $this->sniffCodes[$sniffCode] = $sniffClass;
+
+            if ($this->sniffs[$sniffClass] instanceof DeprecatedSniff) {
+                $this->deprecatedSniffs[$sniffCode] = $sniffClass;
+            }
 
             // Set custom properties.
             if (isset($this->ruleset[$sniffCode]['properties']) === true) {
-                foreach ($this->ruleset[$sniffCode]['properties'] as $name => $value) {
-                    $this->setSniffProperty($sniffClass, $name, $value);
+                foreach ($this->ruleset[$sniffCode]['properties'] as $name => $settings) {
+                    $this->setSniffProperty($sniffClass, $name, $settings);
                 }
             }
 
-            $tokenizers = array();
+            $tokenizers = [];
             $vars       = get_class_vars($sniffClass);
             if (isset($vars['supportedTokenizers']) === true) {
                 foreach ($vars['supportedTokenizers'] as $tokenizer) {
                     $tokenizers[$tokenizer] = $tokenizer;
                 }
             } else {
-                $tokenizers = array('PHP' => 'PHP');
+                $tokenizers = ['PHP' => 'PHP'];
             }
 
             $tokens = $this->sniffs[$sniffClass]->register();
@@ -1178,41 +1416,41 @@ class Ruleset
                 throw new RuntimeException($msg);
             }
 
-            $ignorePatterns = array();
+            $ignorePatterns = [];
             $patterns       = $this->getIgnorePatterns($sniffCode);
             foreach ($patterns as $pattern => $type) {
-                $replacements = array(
-                                 '\\,' => ',',
-                                 '*'   => '.*',
-                                );
+                $replacements = [
+                    '\\,' => ',',
+                    '*'   => '.*',
+                ];
 
                 $ignorePatterns[] = strtr($pattern, $replacements);
             }
 
-            $includePatterns = array();
+            $includePatterns = [];
             $patterns        = $this->getIncludePatterns($sniffCode);
             foreach ($patterns as $pattern => $type) {
-                $replacements = array(
-                                 '\\,' => ',',
-                                 '*'   => '.*',
-                                );
+                $replacements = [
+                    '\\,' => ',',
+                    '*'   => '.*',
+                ];
 
                 $includePatterns[] = strtr($pattern, $replacements);
             }
 
             foreach ($tokens as $token) {
                 if (isset($this->tokenListeners[$token]) === false) {
-                    $this->tokenListeners[$token] = array();
+                    $this->tokenListeners[$token] = [];
                 }
 
                 if (isset($this->tokenListeners[$token][$sniffClass]) === false) {
-                    $this->tokenListeners[$token][$sniffClass] = array(
-                                                                  'class'      => $sniffClass,
-                                                                  'source'     => $sniffCode,
-                                                                  'tokenizers' => $tokenizers,
-                                                                  'ignore'     => $ignorePatterns,
-                                                                  'include'    => $includePatterns,
-                                                                 );
+                    $this->tokenListeners[$token][$sniffClass] = [
+                        'class'      => $sniffClass,
+                        'source'     => $sniffCode,
+                        'tokenizers' => $tokenizers,
+                        'ignore'     => $ignorePatterns,
+                        'include'    => $includePatterns,
+                    ];
                 }
             }
         }//end foreach
@@ -1225,20 +1463,82 @@ class Ruleset
      *
      * @param string $sniffClass The class name of the sniff.
      * @param string $name       The name of the property to change.
-     * @param string $value      The new value of the property.
+     * @param array  $settings   Array with the new value of the property and the scope of the property being set.
      *
      * @return void
+     *
+     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException When attempting to set a non-existent property on a sniff
+     *                                                      which doesn't declare the property or explicitly supports
+     *                                                      dynamic properties.
      */
-    public function setSniffProperty($sniffClass, $name, $value)
+    public function setSniffProperty($sniffClass, $name, $settings)
     {
         // Setting a property for a sniff we are not using.
         if (isset($this->sniffs[$sniffClass]) === false) {
             return;
         }
 
-        $name = trim($name);
+        $name         = trim($name);
+        $propertyName = $name;
+        if (substr($propertyName, -2) === '[]') {
+            $propertyName = substr($propertyName, 0, -2);
+        }
+
+        /*
+         * BC-compatibility layer for $settings using the pre-PHPCS 3.8.0 format.
+         *
+         * Prior to PHPCS 3.8.0, `$settings` was expected to only contain the new _value_
+         * for the property (which could be an array).
+         * Since PHPCS 3.8.0, `$settings` is expected to be an array with two keys: 'scope'
+         * and 'value', where 'scope' indicates whether the property should be set to the given 'value'
+         * for one individual sniff or for all sniffs in a standard.
+         *
+         * This BC-layer is only for integrations with PHPCS which may call this method directly
+         * and will be removed in PHPCS 4.0.0.
+         */
+
+        if (is_array($settings) === false
+            || isset($settings['scope'], $settings['value']) === false
+        ) {
+            // This will be an "old" format value.
+            $settings = [
+                'value' => $settings,
+                'scope' => 'standard',
+            ];
+
+            trigger_error(
+                __FUNCTION__.': the format of the $settings parameter has changed from (mixed) $value to array(\'scope\' => \'sniff|standard\', \'value\' => $value). Please update your integration code. See PR #3629 for more information.',
+                E_USER_DEPRECATED
+            );
+        }
+
+        $isSettable  = false;
+        $sniffObject = $this->sniffs[$sniffClass];
+        if (property_exists($sniffObject, $propertyName) === true
+            || ($sniffObject instanceof stdClass) === true
+            || method_exists($sniffObject, '__set') === true
+        ) {
+            $isSettable = true;
+        }
+
+        if ($isSettable === false) {
+            if ($settings['scope'] === 'sniff') {
+                $notice  = "Ruleset invalid. Property \"$propertyName\" does not exist on sniff ";
+                $notice .= array_search($sniffClass, $this->sniffCodes, true);
+                throw new RuntimeException($notice);
+            }
+
+            return;
+        }
+
+        $value = $settings['value'];
+
         if (is_string($value) === true) {
             $value = trim($value);
+        }
+
+        if ($value === '') {
+            $value = null;
         }
 
         // Special case for booleans.
@@ -1246,9 +1546,24 @@ class Ruleset
             $value = true;
         } else if ($value === 'false') {
             $value = false;
+        } else if (substr($name, -2) === '[]') {
+            $name   = $propertyName;
+            $values = [];
+            if ($value !== null) {
+                foreach (explode(',', $value) as $val) {
+                    list($k, $v) = explode('=>', $val.'=>');
+                    if ($v !== '') {
+                        $values[trim($k)] = trim($v);
+                    } else {
+                        $values[] = trim($k);
+                    }
+                }
+            }
+
+            $value = $values;
         }
 
-        $this->sniffs[$sniffClass]->$name = $value;
+        $sniffObject->$name = $value;
 
     }//end setSniffProperty()
 
@@ -1274,7 +1589,7 @@ class Ruleset
             return $this->ignorePatterns[$listener];
         }
 
-        return array();
+        return [];
 
     }//end getIgnorePatterns()
 
@@ -1300,7 +1615,7 @@ class Ruleset
             return $this->includePatterns[$listener];
         }
 
-        return array();
+        return [];
 
     }//end getIncludePatterns()
 

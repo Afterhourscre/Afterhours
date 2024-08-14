@@ -4,13 +4,13 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Sniffs\Operators;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 
 class ValidLogicalOperatorsSniff implements Sniff
 {
@@ -19,14 +19,14 @@ class ValidLogicalOperatorsSniff implements Sniff
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(
-                T_LOGICAL_AND,
-                T_LOGICAL_OR,
-               );
+        return [
+            T_LOGICAL_AND,
+            T_LOGICAL_OR,
+        ];
 
     }//end register()
 
@@ -44,10 +44,10 @@ class ValidLogicalOperatorsSniff implements Sniff
     {
         $tokens = $phpcsFile->getTokens();
 
-        $replacements = array(
-                         'and' => '&&',
-                         'or'  => '||',
-                        );
+        $replacements = [
+            'and' => '&&',
+            'or'  => '||',
+        ];
 
         $operator = strtolower($tokens[$stackPtr]['content']);
         if (isset($replacements[$operator]) === false) {
@@ -55,10 +55,10 @@ class ValidLogicalOperatorsSniff implements Sniff
         }
 
         $error = 'Logical operator "%s" is prohibited; use "%s" instead';
-        $data  = array(
-                  $operator,
-                  $replacements[$operator],
-                 );
+        $data  = [
+            $operator,
+            $replacements[$operator],
+        ];
         $phpcsFile->addError($error, $stackPtr, 'NotAllowed', $data);
 
     }//end process()

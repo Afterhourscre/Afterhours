@@ -3,6 +3,7 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
 namespace Magento\Downloadable\Model;
 
 use Magento\Catalog\Api\Data\ProductInterface;
@@ -22,6 +23,7 @@ use Magento\Framework\App\ObjectManager;
 
 /**
  * Class SampleRepository
+ *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class SampleRepository implements \Magento\Downloadable\Api\SampleRepositoryInterface
@@ -99,7 +101,7 @@ class SampleRepository implements \Magento\Downloadable\Api\SampleRepositoryInte
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getList($sku)
     {
@@ -183,15 +185,19 @@ class SampleRepository implements \Magento\Downloadable\Api\SampleRepositoryInte
             return $this->updateSample($product, $sample, $isGlobalScopeContent);
         } else {
             if ($product->getTypeId() !== Type::TYPE_DOWNLOADABLE) {
-                throw new InputException(__('Provided product must be type \'downloadable\'.'));
+                throw new InputException(
+                    __('The product needs to be the downloadable type. Verify the product and try again.')
+                );
             }
             $this->validateSampleType($sample);
             if (!$this->contentValidator->isValid($sample, true)) {
-                throw new InputException(__('Provided sample information is invalid.'));
+                throw new InputException(
+                    __('The sample information is invalid. Verify the information and try again.')
+                );
             }
             $title = $sample->getTitle();
             if (empty($title)) {
-                throw new InputException(__('Sample title cannot be empty.'));
+                throw new InputException(__('The sample title is empty. Enter the title and try again.'));
             }
 
             return $this->saveSample($product, $sample, $isGlobalScopeContent);
@@ -199,6 +205,8 @@ class SampleRepository implements \Magento\Downloadable\Api\SampleRepositoryInte
     }
 
     /**
+     * Save sample.
+     *
      * @param \Magento\Catalog\Api\Data\ProductInterface $product
      * @param SampleInterface $sample
      * @param bool $isGlobalScopeContent
@@ -247,6 +255,8 @@ class SampleRepository implements \Magento\Downloadable\Api\SampleRepositoryInte
     }
 
     /**
+     * Update sample.
+     *
      * @param \Magento\Catalog\Api\Data\ProductInterface $product
      * @param SampleInterface $sample
      * @param bool $isGlobalScopeContent
@@ -266,17 +276,21 @@ class SampleRepository implements \Magento\Downloadable\Api\SampleRepositoryInte
         $existingSample = $this->sampleFactory->create()->load($sampleId);
 
         if (!$existingSample->getId()) {
-            throw new NoSuchEntityException(__('There is no downloadable sample with provided ID.'));
+            throw new NoSuchEntityException(
+                __('No downloadable sample with the provided ID was found. Verify the ID and try again.')
+            );
         }
         $linkFieldValue = $product->getData(
             $this->getMetadataPool()->getMetadata(ProductInterface::class)->getLinkField()
         );
         if ($existingSample->getProductId() != $linkFieldValue) {
-            throw new InputException(__('Provided downloadable sample is not related to given product.'));
+            throw new InputException(
+                __("The downloadable sample isn't related to the product. Verify the link and try again.")
+            );
         }
         $this->validateSampleType($sample);
         if (!$this->contentValidator->isValid($sample, true)) {
-            throw new InputException(__('Provided sample information is invalid.'));
+            throw new InputException(__('The sample information is invalid. Verify the information and try again.'));
         }
         if ($isGlobalScopeContent) {
             $product->setStoreId(0);
@@ -285,7 +299,7 @@ class SampleRepository implements \Magento\Downloadable\Api\SampleRepositoryInte
         $title = $sample->getTitle();
         if (empty($title)) {
             if ($isGlobalScopeContent) {
-                throw new InputException(__('Sample title cannot be empty.'));
+                throw new InputException(__('The sample title is empty. Enter the title and try again.'));
             }
             // use title from GLOBAL scope
             $existingSample->setTitle(null);
@@ -298,19 +312,21 @@ class SampleRepository implements \Magento\Downloadable\Api\SampleRepositoryInte
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function delete($id)
     {
         /** @var $sample \Magento\Downloadable\Model\Sample */
         $sample = $this->sampleFactory->create()->load($id);
         if (!$sample->getId()) {
-            throw new NoSuchEntityException(__('There is no downloadable sample with provided ID.'));
+            throw new NoSuchEntityException(
+                __('No downloadable sample with the provided ID was found. Verify the ID and try again.')
+            );
         }
         try {
             $sample->delete();
         } catch (\Exception $exception) {
-            throw new StateException(__('Cannot delete sample with id %1', $sample->getId()), $exception);
+            throw new StateException(__('The sample with "%1" ID can\'t be deleted.', $sample->getId()), $exception);
         }
         return true;
     }
@@ -322,10 +338,10 @@ class SampleRepository implements \Magento\Downloadable\Api\SampleRepositoryInte
      * @throws InputException
      * @return void
      */
-    private function validateSampleType(SampleInterface $sample)
+    private function validateSampleType(SampleInterface $sample): void
     {
         if (!in_array($sample->getSampleType(), ['url', 'file'], true)) {
-            throw new InputException(__('Invalid sample type.'));
+            throw new InputException(__('The sample type is invalid. Verify the sample type and try again.'));
         }
     }
 

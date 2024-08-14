@@ -4,13 +4,13 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Sniffs\PHP;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 
 class GlobalKeywordSniff implements Sniff
 {
@@ -19,11 +19,11 @@ class GlobalKeywordSniff implements Sniff
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(T_GLOBAL);
+        return [T_GLOBAL];
 
     }//end register()
 
@@ -41,10 +41,10 @@ class GlobalKeywordSniff implements Sniff
     {
         $tokens = $phpcsFile->getTokens();
 
-        $nextVar = $tokens[$phpcsFile->findNext(array(T_VARIABLE), $stackPtr)];
+        $nextVar = $tokens[$phpcsFile->findNext([T_VARIABLE], $stackPtr)];
         $varName = str_replace('$', '', $nextVar['content']);
         $error   = 'Use of the "global" keyword is forbidden; use "$GLOBALS[\'%s\']" instead';
-        $data    = array($varName);
+        $data    = [$varName];
         $phpcsFile->addError($error, $stackPtr, 'NotAllowed', $data);
 
     }//end process()

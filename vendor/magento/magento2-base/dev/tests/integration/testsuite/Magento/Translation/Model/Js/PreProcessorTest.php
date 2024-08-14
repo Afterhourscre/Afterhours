@@ -7,13 +7,13 @@ declare(strict_types=1);
 
 namespace Magento\Translation\Model\Js;
 
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Framework\View\FileSystem;
+use Magento\TestFramework\Helper\CacheCleaner;
+use Magento\Framework\Translate;
 use Magento\Framework\App\AreaList;
 use Magento\Framework\Phrase;
 use Magento\Framework\Phrase\RendererInterface;
-use Magento\Framework\Translate;
-use Magento\Framework\View\FileSystem;
-use Magento\TestFramework\Helper\Bootstrap;
-use Magento\TestFramework\Helper\CacheCleaner;
 
 /**
  * Class for testing translation.
@@ -31,15 +31,14 @@ class PreProcessorTest extends \PHPUnit\Framework\TestCase
     private $origRenderer;
 
     /**
-     * @inheritdoc
+     * Set up.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $viewFileSystem = $this->createPartialMock(FileSystem::class, ['getLocaleFileName']);
-        $viewFileSystem->expects($this->any())
-            ->method('getLocaleFileName')
+        $viewFileSystem->expects($this->any())->method('getLocaleFileName')
             ->willReturn(
-            // phpcs:ignore Magento2.Functions.DiscouragedFunction
+                // phpcs:ignore Magento2.Functions.DiscouragedFunction
                 dirname(__DIR__) . '/_files/Magento/Store/i18n/en_AU.csv'
             );
 
@@ -47,9 +46,7 @@ class PreProcessorTest extends \PHPUnit\Framework\TestCase
         $objectManager->addSharedInstance($viewFileSystem, FileSystem::class);
         $translator = $objectManager->create(Translate::class);
         $objectManager->addSharedInstance($translator, Translate::class);
-        $areaList = $this->getMockBuilder(AreaList::class)
-            ->disableOriginalConstructor()
-            ->getMock();
+        $areaList = $this->getMockBuilder(AreaList::class)->disableOriginalConstructor()->getMock();
         $this->origRenderer = Phrase::getRenderer();
         Phrase::setRenderer(
             $objectManager->get(RendererInterface::class)
@@ -59,7 +56,7 @@ class PreProcessorTest extends \PHPUnit\Framework\TestCase
             PreProcessor::class,
             [
                 'translate' => $translator,
-                'areaList' => $areaList,
+                'areaList' => $areaList
             ]
         );
 
@@ -68,9 +65,9 @@ class PreProcessorTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * Tear down.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
         Phrase::setRenderer($this->origRenderer);
     }
@@ -85,7 +82,6 @@ class PreProcessorTest extends \PHPUnit\Framework\TestCase
      */
     public function testProcess(string $content, string $translation)
     {
-        CacheCleaner::cleanAll();
         $this->assertEquals($translation, $this->model->translate($content));
     }
 
@@ -94,34 +90,38 @@ class PreProcessorTest extends \PHPUnit\Framework\TestCase
      *
      * @return array
      */
-    public function contentForTranslateDataProvider(): array
+    public function contentForTranslateDataProvider()
     {
         return [
             'i18n_js_file_error' => [
                 'setTranslateProp = function (el, original) {
-                    var location = $(el).prop(\'tagName\').toLowerCase(),
-                    translated = $.mage.__(original),
-                    translationData = {
-                        shown: translated,
-                        translated: translated,
-                        original: original
-                    },
-                    translateAttr = composeTranslateAttr(translationData, location);
-                    $(el).attr(\'data-translate\', translateAttr);
-                    setText(el, translationData.shown);
-                },',
+            var location = $(el).prop(\'tagName\').toLowerCase(),
+                translated = $.mage.__(original),
+                translationData = {
+                    shown: translated,
+                    translated: translated,
+                    original: original
+                },
+                translateAttr = composeTranslateAttr(translationData, location);
+
+            $(el).attr(\'data-translate\', translateAttr);
+
+            setText(el, translationData.shown);
+        },',
                 'setTranslateProp = function (el, original) {
-                    var location = $(el).prop(\'tagName\').toLowerCase(),
-                    translated = $.mage.__(original),
-                    translationData = {
-                        shown: translated,
-                        translated: translated,
-                        original: original
-                    },
-                    translateAttr = composeTranslateAttr(translationData, location);
-                    $(el).attr(\'data-translate\', translateAttr);
-                    setText(el, translationData.shown);
-                },',
+            var location = $(el).prop(\'tagName\').toLowerCase(),
+                translated = $.mage.__(original),
+                translationData = {
+                    shown: translated,
+                    translated: translated,
+                    original: original
+                },
+                translateAttr = composeTranslateAttr(translationData, location);
+
+            $(el).attr(\'data-translate\', translateAttr);
+
+            setText(el, translationData.shown);
+        },'
             ],
             'checkTranslationWithWhiteSpaces' => [
                 <<<i18n
@@ -141,7 +141,6 @@ i18n
                 title: 'Translated value for Magento_Store module in en_AU';
                 title: 'Translated value for Magento_Store module in en_AU';
 i18n
-                ,
             ],
             'checkTranslationWithReplace' => [
                 <<<i18n
@@ -153,7 +152,6 @@ i18n
                 'The maximum you may purchase is %1.'.replace('%1', params.maxAllowed);
                 'The maximum you may purchase is %1.'.replace('%1', params.maxAllowed);
 i18n
-                ,
             ],
             'checkAvoidingMatchingWithJsInString' => [
                 <<<i18n
@@ -171,21 +169,19 @@ i18n
                     'Verify the combinations and try again.'
                 )
 i18n
-                ,
             ],
             'checkAvoidMatchingPhtml' => [
                 <<<i18n
                 globalMessageList.addErrorMessage({
-                    message: \$t(<?= /* @noEscape */ json_encode(\$params['error_msg'])?>)
-                });
+                        message: \$t(<?= /* @noEscape */ json_encode(\$params['error_msg'])?>)
+                    });
 i18n
                 ,
                 <<<i18n
                 globalMessageList.addErrorMessage({
-                    message: \$t(<?= /* @noEscape */ json_encode(\$params['error_msg'])?>)
-                });
+                        message: \$t(<?= /* @noEscape */ json_encode(\$params['error_msg'])?>)
+                    });
 i18n
-                ,
             ]
         ];
     }

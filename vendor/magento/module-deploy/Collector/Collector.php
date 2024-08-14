@@ -5,9 +5,9 @@
  */
 namespace Magento\Deploy\Collector;
 
+use Magento\Deploy\Source\SourcePool;
 use Magento\Deploy\Package\Package;
 use Magento\Deploy\Package\PackageFactory;
-use Magento\Deploy\Source\SourcePool;
 use Magento\Deploy\Package\PackageFile;
 use Magento\Framework\Module\Manager;
 use Magento\Framework\View\Asset\PreProcessor\FileNameResolver;
@@ -66,7 +66,7 @@ class Collector implements CollectorInterface
      * @param SourcePool $sourcePool
      * @param FileNameResolver $fileNameResolver
      * @param PackageFactory $packageFactory
-     * @param Manager $moduleManager
+     * @param Manager|null $moduleManager
      */
     public function __construct(
         SourcePool $sourcePool,
@@ -78,7 +78,7 @@ class Collector implements CollectorInterface
         $this->fileNameResolver = $fileNameResolver;
         $this->packageFactory = $packageFactory;
         $this->moduleManager = $moduleManager ?: \Magento\Framework\App\ObjectManager::getInstance()
-            ->get(Manager::class);
+            ->get(\Magento\Framework\Module\Manager::class);
     }
 
     /**
@@ -91,6 +91,9 @@ class Collector implements CollectorInterface
             $files = $source->get();
             foreach ($files as $file) {
                 if ($file->getModule() && !$this->moduleManager->isEnabled($file->getModule())) {
+                    continue;
+                }
+                if (!$file->getFileName()) {
                     continue;
                 }
                 $file->setDeployedFileName($this->fileNameResolver->resolve($file->getFileName()));
@@ -108,7 +111,7 @@ class Collector implements CollectorInterface
     }
 
     /**
-     * Retrieve package params.
+     * Retrieve package params
      *
      * @param PackageFile $file
      * @return array
@@ -127,7 +130,6 @@ class Collector implements CollectorInterface
                 $params[$name] = $value;
             }
         }
-
         return $params;
     }
 }

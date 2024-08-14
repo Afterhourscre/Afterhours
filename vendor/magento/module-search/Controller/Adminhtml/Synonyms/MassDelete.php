@@ -6,17 +6,17 @@
 
 namespace Magento\Search\Controller\Adminhtml\Synonyms;
 
-use Magento\Framework\Exception\NotFoundException;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 
 /**
  * Mass-Delete Controller.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class MassDelete extends \Magento\Backend\App\Action
+class MassDelete extends \Magento\Backend\App\Action implements HttpPostActionInterface
 {
     /**
-     * Authorization level of a basic admin session
+     * Authorization level of a basic admin session.
      *
      * @see _isAllowed()
      */
@@ -61,14 +61,10 @@ class MassDelete extends \Magento\Backend\App\Action
      * Execute action.
      *
      * @return \Magento\Backend\Model\View\Result\Redirect
-     * @throws \Magento\Framework\Exception\NotFoundException
+     * @throws \Magento\Framework\Exception\LocalizedException|\Exception
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new NotFoundException(__('Page not found.'));
-        }
-
         $collection = $this->filter->getCollection($this->collectionFactory->create());
         $collectionSize = $collection->getSize();
 
@@ -94,7 +90,6 @@ class MassDelete extends \Magento\Backend\App\Action
         }
         /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
         $resultRedirect = $this->resultFactory->create(\Magento\Framework\Controller\ResultFactory::TYPE_REDIRECT);
-
         return $resultRedirect->setPath('*/*/');
     }
 }

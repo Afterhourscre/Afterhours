@@ -3,26 +3,46 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Catalog\Test\Unit\Block\Adminhtml\Product\Helper\Form;
 
-class CategoryTest extends \PHPUnit\Framework\TestCase
+use Magento\Catalog\Block\Adminhtml\Product\Helper\Form\Category;
+use Magento\Framework\AuthorizationInterface;
+use Magento\Framework\Math\Random;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Framework\View\Helper\SecureHtmlRenderer;
+use PHPUnit\Framework\TestCase;
+
+class CategoryTest extends TestCase
 {
     /**
-     * @var \Magento\Framework\AuthorizationInterface
+     * @var AuthorizationInterface
      */
     protected $authorization;
 
     /**
-     * @var \Magento\Framework\TestFramework\Unit\Helper\ObjectManager
+     * @var ObjectManager
      */
     protected $objectManager;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->authorization = $this->getMockBuilder(\Magento\Framework\AuthorizationInterface::class)
+        $this->authorization = $this->getMockBuilder(AuthorizationInterface::class)
             ->disableOriginalConstructor()
-            ->getMock();
-        $this->objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
+            ->getMockForAbstractClass();
+        $this->objectManager = new ObjectManager($this);
+        $objects = [
+            [
+                SecureHtmlRenderer::class,
+                $this->createMock(SecureHtmlRenderer::class)
+            ],
+            [
+                Random::class,
+                $this->createMock(Random::class)
+            ]
+        ];
+        $this->objectManager->prepareObjectManager($objects);
     }
 
     /**
@@ -33,9 +53,9 @@ class CategoryTest extends \PHPUnit\Framework\TestCase
     {
         $this->authorization->expects($this->any())
             ->method('isAllowed')
-            ->will($this->returnValue($isAllowed));
+            ->willReturn($isAllowed);
         $model = $this->objectManager->getObject(
-            \Magento\Catalog\Block\Adminhtml\Product\Helper\Form\Category::class,
+            Category::class,
             ['authorization' => $this->authorization]
         );
         switch ($isAllowed) {
@@ -45,7 +65,7 @@ class CategoryTest extends \PHPUnit\Framework\TestCase
                 break;
             case false:
                 $this->assertEquals('hidden', $model->getType());
-                $this->assertContains('hidden', $model->getClass());
+                $this->assertStringContainsString('hidden', $model->getClass());
                 break;
         }
     }
@@ -64,12 +84,12 @@ class CategoryTest extends \PHPUnit\Framework\TestCase
     public function testGetAfterElementHtml()
     {
         $model = $this->objectManager->getObject(
-            \Magento\Catalog\Block\Adminhtml\Product\Helper\Form\Category::class,
+            Category::class,
             ['authorization' => $this->authorization]
         );
         $this->authorization->expects($this->any())
             ->method('isAllowed')
-            ->will($this->returnValue(false));
+            ->willReturn(false);
         $this->assertEmpty($model->getAfterElementHtml());
     }
 }

@@ -18,7 +18,6 @@ use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * Import offline shipping.
- *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Import
@@ -132,6 +131,7 @@ class Import
     public function getData(ReadInterface $file, $websiteId, $conditionShortName, $conditionFullName, $bunchSize = 5000)
     {
         $this->errors = [];
+        $this->uniqueHash = [];
 
         $headers = $this->getHeaders($file);
         /** @var ColumnResolver $columnResolver */
@@ -202,7 +202,6 @@ class Import
                 __('The Table Rates File Format is incorrect. Verify the format and try again.')
             );
         }
-
         return $headers;
     }
 }

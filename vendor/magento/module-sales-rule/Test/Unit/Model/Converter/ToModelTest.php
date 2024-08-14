@@ -3,40 +3,51 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\SalesRule\Test\Unit\Model\Converter;
 
-class ToModelTest extends \PHPUnit\Framework\TestCase
+use Magento\Framework\Reflection\DataObjectProcessor;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\SalesRule\Model\Converter\ToModel;
+use Magento\SalesRule\Model\Data\Condition;
+use Magento\SalesRule\Model\Data\Rule;
+use Magento\SalesRule\Model\RuleFactory;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+
+class ToModelTest extends TestCase
 {
     /**
-     * @var \Magento\SalesRule\Model\RuleFactory|\PHPUnit_Framework_MockObject_MockObject
+     * @var RuleFactory|MockObject
      */
     protected $ruleFactory;
 
     /**
-     * @var \Magento\Framework\Reflection\DataObjectProcessor|\PHPUnit_Framework_MockObject_MockObject
+     * @var DataObjectProcessor|MockObject
      */
     protected $dataObjectProcessor;
 
     /**
-     * @var \Magento\SalesRule\Model\Converter\ToModel
+     * @var ToModel
      */
     protected $model;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->ruleFactory = $this->getMockBuilder(\Magento\SalesRule\Model\RuleFactory::class)
+        $this->ruleFactory = $this->getMockBuilder(RuleFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->getMock();
 
-        $this->dataObjectProcessor = $this->getMockBuilder(\Magento\Framework\Reflection\DataObjectProcessor::class)
+        $this->dataObjectProcessor = $this->getMockBuilder(DataObjectProcessor::class)
             ->disableOriginalConstructor()
-            ->setMethods([])
+            ->onlyMethods(['buildOutputDataArray'])
             ->getMock();
 
-        $helper = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
+        $helper = new ObjectManager($this);
         $this->model = $helper->getObject(
-            \Magento\SalesRule\Model\Converter\ToModel::class,
+            ToModel::class,
             [
                 'ruleFactory' =>  $this->ruleFactory,
                 'dataObjectProcessor' => $this->dataObjectProcessor,
@@ -69,11 +80,12 @@ class ToModelTest extends \PHPUnit\Framework\TestCase
         ];
 
         /**
-         * @var \Magento\SalesRule\Model\Data\Condition $dataCondition
+         * @var Condition $dataCondition
          */
-        $dataCondition = $this->getMockBuilder(\Magento\SalesRule\Model\Data\Condition::class)
+        $dataCondition = $this->getMockBuilder(Condition::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create', 'load', 'getConditionType', 'getValue', 'getAttributeName', 'getOperator',
+            ->addMethods(['create', 'load'])
+            ->onlyMethods(['getConditionType', 'getValue', 'getAttributeName', 'getOperator',
                 'getAggregatorType', 'getConditions'])
             ->getMock();
 
@@ -102,15 +114,17 @@ class ToModelTest extends \PHPUnit\Framework\TestCase
             ->method('getAggregatorType')
             ->willReturn('getAggregatorType');
 
-        $dataCondition1 = $this->getMockBuilder(\Magento\SalesRule\Model\Data\Condition::class)
+        $dataCondition1 = $this->getMockBuilder(Condition::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create', 'load', 'getConditionType', 'getValue', 'getAttributeName', 'getOperator',
+            ->addMethods(['create', 'load'])
+            ->onlyMethods(['getConditionType', 'getValue', 'getAttributeName', 'getOperator',
                 'getAggregatorType', 'getConditions'])
             ->getMock();
 
-        $dataCondition2 = $this->getMockBuilder(\Magento\SalesRule\Model\Data\Condition::class)
+        $dataCondition2 = $this->getMockBuilder(Condition::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create', 'load', 'getConditionType', 'getValue', 'getAttributeName', 'getOperator',
+            ->addMethods(['create', 'load'])
+            ->onlyMethods(['getConditionType', 'getValue', 'getAttributeName', 'getOperator',
                 'getAggregatorType', 'getConditions'])
             ->getMock();
 
@@ -127,11 +141,12 @@ class ToModelTest extends \PHPUnit\Framework\TestCase
     public function testToModel()
     {
         /**
-         * @var \Magento\SalesRule\Model\Data\Rule $dataModel
+         * @var Rule $dataModel
          */
-        $dataModel = $this->getMockBuilder(\Magento\SalesRule\Model\Data\Rule::class)
+        $dataModel = $this->getMockBuilder(Rule::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create', 'load', 'getData', 'getRuleId', 'getCondition', 'getActionCondition',
+            ->addMethods(['create', 'load', 'getData'])
+            ->onlyMethods(['getRuleId', 'getCondition', 'getActionCondition',
                 'getStoreLabels'])
             ->getMock();
         $dataModel
@@ -156,7 +171,8 @@ class ToModelTest extends \PHPUnit\Framework\TestCase
 
         $ruleModel = $this->getMockBuilder(\Magento\SalesRule\Model\Rule::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create', 'load', 'getId', 'getData'])
+            ->addMethods(['create'])
+            ->onlyMethods(['load', 'getId', 'getData'])
             ->getMock();
 
         $ruleModel
@@ -193,15 +209,19 @@ class ToModelTest extends \PHPUnit\Framework\TestCase
     public function testFormattingDate($data)
     {
         /**
-         * @var \Magento\SalesRule\Model\Data\Rule|\PHPUnit_Framework_MockObject_MockObject $dataModel
+         * @var Rule|MockObject $dataModel
          */
-        $dataModel = $this->getMockBuilder(\Magento\SalesRule\Model\Data\Rule::class)
+        $dataModel = $this->getMockBuilder(Rule::class)
             ->disableOriginalConstructor()
-            ->setMethods(
+            ->addMethods(
                 [
                     'create',
                     'load',
-                    'getData',
+                    'getData'
+                ]
+            )
+            ->onlyMethods(
+                [
                     'getRuleId',
                     'getCondition',
                     'getActionCondition',
@@ -233,7 +253,8 @@ class ToModelTest extends \PHPUnit\Framework\TestCase
             ->willReturn([]);
         $ruleModel = $this->getMockBuilder(\Magento\SalesRule\Model\Rule::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create', 'load', 'getId', 'getData'])
+            ->addMethods(['create'])
+            ->onlyMethods(['load', 'getId', 'getData'])
             ->getMock();
         $ruleModel
             ->expects($this->atLeastOnce())
@@ -276,31 +297,31 @@ class ToModelTest extends \PHPUnit\Framework\TestCase
     /**
      * @return array
      */
-    public function expectedDatesProvider()
+    public static function expectedDatesProvider()
     {
         return [
             'mm/dd/yyyy to yyyy-mm-dd' => [
                 [
                     'from_date' => '03/24/2016',
                     'to_date' => '03/25/2016',
-                    'expected_from_date' => '2016-03-24T00:00:00-0700',
-                    'expected_to_date' => '2016-03-25T00:00:00-0700',
+                    'expected_from_date' => '2016-03-24T00:00:00',
+                    'expected_to_date' => '2016-03-25T00:00:00',
                 ]
             ],
             'yyyy-mm-dd to yyyy-mm-dd' => [
                 [
                     'from_date' => '2016-03-24',
                     'to_date' => '2016-03-25',
-                    'expected_from_date' => '2016-03-24T00:00:00-0700',
-                    'expected_to_date' => '2016-03-25T00:00:00-0700',
+                    'expected_from_date' => '2016-03-24T00:00:00',
+                    'expected_to_date' => '2016-03-25T00:00:00',
                 ]
             ],
             'yymmdd to yyyy-mm-dd' => [
                 [
                     'from_date' => '20160324',
                     'to_date' => '20160325',
-                    'expected_from_date' => '2016-03-24T00:00:00-0700',
-                    'expected_to_date' => '2016-03-25T00:00:00-0700',
+                    'expected_from_date' => '2016-03-24T00:00:00',
+                    'expected_to_date' => '2016-03-25T00:00:00',
                 ]
             ],
         ];

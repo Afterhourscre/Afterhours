@@ -1,83 +1,112 @@
-<?php
+<?php /** @noinspection PhpDeprecationInspection */
+/** @noinspection PhpUndefinedClassInspection */
 /**
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Newsletter\Test\Unit\Model\Queue;
 
+use Magento\Email\Model\Template;
+use Magento\Email\Model\Template\Filter;
 use Magento\Framework\App\TemplateTypesInterface;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Mail\EmailMessageInterface;
+use Magento\Framework\Mail\EmailMessageInterfaceFactory;
+use Magento\Framework\Mail\Message;
 use Magento\Framework\Mail\MessageInterface;
+use Magento\Framework\Mail\MessageInterfaceFactory;
+use Magento\Framework\Mail\MimePartInterface;
+use Magento\Framework\Mail\MimePartInterfaceFactory;
+use Magento\Framework\Mail\Template\FactoryInterface;
+use Magento\Framework\Mail\Template\SenderResolverInterface;
+use Magento\Framework\Mail\TransportInterfaceFactory;
+use Magento\Framework\ObjectManagerInterface;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Newsletter\Model\Queue\TransportBuilder;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
- * Tests \Magento\Newsletter\Model\Queue\TransportBuilder.
+ * @covers \Magento\Newsletter\Model\Queue\TransportBuilder
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class TransportBuilderTest extends \PHPUnit\Framework\TestCase
+class TransportBuilderTest extends TestCase
 {
     /**
      * @var string
      */
-    protected $builderClassName = \Magento\Newsletter\Model\Queue\TransportBuilder::class;
+    private $builderClassName = TransportBuilder::class;
 
     /**
-     * @var \Magento\Newsletter\Model\Queue\TransportBuilder
+     * @var TransportBuilder
      */
-    protected $builder;
+    private $builder;
 
     /**
-     * @var \Magento\Framework\Mail\Template\FactoryInterface | \PHPUnit_Framework_MockObject_MockObject
+     * @var FactoryInterface|MockObject
      */
-    protected $templateFactoryMock;
+    private $templateFactoryMock;
 
     /**
-     * @var \Magento\Framework\Mail\Message | \PHPUnit_Framework_MockObject_MockObject
+     * @var Message|MockObject
      */
-    protected $messageMock;
+    private $messageMock;
 
     /**
-     * @var \Magento\Framework\ObjectManagerInterface | \PHPUnit_Framework_MockObject_MockObject
+     * @var ObjectManagerInterface|MockObject
      */
-    protected $objectManagerMock;
+    private $objectManagerMock;
 
     /**
-     * @var \Magento\Framework\Mail\Template\SenderResolverInterface | \PHPUnit_Framework_MockObject_MockObject
+     * @var SenderResolverInterface|MockObject
      */
-    protected $senderResolverMock;
+    private $senderResolverMock;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
-    protected $mailTransportFactoryMock;
+    private $mailTransportFactoryMock;
 
     /**
-     * @var \Magento\Framework\Mail\MessageInterfaceFactory | \PHPUnit_Framework_MockObject_MockObject
+     * @var MessageInterfaceFactory|MockObject
      */
     private $messageFactoryMock;
 
     /**
+     * @var MockObject
+     */
+    private $emailMessageInterfaceFactoryMock;
+
+    /**
+     * @var MockObject
+     */
+    private $mimePartFactoryMock;
+
+    /**
      * @return void
      */
-    public function setUp()
+    protected function setUp(): void
     {
-        $objectManagerHelper = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
-        $this->templateFactoryMock = $this->createMock(\Magento\Framework\Mail\Template\FactoryInterface::class);
-        $this->messageMock = $this->getMockBuilder(\Magento\Framework\Mail\MessageInterface::class)
+        $objectManagerHelper = new ObjectManager($this);
+        $this->templateFactoryMock = $this->getMockForAbstractClass(FactoryInterface::class);
+        $this->messageMock = $this->getMockBuilder(MessageInterface::class)
             ->disableOriginalConstructor()
-            ->setMethods(['setMessageType', 'setSubject', 'setBody'])
+            ->setMethods(['setBodyHtml', 'setSubject'])
             ->getMockForAbstractClass();
-        $this->objectManagerMock = $this->createMock(\Magento\Framework\ObjectManagerInterface::class);
-        $this->senderResolverMock = $this->createMock(\Magento\Framework\Mail\Template\SenderResolverInterface::class);
-        $this->mailTransportFactoryMock = $this->getMockBuilder(
-            \Magento\Framework\Mail\TransportInterfaceFactory::class
-        )->disableOriginalConstructor()
+
+        $this->emailMessageInterfaceFactoryMock = $this->createMock(EmailMessageInterfaceFactory::class);
+        $this->mimePartFactoryMock = $this->createMock(MimePartInterfaceFactory::class);
+
+        $this->objectManagerMock = $this->getMockForAbstractClass(ObjectManagerInterface::class);
+        $this->senderResolverMock = $this->getMockForAbstractClass(SenderResolverInterface::class);
+        $this->mailTransportFactoryMock = $this->getMockBuilder(TransportInterfaceFactory::class)
+            ->disableOriginalConstructor()
             ->setMethods(['create'])
             ->getMock();
-        $this->messageFactoryMock = $this->getMockBuilder(\Magento\Framework\Mail\MessageInterfaceFactory::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['create'])
-            ->getMockForAbstractClass();
-        $this->messageFactoryMock->expects($this->atLeastOnce())->method('create')->willReturn($this->messageMock);
+
         $this->builder = $objectManagerHelper->getObject(
             $this->builderClassName,
             [
@@ -87,23 +116,24 @@ class TransportBuilderTest extends \PHPUnit\Framework\TestCase
                 'senderResolver' => $this->senderResolverMock,
                 'mailTransportFactory' => $this->mailTransportFactoryMock,
                 'messageFactory' => $this->messageFactoryMock,
+                'emailMessageInterfaceFactory' => $this->emailMessageInterfaceFactoryMock,
+                'mimePartInterfaceFactory' => $this->mimePartFactoryMock,
             ]
         );
     }
 
     /**
      * @param int $templateType
-     * @param string $messageType
      * @param string $bodyText
      * @return void
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     * @throws LocalizedException
      */
     public function testGetTransport(
         $templateType = TemplateTypesInterface::TYPE_HTML,
-        $messageType = MessageInterface::TYPE_HTML,
         $bodyText = '<h1>Html message</h1>'
-    ) {
-        $filter = $this->createMock(\Magento\Email\Model\Template\Filter::class);
+    ): void {
+        $filter = $this->createMock(Filter::class);
         $data = [
             'template_subject' => 'Email Subject',
             'template_text' => $bodyText,
@@ -113,37 +143,50 @@ class TransportBuilderTest extends \PHPUnit\Framework\TestCase
         ];
         $vars = ['reason' => 'Reason', 'customer' => 'Customer'];
         $options = ['area' => 'frontend', 'store' => 1];
-        $template = $this->createMock(\Magento\Email\Model\Template::class);
-        $template->expects($this->once())->method('setVars')->with($vars)->willReturnSelf();
-        $template->expects($this->once())->method('setOptions')->with($options)->willReturnSelf();
-        $template->expects($this->once())->method('getSubject')->willReturn('Email Subject');
-        $template->expects($this->once())->method('setData')->with($data)->willReturnSelf();
-        $template->expects($this->once())
-            ->method('getProcessedTemplate')
-            ->with($vars)
-            ->willReturn($bodyText);
-        $template->expects($this->once())
-            ->method('setTemplateFilter')
+
+        /** @var MimePartInterface|MockObject $mimePartMock */
+        $mimePartMock = $this->getMockForAbstractClass(MimePartInterface::class);
+
+        $this->mimePartFactoryMock->expects($this->any())
+            ->method('create')
+            ->willReturn($mimePartMock);
+
+        /** @var EmailMessageInterface|MockObject $emailMessage */
+        $emailMessage = $this->getMockForAbstractClass(EmailMessageInterface::class);
+
+        $this->emailMessageInterfaceFactoryMock->expects($this->any())
+            ->method('create')
+            ->willReturn($emailMessage);
+
+        $template = $this->createMock(Template::class);
+        $template->expects($this->once())->method('setVars')
+            ->with($vars)->willReturnSelf();
+        $template->expects($this->once())->method('setOptions')
+            ->with($options)->willReturnSelf();
+        $template->expects($this->once())->method('getSubject')
+            ->willReturn('Email Subject');
+        $template->expects($this->once())->method('setData')
+            ->with($data)->willReturnSelf();
+        $template->expects($this->once())->method('getProcessedTemplate')
+            ->with($vars)->willReturn($bodyText);
+        $template->expects($this->once())->method('setTemplateFilter')
             ->with($filter);
 
-        $this->templateFactoryMock->expects($this->once())->method('get')->with('identifier')->willReturn($template);
+        $this->templateFactoryMock->expects($this->once())
+            ->method('get')
+            ->with('identifier')
+            ->willReturn($template);
 
-        $this->messageMock->expects($this->once())->method('setSubject')->with('Email Subject')->willReturnSelf();
-        $this->messageMock->expects($this->once())->method('setMessageType')->with($messageType)->willReturnSelf();
-        $this->messageMock->expects($this->once())->method('setBody')->with($bodyText)->willReturnSelf();
+        $this->builder->setTemplateIdentifier(
+            'identifier'
+        )->setTemplateVars(
+            $vars
+        )->setTemplateOptions(
+            $options
+        )->setTemplateData(
+            $data
+        );
 
-        $transport = $this->createMock(\Magento\Framework\Mail\TransportInterface::class);
-
-        $this->mailTransportFactoryMock->expects($this->at(0))->method('create')
-            ->with(['message' => $this->messageMock])->willReturn($transport);
-
-        $this->builder->setTemplateIdentifier('identifier')
-            ->setTemplateVars($vars)
-            ->setTemplateOptions($options)
-            ->setTemplateData($data);
-
-        $result = $this->builder->getTransport();
-
-        $this->assertInstanceOf(\Magento\Framework\Mail\TransportInterface::class, $result);
+        $this->builder->getTransport();
     }
 }

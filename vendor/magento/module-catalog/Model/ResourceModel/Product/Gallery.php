@@ -6,6 +6,8 @@
 
 namespace Magento\Catalog\Model\ResourceModel\Product;
 
+use Magento\Catalog\Model\Product\Media\Config;
+use Magento\Framework\App\ObjectManager;
 use Magento\Store\Model\Store;
 
 /**
@@ -31,26 +33,35 @@ class Gallery extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
      * @since 101.0.0
      */
     protected $metadata;
+    /**
+     * @var Config|null
+     */
+    private $mediaConfig;
 
     /**
      * @param \Magento\Framework\Model\ResourceModel\Db\Context $context
      * @param \Magento\Framework\EntityManager\MetadataPool $metadataPool
      * @param string $connectionName
+     * @param Config|null $mediaConfig
+     * @throws \Exception
      */
     public function __construct(
         \Magento\Framework\Model\ResourceModel\Db\Context $context,
         \Magento\Framework\EntityManager\MetadataPool $metadataPool,
-        $connectionName = null
+        $connectionName = null,
+        ?Config $mediaConfig = null
     ) {
         $this->metadata = $metadataPool->getMetadata(
             \Magento\Catalog\Api\Data\ProductInterface::class
         );
 
         parent::__construct($context, $connectionName);
+        $this->mediaConfig = $mediaConfig ?? ObjectManager::getInstance()->get(Config::class);
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
+     *
      * @since 101.0.0
      */
     protected function _construct()
@@ -59,7 +70,8 @@ class Gallery extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
+     *
      * @since 101.0.0
      */
     public function getConnection()
@@ -68,6 +80,8 @@ class Gallery extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     }
 
     /**
+     * Load data from table by valueId
+     *
      * @param string $tableNameAlias
      * @param array $ids
      * @param int|null $storeId
@@ -112,6 +126,8 @@ class Gallery extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     }
 
     /**
+     * Load product gallery by attributeId
+     *
      * @param \Magento\Catalog\Model\Product $product
      * @param int $attributeId
      * @return array
@@ -133,6 +149,8 @@ class Gallery extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     }
 
     /**
+     * Create base load select
+     *
      * @param int $entityId
      * @param int $storeId
      * @param int $attributeId
@@ -152,6 +170,8 @@ class Gallery extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     }
 
     /**
+     * Create batch base select
+     *
      * @param int $storeId
      * @param int $attributeId
      * @return \Magento\Framework\DB\Select
@@ -248,6 +268,8 @@ class Gallery extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     }
 
     /**
+     * Get main table alias
+     *
      * @return string
      * @since 101.0.0
      */
@@ -257,6 +279,8 @@ class Gallery extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     }
 
     /**
+     * Bind value to entity
+     *
      * @param int $valueId
      * @param int $entityId
      * @return int
@@ -274,6 +298,8 @@ class Gallery extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     }
 
     /**
+     * Save data row
+     *
      * @param string $table
      * @param array $data
      * @param array $fields
@@ -427,6 +453,9 @@ class Gallery extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
         $select = $this->getConnection()->select()->from(
             $this->getTable(self::GALLERY_VALUE_TABLE)
         )->where(
+            $linkField . ' = ?',
+            $originalProductId
+        )->where(
             'value_id IN(?)',
             array_keys($valueIdMap)
         );
@@ -471,10 +500,11 @@ class Gallery extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
             $product->getData($this->metadata->getLinkField())
         )->where(
             'store_id IN (?)',
-            $storeIds
+            $storeIds,
+            \Zend_Db::INT_TYPE
         )->where(
             'attribute_code IN (?)',
-            ['small_image', 'thumbnail', 'image']
+            $this->mediaConfig->getMediaAttributeCodes()
         );
 
         return $this->getConnection()->fetchAll($select);

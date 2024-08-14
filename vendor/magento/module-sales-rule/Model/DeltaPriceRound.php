@@ -3,14 +3,17 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\SalesRule\Model;
 
+use Magento\Framework\ObjectManager\ResetAfterRequestInterface;
 use Magento\Framework\Pricing\PriceCurrencyInterface;
 
 /**
  * Round price and save rounding operation delta.
  */
-class DeltaPriceRound
+class DeltaPriceRound implements ResetAfterRequestInterface
 {
     /**
      * @var PriceCurrencyInterface
@@ -18,16 +21,26 @@ class DeltaPriceRound
     private $priceCurrency;
 
     /**
-     * @var float[]
+     * @var float[]|null
      */
     private $roundingDeltas;
 
     /**
+     * Constructor
+     *
      * @param PriceCurrencyInterface $priceCurrency
      */
     public function __construct(PriceCurrencyInterface $priceCurrency)
     {
         $this->priceCurrency = $priceCurrency;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function _resetState(): void
+    {
+        $this->roundingDeltas = null;
     }
 
     /**
@@ -37,7 +50,7 @@ class DeltaPriceRound
      * @param string $type
      * @return float
      */
-    public function round($price, $type)
+    public function round(float $price, string $type): float
     {
         if ($price) {
             // initialize the delta to a small number to avoid non-deterministic behavior with rounding of 0.5
@@ -56,7 +69,7 @@ class DeltaPriceRound
      *
      * @return void
      */
-    public function resetAll()
+    public function resetAll(): void
     {
         $this->roundingDeltas = [];
     }
@@ -67,7 +80,7 @@ class DeltaPriceRound
      * @param string $type
      * @return void
      */
-    public function reset($type)
+    public function reset(string $type): void
     {
         if (isset($this->roundingDeltas[$type])) {
             unset($this->roundingDeltas[$type]);

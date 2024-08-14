@@ -9,9 +9,8 @@
 define([
     'mage/url',
     'Magento_Ui/js/model/messageList',
-    'consoleLogger',
     'mage/translate'
-], function (url, globalMessageList, consoleLogger, $t) {
+], function (url, globalMessageList, $t) {
     'use strict';
 
     return {
@@ -25,18 +24,24 @@ define([
             messageContainer = messageContainer || globalMessageList;
 
             if (response.status == 401) { //eslint-disable-line eqeqeq
-                window.location.replace(url.build('customer/account/login/'));
+                this.redirectTo(url.build('customer/account/login/'));
             } else {
                 try {
                     error = JSON.parse(response.responseText);
-                } catch (e) {
-                    consoleLogger.error(e);
+                } catch (exception) {
                     error = {
                         message: $t('Something went wrong with your request. Please try again later.')
                     };
                 }
                 messageContainer.addErrorMessage(error);
             }
+        },
+
+        /**
+         * Method to redirect by requested URL.
+         */
+        redirectTo: function (redirectUrl) {
+            window.location.replace(redirectUrl);
         }
     };
 });

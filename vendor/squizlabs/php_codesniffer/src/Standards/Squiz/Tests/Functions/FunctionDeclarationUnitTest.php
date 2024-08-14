@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Tests\Functions;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class FunctionDeclarationUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the FunctionDeclaration sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Squiz\Sniffs\Functions\FunctionDeclarationSniff
+ */
+final class FunctionDeclarationUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,10 +30,10 @@ class FunctionDeclarationUnitTest extends AbstractSniffUnitTest
      */
     public function getErrorList()
     {
-        return array(
-                55 => 1,
-                68 => 1,
-               );
+        return [
+            55 => 1,
+            68 => 1,
+        ];
 
     }//end getErrorList()
 
@@ -43,7 +48,7 @@ class FunctionDeclarationUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

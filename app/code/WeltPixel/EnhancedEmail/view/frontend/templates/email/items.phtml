@@ -5,10 +5,11 @@
  */
 
 // @codingStandardsIgnoreFile
-
 ?>
 <?php $_order = $block->getOrder() ?>
+
 <?php if ($_order): ?>
+  
     <?php $_items = $_order->getAllItems(); ?>
     <table class="email-items">
         <thead>

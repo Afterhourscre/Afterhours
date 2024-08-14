@@ -4,7 +4,9 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ *
+ * @deprecated 3.9.0
  */
 
 namespace PHP_CodeSniffer\Standards\MySource\Sniffs\Channels;
@@ -20,11 +22,11 @@ class DisallowSelfActionsSniff implements Sniff
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(T_CLASS);
+        return [T_CLASS];
 
     }//end register()
 
@@ -55,8 +57,8 @@ class DisallowSelfActionsSniff implements Sniff
             return;
         }
 
-        $foundFunctions = array();
-        $foundCalls     = array();
+        $foundFunctions = [];
+        $foundCalls     = [];
 
         // Find all static method calls in the form self::method() in the class.
         $classEnd = $tokens[$stackPtr]['scope_closer'];
@@ -91,14 +93,14 @@ class DisallowSelfActionsSniff implements Sniff
             // We've found the function, now we need to find it and see if it is
             // public, private or protected. If it starts with an underscore we
             // can assume it is private.
-            if ($funcName{0} === '_') {
+            if ($funcName[0] === '_') {
                 continue;
             }
 
-            $foundCalls[$i] = array(
-                               'name' => $funcName,
-                               'type' => strtolower($tokens[$prevToken]['content']),
-                              );
+            $foundCalls[$i] = [
+                'name' => $funcName,
+                'type' => strtolower($tokens[$prevToken]['content']),
+            ];
         }//end for
 
         $errorClassName = substr($className, 0, -7);
@@ -111,10 +113,10 @@ class DisallowSelfActionsSniff implements Sniff
             } else if ($foundFunctions[$funcData['name']] === 'public') {
                 $type  = $funcData['type'];
                 $error = "Static calls to public methods in Action classes must not use the $type keyword; use %s::%s() instead";
-                $data  = array(
-                          $errorClassName,
-                          $funcName,
-                         );
+                $data  = [
+                    $errorClassName,
+                    $funcName,
+                ];
                 $phpcsFile->addError($error, $token, 'Found'.ucfirst($funcData['type']), $data);
             }
         }

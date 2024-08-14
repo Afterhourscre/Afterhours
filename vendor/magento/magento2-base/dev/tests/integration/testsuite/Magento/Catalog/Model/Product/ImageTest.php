@@ -52,7 +52,7 @@ class ImageTest extends \PHPUnit\Framework\TestCase
     public function testGetUrlPlaceholder($model)
     {
         $this->assertStringMatchesFormat(
-            'http://localhost/pub/static/%s/frontend/%s/Magento_Catalog/images/product/placeholder/image.jpg',
+            'http://localhost/static/%s/frontend/%s/Magento_Catalog/images/product/placeholder/image.jpg',
             $model->getUrl()
         );
     }
@@ -62,12 +62,12 @@ class ImageTest extends \PHPUnit\Framework\TestCase
         $inputFile = 'watermark.png';
         $expectedFile = '/somewhere/watermark.png';
 
-        /** @var \Magento\Framework\View\FileSystem|\PHPUnit_Framework_MockObject_MockObject $viewFilesystem */
+        /** @var \Magento\Framework\View\FileSystem|\PHPUnit\Framework\MockObject\MockObject $viewFilesystem */
         $viewFileSystem = $this->createMock(\Magento\Framework\View\FileSystem::class);
         $viewFileSystem->expects($this->once())
             ->method('getStaticFileName')
             ->with($inputFile)
-            ->will($this->returnValue($expectedFile));
+            ->willReturn($expectedFile);
 
         /** @var $model \Magento\Catalog\Model\Product\Image */
         $model = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()
@@ -75,9 +75,18 @@ class ImageTest extends \PHPUnit\Framework\TestCase
         $processor = $this->createPartialMock(
             \Magento\Framework\Image::class,
             [
-                'save', 'keepAspectRatio', 'keepFrame', 'keepTransparency', 'constrainOnly', 'backgroundColor',
-                'quality', 'setWatermarkPosition', 'setWatermarkImageOpacity', 'setWatermarkWidth',
-                'setWatermarkHeight', 'watermark',
+                'save',
+                'keepAspectRatio',
+                'keepFrame',
+                'keepTransparency',
+                'constrainOnly',
+                'backgroundColor',
+                'quality',
+                'setWatermarkPosition',
+                'setWatermarkImageOpacity',
+                'setWatermarkWidth',
+                'setWatermarkHeight',
+                'watermark'
             ]
         );
         $processor->expects($this->once())

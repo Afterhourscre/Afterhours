@@ -4,13 +4,13 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\PSR2\Sniffs\Methods;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 
 class FunctionClosingBraceSniff implements Sniff
 {
@@ -19,14 +19,14 @@ class FunctionClosingBraceSniff implements Sniff
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(
-                T_FUNCTION,
-                T_CLOSURE,
-               );
+        return [
+            T_FUNCTION,
+            T_CLOSURE,
+        ];
 
     }//end register()
 
@@ -64,7 +64,7 @@ class FunctionClosingBraceSniff implements Sniff
         }
 
         $error = 'Function closing brace must go on the next line following the body; found %s blank lines before brace';
-        $data  = array($found);
+        $data  = [$found];
         $fix   = $phpcsFile->addFixableError($error, $closeBrace, 'SpacingBeforeClose', $data);
 
         if ($fix === true) {
@@ -74,7 +74,7 @@ class FunctionClosingBraceSniff implements Sniff
                     continue;
                 }
 
-                // Don't remove any identation before the brace.
+                // Don't remove any indentation before the brace.
                 if ($tokens[$i]['line'] === $tokens[$closeBrace]['line']) {
                     break;
                 }

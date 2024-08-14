@@ -4,19 +4,22 @@
  * See COPYING.txt for license details.
  */
 
+declare(strict_types=1);
+
 namespace Magento\Catalog\Block\Product\View\Options\Type\Select;
 
 use Magento\Catalog\Block\Product\View\Options\AbstractOptions;
-use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
 use Magento\Catalog\Model\Product\Option;
 use Magento\Framework\View\Element\Html\Select;
 
 /**
- * Class represents necessary logic for dropdown and multiselect option types
+ * Represent needed logic for dropdown and multi-select
  */
 class Multiple extends AbstractOptions
 {
     /**
+     * @inheritdoc
+     *
      * @return string
      * @throws \Magento\Framework\Exception\LocalizedException
      */
@@ -36,38 +39,33 @@ class Multiple extends AbstractOptions
                 'class' => $require . ' product-custom-option admin__control-select'
             ]
         );
-
         $select = $this->insertSelectOption($select, $option);
         $select = $this->processSelectOption($select, $option);
-
-        if ($optionType === ProductCustomOptionInterface::OPTION_TYPE_MULTIPLE) {
+        if ($optionType === Option::OPTION_TYPE_MULTIPLE) {
             $extraParams = ' multiple="multiple"';
         }
-
         if (!$this->getSkipJsReloadPrice()) {
             $extraParams .= ' onchange="opConfig.reloadPrice()"';
         }
-
         $extraParams .= ' data-selector="' . $select->getName() . '"';
         $select->setExtraParams($extraParams);
-
         if ($configValue) {
             $select->setValue($configValue);
         }
-
         return $select->getHtml();
     }
 
     /**
+     * Returns select with inserted option give as a parameter
+     *
      * @param Select $select
      * @param Option $option
      * @return Select
      */
-    private function insertSelectOption(Select $select, Option $option) : Select
+    private function insertSelectOption(Select $select, Option $option): Select
     {
         $require = $option->getIsRequire() ? ' required' : '';
-
-        if ($option->getType() === ProductCustomOptionInterface::OPTION_TYPE_DROP_DOWN) {
+        if ($option->getType() === Option::OPTION_TYPE_DROP_DOWN) {
             $select->setName('options[' . $option->getId() . ']')->addOption('', __('-- Please Select --'));
         } else {
             $select->setName('options[' . $option->getId() . '][]');
@@ -78,16 +76,17 @@ class Multiple extends AbstractOptions
     }
 
     /**
+     * Returns select with formated option prices
+     *
      * @param Select $select
      * @param Option $option
      * @return Select
      */
-    private function processSelectOption(Select $select, Option $option) : Select
+    private function processSelectOption(Select $select, Option $option): Select
     {
         $store = $this->getProduct()->getStore();
-
         foreach ($option->getValues() as $_value) {
-            $isPercentPriceType =  $_value->getPriceType() === 'percent';
+            $isPercentPriceType = $_value->getPriceType() === 'percent';
             $priceStr = $this->_formatPrice(
                 [
                     'is_percent' => $isPercentPriceType,
@@ -95,7 +94,6 @@ class Multiple extends AbstractOptions
                 ],
                 false
             );
-
             $select->addOption(
                 $_value->getOptionTypeId(),
                 $_value->getTitle() . ' ' . strip_tags($priceStr) . '',

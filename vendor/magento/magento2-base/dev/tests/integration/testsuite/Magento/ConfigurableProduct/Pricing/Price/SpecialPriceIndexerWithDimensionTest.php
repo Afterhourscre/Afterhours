@@ -3,6 +3,8 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\ConfigurableProduct\Pricing\Price;
 
 use Magento\Catalog\Api\Data\ProductInterface;
@@ -16,7 +18,7 @@ use Magento\TestFramework\Helper\Bootstrap;
 /**
  * @magentoDbIsolation disabled
  * @group indexer_dimension
- * @--magentoIndexerDimensionMode catalog_product_price website_and_customer_group
+ * @magentoIndexerDimensionMode catalog_product_price website_and_customer_group
  */
 class SpecialPriceIndexerWithDimensionTest extends \PHPUnit\Framework\TestCase
 {
@@ -35,7 +37,10 @@ class SpecialPriceIndexerWithDimensionTest extends \PHPUnit\Framework\TestCase
      */
     private $indexerProcessor;
 
-    protected function setUp()
+    /**
+     * Set up
+     */
+    protected function setUp(): void
     {
         $this->productRepository = Bootstrap::getObjectManager()->get(ProductRepositoryInterface::class);
         $this->productCollectionFactory = Bootstrap::getObjectManager()->get(CollectionFactory::class);
@@ -51,9 +56,6 @@ class SpecialPriceIndexerWithDimensionTest extends \PHPUnit\Framework\TestCase
      */
     public function testFullReindexIfChildHasSpecialPrice()
     {
-        $this->markTestSkipped(
-            'Skipped because of MAGETWO-99136'
-        );
         $specialPrice = 2;
         /** @var Product $childProduct */
         $childProduct = $this->productRepository->get('simple_10', true);
@@ -91,9 +93,6 @@ class SpecialPriceIndexerWithDimensionTest extends \PHPUnit\Framework\TestCase
      */
     public function testOnSaveIndexationIfChildHasSpecialPrice()
     {
-        $this->markTestSkipped(
-            'Skipped because of MAGETWO-99136'
-        );
         $specialPrice = 2;
         /** @var Product $childProduct */
         $childProduct = $this->productRepository->get('simple_10', true);

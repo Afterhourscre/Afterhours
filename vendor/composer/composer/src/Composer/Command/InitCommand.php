@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /*
  * This file is part of Composer.
@@ -12,21 +12,24 @@
 
 namespace Composer\Command;
 
-use Composer\DependencyResolver\Pool;
-use Composer\Json\JsonFile;
 use Composer\Factory;
-use Composer\Repository\RepositoryFactory;
+use Composer\Json\JsonFile;
+use Composer\Json\JsonValidationException;
 use Composer\Package\BasePackage;
-use Composer\Package\Version\VersionParser;
-use Composer\Package\Version\VersionSelector;
+use Composer\Package\Package;
+use Composer\Pcre\Preg;
 use Composer\Repository\CompositeRepository;
 use Composer\Repository\PlatformRepository;
-use Composer\Util\ProcessExecutor;
+use Composer\Repository\RepositoryFactory;
+use Composer\Util\Filesystem;
+use Composer\Util\Silencer;
+use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
+use Composer\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Process\Process;
 use Symfony\Component\Process\ExecutableFinder;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Console\Helper\FormatterHelper;
 
 /**
  * @author Justin Rainbow <justin.rainbow@gmail.com>
@@ -34,56 +37,63 @@ use Symfony\Component\Process\ExecutableFinder;
  */
 class InitCommand extends BaseCommand
 {
-    /** @var CompositeRepository */
-    protected $repos;
+    use CompletionTrait;
+    use PackageDiscoveryTrait;
 
-    /** @var array */
+    /** @var array<string, string> */
     private $gitConfig;
 
-    /** @var Pool */
-    private $pool;
-
     /**
-     * {@inheritdoc}
+     * @inheritDoc
+     *
+     * @return void
      */
     protected function configure()
     {
         $this
             ->setName('init')
-            ->setDescription('Creates a basic composer.json file in current directory.')
-            ->setDefinition(array(
+            ->setDescription('Creates a basic composer.json file in current directory')
+            ->setDefinition([
                 new InputOption('name', null, InputOption::VALUE_REQUIRED, 'Name of the package'),
                 new InputOption('description', null, InputOption::VALUE_REQUIRED, 'Description of package'),
                 new InputOption('author', null, InputOption::VALUE_REQUIRED, 'Author name of package'),
-                // new InputOption('version', null, InputOption::VALUE_NONE, 'Version of package'),
-                new InputOption('type', null, InputOption::VALUE_OPTIONAL, 'Type of package (e.g. library, project, metapackage, composer-plugin)'),
+                new InputOption('type', null, InputOption::VALUE_REQUIRED, 'Type of package (e.g. library, project, metapackage, composer-plugin)'),
                 new InputOption('homepage', null, InputOption::VALUE_REQUIRED, 'Homepage of package'),
-                new InputOption('require', null, InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED, 'Package to require with a version constraint, e.g. foo/bar:1.0.0 or foo/bar=1.0.0 or "foo/bar 1.0.0"'),
-                new InputOption('require-dev', null, InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED, 'Package to require for development with a version constraint, e.g. foo/bar:1.0.0 or foo/bar=1.0.0 or "foo/bar 1.0.0"'),
+                new InputOption('require', null, InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED, 'Package to require with a version constraint, e.g. foo/bar:1.0.0 or foo/bar=1.0.0 or "foo/bar 1.0.0"', null, $this->suggestAvailablePackageInclPlatform()),
+                new InputOption('require-dev', null, InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED, 'Package to require for development with a version constraint, e.g. foo/bar:1.0.0 or foo/bar=1.0.0 or "foo/bar 1.0.0"', null, $this->suggestAvailablePackageInclPlatform()),
                 new InputOption('stability', 's', InputOption::VALUE_REQUIRED, 'Minimum stability (empty or one of: '.implode(', ', array_keys(BasePackage::$stabilities)).')'),
                 new InputOption('license', 'l', InputOption::VALUE_REQUIRED, 'License of package'),
                 new InputOption('repository', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Add custom repositories, either by URL or using JSON arrays'),
-            ))
-            ->setHelp(<<<EOT
+                new InputOption('autoload', 'a', InputOption::VALUE_REQUIRED, 'Add PSR-4 autoload mapping. Maps your package\'s namespace to the provided directory. (Expects a relative path, e.g. src/)'),
+            ])
+            ->setHelp(
+                <<<EOT
 The <info>init</info> command creates a basic composer.json file
 in the current directory.
 
 <info>php composer.phar init</info>
 
+Read more at https://getcomposer.org/doc/03-cli.md#init
 EOT
             )
         ;
     }
 
     /**
-     * {@inheritdoc}
+     * @throws \Seld\JsonLint\ParsingException
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = $this->getIO();
 
-        $whitelist = array('name', 'description', 'author', 'type', 'homepage', 'require', 'require-dev', 'stability', 'license');
-        $options = array_filter(array_intersect_key($input->getOptions(), array_flip($whitelist)));
+        $allowlist = ['name', 'description', 'author', 'type', 'homepage', 'require', 'require-dev', 'stability', 'license', 'autoload'];
+        $options = array_filter(array_intersect_key($input->getOptions(), array_flip($allowlist)), function ($val) { return $val !== null && $val !== []; });
+
+        if (isset($options['name']) && !Preg::isMatch('{^[a-z0-9_.-]+/[a-z0-9_.-]+$}D', $options['name'])) {
+            throw new \InvalidArgumentException(
+                'The package name '.$options['name'].' is invalid, it should be lowercase and have a vendor name, a forward slash, and a package name, matching: [a-z0-9_.-]+/[a-z0-9_.-]+'
+            );
+        }
 
         if (isset($options['author'])) {
             $options['authors'] = $this->formatAuthors($options['author']);
@@ -91,10 +101,10 @@ EOT
         }
 
         $repositories = $input->getOption('repository');
-        if ($repositories) {
+        if (count($repositories) > 0) {
             $config = Factory::createConfig($io);
             foreach ($repositories as $repo) {
-                $options['repositories'][] = RepositoryFactory::configFromString($io, $config, $repo);
+                $options['repositories'][] = RepositoryFactory::configFromString($io, $config, $repo, true);
             }
         }
 
@@ -104,30 +114,69 @@ EOT
         }
 
         $options['require'] = isset($options['require']) ? $this->formatRequirements($options['require']) : new \stdClass;
-        if (array() === $options['require']) {
+        if ([] === $options['require']) {
             $options['require'] = new \stdClass;
         }
 
         if (isset($options['require-dev'])) {
             $options['require-dev'] = $this->formatRequirements($options['require-dev']);
-            if (array() === $options['require-dev']) {
+            if ([] === $options['require-dev']) {
                 $options['require-dev'] = new \stdClass;
             }
         }
 
+        // --autoload - create autoload object
+        $autoloadPath = null;
+        if (isset($options['autoload'])) {
+            $autoloadPath = $options['autoload'];
+            $namespace = $this->namespaceFromPackageName((string) $input->getOption('name'));
+            $options['autoload'] = (object) [
+                'psr-4' => [
+                    $namespace . '\\' => $autoloadPath,
+                ],
+            ];
+        }
+
         $file = new JsonFile(Factory::getComposerFile());
-        $json = $file->encode($options);
+        $json = JsonFile::encode($options);
 
         if ($input->isInteractive()) {
-            $io->writeError(array('', $json, ''));
-            if (!$io->askConfirmation('Do you confirm generation [<comment>yes</comment>]? ', true)) {
+            $io->writeError(['', $json, '']);
+            if (!$io->askConfirmation('Do you confirm generation [<comment>yes</comment>]? ')) {
                 $io->writeError('<error>Command aborted</error>');
 
                 return 1;
             }
+        } else {
+            if (json_encode($options) === '{"require":{}}') {
+                throw new \RuntimeException('You have to run this command in interactive mode, or specify at least some data using --name, --require, etc.');
+            }
+
+            $io->writeError('Writing '.$file->getPath());
         }
 
         $file->write($options);
+        try {
+            $file->validateSchema(JsonFile::LAX_SCHEMA);
+        } catch (JsonValidationException $e) {
+            $io->writeError('<error>Schema validation error, aborting</error>');
+            $errors = ' - ' . implode(PHP_EOL . ' - ', $e->getErrors());
+            $io->writeError($e->getMessage() . ':' . PHP_EOL . $errors);
+            Silencer::call('unlink', $file->getPath());
+
+            return 1;
+        }
+
+        // --autoload - Create src folder
+        if ($autoloadPath) {
+            $filesystem = new Filesystem();
+            $filesystem->ensureDirectoryExists($autoloadPath);
+
+            // dump-autoload only for projects without added dependencies.
+            if (!$this->hasDependencies($options)) {
+                $this->runDumpAutoloadCommand($output);
+            }
+        }
 
         if ($input->isInteractive() && is_dir('.git')) {
             $ignoreFile = realpath('.gitignore');
@@ -139,85 +188,117 @@ EOT
             if (!$this->hasVendorIgnore($ignoreFile)) {
                 $question = 'Would you like the <info>vendor</info> directory added to your <info>.gitignore</info> [<comment>yes</comment>]? ';
 
-                if ($io->askConfirmation($question, true)) {
+                if ($io->askConfirmation($question)) {
                     $this->addVendorIgnore($ignoreFile);
                 }
             }
         }
+
+        $question = 'Would you like to install dependencies now [<comment>yes</comment>]? ';
+        if ($input->isInteractive() && $this->hasDependencies($options) && $io->askConfirmation($question)) {
+            $this->updateDependencies($output);
+        }
+
+        // --autoload - Show post-install configuration info
+        if ($autoloadPath) {
+            $namespace = $this->namespaceFromPackageName((string) $input->getOption('name'));
+
+            $io->writeError('PSR-4 autoloading configured. Use "<comment>namespace '.$namespace.';</comment>" in '.$autoloadPath);
+            $io->writeError('Include the Composer autoloader with: <comment>require \'vendor/autoload.php\';</comment>');
+        }
+
+        return 0;
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
+     *
+     * @return void
      */
     protected function interact(InputInterface $input, OutputInterface $output)
     {
         $git = $this->getGitConfig();
         $io = $this->getIO();
+        /** @var FormatterHelper $formatter */
         $formatter = $this->getHelperSet()->get('formatter');
 
         // initialize repos if configured
         $repositories = $input->getOption('repository');
-        if ($repositories) {
+        if (count($repositories) > 0) {
             $config = Factory::createConfig($io);
-            $repos = array(new PlatformRepository);
+            $io->loadConfiguration($config);
+            $repoManager = RepositoryFactory::manager($io, $config);
+
+            $repos = [new PlatformRepository];
+            $createDefaultPackagistRepo = true;
             foreach ($repositories as $repo) {
-                $repos[] = RepositoryFactory::fromString($io, $config, $repo);
+                $repoConfig = RepositoryFactory::configFromString($io, $config, $repo, true);
+                if (
+                    (isset($repoConfig['packagist']) && $repoConfig === ['packagist' => false])
+                    || (isset($repoConfig['packagist.org']) && $repoConfig === ['packagist.org' => false])
+                ) {
+                    $createDefaultPackagistRepo = false;
+                    continue;
+                }
+                $repos[] = RepositoryFactory::createRepo($io, $config, $repoConfig, $repoManager);
             }
-            $repos[] = RepositoryFactory::createRepo($io, $config, array(
-                'type' => 'composer',
-                'url' => 'https://packagist.org',
-            ));
+
+            if ($createDefaultPackagistRepo) {
+                $repos[] = RepositoryFactory::createRepo($io, $config, [
+                    'type' => 'composer',
+                    'url' => 'https://repo.packagist.org',
+                ], $repoManager);
+            }
 
             $this->repos = new CompositeRepository($repos);
             unset($repos, $config, $repositories);
         }
 
-        $io->writeError(array(
+        $io->writeError([
             '',
             $formatter->formatBlock('Welcome to the Composer config generator', 'bg=blue;fg=white', true),
             '',
-        ));
+        ]);
 
         // namespace
-        $io->writeError(array(
+        $io->writeError([
             '',
             'This command will guide you through creating your composer.json config.',
             '',
-        ));
+        ]);
 
         $cwd = realpath(".");
 
-        if (!$name = $input->getOption('name')) {
+        $name = $input->getOption('name');
+        if (null === $name) {
             $name = basename($cwd);
-            $name = preg_replace('{(?:([a-z])([A-Z])|([A-Z])([A-Z][a-z]))}', '\\1\\3-\\2\\4', $name);
+            $name = Preg::replace('{(?:([a-z])([A-Z])|([A-Z])([A-Z][a-z]))}', '\\1\\3-\\2\\4', $name);
             $name = strtolower($name);
-            if (isset($git['github.user'])) {
+            if (!empty($_SERVER['COMPOSER_DEFAULT_VENDOR'])) {
+                $name = $_SERVER['COMPOSER_DEFAULT_VENDOR'] . '/' . $name;
+            } elseif (isset($git['github.user'])) {
                 $name = $git['github.user'] . '/' . $name;
             } elseif (!empty($_SERVER['USERNAME'])) {
                 $name = $_SERVER['USERNAME'] . '/' . $name;
+            } elseif (!empty($_SERVER['USER'])) {
+                $name = $_SERVER['USER'] . '/' . $name;
             } elseif (get_current_user()) {
                 $name = get_current_user() . '/' . $name;
             } else {
                 // package names must be in the format foo/bar
-                $name = $name . '/' . $name;
+                $name .= '/' . $name;
             }
             $name = strtolower($name);
-        } else {
-            if (!preg_match('{^[a-z0-9_.-]+/[a-z0-9_.-]+$}', $name)) {
-                throw new \InvalidArgumentException(
-                    'The package name '.$name.' is invalid, it should be lowercase and have a vendor name, a forward slash, and a package name, matching: [a-z0-9_.-]+/[a-z0-9_.-]+'
-                );
-            }
         }
 
         $name = $io->askAndValidate(
             'Package name (<vendor>/<name>) [<comment>'.$name.'</comment>]: ',
-            function ($value) use ($name) {
+            static function ($value) use ($name) {
                 if (null === $value) {
                     return $name;
                 }
 
-                if (!preg_match('{^[a-z0-9_.-]+/[a-z0-9_.-]+$}', $value)) {
+                if (!Preg::isMatch('{^[a-z0-9_.-]+/[a-z0-9_.-]+$}D', $value)) {
                     throw new \InvalidArgumentException(
                         'The package name '.$value.' is invalid, it should be lowercase and have a vendor name, a forward slash, and a package name, matching: [a-z0-9_.-]+/[a-z0-9_.-]+'
                     );
@@ -230,7 +311,7 @@ EOT
         );
         $input->setOption('name', $name);
 
-        $description = $input->getOption('description') ?: false;
+        $description = $input->getOption('description') ?: null;
         $description = $io->ask(
             'Description [<comment>'.$description.'</comment>]: ',
             $description
@@ -238,20 +319,35 @@ EOT
         $input->setOption('description', $description);
 
         if (null === $author = $input->getOption('author')) {
-            if (isset($git['user.name']) && isset($git['user.email'])) {
-                $author = sprintf('%s <%s>', $git['user.name'], $git['user.email']);
+            if (!empty($_SERVER['COMPOSER_DEFAULT_AUTHOR'])) {
+                $author_name = $_SERVER['COMPOSER_DEFAULT_AUTHOR'];
+            } elseif (isset($git['user.name'])) {
+                $author_name = $git['user.name'];
+            }
+
+            if (!empty($_SERVER['COMPOSER_DEFAULT_EMAIL'])) {
+                $author_email = $_SERVER['COMPOSER_DEFAULT_EMAIL'];
+            } elseif (isset($git['user.email'])) {
+                $author_email = $git['user.email'];
+            }
+
+            if (isset($author_name, $author_email)) {
+                $author = sprintf('%s <%s>', $author_name, $author_email);
             }
         }
 
-        $self = $this;
         $author = $io->askAndValidate(
-            'Author [<comment>'.$author.'</comment>, n to skip]: ',
-            function ($value) use ($self, $author) {
+            'Author ['.(is_string($author) ? '<comment>'.$author.'</comment>, ' : '') . 'n to skip]: ',
+            function ($value) use ($author) {
                 if ($value === 'n' || $value === 'no') {
                     return;
                 }
                 $value = $value ?: $author;
-                $author = $self->parseAuthorString($value);
+                $author = $this->parseAuthorString($value ?? '');
+
+                if ($author['email'] === null) {
+                    return $author['name'];
+                }
 
                 return sprintf('%s <%s>', $author['name'], $author['email']);
             },
@@ -263,7 +359,7 @@ EOT
         $minimumStability = $input->getOption('stability') ?: null;
         $minimumStability = $io->askAndValidate(
             'Minimum Stability [<comment>'.$minimumStability.'</comment>]: ',
-            function ($value) use ($self, $minimumStability) {
+            static function ($value) use ($minimumStability) {
                 if (null === $value) {
                     return $minimumStability;
                 }
@@ -282,219 +378,155 @@ EOT
         );
         $input->setOption('stability', $minimumStability);
 
-        $type = $input->getOption('type') ?: false;
+        $type = $input->getOption('type');
         $type = $io->ask(
             'Package Type (e.g. library, project, metapackage, composer-plugin) [<comment>'.$type.'</comment>]: ',
             $type
         );
+        if ($type === '' || $type === false) {
+            $type = null;
+        }
         $input->setOption('type', $type);
 
-        $license = $input->getOption('license') ?: false;
+        if (null === $license = $input->getOption('license')) {
+            if (!empty($_SERVER['COMPOSER_DEFAULT_LICENSE'])) {
+                $license = $_SERVER['COMPOSER_DEFAULT_LICENSE'];
+            }
+        }
+
         $license = $io->ask(
             'License [<comment>'.$license.'</comment>]: ',
             $license
         );
         $input->setOption('license', $license);
 
-        $io->writeError(array('', 'Define your dependencies.', ''));
+        $io->writeError(['', 'Define your dependencies.', '']);
+
+        // prepare to resolve dependencies
+        $repos = $this->getRepos();
+        $preferredStability = $minimumStability ?: 'stable';
+        $platformRepo = null;
+        if ($repos instanceof CompositeRepository) {
+            foreach ($repos->getRepositories() as $candidateRepo) {
+                if ($candidateRepo instanceof PlatformRepository) {
+                    $platformRepo = $candidateRepo;
+                    break;
+                }
+            }
+        }
 
         $question = 'Would you like to define your dependencies (require) interactively [<comment>yes</comment>]? ';
-        $requirements = array();
-        if ($io->askConfirmation($question, true)) {
-            $requirements = $this->determineRequirements($input, $output, $input->getOption('require'));
+        $require = $input->getOption('require');
+        $requirements = [];
+        if (count($require) > 0 || $io->askConfirmation($question)) {
+            $requirements = $this->determineRequirements($input, $output, $require, $platformRepo, $preferredStability);
         }
         $input->setOption('require', $requirements);
 
         $question = 'Would you like to define your dev dependencies (require-dev) interactively [<comment>yes</comment>]? ';
-        $devRequirements = array();
-        if ($io->askConfirmation($question, true)) {
-            $devRequirements = $this->determineRequirements($input, $output, $input->getOption('require-dev'));
+        $requireDev = $input->getOption('require-dev');
+        $devRequirements = [];
+        if (count($requireDev) > 0 || $io->askConfirmation($question)) {
+            $devRequirements = $this->determineRequirements($input, $output, $requireDev, $platformRepo, $preferredStability);
         }
         $input->setOption('require-dev', $devRequirements);
+
+        // --autoload - input and validation
+        $autoload = $input->getOption('autoload') ?: 'src/';
+        $namespace = $this->namespaceFromPackageName((string) $input->getOption('name'));
+        $autoload = $io->askAndValidate(
+            'Add PSR-4 autoload mapping? Maps namespace "'.$namespace.'" to the entered relative path. [<comment>'.$autoload.'</comment>, n to skip]: ',
+            static function ($value) use ($autoload) {
+                if (null === $value) {
+                    return $autoload;
+                }
+
+                if ($value === 'n' || $value === 'no') {
+                    return;
+                }
+
+                $value = $value ?: $autoload;
+
+                if (!Preg::isMatch('{^[^/][A-Za-z0-9\-_/]+/$}', $value)) {
+                    throw new \InvalidArgumentException(sprintf(
+                        'The src folder name "%s" is invalid. Please add a relative path with tailing forward slash. [A-Za-z0-9_-/]+/',
+                        $value
+                    ));
+                }
+
+                return $value;
+            },
+            null,
+            $autoload
+        );
+        $input->setOption('autoload', $autoload);
     }
 
     /**
-     * @private
-     * @param  string $author
-     * @return array
+     * @return array{name: string, email: string|null}
      */
-    public function parseAuthorString($author)
+    private function parseAuthorString(string $author): array
     {
-        if (preg_match('/^(?P<name>[- .,\p{L}\p{N}\'’"()]+) <(?P<email>.+?)>$/u', $author, $match)) {
-            if ($this->isValidEmail($match['email'])) {
-                return array(
-                    'name' => trim($match['name']),
-                    'email' => $match['email'],
-                );
+        if (Preg::isMatch('/^(?P<name>[- .,\p{L}\p{N}\p{Mn}\'’"()]+)(?:\s+<(?P<email>.+?)>)?$/u', $author, $match)) {
+            assert(is_string($match['name']));
+
+            if (null !== $match['email'] && !$this->isValidEmail($match['email'])) {
+                throw new \InvalidArgumentException('Invalid email "'.$match['email'].'"');
             }
+
+            return [
+                'name' => trim($match['name']),
+                'email' => $match['email'],
+            ];
         }
 
         throw new \InvalidArgumentException(
-            'Invalid author string.  Must be in the format: '.
-            'John Smith <john@example.com>'
+            'Invalid author string.  Must be in the formats: '.
+            'Jane Doe or John Smith <john@example.com>'
         );
     }
 
-    protected function findPackages($name)
+    /**
+     * @return array<int, array{name: string, email?: string}>
+     */
+    protected function formatAuthors(string $author): array
     {
-        return $this->getRepos()->search($name);
-    }
-
-    protected function getRepos()
-    {
-        if (!$this->repos) {
-            $this->repos = new CompositeRepository(array_merge(
-                array(new PlatformRepository),
-                RepositoryFactory::defaultRepos($this->getIO())
-            ));
+        $author = $this->parseAuthorString($author);
+        if (null === $author['email']) {
+            unset($author['email']);
         }
 
-        return $this->repos;
+        return [$author];
     }
 
-    protected function determineRequirements(InputInterface $input, OutputInterface $output, $requires = array(), $phpVersion = null, $preferredStability = 'stable')
+    /**
+     * Extract namespace from package's vendor name.
+     *
+     * new_projects.acme-extra/package-name becomes "NewProjectsAcmeExtra\PackageName"
+     */
+    public function namespaceFromPackageName(string $packageName): ?string
     {
-        if ($requires) {
-            $requires = $this->normalizeRequirements($requires);
-            $result = array();
-            $io = $this->getIO();
-
-            foreach ($requires as $requirement) {
-                if (!isset($requirement['version'])) {
-                    // determine the best version automatically
-                    $version = $this->findBestVersionForPackage($input, $requirement['name'], $phpVersion, $preferredStability);
-                    $requirement['version'] = $version;
-
-                    $io->writeError(sprintf(
-                        'Using version <info>%s</info> for <info>%s</info>',
-                        $requirement['version'],
-                        $requirement['name']
-                    ));
-                }
-
-                $result[] = $requirement['name'] . ' ' . $requirement['version'];
-            }
-
-            return $result;
+        if (!$packageName || strpos($packageName, '/') === false) {
+            return null;
         }
 
-        $versionParser = new VersionParser();
-        $io = $this->getIO();
-        while (null !== $package = $io->ask('Search for a package: ')) {
-            $matches = $this->findPackages($package);
+        $namespace = array_map(
+            static function ($part): string {
+                $part = Preg::replace('/[^a-z0-9]/i', ' ', $part);
+                $part = ucwords($part);
 
-            if (count($matches)) {
-                $exactMatch = null;
-                $choices = array();
-                foreach ($matches as $position => $foundPackage) {
-                    $choices[] = sprintf(' <info>%5s</info> %s', "[$position]", $foundPackage['name']);
-                    if ($foundPackage['name'] === $package) {
-                        $exactMatch = true;
-                        break;
-                    }
-                }
+                return str_replace(' ', '', $part);
+            },
+            explode('/', $packageName)
+        );
 
-                // no match, prompt which to pick
-                if (!$exactMatch) {
-                    $io->writeError(array(
-                        '',
-                        sprintf('Found <info>%s</info> packages matching <info>%s</info>', count($matches), $package),
-                        '',
-                    ));
-
-                    $io->writeError($choices);
-                    $io->writeError('');
-
-                    $validator = function ($selection) use ($matches, $versionParser) {
-                        if ('' === $selection) {
-                            return false;
-                        }
-
-                        if (is_numeric($selection) && isset($matches[(int) $selection])) {
-                            $package = $matches[(int) $selection];
-
-                            return $package['name'];
-                        }
-
-                        if (preg_match('{^\s*(?P<name>[\S/]+)(?:\s+(?P<version>\S+))?\s*$}', $selection, $packageMatches)) {
-                            if (isset($packageMatches['version'])) {
-                                // parsing `acme/example ~2.3`
-
-                                // validate version constraint
-                                $versionParser->parseConstraints($packageMatches['version']);
-
-                                return $packageMatches['name'].' '.$packageMatches['version'];
-                            }
-
-                            // parsing `acme/example`
-                            return $packageMatches['name'];
-                        }
-
-                        throw new \Exception('Not a valid selection');
-                    };
-
-                    $package = $io->askAndValidate(
-                        'Enter package # to add, or the complete package name if it is not listed: ',
-                        $validator,
-                        3,
-                        false
-                    );
-                }
-
-                // no constraint yet, determine the best version automatically
-                if (false !== $package && false === strpos($package, ' ')) {
-                    $validator = function ($input) {
-                        $input = trim($input);
-
-                        return $input ?: false;
-                    };
-
-                    $constraint = $io->askAndValidate(
-                        'Enter the version constraint to require (or leave blank to use the latest version): ',
-                        $validator,
-                        3,
-                        false
-                    );
-
-                    if (false === $constraint) {
-                        $constraint = $this->findBestVersionForPackage($input, $package, $phpVersion, $preferredStability);
-
-                        $io->writeError(sprintf(
-                            'Using version <info>%s</info> for <info>%s</info>',
-                            $constraint,
-                            $package
-                        ));
-                    }
-
-                    $package .= ' '.$constraint;
-                }
-
-                if (false !== $package) {
-                    $requires[] = $package;
-                }
-            }
-        }
-
-        return $requires;
+        return implode('\\', $namespace);
     }
 
-    protected function formatAuthors($author)
-    {
-        return array($this->parseAuthorString($author));
-    }
-
-    protected function formatRequirements(array $requirements)
-    {
-        $requires = array();
-        $requirements = $this->normalizeRequirements($requirements);
-        foreach ($requirements as $requirement) {
-            $requires[$requirement['name']] = $requirement['version'];
-        }
-
-        return $requires;
-    }
-
-    protected function getGitConfig()
+    /**
+     * @return array<string, string>
+     */
+    protected function getGitConfig(): array
     {
         if (null !== $this->gitConfig) {
             return $this->gitConfig;
@@ -503,20 +535,20 @@ EOT
         $finder = new ExecutableFinder();
         $gitBin = $finder->find('git');
 
-        $cmd = new Process(sprintf('%s config -l', ProcessExecutor::escape($gitBin)));
+        $cmd = new Process([$gitBin, 'config', '-l']);
         $cmd->run();
 
         if ($cmd->isSuccessful()) {
-            $this->gitConfig = array();
-            preg_match_all('{^([^=]+)=(.*)$}m', $cmd->getOutput(), $matches, PREG_SET_ORDER);
-            foreach ($matches as $match) {
-                $this->gitConfig[$match[1]] = $match[2];
+            $this->gitConfig = [];
+            Preg::matchAllStrictGroups('{^([^=]+)=(.*)$}m', $cmd->getOutput(), $matches);
+            foreach ($matches[1] as $key => $match) {
+                $this->gitConfig[$match] = $matches[2][$key];
             }
 
             return $this->gitConfig;
         }
 
-        return $this->gitConfig = array();
+        return $this->gitConfig = [];
     }
 
     /**
@@ -529,13 +561,8 @@ EOT
      *  "/$vendor/"
      *  "/$vendor/*"
      *  "$vendor/*"
-     *
-     * @param string $ignoreFile
-     * @param string $vendor
-     *
-     * @return bool
      */
-    protected function hasVendorIgnore($ignoreFile, $vendor = 'vendor')
+    protected function hasVendorIgnore(string $ignoreFile, string $vendor = 'vendor'): bool
     {
         if (!file_exists($ignoreFile)) {
             return false;
@@ -545,7 +572,7 @@ EOT
 
         $lines = file($ignoreFile, FILE_IGNORE_NEW_LINES);
         foreach ($lines as $line) {
-            if (preg_match($pattern, $line)) {
+            if (Preg::isMatch($pattern, $line)) {
                 return true;
             }
         }
@@ -553,20 +580,13 @@ EOT
         return false;
     }
 
-    protected function normalizeRequirements(array $requirements)
-    {
-        $parser = new VersionParser();
-
-        return $parser->parseNameVersionPairs($requirements);
-    }
-
-    protected function addVendorIgnore($ignoreFile, $vendor = '/vendor/')
+    protected function addVendorIgnore(string $ignoreFile, string $vendor = '/vendor/'): void
     {
         $contents = "";
         if (file_exists($ignoreFile)) {
             $contents = file_get_contents($ignoreFile);
 
-            if ("\n" !== substr($contents, 0, -1)) {
+            if (strpos($contents, "\n") !== 0) {
                 $contents .= "\n";
             }
         }
@@ -574,79 +594,46 @@ EOT
         file_put_contents($ignoreFile, $contents . $vendor. "\n");
     }
 
-    protected function isValidEmail($email)
+    protected function isValidEmail(string $email): bool
     {
         // assume it's valid if we can't validate it
         if (!function_exists('filter_var')) {
             return true;
         }
 
-        // php <5.3.3 has a very broken email validator, so bypass checks
-        if (PHP_VERSION_ID < 50303) {
-            return true;
-        }
-
         return false !== filter_var($email, FILTER_VALIDATE_EMAIL);
     }
 
-    private function getPool(InputInterface $input)
+    private function updateDependencies(OutputInterface $output): void
     {
-        if (!$this->pool) {
-            $this->pool = new Pool($this->getMinimumStability($input));
-            $this->pool->addRepository($this->getRepos());
+        try {
+            $updateCommand = $this->getApplication()->find('update');
+            $this->getApplication()->resetComposer();
+            $updateCommand->run(new ArrayInput([]), $output);
+        } catch (\Exception $e) {
+            $this->getIO()->writeError('Could not update dependencies. Run `composer update` to see more information.');
         }
-
-        return $this->pool;
     }
 
-    private function getMinimumStability(InputInterface $input)
+    private function runDumpAutoloadCommand(OutputInterface $output): void
     {
-        if ($input->hasOption('stability')) {
-            return $input->getOption('stability') ?: 'stable';
+        try {
+            $command = $this->getApplication()->find('dump-autoload');
+            $this->getApplication()->resetComposer();
+            $command->run(new ArrayInput([]), $output);
+        } catch (\Exception $e) {
+            $this->getIO()->writeError('Could not run dump-autoload.');
         }
-
-        $file = Factory::getComposerFile();
-        if (is_file($file) && is_readable($file) && is_array($composer = json_decode(file_get_contents($file), true))) {
-            if (!empty($composer['minimum-stability'])) {
-                return $composer['minimum-stability'];
-            }
-        }
-
-        return 'stable';
     }
 
     /**
-     * Given a package name, this determines the best version to use in the require key.
-     *
-     * This returns a version with the ~ operator prefixed when possible.
-     *
-     * @param  InputInterface            $input
-     * @param  string                    $name
-     * @param  string                    $phpVersion
-     * @param  string                    $preferredStability
-     * @throws \InvalidArgumentException
-     * @return string
+     * @param array<string, string|array<string>> $options
      */
-    private function findBestVersionForPackage(InputInterface $input, $name, $phpVersion, $preferredStability = 'stable')
+    private function hasDependencies(array $options): bool
     {
-        // find the latest version allowed in this pool
-        $versionSelector = new VersionSelector($this->getPool($input));
-        $package = $versionSelector->findBestCandidate($name, null, $phpVersion, $preferredStability);
+        $requires = (array) $options['require'];
+        $devRequires = isset($options['require-dev']) ? (array) $options['require-dev'] : [];
 
-        if (!$package) {
-            // Check whether the PHP version was the problem
-            if ($phpVersion && $versionSelector->findBestCandidate($name)) {
-                throw new \InvalidArgumentException(sprintf(
-                    'Could not find package %s at any version matching your PHP version %s', $name, $phpVersion
-                ));
-            }
-            throw new \InvalidArgumentException(sprintf(
-                'Could not find package %s at any version for your minimum-stability (%s). Check the package spelling or your minimum-stability',
-                $name,
-                $this->getMinimumStability($input)
-            ));
-        }
-
-        return $versionSelector->findRecommendedRequireVersion($package);
+        return !empty($requires) || !empty($devRequires);
     }
 }

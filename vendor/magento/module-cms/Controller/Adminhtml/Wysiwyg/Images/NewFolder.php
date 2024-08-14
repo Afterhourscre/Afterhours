@@ -6,13 +6,13 @@
  */
 namespace Magento\Cms\Controller\Adminhtml\Wysiwyg\Images;
 
+use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Exception\NotFoundException;
 
 /**
  * Creates new folder.
  */
-class NewFolder extends \Magento\Cms\Controller\Adminhtml\Wysiwyg\Images
+class NewFolder extends \Magento\Cms\Controller\Adminhtml\Wysiwyg\Images implements HttpPostActionInterface
 {
     /**
      * @var \Magento\Framework\Controller\Result\JsonFactory
@@ -50,10 +50,6 @@ class NewFolder extends \Magento\Cms\Controller\Adminhtml\Wysiwyg\Images
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new NotFoundException(__('Page not found'));
-        }
-
         try {
             $this->_initAction();
             $name = $this->getRequest()->getPost('name');
@@ -69,7 +65,7 @@ class NewFolder extends \Magento\Cms\Controller\Adminhtml\Wysiwyg\Images
         }
         /** @var \Magento\Framework\Controller\Result\Json $resultJson */
         $resultJson = $this->resultJsonFactory->create();
-        
+
         return $resultJson->setData($result);
     }
 }

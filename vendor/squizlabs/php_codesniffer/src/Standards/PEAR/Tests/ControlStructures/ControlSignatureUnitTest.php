@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\PEAR\Tests\ControlStructures;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class ControlSignatureUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the ControlSignature sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\PEAR\Sniffs\ControlStructures\ControlSignatureSniff
+ */
+final class ControlSignatureUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,30 +30,31 @@ class ControlSignatureUnitTest extends AbstractSniffUnitTest
      */
     public function getErrorList()
     {
-        return array(
-                9   => 1,
-                14  => 1,
-                20  => 1,
-                22  => 1,
-                32  => 1,
-                36  => 1,
-                44  => 1,
-                48  => 1,
-                56  => 1,
-                60  => 1,
-                68  => 1,
-                72  => 1,
-                84  => 1,
-                88  => 2,
-                100 => 1,
-                104 => 2,
-                122 => 2,
-                128 => 1,
-                132 => 3,
-                133 => 2,
-                147 => 1,
-                157 => 1,
-               );
+        return [
+            9   => 1,
+            14  => 1,
+            20  => 1,
+            22  => 1,
+            32  => 1,
+            36  => 1,
+            44  => 1,
+            48  => 1,
+            56  => 1,
+            60  => 1,
+            68  => 1,
+            72  => 1,
+            84  => 1,
+            88  => 2,
+            100 => 1,
+            104 => 2,
+            122 => 2,
+            128 => 1,
+            132 => 3,
+            133 => 2,
+            147 => 1,
+            157 => 1,
+            165 => 1,
+        ];
 
     }//end getErrorList()
 
@@ -63,7 +69,7 @@ class ControlSignatureUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

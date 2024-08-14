@@ -3,8 +3,10 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-?>
-<?php
+
+// @deprecated
+// phpcs:disable PHPCompatibility.Miscellaneous.RemovedAlternativePHPTags.MaybeASPOpenTagFound
+
 /**
  * @var $block \Magento\Downloadable\Block\Adminhtml\Catalog\Product\Edit\Tab\Downloadable\Links
  */
@@ -102,14 +104,14 @@ require([
                 '<div class="admin__field admin__field-option admin__field-file-url">'+
                     '<input type="radio" class="admin__control-radio validate-one-required-by-name" id="downloadable_sample_<%- data.id %>_url_type" name="downloadable[sample][<%- data.id %>][type]" value="url"<%- data.url_checked %> />' +
                     '<label for="downloadable_sample_<%- data.id %>_url_type" class="admin__field-label"><span><?= $block->escapeJs($block->escapeHtml(__('URL'))) ?></span></label>' +
-                    '<input type="text" class="validate-downloadable-url validate-url admin__control-text" name="downloadable[sample][<%- data.id %>][sample_url]" value="<%- data.sample_url %>" placeholder="<?=  $block->escapeJs($block->escapeHtmlAttr(__('URL'))) ?>" />'+
+                    '<input type="text" class="validate-downloadable-url validate-url admin__control-text" name="downloadable[sample][<%- data.id %>][sample_url]" value="<%- data.sample_url %>" placeholder="<?= $block->escapeJs($block->escapeHtmlAttr(__('URL'))) ?>" />'+
                 '</div>'+
                 '<div>'+
                     '<span id="downloadable_sample_<%- data.id %>_container"></span>'+
                 '</div>'+
             '</td>'+
             '<td class="col-actions">'+
-                '<button type="button" class="action-delete" title="<?=  $block->escapeJs($block->escapeHtmlAttr(__('Delete'))) ?>"><span><?= $block->escapeJs($block->escapeHtml(__('Delete'))) ?></span></button>'+
+                '<button type="button" class="action-delete" title="<?= $block->escapeJs($block->escapeHtmlAttr(__('Delete'))) ?>"><span><?= $block->escapeJs($block->escapeHtml(__('Delete'))) ?></span></button>'+
             '</td>'+
         '</tr>';
         sampleItems = {

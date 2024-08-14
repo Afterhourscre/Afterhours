@@ -42,7 +42,7 @@ class RowTest extends IndexerTestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->objectManager = Bootstrap::getObjectManager();
         $this->processor = $this->objectManager->get(Processor::class);
@@ -65,7 +65,7 @@ class RowTest extends IndexerTestCase
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      * @throws \Magento\Framework\Exception\StateException
      */
-    public function testProductUpdate()
+    public function testProductUpdate(): void
     {
         /** @var ListProduct $listProduct */
         $listProduct = $this->objectManager->create(ListProduct::class);

@@ -4,8 +4,10 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
 namespace Magento\Sales\Controller\Adminhtml\Order\Invoice;
 
+use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\View\Result\PageFactory;
@@ -13,12 +15,13 @@ use Magento\Framework\Controller\Result\RawFactory;
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\Registry;
 use Magento\Sales\Model\Service\InvoiceService;
+use Magento\Sales\Controller\Adminhtml\Invoice\AbstractInvoice\View as AbstractView;
 
 /**
  * Class UpdateQty
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class UpdateQty extends \Magento\Sales\Controller\Adminhtml\Invoice\AbstractInvoice\View
+class UpdateQty extends AbstractView implements HttpPostActionInterface
 {
     /**
      * @var JsonFactory
@@ -73,27 +76,27 @@ class UpdateQty extends \Magento\Sales\Controller\Adminhtml\Invoice\AbstractInvo
     public function execute()
     {
         try {
-            if (!$this->getRequest()->isPost()) {
-                throw new LocalizedException(__('Invalid request type.'));
-            }
-
             $orderId = $this->getRequest()->getParam('order_id');
             $invoiceData = $this->getRequest()->getParam('invoice', []);
             $invoiceItems = isset($invoiceData['items']) ? $invoiceData['items'] : [];
             /** @var \Magento\Sales\Model\Order $order */
             $order = $this->_objectManager->create(\Magento\Sales\Model\Order::class)->load($orderId);
             if (!$order->getId()) {
-                throw new LocalizedException(__('The order no longer exists.'));
+                throw new \Magento\Framework\Exception\LocalizedException(__('The order no longer exists.'));
             }
 
             if (!$order->canInvoice()) {
-                throw new LocalizedException(__('The order does not allow an invoice to be created.'));
+                throw new \Magento\Framework\Exception\LocalizedException(
+                    __('The order does not allow an invoice to be created.')
+                );
             }
 
             $invoice = $this->invoiceService->prepareInvoice($order, $invoiceItems);
 
             if (!$invoice->getTotalQty()) {
-                throw new LocalizedException(__('You can\'t create an invoice without products.'));
+                throw new \Magento\Framework\Exception\LocalizedException(
+                    __("The invoice can't be created without products. Add products and try again.")
+                );
             }
             $this->registry->register('current_invoice', $invoice);
             // Save invoice comment text in current invoice object in order to display it in corresponding view

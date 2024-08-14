@@ -10,9 +10,12 @@ use Magento\Framework\Code\Generator;
 use Magento\Framework\Logger\Monolog as MagentoMonologLogger;
 use Magento\TestFramework\ObjectManager;
 use PHPUnit\Framework\TestCase;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use PHPUnit\Framework\MockObject\MockObject as MockObject;
 use Psr\Log\LoggerInterface;
 
+/**
+ * @magentoAppIsolation enabled
+ */
 class AutoloaderTest extends TestCase
 {
     /**
@@ -28,21 +31,11 @@ class AutoloaderTest extends TestCase
         return ObjectManager::getInstance();
     }
 
-    /**
-     * @before
-     */
-    public function setupLoggerTestDouble()
+    protected function setUp(): void
     {
         $loggerTestDouble = $this->createMock(LoggerInterface::class);
-        $this->getTestFrameworkObjectManager()->addSharedInstance($loggerTestDouble, MagentoMonologLogger::class);
-    }
-
-    /**
-     * @after
-     */
-    public function removeLoggerTestDouble()
-    {
-        $this->getTestFrameworkObjectManager()->removeSharedInstance(MagentoMonologLogger::class);
+        $this->getTestFrameworkObjectManager()->addSharedInstance($loggerTestDouble, LoggerInterface::class, true);
+        // magentoAppIsolation will cleanup the mess
     }
 
     /**
@@ -58,7 +51,7 @@ class AutoloaderTest extends TestCase
         return $generatorStub;
     }
 
-    public function testLogsExceptionDuringGeneration()
+    public function testLogsExceptionDuringGeneration(): void
     {
         $exceptionMessage = 'Test exception thrown during generation';
         $testException = new \RuntimeException($exceptionMessage);
@@ -70,7 +63,7 @@ class AutoloaderTest extends TestCase
         $this->assertNull($autoloader->load(NonExistingClassName::class));
     }
 
-    public function testFiltersDuplicateExceptionMessages()
+    public function testFiltersDuplicateExceptionMessages(): void
     {
         $exceptionMessage = 'Test exception thrown during generation';
         $testException = new \RuntimeException($exceptionMessage);

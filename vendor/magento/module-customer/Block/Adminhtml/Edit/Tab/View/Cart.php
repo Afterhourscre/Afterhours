@@ -71,7 +71,7 @@ class Cart extends \Magento\Backend\Block\Widget\Grid\Extended
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected function _construct()
     {
@@ -107,7 +107,7 @@ class Cart extends \Magento\Backend\Block\Widget\Grid\Extended
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected function _prepareColumns()
     {
@@ -145,7 +145,7 @@ class Cart extends \Magento\Backend\Block\Widget\Grid\Extended
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getRowUrl($row)
     {
@@ -153,7 +153,7 @@ class Cart extends \Magento\Backend\Block\Widget\Grid\Extended
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getHeadersVisibility()
     {

@@ -40,7 +40,7 @@ define([
      * To limit recursion for a specific property add __disableTmpl: {propertyName: numberOfCycles}.
      *
      * @param {String} tmpl
-     * @param {Object|undefined} target
+     * @param {Object | undefined} target
      * @returns {Boolean|Object}
      */
     function isTmplIgnored(tmpl, target) {
@@ -62,6 +62,7 @@ define([
         }
 
         return false;
+
     }
 
     if (hasStringTmpls) {
@@ -111,7 +112,11 @@ define([
      * @returns {Boolean}
      */
     function isTemplate(value) {
-        return typeof value === 'string' && ~value.indexOf(opener);
+        return typeof value === 'string' &&
+            value.indexOf(opener) !== -1 &&
+            // the below pattern almost always indicates an accident which should not cause template evaluation
+            // refuse to evaluate
+            value.indexOf('${{') === -1;
     }
 
     /**

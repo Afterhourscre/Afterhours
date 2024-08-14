@@ -6,16 +6,7 @@
 
 namespace Magento\Backend\Block\Widget;
 
-use Magento\Backend\Block\Widget\Form\Element\ElementCreator;
 use Magento\Framework\App\ObjectManager;
-use Magento\Backend\Block\Template\Context;
-use Magento\Framework\Data\Form as DataForm;
-use Magento\Backend\Block\Widget\Form\Renderer\Element;
-use Magento\Backend\Block\Widget\Form\Renderer\Fieldset;
-use Magento\Backend\Block\Widget\Form\Renderer\Fieldset\Element as FieldsetElement;
-use Magento\Eav\Model\Entity\Attribute;
-use Magento\Framework\Data\Form\Element\AbstractElement;
-use Magento\Framework\Data\Form\AbstractForm;
 
 /**
  * Backend form widget
@@ -30,7 +21,7 @@ class Form extends \Magento\Backend\Block\Widget
     /**
      * Form Object
      *
-     * @var DataForm
+     * @var \Magento\Framework\Data\Form
      */
     protected $_form;
 
@@ -39,25 +30,23 @@ class Form extends \Magento\Backend\Block\Widget
      */
     protected $_template = 'Magento_Backend::widget/form.phtml';
 
-    /**
-     * @var ElementCreator
-     * /
+    /** @var Form\Element\ElementCreator */
     private $creator;
 
     /**
      * Constructs form
      *
-     * @param Context $context
+     * @param \Magento\Backend\Block\Template\Context $context
      * @param array $data
-     * @param ElementCreator|null $creator
+     * @param Form\Element\ElementCreator|null $creator
      */
     public function __construct(
-        Context $context,
+        \Magento\Backend\Block\Template\Context $context,
         array $data = [],
-        ElementCreator $creator = null
+        Form\Element\ElementCreator $creator = null
     ) {
         parent::__construct($context, $data);
-        $this->creator = $creator ?: ObjectManager::getInstance()->get(ElementCreator::class);
+        $this->creator = $creator ?: ObjectManager::getInstance()->get(Form\Element\ElementCreator::class);
     }
 
     /**
@@ -70,7 +59,6 @@ class Form extends \Magento\Backend\Block\Widget
         parent::_construct();
 
         $this->setDestElementId('edit_form');
-        $this->setShowGlobalIcon(false);
     }
 
     /**
@@ -82,21 +70,21 @@ class Form extends \Magento\Backend\Block\Widget
      */
     protected function _prepareLayout()
     {
-        DataForm::setElementRenderer(
+        \Magento\Framework\Data\Form::setElementRenderer(
             $this->getLayout()->createBlock(
-                Element::class,
+                \Magento\Backend\Block\Widget\Form\Renderer\Element::class,
                 $this->getNameInLayout() . '_element'
             )
         );
-        DataForm::setFieldsetRenderer(
+        \Magento\Framework\Data\Form::setFieldsetRenderer(
             $this->getLayout()->createBlock(
-                Fieldset::class,
+                \Magento\Backend\Block\Widget\Form\Renderer\Fieldset::class,
                 $this->getNameInLayout() . '_fieldset'
             )
         );
-        DataForm::setFieldsetElementRenderer(
+        \Magento\Framework\Data\Form::setFieldsetElementRenderer(
             $this->getLayout()->createBlock(
-                FieldsetElement::class,
+                \Magento\Backend\Block\Widget\Form\Renderer\Fieldset\Element::class,
                 $this->getNameInLayout() . '_fieldset_element'
             )
         );
@@ -107,7 +95,7 @@ class Form extends \Magento\Backend\Block\Widget
     /**
      * Get form object
      *
-     * @return DataForm
+     * @return \Magento\Framework\Data\Form
      */
     public function getForm()
     {
@@ -130,10 +118,10 @@ class Form extends \Magento\Backend\Block\Widget
     /**
      * Set form object
      *
-     * @param DataForm $form
+     * @param \Magento\Framework\Data\Form $form
      * @return $this
      */
-    public function setForm(DataForm $form)
+    public function setForm(\Magento\Framework\Data\Form $form)
     {
         $this->_form = $form;
         $this->_form->setParent($this);
@@ -194,7 +182,7 @@ class Form extends \Magento\Backend\Block\Widget
     {
         $this->_addElementTypes($fieldset);
         foreach ($attributes as $attribute) {
-            /* @var $attribute Attribute */
+            /* @var $attribute \Magento\Eav\Model\Entity\Attribute */
             if (!$this->_isAttributeVisible($attribute)) {
                 continue;
             }
@@ -213,10 +201,10 @@ class Form extends \Magento\Backend\Block\Widget
     /**
      * Check whether attribute is visible
      *
-     * @param Attribute $attribute
+     * @param \Magento\Eav\Model\Entity\Attribute $attribute
      * @return bool
      */
-    protected function _isAttributeVisible(Attribute $attribute)
+    protected function _isAttributeVisible(\Magento\Eav\Model\Entity\Attribute $attribute)
     {
         return !(!$attribute || $attribute->hasIsVisible() && !$attribute->getIsVisible());
     }
@@ -225,11 +213,11 @@ class Form extends \Magento\Backend\Block\Widget
      * Apply configuration specific for different element type
      *
      * @param string $inputType
-     * @param AbstractElement $element
-     * @param Attribute $attribute
+     * @param \Magento\Framework\Data\Form\Element\AbstractElement $element
+     * @param \Magento\Eav\Model\Entity\Attribute $attribute
      * @return void
      */
-    protected function _applyTypeSpecificConfig($inputType, $element, Attribute $attribute)
+    protected function _applyTypeSpecificConfig($inputType, $element, \Magento\Eav\Model\Entity\Attribute $attribute)
     {
         switch ($inputType) {
             case 'select':
@@ -242,6 +230,10 @@ class Form extends \Magento\Backend\Block\Widget
             case 'date':
                 $element->setDateFormat($this->_localeDate->getDateFormatWithLongYear());
                 break;
+            case 'datetime':
+                $element->setDateFormat($this->_localeDate->getDateFormatWithLongYear());
+                $element->setTimeFormat($this->_localeDate->getTimeFormat());
+                break;
             case 'multiline':
                 $element->setLineCount($attribute->getMultilineCount());
                 break;
@@ -253,12 +245,18 @@ class Form extends \Magento\Backend\Block\Widget
     /**
      * Add new element type
      *
-     * @param AbstractForm $baseElement
+     * @param \Magento\Framework\Data\Form\AbstractForm $baseElement
      * @return void
      */
-    protected function _addElementTypes(AbstractForm $baseElement)
+    protected function _addElementTypes(\Magento\Framework\Data\Form\AbstractForm $baseElement)
     {
-        $types = $this->_getAdditionalElementTypes();
+        $types = array_merge(
+            [
+                'datetime' => 'date'
+            ],
+            $this->_getAdditionalElementTypes()
+        );
+
         foreach ($types as $code => $className) {
             $baseElement->addType($code, $className);
         }
@@ -277,7 +275,7 @@ class Form extends \Magento\Backend\Block\Widget
     /**
      * Render additional element
      *
-     * @param AbstractElement $element
+     * @param \Magento\Framework\Data\Form\Element\AbstractElement $element
      * @return string
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */

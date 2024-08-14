@@ -40,7 +40,7 @@ $attributeMultiselect = $objectManager->create(
             'frontend_input' => 'multiselect',
             'frontend_label' => ['Multiselect Attribute'],
             'sort_order' => '0',
-            'backend_type' => 'varchar',
+            'backend_type' => 'text',
             'is_user_defined' => 1,
             'is_system' => 0,
             'is_required' => '0',
@@ -64,7 +64,7 @@ $attributeMultiselect = $objectManager->create(
     ]
 );
 
-$attributeMultiselect->setAttributeCode('address_multiselect_attribute');
+$attributeMultiselect->setAttributeCode('fixture_address_multiselect_attribute');
 $attributeMultiselect->save();
 
 $attributeMultiline = $objectManager->create(
@@ -89,7 +89,7 @@ $attributeMultiline = $objectManager->create(
     ]
 );
 
-$attributeMultiline->setAttributeCode('address_multiline_attribute');
+$attributeMultiline->setAttributeCode('fixture_address_multiline_attribute');
 $attributeMultiline->save();
 
 $billingAddress = $objectManager->create(

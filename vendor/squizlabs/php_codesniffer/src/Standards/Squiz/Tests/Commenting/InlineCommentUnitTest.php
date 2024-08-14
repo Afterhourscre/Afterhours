@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Tests\Commenting;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class InlineCommentUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the InlineComment sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\InlineCommentSniff
+ */
+final class InlineCommentUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,48 +30,49 @@ class InlineCommentUnitTest extends AbstractSniffUnitTest
      *
      * @return array<int, int>
      */
-    public function getErrorList($testFile='InlineCommentUnitTest.inc')
+    public function getErrorList($testFile='')
     {
         switch ($testFile) {
         case 'InlineCommentUnitTest.inc':
-            $errors = array(
-                       17  => 1,
-                       27  => 1,
-                       28  => 1,
-                       32  => 2,
-                       36  => 1,
-                       44  => 2,
-                       58  => 1,
-                       61  => 1,
-                       64  => 1,
-                       67  => 1,
-                       95  => 1,
-                       96  => 1,
-                       97  => 3,
-                       118 => 1,
-                       126 => 2,
-                       130 => 2,
-                      );
+            $errors = [
+                17  => 1,
+                27  => 1,
+                28  => 1,
+                32  => 2,
+                36  => 1,
+                44  => 2,
+                58  => 1,
+                61  => 1,
+                64  => 1,
+                67  => 1,
+                95  => 1,
+                96  => 1,
+                97  => 3,
+                118 => 1,
+                126 => 2,
+                130 => 2,
+                149 => 1,
+            ];
 
             return $errors;
         case 'InlineCommentUnitTest.js':
-            return array(
-                    31  => 1,
-                    36  => 2,
-                    48  => 1,
-                    51  => 1,
-                    54  => 1,
-                    57  => 1,
-                    102 => 1,
-                    103 => 1,
-                    104 => 3,
-                    118 => 1,
-                    121 => 1,
-                    125 => 2,
-                    129 => 2,
-                   );
+            return [
+                31  => 1,
+                36  => 2,
+                48  => 1,
+                51  => 1,
+                54  => 1,
+                57  => 1,
+                102 => 1,
+                103 => 1,
+                104 => 3,
+                118 => 1,
+                121 => 1,
+                125 => 2,
+                129 => 2,
+            ];
         default:
-            return array();
+            return [];
         }//end switch
 
     }//end getErrorList()
@@ -82,7 +88,7 @@ class InlineCommentUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

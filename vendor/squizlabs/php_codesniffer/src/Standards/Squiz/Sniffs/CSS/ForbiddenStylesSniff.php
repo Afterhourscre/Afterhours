@@ -4,13 +4,15 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ *
+ * @deprecated 3.9.0
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Sniffs\CSS;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 
 class ForbiddenStylesSniff implements Sniff
 {
@@ -20,33 +22,33 @@ class ForbiddenStylesSniff implements Sniff
      *
      * @var array
      */
-    public $supportedTokenizers = array('CSS');
+    public $supportedTokenizers = ['CSS'];
 
     /**
      * A list of forbidden styles with their alternatives.
      *
      * The value is NULL if no alternative exists. i.e., the
-     * function should just not be used.
+     * style should just not be used.
      *
      * @var array<string, string|null>
      */
-    protected $forbiddenStyles = array(
-                                  '-moz-border-radius'             => 'border-radius',
-                                  '-webkit-border-radius'          => 'border-radius',
-                                  '-moz-border-radius-topleft'     => 'border-top-left-radius',
-                                  '-moz-border-radius-topright'    => 'border-top-right-radius',
-                                  '-moz-border-radius-bottomright' => 'border-bottom-right-radius',
-                                  '-moz-border-radius-bottomleft'  => 'border-bottom-left-radius',
-                                  '-moz-box-shadow'                => 'box-shadow',
-                                  '-webkit-box-shadow'             => 'box-shadow',
-                                 );
+    protected $forbiddenStyles = [
+        '-moz-border-radius'             => 'border-radius',
+        '-webkit-border-radius'          => 'border-radius',
+        '-moz-border-radius-topleft'     => 'border-top-left-radius',
+        '-moz-border-radius-topright'    => 'border-top-right-radius',
+        '-moz-border-radius-bottomright' => 'border-bottom-right-radius',
+        '-moz-border-radius-bottomleft'  => 'border-bottom-left-radius',
+        '-moz-box-shadow'                => 'box-shadow',
+        '-webkit-box-shadow'             => 'box-shadow',
+    ];
 
     /**
      * A cache of forbidden style names, for faster lookups.
      *
      * @var string[]
      */
-    protected $forbiddenStyleNames = array();
+    protected $forbiddenStyleNames = [];
 
     /**
      * If true, forbidden styles will be considered regular expressions.
@@ -66,7 +68,7 @@ class ForbiddenStylesSniff implements Sniff
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
@@ -78,7 +80,7 @@ class ForbiddenStylesSniff implements Sniff
             }
         }
 
-        return array(T_STYLE);
+        return [T_STYLE];
 
     }//end register()
 
@@ -115,7 +117,7 @@ class ForbiddenStylesSniff implements Sniff
             // Remove the pattern delimiters and modifier.
             $pattern = substr($pattern, 1, -2);
         } else {
-            if (in_array($style, $this->forbiddenStyleNames) === false) {
+            if (in_array($style, $this->forbiddenStyleNames, true) === false) {
                 return;
             }
         }//end if
@@ -138,7 +140,7 @@ class ForbiddenStylesSniff implements Sniff
      */
     protected function addError($phpcsFile, $stackPtr, $style, $pattern=null)
     {
-        $data  = array($style);
+        $data  = [$style];
         $error = 'The use of style %s is ';
         if ($this->error === true) {
             $type   = 'Found';

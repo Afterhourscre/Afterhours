@@ -38,45 +38,62 @@
  *
  * @copyright 2008-2017 Manuel Pichler. All rights reserved.
  * @license http://www.opensource.org/licenses/bsd-license.php BSD License
+ *
  * @since 2.3
  */
 
 namespace PDepend\Source\Language\PHP;
 
+use PDepend\Source\AST\ASTCatchStatement;
+use PDepend\Source\AST\ASTExpression;
+use PDepend\Source\AST\ASTFormalParameter;
+use PDepend\Source\AST\ASTInterface;
+use PDepend\Source\AST\ASTType;
+use PDepend\Source\AST\State;
+use PDepend\Source\Parser\InvalidStateException;
 use PDepend\Source\Tokenizer\Tokens;
 
 /**
  * Concrete parser implementation that supports features up to PHP version 7.1.
  *
- * TODO:
- * - void
- *   http://php.net/manual/en/migration71.new-features.php#migration71.new-features.void-functions
- * - Symmetric array destructuring
- *   http://php.net/manual/en/migration71.new-features.php#migration71.new-features.symmetric-array-destructuring
- * - Class constant visibility
- *   http://php.net/manual/en/migration71.new-features.php#migration71.new-features.class-constant-visibility
- * - Multi catch exception handling
- *   http://php.net/manual/en/migration71.new-features.php#migration71.new-features.mulit-catch-exception-handling
- * - see full list
- *   http://php.net/manual/en/migration71.php
- *
  * @copyright 2008-2017 Manuel Pichler. All rights reserved.
  * @license http://www.opensource.org/licenses/bsd-license.php BSD License
+ *
  * @since 2.4
  */
 abstract class PHPParserVersion71 extends PHPParserVersion70
 {
     /**
-     * @return \PDepend\Source\AST\ASTType
+     * Return true if current PHP level supports keys in lists.
+     *
+     * @return bool
+     */
+    protected function supportsKeysInList()
+    {
+        return true;
+    }
+
+    /**
+     * This methods return true if the token matches a list opening in the current PHP version level.
+     *
+     * @param int $tokenType
+     *
+     * @return bool
+     *
+     * @since 2.6.0
+     */
+    protected function isListUnpacking($tokenType = null)
+    {
+        return in_array($tokenType ?: $this->tokenizer->peek(), array(Tokens::T_LIST, Tokens::T_SQUARED_BRACKET_OPEN));
+    }
+
+    /**
+     * @return ASTType
      */
     protected function parseReturnTypeHint()
     {
         $this->consumeComments();
-
-        $tokenType = $this->tokenizer->peek();
-        if (Tokens::T_QUESTION_MARK === $tokenType) {
-            $this->consumeToken(Tokens::T_QUESTION_MARK);
-        }
+        $this->consumeQuestionMark();
 
         return parent::parseReturnTypeHint();
     }
@@ -98,31 +115,128 @@ abstract class PHPParserVersion71 extends PHPParserVersion70
      * //                ---
      * </code>
      *
-     * @return \PDepend\Source\AST\ASTFormalParameter
+     * @return ASTFormalParameter
      */
     protected function parseFormalParameterOrTypeHintOrByReference()
     {
         $this->consumeComments();
-        $tokenType = $this->tokenizer->peek();
-        if ($tokenType === Tokens::T_QUESTION_MARK) {
-            $this->consumeToken(Tokens::T_QUESTION_MARK);
-        }
+        $this->consumeQuestionMark();
 
         return parent::parseFormalParameterOrTypeHintOrByReference();
     }
 
-    /**
-     * Parses a type hint that is valid in the supported PHP version.
-     *
-     * @return \PDepend\Source\AST\ASTNode
-     */
     protected function parseTypeHint()
     {
-        $tokenType = $this->tokenizer->peek();
-        if (Tokens::T_QUESTION_MARK === $tokenType) {
-            $this->consumeToken(Tokens::T_QUESTION_MARK);
-        }
+        $this->consumeQuestionMark();
 
         return parent::parseTypeHint();
+    }
+
+    protected function parseUnknownDeclaration($tokenType, $modifiers)
+    {
+        if ($tokenType == Tokens::T_CONST) {
+            $definition = $this->parseConstantDefinition();
+            $constantModifiers = $this->getModifiersForConstantDefinition($tokenType, $modifiers);
+            $definition->setModifiers($constantModifiers);
+
+            return $definition;
+        }
+
+        return parent::parseUnknownDeclaration($tokenType, $modifiers);
+    }
+
+    /**
+     * Parses a scalar type hint or a callable type hint.
+     *
+     * @param string $image
+     */
+    protected function parseScalarOrCallableTypeHint($image)
+    {
+        switch (strtolower($image)) {
+            case 'void':
+                return $this->builder->buildAstScalarType($image);
+            case 'iterable':
+                return $this->builder->buildAstTypeIterable();
+        }
+
+        return parent::parseScalarOrCallableTypeHint($image);
+    }
+
+    /**
+     * This method parses class references in catch statement.
+     *
+     * @param ASTCatchStatement $stmt The owning catch statement.
+     *
+     * @return void
+     */
+    protected function parseCatchExceptionClass(ASTCatchStatement $stmt)
+    {
+        do {
+            $repeat = false;
+            parent::parseCatchExceptionClass($stmt);
+
+            if (Tokens::T_BITWISE_OR === $this->tokenizer->peek()) {
+                $this->consumeToken(Tokens::T_BITWISE_OR);
+                $repeat = true;
+            }
+        } while ($repeat === true);
+    }
+
+    /**
+     * Return true if [, $foo] or [$foo, , $bar] is allowed.
+     *
+     * @return bool
+     */
+    protected function canHaveCommaBetweenArrayElements()
+    {
+        return true;
+    }
+
+    /**
+     * @return void
+     */
+    private function consumeQuestionMark()
+    {
+        if ($this->tokenizer->peek() === Tokens::T_QUESTION_MARK) {
+            $this->consumeToken(Tokens::T_QUESTION_MARK);
+        }
+    }
+
+    /**
+     * @param int $tokenType
+     * @param int $modifiers
+     *
+     * @return int
+     */
+    private function getModifiersForConstantDefinition($tokenType, $modifiers)
+    {
+        $allowed = State::IS_PUBLIC | State::IS_PROTECTED | State::IS_PRIVATE;
+        $modifiers &= $allowed;
+
+        if ($this->classOrInterface instanceof ASTInterface && ($modifiers & (State::IS_PROTECTED | State::IS_PRIVATE)) !== 0) {
+            throw new InvalidStateException(
+                $this->requireNextToken()->startLine,
+                (string) $this->compilationUnit,
+                sprintf(
+                    'Constant can\'t be declared private or protected in interface "%s".',
+                    $this->classOrInterface->getName()
+                )
+            );
+        }
+
+        return $modifiers;
+    }
+
+    /**
+     * Return true if the current node can be used as a list key.
+     *
+     * @param ASTExpression|null $node
+     *
+     * @return bool
+     */
+    protected function canBeListKey($node)
+    {
+        // Starting with PHP 7.1, any expression can be used as list key
+        return true;
     }
 }

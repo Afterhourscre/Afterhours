@@ -4,14 +4,19 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Generic\Tests\PHP;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-class ForbiddenFunctionsUnitTest extends AbstractSniffUnitTest
+/**
+ * Unit test class for the ForbiddenFunctions sniff.
+ *
+ * @covers \PHP_CodeSniffer\Standards\Generic\Sniffs\PHP\ForbiddenFunctionsSniff
+ */
+final class ForbiddenFunctionsUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -25,11 +30,11 @@ class ForbiddenFunctionsUnitTest extends AbstractSniffUnitTest
      */
     public function getErrorList()
     {
-        $errors = array(
-                   2 => 1,
-                   4 => 1,
-                   6 => 1,
-                  );
+        $errors = [
+            2 => 1,
+            4 => 1,
+            6 => 1,
+        ];
 
         return $errors;
 
@@ -46,7 +51,7 @@ class ForbiddenFunctionsUnitTest extends AbstractSniffUnitTest
      */
     public function getWarningList()
     {
-        return array();
+        return [];
 
     }//end getWarningList()
 

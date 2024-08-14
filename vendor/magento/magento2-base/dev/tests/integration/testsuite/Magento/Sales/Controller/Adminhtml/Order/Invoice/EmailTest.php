@@ -26,7 +26,7 @@ class EmailTest extends AbstractInvoiceControllerTest
     /**
      * @return void
      */
-    public function testSendInvoiceEmail()
+    public function testSendInvoiceEmail(): void
     {
         $order = $this->getOrder('100000001');
         $invoice = $this->getInvoiceByOrder($order);

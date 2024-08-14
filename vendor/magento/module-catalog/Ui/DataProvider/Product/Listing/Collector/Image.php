@@ -14,6 +14,7 @@ use Magento\Catalog\Helper\ImageFactory;
 use Magento\Catalog\Model\Product\Image\NotLoadInfoImageException;
 use Magento\Catalog\Ui\DataProvider\Product\ProductRenderCollectorInterface;
 use Magento\Framework\App\State;
+use Magento\Framework\View\Design\ThemeInterface;
 use Magento\Framework\View\DesignInterface;
 use Magento\Store\Model\StoreManager;
 use Magento\Store\Model\StoreManagerInterface;
@@ -53,6 +54,7 @@ class Image implements ProductRenderCollectorInterface
 
     /**
      * @var DesignInterface
+     * @deprecated 103.0.1 DesignLoader is used for design theme loading
      */
     private $design;
 
@@ -74,7 +76,7 @@ class Image implements ProductRenderCollectorInterface
      * @param DesignInterface $design
      * @param ImageInterfaceFactory $imageRenderInfoFactory
      * @param array $imageCodes
-     * @param DesignLoader|null $designLoader
+     * @param DesignLoader $designLoader
      */
     public function __construct(
         ImageFactory $imageFactory,
@@ -96,13 +98,14 @@ class Image implements ProductRenderCollectorInterface
     }
 
     /**
-     * In order to allow to use image generation using Services, we need to emulate area code and store code
-     *
      * @inheritdoc
      */
     public function collect(ProductInterface $product, ProductRenderInterface $productRender)
     {
         $images = [];
+        /** @var ThemeInterface $currentTheme */
+        $currentTheme = $this->design->getDesignTheme();
+        $this->design->setDesignTheme($currentTheme);
 
         foreach ($this->imageCodes as $imageCode) {
             /** @var ImageInterface $image */
@@ -115,18 +118,14 @@ class Image implements ProductRenderCollectorInterface
                     [$product, $imageCode, (int) $productRender->getStoreId(), $image]
                 );
 
-            try {
-                $resizedInfo = $helper->getResizedImageInfo();
-            } catch (NotLoadInfoImageException $exception) {
-                $resizedInfo = [$helper->getWidth(), $helper->getHeight()];
-            }
-
             $image->setCode($imageCode);
-            $image->setHeight($helper->getHeight());
-            $image->setWidth($helper->getWidth());
+            $height = $helper->getHeight();
+            $image->setHeight($height);
+            $width = $helper->getWidth();
+            $image->setWidth($width);
             $image->setLabel($helper->getLabel());
-            $image->setResizedHeight($resizedInfo[1]);
-            $image->setResizedWidth($resizedInfo[0]);
+            $image->setResizedHeight($height);
+            $image->setResizedWidth($width);
 
             $images[] = $image;
         }
@@ -135,7 +134,7 @@ class Image implements ProductRenderCollectorInterface
     }
 
     /**
-     * Callback for emulating image creation.
+     * Callback for emulating image creation
      *
      * Callback in which we emulate initialize default design theme, depends on current store, be settings store id
      * from render info

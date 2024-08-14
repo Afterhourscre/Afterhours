@@ -3,19 +3,27 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Catalog\Test\Unit\Model;
 
 use Magento\Catalog\Api\Data\CustomOptionInterface;
+use Magento\Catalog\Api\Data\ProductOptionExtensionInterface;
+use Magento\Catalog\Api\Data\ProductOptionInterface;
+use Magento\Catalog\Model\CustomOptions\CustomOption;
 use Magento\Catalog\Model\CustomOptions\CustomOptionFactory;
+use Magento\Catalog\Model\Product\Option\UrlBuilder;
 use Magento\Catalog\Model\ProductOptionProcessor;
 use Magento\Framework\DataObject;
 use Magento\Framework\DataObject\Factory as DataObjectFactory;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class ProductOptionProcessorTest extends \PHPUnit\Framework\TestCase
+class ProductOptionProcessorTest extends TestCase
 {
     /**
      * @var ProductOptionProcessor
@@ -23,36 +31,35 @@ class ProductOptionProcessorTest extends \PHPUnit\Framework\TestCase
     protected $processor;
 
     /**
-     * @var DataObject | \PHPUnit_Framework_MockObject_MockObject
+     * @var DataObject|MockObject
      */
     protected $dataObject;
 
     /**
-     * @var DataObjectFactory | \PHPUnit_Framework_MockObject_MockObject
+     * @var DataObjectFactory|MockObject
      */
     protected $dataObjectFactory;
 
     /**
-     * @var CustomOptionFactory | \PHPUnit_Framework_MockObject_MockObject
+     * @var CustomOptionFactory|MockObject
      */
     protected $customOptionFactory;
 
     /**
-     * @var CustomOptionInterface | \PHPUnit_Framework_MockObject_MockObject
+     * @var CustomOptionInterface|MockObject
      */
     protected $customOption;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->dataObject = $this->getMockBuilder(\Magento\Framework\DataObject::class)
-            ->setMethods([
-                'getOptions', 'addData',
-            ])
+        $this->dataObject = $this->getMockBuilder(DataObject::class)
+            ->addMethods(['getOptions'])
+            ->onlyMethods(['addData'])
             ->disableOriginalConstructor()
             ->getMock();
 
         $this->dataObjectFactory = $this->getMockBuilder(\Magento\Framework\DataObject\Factory::class)
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->dataObjectFactory->expects($this->any())
@@ -60,17 +67,17 @@ class ProductOptionProcessorTest extends \PHPUnit\Framework\TestCase
             ->willReturn($this->dataObject);
 
         $this->customOption = $this->getMockBuilder(
-            \Magento\Catalog\Api\Data\CustomOptionInterface::class
+            CustomOptionInterface::class
         )
-            ->setMethods([
+            ->addMethods([
                 'getDownloadableLinks',
             ])
             ->getMockForAbstractClass();
 
         $this->customOptionFactory = $this->getMockBuilder(
-            \Magento\Catalog\Model\CustomOptions\CustomOptionFactory::class
+            CustomOptionFactory::class
         )
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->customOptionFactory->expects($this->any())
@@ -82,9 +89,9 @@ class ProductOptionProcessorTest extends \PHPUnit\Framework\TestCase
             $this->customOptionFactory
         );
 
-        $urlBuilder = $this->getMockBuilder(\Magento\Catalog\Model\Product\Option\UrlBuilder::class)
+        $urlBuilder = $this->getMockBuilder(UrlBuilder::class)
             ->disableOriginalConstructor()
-            ->setMethods(['getUrl'])
+            ->onlyMethods(['getUrl'])
             ->getMock();
         $urlBuilder->expects($this->any())->method('getUrl')->willReturn('http://built.url/string/');
 
@@ -103,15 +110,11 @@ class ProductOptionProcessorTest extends \PHPUnit\Framework\TestCase
         $options,
         $requestData
     ) {
-        $productOptionMock = $this->getMockBuilder(\Magento\Catalog\Api\Data\ProductOptionInterface::class)
+        $productOptionMock = $this->getMockBuilder(ProductOptionInterface::class)
             ->getMockForAbstractClass();
 
-        $productOptionExtensionMock = $this->getMockBuilder(
-            \Magento\Catalog\Api\Data\ProductOptionExtensionInterface::class
-        )
-            ->setMethods([
-                'getCustomOptions',
-            ])
+        $productOptionExtensionMock = $this->getMockBuilder(ProductOptionExtensionInterface::class)
+            ->addMethods(['getCustomOptions'])
             ->getMockForAbstractClass();
 
         $productOptionMock->expects($this->any())
@@ -137,8 +140,8 @@ class ProductOptionProcessorTest extends \PHPUnit\Framework\TestCase
     {
         $objectManager = new ObjectManager($this);
 
-        /** @var \Magento\Catalog\Model\CustomOptions\CustomOption $option */
-        $option = $objectManager->getObject(\Magento\Catalog\Model\CustomOptions\CustomOption::class);
+        /** @var CustomOption $option */
+        $option = $objectManager->getObject(CustomOption::class);
         $option->setOptionId(1);
         $option->setOptionValue(1);
 
@@ -188,7 +191,7 @@ class ProductOptionProcessorTest extends \PHPUnit\Framework\TestCase
 
         if (!empty($expected)) {
             $this->assertArrayHasKey($expected, $result);
-            $this->assertTrue(is_array($result));
+            $this->assertIsArray($result);
             $this->assertSame($this->customOption, $result['custom_options'][0]);
         } else {
             $this->assertEmpty($result);
@@ -198,7 +201,7 @@ class ProductOptionProcessorTest extends \PHPUnit\Framework\TestCase
     /**
      * @return array
      */
-    public function dataProviderConvertToProductOption()
+    public static function dataProviderConvertToProductOption()
     {
         return [
             [

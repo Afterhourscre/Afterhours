@@ -23,7 +23,7 @@ class UpsUrlTest extends TestCase
      */
     private $config;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $objectManager = new ObjectManager($this);
         /** @var UpsUrl $upsUrl */
@@ -37,18 +37,17 @@ class UpsUrlTest extends TestCase
     public function testBeforeSave($data = null)
     {
         $this->config->setValue($data);
-        $result = $this->config->beforeSave();
-        $this->assertSame($this->config, $result);
+        $this->config->beforeSave();
     }
 
     /**
      * @dataProvider invalidDataProvider
      * @param string $data The invalid data
-     * @expectedException \Magento\Framework\Exception\ValidatorException
-     * @expectedExceptionMessage UPS API endpoint URL's must use ups.com
      */
     public function testBeforeSaveErrors($data)
     {
+        $this->expectException('Magento\Framework\Exception\ValidatorException');
+        $this->expectExceptionMessage('UPS API endpoint URL\'s must use ups.com');
         $this->config->setValue($data);
         $this->config->beforeSave();
     }

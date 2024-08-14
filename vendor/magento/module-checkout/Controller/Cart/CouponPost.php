@@ -5,10 +5,12 @@
  */
 namespace Magento\Checkout\Controller\Cart;
 
+use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
+
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class CouponPost extends \Magento\Checkout\Controller\Cart
+class CouponPost extends \Magento\Checkout\Controller\Cart implements HttpPostActionInterface
 {
     /**
      * Sales quote repository
@@ -18,8 +20,6 @@ class CouponPost extends \Magento\Checkout\Controller\Cart
     protected $quoteRepository;
 
     /**
-     * Coupon factory
-     *
      * @var \Magento\SalesRule\Model\CouponFactory
      */
     protected $couponFactory;
@@ -61,25 +61,17 @@ class CouponPost extends \Magento\Checkout\Controller\Cart
      * Initialize coupon
      *
      * @return \Magento\Framework\Controller\Result\Redirect
-     * @throws \Magento\Framework\Exception\NotFoundException
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new \Magento\Framework\Exception\NotFoundException(__('Page not found.'));
-        }
-        if (!$this->_formKeyValidator->validate($this->getRequest())) {
-            return $this->_goBack();
-        }
-
         $couponCode = $this->getRequest()->getParam('remove') == 1
             ? ''
-            : trim($this->getRequest()->getParam('coupon_code'));
+            : trim($this->getRequest()->getParam('coupon_code', ''));
 
         $cartQuote = $this->cart->getQuote();
-        $oldCouponCode = $cartQuote->getCouponCode();
+        $oldCouponCode = $cartQuote->getCouponCode() ?? '';
 
         $codeLength = strlen($couponCode);
         if (!$codeLength && !strlen($oldCouponCode)) {

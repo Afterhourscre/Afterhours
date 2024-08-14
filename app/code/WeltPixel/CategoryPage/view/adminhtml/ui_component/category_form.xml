@@ -8,7 +8,8 @@
 	            <item name="sortOrder" xsi:type="number">1</item>
 	            <item name="dataType" xsi:type="string">boolean</item>
 	            <item name="formElement" xsi:type="string">checkbox</item>
-	            <item name="scopeLabel" xsi:type="string">[STORE VIEW]</item>
+	            <item name="scopeLabel" xsi:type="string">[GLOBAL]</item>
+	             <item name="scope" xsi:type="string">[GLOBAL]</item>
 	            <item name="label" xsi:type="string" translate="true">Hide Page Title</item>
 	            <item name="prefer" xsi:type="string">toggle</item>
 	            <item name="valueMap" xsi:type="array">
@@ -25,7 +26,7 @@
 	            <item name="sortOrder" xsi:type="number">2</item>
 	            <item name="dataType" xsi:type="string">boolean</item>
 	            <item name="formElement" xsi:type="string">checkbox</item>
-	            <item name="scopeLabel" xsi:type="string">[STORE VIEW]</item>
+	            <item name="scopeLabel" xsi:type="string">[GLOBAL]</item>
 	            <item name="label" xsi:type="string" translate="true">Hide Breadcrumbs</item>
 	            <item name="prefer" xsi:type="string">toggle</item>
 	            <item name="valueMap" xsi:type="array">

@@ -3,11 +3,14 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Framework\Filesystem\File;
 
 /**
  * Interface \Magento\Framework\Filesystem\File\ReadInterface
  *
+ * @api
  */
 interface ReadInterface
 {
@@ -18,6 +21,15 @@ interface ReadInterface
      * @return string
      */
     public function read($length);
+
+    /**
+     * Returns the complete content of the file.
+     *
+     * @param string|null $flag
+     * @param resource|null $context
+     * @return string
+     */
+    public function readAll($flag = null, $context = null);
 
     /**
      * Reads the line with specified number of bytes from the current position.
@@ -37,7 +49,7 @@ interface ReadInterface
      * @param string $escape [optional]
      * @return array|bool false on end of file
      */
-    public function readCsv($length = 0, $delimiter = ',', $enclosure = '"', $escape = '\\');
+    public function readCsv($length = 0, $delimiter = ',', $enclosure = '"', $escape = "\0");
 
     /**
      * Returns the current position

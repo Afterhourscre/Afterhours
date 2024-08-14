@@ -13,6 +13,8 @@ use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Validate a page repository
+ *
+ * @api
  */
 interface ValidatorInterface
 {
@@ -23,5 +25,5 @@ interface ValidatorInterface
      * @return void
      * @throws LocalizedException
      */
-    public function validate(PageInterface $page);
+    public function validate(PageInterface $page): void;
 }

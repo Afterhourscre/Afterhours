@@ -4,13 +4,13 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Generic\Sniffs\PHP;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 
 class SAPIUsageSniff implements Sniff
 {
@@ -19,11 +19,11 @@ class SAPIUsageSniff implements Sniff
     /**
      * Returns an array of tokens this test wants to listen for.
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
-        return array(T_STRING);
+        return [T_STRING];
 
     }//end register()
 
@@ -41,12 +41,13 @@ class SAPIUsageSniff implements Sniff
     {
         $tokens = $phpcsFile->getTokens();
 
-        $ignore = array(
-                   T_DOUBLE_COLON    => true,
-                   T_OBJECT_OPERATOR => true,
-                   T_FUNCTION        => true,
-                   T_CONST           => true,
-                  );
+        $ignore = [
+            T_DOUBLE_COLON             => true,
+            T_OBJECT_OPERATOR          => true,
+            T_NULLSAFE_OBJECT_OPERATOR => true,
+            T_FUNCTION                 => true,
+            T_CONST                    => true,
+        ];
 
         $prevToken = $phpcsFile->findPrevious(T_WHITESPACE, ($stackPtr - 1), null, true);
         if (isset($ignore[$tokens[$prevToken]['code']]) === true) {

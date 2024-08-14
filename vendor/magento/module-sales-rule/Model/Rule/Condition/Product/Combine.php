@@ -9,7 +9,6 @@ use Magento\Catalog\Model\ResourceModel\Product\Collection;
 
 /**
  * Combine conditions for product.
- *
  * @api
  * @since 100.0.2
  */
@@ -46,7 +45,7 @@ class Combine extends \Magento\Rule\Model\Condition\Combine
         $pAttributes = [];
         $iAttributes = [];
         foreach ($productAttributes as $code => $label) {
-            if (strpos($code, 'quote_item_') === 0) {
+            if (strpos($code, 'quote_item_') === 0 || strpos($code, 'parent::quote_item_') === 0) {
                 $iAttributes[] = [
                     'value' => \Magento\SalesRule\Model\Rule\Condition\Product::class . '|' . $code,
                     'label' => $label,
@@ -90,6 +89,7 @@ class Combine extends \Magento\Rule\Model\Condition\Combine
 
     /**
      * @inheritdoc
+     * @since 101.0.6
      */
     protected function _isValid($entity)
     {
@@ -102,7 +102,7 @@ class Combine extends \Magento\Rule\Model\Condition\Combine
 
         foreach ($this->getConditions() as $cond) {
             if ($entity instanceof \Magento\Framework\Model\AbstractModel) {
-                $validated = $this->validateEntity($entity, $cond);
+                $validated = $this->validateEntity($cond, $entity);
             } else {
                 $validated = $cond->validateByEntityId($entity);
             }
@@ -112,22 +112,21 @@ class Combine extends \Magento\Rule\Model\Condition\Combine
                 return true;
             }
         }
-
         return $all ? true : false;
     }
 
     /**
      * Validate entity.
      *
+     * @param object $cond
      * @param \Magento\Framework\Model\AbstractModel $entity
-     * @param mixed $cond
      * @return bool
      */
-    private function validateEntity(\Magento\Framework\Model\AbstractModel $entity, $cond): bool
+    private function validateEntity($cond, \Magento\Framework\Model\AbstractModel $entity)
     {
         $true = (bool)$this->getValue();
         $validated = !$true;
-        foreach ($this->retrieveValidateEntities($entity, $cond->getAttributeScope()) as $validateEntity) {
+        foreach ($this->retrieveValidateEntities($cond->getAttributeScope(), $entity) as $validateEntity) {
             $validated = $cond->validate($validateEntity);
             if ($validated === $true) {
                 break;
@@ -140,16 +139,15 @@ class Combine extends \Magento\Rule\Model\Condition\Combine
     /**
      * Retrieve entities for validation by attribute scope
      *
+     * @param string $attributeScope
      * @param \Magento\Framework\Model\AbstractModel $entity
-     * @param string|null $attributeScope
      * @return \Magento\Framework\Model\AbstractModel[]
      */
-    private function retrieveValidateEntities(
-        \Magento\Framework\Model\AbstractModel $entity,
-        $attributeScope
-    ): array {
+    private function retrieveValidateEntities($attributeScope, \Magento\Framework\Model\AbstractModel $entity)
+    {
         if ($attributeScope === 'parent') {
-            $validateEntities = [$entity];
+            $parentItem = $entity->getParentItem();
+            $validateEntities = $parentItem ? [$parentItem] : [$entity];
         } elseif ($attributeScope === 'children') {
             $validateEntities = $entity->getChildren() ?: [$entity];
         } else {

@@ -109,7 +109,7 @@ class Full extends AbstractAction
      * @throws LocalizedException
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function execute($ids = null)
+    public function execute($ids = null): void
     {
         if (!$this->isEavIndexerEnabled()) {
             return;
@@ -149,7 +149,7 @@ class Full extends AbstractAction
     /**
      * @inheritdoc
      */
-    protected function syncData($indexer, $destinationTable, $ids = null)
+    protected function syncData($indexer, $destinationTable, $ids = null): void
     {
         $connection = $indexer->getConnection();
         $connection->beginTransaction();

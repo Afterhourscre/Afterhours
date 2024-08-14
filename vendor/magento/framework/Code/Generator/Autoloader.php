@@ -62,7 +62,7 @@ class Autoloader
      *
      * @param \Exception $exception
      */
-    private function tryToLogExceptionMessageIfNotDuplicate(\Exception $exception)
+    private function tryToLogExceptionMessageIfNotDuplicate(\Exception $exception): void
     {
         if ($this->lastGenerationErrorMessage !== $exception->getMessage()) {
             $this->lastGenerationErrorMessage = $exception->getMessage();
@@ -84,7 +84,7 @@ class Autoloader
      * @param \Exception $exception
      * @return void
      */
-    private function tryToLogException(\Exception $exception)
+    private function tryToLogException(\Exception $exception): void
     {
         try {
             $logger = ObjectManager::getInstance()->get(LoggerInterface::class);

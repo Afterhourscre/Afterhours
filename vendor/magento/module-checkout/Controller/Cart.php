@@ -3,56 +3,69 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
+
 namespace Magento\Checkout\Controller;
 
 use Magento\Catalog\Controller\Product\View\ViewInterface;
 use Magento\Checkout\Model\Cart as CustomerCart;
+use Magento\Checkout\Model\Session;
+use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Controller\Result\Redirect;
+use Magento\Framework\Data\Form\FormKey\Validator;
+use Magento\Framework\UrlInterface;
+use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\Store;
+use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * Shopping cart controller
+ *
+ * @api
  */
 abstract class Cart extends \Magento\Framework\App\Action\Action implements ViewInterface
 {
     /**
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface
+     * @var ScopeConfigInterface
      */
     protected $_scopeConfig;
 
     /**
-     * @var \Magento\Checkout\Model\Session
+     * @var Session
      */
     protected $_checkoutSession;
 
     /**
-     * @var \Magento\Store\Model\StoreManagerInterface
+     * @var StoreManagerInterface
      */
     protected $_storeManager;
 
     /**
-     * @var \Magento\Framework\Data\Form\FormKey\Validator
+     * @var Validator
      */
     protected $_formKeyValidator;
 
     /**
-     * @var \Magento\Checkout\Model\Cart
+     * @var CustomerCart
      */
     protected $cart;
 
     /**
-     * @param \Magento\Framework\App\Action\Context $context
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-     * @param \Magento\Checkout\Model\Session $checkoutSession
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \Magento\Framework\Data\Form\FormKey\Validator $formKeyValidator
+     * @param Context $context
+     * @param ScopeConfigInterface $scopeConfig
+     * @param Session $checkoutSession
+     * @param StoreManagerInterface $storeManager
+     * @param Validator $formKeyValidator
      * @param CustomerCart $cart
      * @codeCoverageIgnore
      */
     public function __construct(
-        \Magento\Framework\App\Action\Context $context,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Framework\Data\Form\FormKey\Validator $formKeyValidator,
+        Context $context,
+        ScopeConfigInterface $scopeConfig,
+        Session $checkoutSession,
+        StoreManagerInterface $storeManager,
+        Validator $formKeyValidator,
         CustomerCart $cart
     ) {
         $this->_formKeyValidator = $formKeyValidator;
@@ -68,7 +81,7 @@ abstract class Cart extends \Magento\Framework\App\Action\Action implements View
      *
      * @param null|string $backUrl
      *
-     * @return \Magento\Framework\Controller\Result\Redirect
+     * @return Redirect
      */
     protected function _goBack($backUrl = null)
     {
@@ -77,7 +90,7 @@ abstract class Cart extends \Magento\Framework\App\Action\Action implements View
         if ($backUrl || $backUrl = $this->getBackUrl($this->_redirect->getRefererUrl())) {
             $resultRedirect->setUrl($backUrl);
         }
-        
+
         return $resultRedirect;
     }
 
@@ -96,18 +109,17 @@ abstract class Cart extends \Magento\Framework\App\Action\Action implements View
         /**
          * Url must start from base secure or base unsecure url
          */
-        /** @var $store \Magento\Store\Model\Store */
+        /** @var $store Store */
         $store = $this->_storeManager->getStore();
-        $unsecure = strpos($url, $store->getBaseUrl()) === 0;
-        $secure = strpos($url, $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_LINK, true)) === 0;
+        $unsecure = strpos($url, (string) $store->getBaseUrl()) === 0;
+        $secure = strpos($url, (string) $store->getBaseUrl(UrlInterface::URL_TYPE_LINK, true)) === 0;
         return $unsecure || $secure;
     }
 
     /**
      * Get resolved back url
      *
-     * @param null $defaultUrl
-     *
+     * @param string|null $defaultUrl
      * @return mixed|null|string
      */
     protected function getBackUrl($defaultUrl = null)
@@ -129,13 +141,15 @@ abstract class Cart extends \Magento\Framework\App\Action\Action implements View
     }
 
     /**
+     * Is redirect should be performed after the product was added to cart.
+     *
      * @return bool
      */
     private function shouldRedirectToCart()
     {
         return $this->_scopeConfig->isSetFlag(
             'checkout/cart/redirect_to_cart',
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE
         );
     }
 }

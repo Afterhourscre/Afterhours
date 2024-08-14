@@ -5,7 +5,12 @@
  */
 namespace Magento\Cms\Controller\Adminhtml\Page;
 
-class Delete extends \Magento\Backend\App\Action
+use Magento\Framework\App\Action\HttpPostActionInterface;
+
+/**
+ * Delete CMS page action.
+ */
+class Delete extends \Magento\Backend\App\Action implements HttpPostActionInterface
 {
     /**
      * Authorization level of a basic admin session
@@ -18,14 +23,9 @@ class Delete extends \Magento\Backend\App\Action
      * Delete action
      *
      * @return \Magento\Backend\Model\View\Result\Redirect
-     * @throws \Magento\Framework\Exception\NotFoundException
      */
     public function execute()
     {
-        if (!$this->getRequest()->isPost()) {
-            throw new \Magento\Framework\Exception\NotFoundException(__('Page not found.'));
-        }
-
         // check if we know what should be deleted
         $id = $this->getRequest()->getParam('page_id');
         /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */

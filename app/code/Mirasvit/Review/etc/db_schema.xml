@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="mst_review_details_additional" resource="default" engine="innodb" comment="Reviews additional data">
+        <column xsi:type="bigint" name="review_id" unsigned="true" nullable="false" identity="false" default="0" comment="Review ID"/>
+        <column xsi:type="text" name="pros" nullable="true" comment="Pros"/>
+        <column xsi:type="text" name="cons" nullable="true" comment="Cons"/>
+        <column xsi:type="varchar" length="254" name="ip" nullable="true" comment="IP"/>
+        <column xsi:type="varchar" length="254" name="country" nullable="true" comment="Country"/>
+        <column xsi:type="varchar" length="254" name="country_iso" nullable="true" comment="Country"/>
+        <column xsi:type="varchar" length="254" name="location" nullable="true" comment="Location"/>
+        <column xsi:type="text" name="product_ids" nullable="true" comment="Product IDS"/>
+        <column xsi:type="varchar" length="254" name="product_info" nullable="true" comment="Product Info"/>
+        <column xsi:type="boolean" name="is_verified_buyer" nullable="false" default="false" comment="Verified buyer"/>
+        <column xsi:type="datetime" name="reindexed_at" nullable="true" comment="Reindexed At"/>
+        <constraint xsi:type="foreign" referenceId="MST_REVIEW_DETAIL_ADDITIONAL_REVIEW_ID_REVIEW_REVIEW_ID" table="mst_review_detail_additional"
+                    column="review_id" referenceTable="review" referenceColumn="review_id" onDelete="CASCADE"/>
+    </table>
+    <table name="mst_review_summary" resource="default" engine="innodb" comment="Reviews summary">
+        <column xsi:type="bigint" name="summary_id" unsigned="true" nullable="false" identity="true" comment="Summary ID"/>
+        <column xsi:type="bigint" name="product_id" unsigned="true" nullable="false" identity="false" comment="Product ID"/>
+        <column xsi:type="int" name="store_id" nullable="false" comment="Store ID"/>
+        <column xsi:type="text" name="detail" nullable="true" comment="Review Summary"/>
+        <column xsi:type="text" name="pros" nullable="true" comment="Pros Summary"/>
+        <column xsi:type="text" name="cons" nullable="true" comment="Cons Summary"/>
+        <column xsi:type="datetime" name="generated_at" nullable="true" comment="Generated At"/>
+        <column xsi:type="bigint" name="last_review_id" unsigned="true" nullable="false" identity="false" comment="Last Review ID"/>
+        <column xsi:type="int" name="processed_reviews" nullable="false" comment="Count reviews"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="summary_id"/>
+        </constraint>
+    </table>
+
+    <table name="mst_review_media" resource="default" engine="innodb" comment="Reviews summary">
+        <column xsi:type="bigint" name="media_id" unsigned="true" nullable="false" identity="true" comment="Media ID"/>
+        <column xsi:type="bigint" name="review_id" unsigned="true" nullable="false" identity="false" comment="Review ID"/>
+        <column xsi:type="int" name="product_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Product ID"/>
+        <column xsi:type="varchar" length="254" name="type" nullable="false" comment="Type"/>
+        <column xsi:type="varchar" length="254" name="value" nullable="false" comment="Value"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="media_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="MST_REVIEW_MEDIA_REVIEW_ID_REVIEW_REVIEW_ID" table="mst_review_media"
+                    column="review_id" referenceTable="review" referenceColumn="review_id" onDelete="CASCADE"/>
+        <constraint xsi:type="foreign" referenceId="MST_REVIEW_MEDIA_PRODUCT_ID_CATALOG_PRODUCT_ENTITY_ENTITY_ID" table="mst_review_media"
+                    column="product_id" referenceTable="catalog_product_entity" referenceColumn="entity_id" onDelete="CASCADE"/>
+    </table>
+</schema>

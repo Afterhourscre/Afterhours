@@ -1,0 +1,45 @@
+<?php
+declare(strict_types=1);
+
+use Mirasvit\Comment\Api\Data\CommentInterface;
+use Mirasvit\Comment\Block\Comment\Form;
+
+/** @var Form $block */
+
+$formId   = $block->getFormId();
+$parentId = $block->getParentId();
+?>
+
+<?php if ($block->isCommentAllowed()): ?>
+    <div class="mst-comments__form">
+        <form action="<?= $block->getSubmitUrl() ?>" method="post" id="<?= $formId ?>">
+            <input type="hidden" name="form_key" value="<?= $block->getFormKey() ?>"/>
+            <input type="hidden" name="<?= CommentInterface::REL_ENTITY_TYPE ?>" value="<?= $block->getEntityType() ?>"/>
+            <input type="hidden" name="<?= CommentInterface::REL_ENTITY_ID ?>" value="<?= $block->getEntityId() ?>"/>
+            <?php if ($parentId): ?>
+                <input type="hidden" name="<?= CommentInterface::PARENT_ID ?>" value="<?= $parentId ?>"/>
+            <?php endif; ?>
+            <fieldset class="fieldset comment-fieldset">
+                <div class="field required">
+                    <label for="<?= CommentInterface::NICKNAME ?>" class="label">
+                        <span><?= __('Nickname') ?></span>
+                    </label>
+                    <input type="text" name="<?= CommentInterface::NICKNAME ?>"/>
+                </div>
+                <div class="field required">
+                    <label for="<?= CommentInterface::CONTENT ?>" class="label">
+                        <span><?= __('Message') ?></span>
+                    </label>
+                    <textarea name="<?= CommentInterface::CONTENT ?>" cols="5" rows="3"></textarea>
+                </div>
+            </fieldset>
+            <button type="submit" class="action submit primary"><?= __('Add Comment') ?></button>
+        </form>
+    </div>
+<?php else: ?>
+    <div class="message info notlogged">
+        <div>
+            <?= $block->escapeHtml(__('Only registered users can write comments. Please <a href="%1">Sign in</a> or <a href="%2">create an account</a>', $block->getLoginLink(), $block->getRegisterUrl()), ['a']) ?>
+        </div>
+    </div>
+<?php endif; ?>

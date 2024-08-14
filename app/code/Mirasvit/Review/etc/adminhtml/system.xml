@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="mirasvit" translate="label" sortOrder="550">
+            <label>Mirasvit Extensions</label>
+        </tab>
+
+        <section id="mst_review" showInDefault="1" showInWebsite="1" showInStore="1" type="text" translate="label" sortOrder="100">
+            <label>Advanced Reviews</label>
+            <tab>mirasvit</tab>
+            <resource>Mirasvit_Review::review_settings</resource>
+
+            <group id="general" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10">
+                <label>General settings</label>
+
+                <field id="is_enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <config_path>catalog/review/active</config_path>
+                </field>
+
+                <field id="allow_guest" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Allow Guests to Write Reviews</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <config_path>catalog/review/allow_guest</config_path>
+                    <depends>
+                        <field id="is_enabled">1</field>
+                    </depends>
+                </field>
+
+                <field id="date_format" translate="label" type="select" sortOrder="22" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Date Format</label>
+                    <source_model>Mirasvit\Review\Model\Config\Source\DateFormatSource</source_model>
+                    <depends>
+                        <field id="is_enabled">1</field>
+                    </depends>
+                </field>
+
+                <field id="default_sorting" translate="label" type="select" sortOrder="25" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Default Sort by</label>
+                    <source_model>Mirasvit\Review\Model\Config\Source\SortingSource</source_model>
+                    <comment>The default order for reviews</comment>
+                    <depends>
+                        <field id="is_enabled">1</field>
+                    </depends>
+                </field>
+
+                <field id="display_pros_cons" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Display Pros/Cons</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Allows reviewers to add Pros and Cons in the review</comment>
+                    <depends>
+                        <field id="is_enabled">1</field>
+                    </depends>
+                </field>
+
+                <field id="display_country" translate="label" type="select" sortOrder="35" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Display Reviewer Location</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="is_enabled">1</field>
+                    </depends>
+                </field>
+
+                <field id="display_verified_buyer" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Display "Verified Buyer" Labels</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Displays "Verified Buyer" label, if a review was written by the customer after purchasing the product.</comment>
+                    <depends>
+                        <field id="is_enabled">1</field>
+                    </depends>
+                </field>
+
+                <field id="display_product_option" translate="label" type="select" sortOrder="45" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Display Purchased Product Info</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>
+                        <![CDATA[
+                        Displays additional information of purchased product.
+                        This option only affects reviews for configurable products placed by verified buyers
+                        ]]>
+                    </comment>
+                    <depends>
+                        <field id="display_verified_buyer">1</field>
+                        <field id="is_enabled">1</field>
+                    </depends>
+                </field>
+
+                <field id="order_status" translate="label" type="multiselect" sortOrder="50" showInDefault="1" canRestore="1">
+                    <label>Order Statuses</label>
+                    <source_model>Magento\Sales\Model\ResourceModel\Order\Status\Collection</source_model>
+                    <comment>
+                        <![CDATA[
+                        Select for which order statuses the customer should be considered as a "Verified Buyer".<br>
+                        After changing this setting reindex reviews with the command <code>bin/magento mirasvit:review:reindex --verify --force</code>
+                        ]]>
+                    </comment>
+                    <depends>
+                        <field id="is_enabled">1</field>
+                    </depends>
+                </field>
+            </group>
+
+            <group id="media" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10">
+                <label>Review Media</label>
+                <field id="is_media_enabled" translate="label" type="select" sortOrder="45" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable attaching photos to reviews</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="is_enabled">1</field>
+                    </depends>
+                </field>
+
+                <field id="display_review_photo_gallery" translate="label" type="select" sortOrder="45" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Display review photos gallery</label>
+                    <comment>
+                        <![CDATA[
+                         If enabled the extension will add gallery with all reviews' photos for current product in reviews list
+                        ]]>
+                    </comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="is_enabled">1</field>
+                        <field id="is_media_enabled">1</field>
+                    </depends>
+                </field>
+
+                <field id="max_number_files" translate="label" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Maximum number of photos per review</label>
+                    <validate>validate-digits validate-not-negative-number validate-digits-range digits-range-1-20</validate>
+                    <comment>
+                        <![CDATA[
+                         Max number of images to upload per review.<br>
+                         The limit should be between 1 and 20 photos.<br>
+                         If empty, the default limit will be used (5 photos)
+                        ]]>
+                    </comment>
+                    <depends>
+                        <field id="is_media_enabled">1</field>
+                    </depends>
+                </field>
+            </group>
+
+            <group id="ai" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10">
+                <label>AI Features</label>
+                <depends>
+                    <field id="review/general/is_enabled">1</field>
+                </depends>
+
+                <field id="api_key" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" type="password">
+                    <label>API Key</label>
+                    <comment>
+                        <![CDATA[
+                        Generate an <a href="https://platform.openai.com/account/api-keys" target="_blank">OpenAI API key</a>.
+                        You'll need to create an account if you don't have one.
+                        ]]>
+                    </comment>
+                    <depends>
+                        <field id="review/general/is_enabled">1</field>
+                    </depends>
+                </field>
+
+                <field id="is_aggregate" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable review aggregation</label>
+                    <comment><![CDATA[
+                        If enabled the extension will generate a summarized review for each products.<br>
+                        The summarized review will be generated based on the last 10 customer reviews.<br>
+                        The summarized review won't be generated for products with less than 5 reviews.
+                    ]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="review/general/is_enabled">1</field>
+                    </depends>
+                </field>
+
+                <field id="show_hint" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Add info hint to review summary title</label>
+                    <comment><![CDATA[
+                        If enabled the extension will add info icon and popup with info that the summary was generated by AI
+                    ]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="review/general/is_enabled">1</field>
+                        <field id="is_aggregate">1</field>
+                    </depends>
+                </field>
+
+                <field id="is_autowrite" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Autowrite Review</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Enable/disable the ability to generate the content for a product review using Open AI (ChatGPT) when creating a new review from the admin panel</comment>
+                    <depends>
+                        <field id="review/general/is_enabled">1</field>
+                    </depends>
+                </field>
+            </group>
+            <group id="notifications" showInDefault="1" sortOrder="10">
+                <label>Notifications</label>
+
+                <field id="is_admin_notifications_enabled" translate="label" type="select" sortOrder="10" showInDefault="1">
+                    <label>Enable Admin Notifications</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="review/general/is_enabled">1</field>
+                    </depends>
+                    <comment><![CDATA[
+                        If enabled, system admin message will be added with the number of pending reviews
+                    ]]></comment>
+                </field>
+
+                <field id="is_email_notifications_enabled" translate="label" type="select" sortOrder="20" showInDefault="1">
+                    <label>Enable Email Notifications About New Reviews</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="review/general/is_enabled">1</field>
+                    </depends>
+                </field>
+
+                <field id="emails" translate="label" sortOrder="30" showInDefault="1" type="text">
+                    <label>Emails</label>
+                    <comment>
+                        <![CDATA[
+                        Comma-separated emails to which notifications about new pending reviews should be sent
+                        ]]>
+                    </comment>
+                    <depends>
+                        <field id="review/general/is_enabled">1</field>
+                        <field id="is_email_notifications_enabled">1</field>
+                    </depends>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

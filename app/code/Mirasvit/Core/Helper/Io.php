@@ -9,7 +9,7 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.4.37
+ * @version   1.4.40
  * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
@@ -178,7 +178,7 @@ class Io extends AbstractHelper
 
     public function filePutContents(string $path, string $content, ?string $mode = null): int
     {
-        return $this->driver->filePutContents($path, $content, $mode);
+        return (int)$this->driver->filePutContents($path, $content, $mode);
     }
 
     public function isWritable(string $path): bool
@@ -220,5 +220,15 @@ class Io extends AbstractHelper
     public function fileUnlock($resource)
     {
         return $this->driver->fileUnlock($resource);
+    }
+
+    public function readDirectory($path)
+    {
+        return $this->driver->readDirectory($path);
+    }
+
+    public function isReadable($path)
+    {
+        return $this->driver->isReadable($path);
     }
 }

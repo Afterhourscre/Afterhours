@@ -1,0 +1,66 @@
+.mst-review-toolbar {
+    display:         flex;
+    align-items:     flex-start;
+    align-content:   center;
+    justify-content: space-between;
+    flex-wrap:       wrap;
+    margin-bottom:   10px;
+    margin-top:      10px;
+
+    .mst-review-sorting {
+        display:         inline-flex;
+        align-items:     center;
+        justify-content: flex-end;
+
+        select {
+            width: auto;
+        }
+
+        .mst-review-sorting-label {
+            white-space:  nowrap;
+            margin-right: 10px;
+        }
+
+        .mst-review-filter {
+            white-space:   nowrap;
+            margin-right:  10px;
+            border-right:  1px solid #666666;
+            padding-right: 10px;
+        }
+    }
+
+    .mst-review-filters {
+        display:      inline-flex;
+        margin-right: 5px;
+        margin-top:   5px;
+        white-space:  nowrap;
+
+        .rating-label {
+            margin-right: 10px;
+        }
+
+        .mst-rating-option {
+            display:       block;
+            margin-bottom: 5px;
+
+            label {
+                cursor: pointer !important;
+            }
+
+            .rating-result {
+                margin-right: 10px;
+            }
+
+            &.mst-rating-option-disabled {
+                filter: grayscale(.8);
+                color:  #666666;
+
+                label {
+                    cursor: default !important;
+                }
+            }
+        }
+    }
+}
+
+

@@ -24,11 +24,10 @@ class DataProvider
      */
     public function afterPrepareMeta(\Magento\Catalog\Model\Category\DataProvider $subject, $result)
     {
-        $meta = array_merge_recursive($result, $this->_prepareFieldsMeta(
+        $meta = array_replace_recursive($result, $this->_prepareFieldsMeta(
             $this->_getFieldsMap(),
             $subject->getAttributesMeta($this->eavConfig->getEntityType('catalog_category'))
         ));
-
         return $meta;
     }
 

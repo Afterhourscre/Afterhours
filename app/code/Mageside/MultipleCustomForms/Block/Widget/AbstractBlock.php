@@ -64,6 +64,7 @@ class AbstractBlock extends \Magento\Framework\View\Element\Template
      */
     public function removeDataBind($string)
     {
+        $string = (string) $string; // Ensure $string is a string
         return preg_replace('/data\-bind=".*?"/', '', $string);
     }
 }

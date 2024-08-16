@@ -18,6 +18,9 @@ define([
         },
 
         _create: function() {
+
+            console.log("WIDGET IS LOADING")
+            console.log(this.options.formSelector)
             var self = this;
 
             $(this.options.formSelector).on('customFormInitFields' + self.options.formId, function (event) {

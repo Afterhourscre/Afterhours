@@ -123,7 +123,7 @@ class Reindex extends \MageCloud\IndexManagement\Controller\Adminhtml\Indexer\In
                 $indexModel->reindexAll();
                 $resultTime = microtime(true) - $startTime;
                 $result[] = $indexModel->getTitle() . ' index has been rebuilt successfully in '
-                    . gmdate('H:i:s', $resultTime);
+                    . gmdate('H:i:s', (int)$resultTime);
             }
             return $result;
         } catch (LocalizedException $e) {

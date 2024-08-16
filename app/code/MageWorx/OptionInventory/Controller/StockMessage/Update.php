@@ -7,6 +7,10 @@
 namespace MageWorx\OptionInventory\Controller\StockMessage;
 
 use Magento\Framework\App\Action\Action;
+use Magento\Framework\App\Action\Context;
+use Magento\Framework\Serialize\Serializer\Json as Serializer;
+use MageWorx\OptionInventory\Helper\Data;
+use MageWorx\OptionInventory\Model\StockProvider;
 
 /**
  * Class Update.
@@ -14,35 +18,43 @@ use Magento\Framework\App\Action\Action;
  */
 class Update extends Action
 {
-    /**
-     * @var \MageWorx\OptionInventory\Model\StockProvider|null
-     */
-    protected $stockProvider = null;
+    protected ?StockProvider $stockProvider = null;
+    protected Serializer $serializer;
+    protected Data $helperData;
 
-    /**
-     * Update constructor.
-     *
-     * @param \Magento\Framework\App\Action\Context $context
-     * @param \MageWorx\OptionInventory\Model\StockProvider $stockProvider
-     */
     public function __construct(
-        \Magento\Framework\App\Action\Context $context,
-        \MageWorx\OptionInventory\Model\StockProvider $stockProvider
+        Context $context,
+        StockProvider $stockProvider,
+        Serializer $serializer,
+        Data $helperData
     ) {
         parent::__construct($context);
         $this->stockProvider = $stockProvider;
+        $this->serializer    = $serializer;
+        $this->helperData    = $helperData;
     }
 
     /**
-     * @return mixed
+     * @return \Magento\Framework\App\ResponseInterface|\Magento\Framework\Controller\ResultInterface|void
      */
     public function execute()
     {
+        if (!$this->helperData->isEnabledOptionInventory()) {
+            return;
+        }
         $this->getRequest()->getParams();
-        $options = json_decode($this->getRequest()->getPost('opConfig'), true);
+        $optionConfig    = $this->getRequest()->getPost('opConfig');
+
+        if (!$optionConfig) {
+            return;
+        }
+        $options = $this->serializer->unserialize($optionConfig);
+        if (isset($options['bundleId'])) {
+            return;
+        }
 
         $options = $this->stockProvider->updateOptionsStockMessage($options);
 
-        return $this->getResponse()->setBody(json_encode(['result' => $options]));
+        return $this->getResponse()->setBody($this->serializer->serialize(['result'=> $options]));
     }
 }

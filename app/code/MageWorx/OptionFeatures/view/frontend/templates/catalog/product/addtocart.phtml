@@ -26,6 +26,7 @@
                     </div>
                 </div>
             <?php endif; ?>
+            <?php if ($block->getData('show_additional_price')): ?>
             <div class="product-info-price mageworx-product-final-price">
                 <div class="price-box price-final_price">
                     <label class="label" for="mageworx-product-final-price">
@@ -43,15 +44,43 @@
                         </span>
                 </div>
             </div>
+            <?php endif; ?>
         </div>
         <div class="actions">
             <button type="submit"
                     title="<?= $block->escapeHtmlAttr($buttonTitle) ?>"
                     class="action primary tocart"
-                    id="product-addtocart-button">
+                    id="product-addtocart-button" disabled>
                 <span><?= $block->escapeHtml($buttonTitle) ?></span>
             </button>
             <?= $block->getChildHtml('', true) ?>
+            <?php if ($block->getData('show_shareable_link')): ?>
+                <div class="mageworx-shareable-link-container">
+                    <div class="mageworx-shareable-link-icon">
+                        <img src="<?= $this->getViewFileUrl('MageWorx_OptionFeatures::image/shareable.png') ?>" />
+                    </div>
+                    <div class="mageworx-shareable-link-text" id="mageworx_shareable_link">
+                        <a>
+                            <span>
+                                <?= $block->escapeHtml($block->getData('shareable_link_text')) ?>
+                            </span>
+                        </a>
+                    </div>
+                    <div class="mageworx-shareable-hint-icon" id="mageworx_shareable_hint_icon">
+                        <img src="<?= $this->getViewFileUrl('MageWorx_OptionFeatures::image/hint.png') ?>" />
+                    </div>
+                </div>
+                <div class="mageworx-shareable-link-success-container" style="display:none">
+                    <div class="mageworx-shareable-link-icon">
+                        <img src="<?= $this->getViewFileUrl('MageWorx_OptionFeatures::image/clipboard.png') ?>" />
+                    </div>
+                    <div class="mageworx-shareable-link-text">
+                        <span>
+                            <?= $block->escapeHtml($block->getData('shareable_link_success_text')) ?>
+                        </span>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 <?php endif; ?>

@@ -19,6 +19,6 @@ class GalleryContainer extends AbstractBlock
         $html .= '<input type="hidden" id="optionfeatures_provider" value="" />';
         $html .= '<input type="hidden" id="optionfeatures_datascope" value="" />';
 
-        return $html;
+        return (string)$html;
     }
 }

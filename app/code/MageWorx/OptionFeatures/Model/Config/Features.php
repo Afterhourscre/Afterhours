@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2018 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
 
@@ -20,16 +20,18 @@ class Features extends AbstractExtensibleModel
     public function getIsDefaultArray($product)
     {
         $result = [];
-        if (!empty($product->getOptions())) {
-            foreach ($product->getOptions() as $option) {
-                if (!empty($option->getValues())) {
-                    foreach ($option->getValues() as $value) {
-                        if ($value->getIsDefault() != 1) {
-                            continue;
-                        }
-                        $result[$value->getOptionTypeId()] = $option->getType();
-                    }
+        if (empty($product->getOptions())) {
+            return $result;
+        }
+        foreach ($product->getOptions() as $option) {
+            if (empty($option->getValues())) {
+                continue;
+            }
+            foreach ($option->getValues() as $value) {
+                if (!$value->getIsDefault()) {
+                    continue;
                 }
+                $result[$value->getOptionTypeId()] = $option->getType();
             }
         }
 

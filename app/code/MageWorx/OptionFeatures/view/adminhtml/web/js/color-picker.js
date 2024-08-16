@@ -5,8 +5,7 @@
 
 define([
     'jquery',
-    'jquery/colorpicker/js/colorpicker',
-    'jquery/ui'
+    'jquery/colorpicker/js/colorpicker'
 ], function ($) {
     'use strict';
 

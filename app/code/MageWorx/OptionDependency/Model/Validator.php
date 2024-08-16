@@ -3,29 +3,21 @@
  * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+declare(strict_types=1);
+
 namespace MageWorx\OptionDependency\Model;
 
+use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
 use MageWorx\OptionBase\Api\ValidatorInterface;
-use MageWorx\OptionDependency\Model\Config;
 use Magento\Catalog\Model\Product\Option\Type\DefaultType;
 use MageWorx\OptionBase\Helper\Data as BaseHelper;
 
 class Validator implements ValidatorInterface
 {
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
+    protected BaseHelper $baseHelper;
+    protected Config $modelConfig;
 
-    /**
-     * @var Config
-     */
-    protected $modelConfig;
-
-    /**
-     * @param Config $modelConfig
-     * @param BaseHelper $baseHelper
-     */
     public function __construct(
         Config $modelConfig,
         BaseHelper $baseHelper
@@ -37,11 +29,8 @@ class Validator implements ValidatorInterface
     /**
      * Run validation process for add to cart action
      *
-     * @param DefaultType $subject
-     * @param array $values
-     * @return bool
      */
-    public function canValidateAddToCart($subject, $values)
+    public function canValidateAddToCart(DefaultType $subject, array $values): bool
     {
         return $this->process($subject->getProduct(), $subject->getOption(), $values);
     }
@@ -49,14 +38,14 @@ class Validator implements ValidatorInterface
     /**
      * Run validation process for cart and checkout
      *
-     * @param \Magento\Catalog\Model\Product $product
-     * @param \Magento\Catalog\Model\Product\Option $option
-     * @return bool
      */
-    public function canValidateCartCheckout($product, $option)
+    public function canValidateCartCheckout(ProductInterface $product, ProductCustomOptionInterface $option): bool
     {
-        $value = $this->baseHelper->getInfoBuyRequest($product);
-        $values = isset($value['options']) ? $value['options'] : [];
+        $buyRequest = $this->baseHelper->getInfoBuyRequest($product);
+        if (empty($buyRequest)) {
+            return true;
+        }
+        $values = $buyRequest['options'] ?? [];
 
         return $this->process($product, $option, $values);
     }
@@ -64,23 +53,20 @@ class Validator implements ValidatorInterface
     /**
      * Check dependent option, if hidden - skip validation
      *
-     * @param \Magento\Catalog\Model\Product\Option $option
-     * @param \Magento\Catalog\Model\Product $product
-     * @return bool
      */
-    protected function process($product, $option, $values)
+    protected function process(ProductInterface $product, ProductCustomOptionInterface $option, array $values): bool
     {
         $productId = $this->baseHelper->isEnterprise() ?
             $product->getRowId() :
             $product->getId();
 
-        $isNeedValidation = $this->modelConfig->isNeedDependentOptionValidation(
+        $values = $option->getType() != ProductCustomOptionInterface::OPTION_TYPE_FILE ? $values : [];
+
+        return $this->modelConfig->isNeedDependentOptionValidation(
             $option,
             $values,
             $product,
-            $productId
+            (int)$productId
         );
-
-        return $isNeedValidation;
     }
 }

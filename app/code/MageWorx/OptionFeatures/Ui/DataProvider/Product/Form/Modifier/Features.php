@@ -12,6 +12,7 @@ use Magento\Catalog\Ui\DataProvider\Product\Form\Modifier\CustomOptions;
 use Magento\Framework\Stdlib\ArrayManager;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Ui\Component\Container;
+use Magento\Ui\Component\Form\Element\Select;
 use Magento\Ui\Component\Form\Element\Checkbox;
 use Magento\Ui\Component\Form\Element\DataType\Number;
 use Magento\Ui\Component\Form\Element\DataType\Text;
@@ -22,6 +23,8 @@ use Magento\Ui\Component\Form\Element\Hidden;
 use Magento\Ui\Component\Modal;
 use Magento\Framework\UrlInterface;
 use Magento\Framework\App\Request\Http;
+use MageWorx\OptionFeatures\Model\Config\Source\ShareableLinkMode as SourceConfig;
+use MageWorx\OptionBase\Helper\Data as HelperBase;
 
 class Features extends AbstractModifier implements ModifierInterface
 {
@@ -33,52 +36,30 @@ class Features extends AbstractModifier implements ModifierInterface
     const MODAL_CONTENT  = 'content';
     const MODAL_FIELDSET = 'fieldset';
 
+    protected UrlInterface $urlBuilder;
+    protected ArrayManager $arrayManager;
+    protected StoreManagerInterface $storeManager;
+    protected LocatorInterface $locator;
+    protected SourceConfig $sourceConfig;
+    protected Helper $helper;
     /**
-     * @var UrlInterface
+     * @var \MageWorx\OptionVisibility\Helper\Data
      */
-    protected $urlBuilder;
+    protected $helperBase;
+    protected Http $request;
+    protected array $meta = [];
+    protected string $form = 'product_form';
 
     /**
-     * @var \Magento\Framework\Stdlib\ArrayManager
-     */
-    protected $arrayManager;
-
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
-    protected $storeManager;
-
-    /**
-     * @var \Magento\Catalog\Model\Locator\LocatorInterface
-     */
-    protected $locator;
-
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var Http
-     */
-    protected $request;
-
-    /**
-     * @var array
-     */
-    protected $meta = [];
-
-    /**
-     * @var string
-     */
-    protected $form = 'product_form';
-
-    /**
+     * Features constructor.
+     *
      * @param ArrayManager $arrayManager
      * @param StoreManagerInterface $storeManager
      * @param LocatorInterface $locator
      * @param Helper $helper
+     * @param HelperBase $helperBase
      * @param Http $request
+     * @param SourceConfig $sourceConfig
      * @param UrlInterface $urlBuilder
      */
     public function __construct(
@@ -86,14 +67,18 @@ class Features extends AbstractModifier implements ModifierInterface
         StoreManagerInterface $storeManager,
         LocatorInterface $locator,
         Helper $helper,
+        HelperBase $helperBase,
         Http $request,
+        SourceConfig $sourceConfig,
         UrlInterface $urlBuilder
     ) {
         $this->arrayManager = $arrayManager;
         $this->storeManager = $storeManager;
         $this->locator      = $locator;
         $this->helper       = $helper;
+        $this->helperBase   = $helperBase;
         $this->request      = $request;
+        $this->sourceConfig = $sourceConfig;
         $this->urlBuilder   = $urlBuilder;
     }
 
@@ -116,13 +101,13 @@ class Features extends AbstractModifier implements ModifierInterface
         $product = $this->locator->getProduct();
 
         if (!$product || !$product->getId()) {
-            $storeId = $this->storeManager->getStore()->getId();
+            $storeId                         = $this->storeManager->getStore()->getId();
             $isAbsolutePriceEnabledByDefault = $this->helper->isAbsolutePriceEnabledByDefault($storeId);
-            $key = 'product';
+            $key                             = 'product';
             if (is_array($data) && isset($data['']['mageworx_optiontemplates_group'])) {
                 $key = 'mageworx_optiontemplates_group';
             }
-            $data[''][$key]['absolute_price'] = $isAbsolutePriceEnabledByDefault ? '1' : '0';
+            $data[''][$key][Helper::KEY_ABSOLUTE_PRICE] = $isAbsolutePriceEnabledByDefault ? '1' : '0';
             return $data;
         }
 
@@ -131,9 +116,13 @@ class Features extends AbstractModifier implements ModifierInterface
             [
                 $product->getId() => [
                     static::DATA_SOURCE_DEFAULT => [
-                        Helper::KEY_ABSOLUTE_COST   => $product->getData(Helper::KEY_ABSOLUTE_COST),
-                        Helper::KEY_ABSOLUTE_WEIGHT => $product->getData(Helper::KEY_ABSOLUTE_WEIGHT),
-                        Helper::KEY_ABSOLUTE_PRICE  => $product->getData(Helper::KEY_ABSOLUTE_PRICE),
+                        Helper::KEY_ABSOLUTE_COST                 => $product->getData(Helper::KEY_ABSOLUTE_COST),
+                        Helper::KEY_ABSOLUTE_WEIGHT               => $product->getData(Helper::KEY_ABSOLUTE_WEIGHT),
+                        Helper::KEY_ABSOLUTE_PRICE                => $product->getData(Helper::KEY_ABSOLUTE_PRICE),
+                        Helper::KEY_HIDE_ADDITIONAL_PRODUCT_PRICE => $product->getData(
+                            Helper::KEY_HIDE_ADDITIONAL_PRODUCT_PRICE
+                        ),
+                        Helper::KEY_SHAREABLE_LINK                => $product->getData(Helper::KEY_SHAREABLE_LINK)
                     ],
                 ],
             ]
@@ -203,12 +192,8 @@ class Features extends AbstractModifier implements ModifierInterface
      */
     protected function getValueFeaturesFieldsConfig()
     {
-        $fields = [];
-
-        if ($this->helper->isDefaultEnabled()) {
-            $fields[Helper::KEY_IS_DEFAULT] = $this->getIsDefaultConfig(148);
-        }
-
+        $fields                         = [];
+        $fields[Helper::KEY_IS_DEFAULT] = $this->getIsDefaultConfig(148);
         return $fields;
     }
 
@@ -226,7 +211,7 @@ class Features extends AbstractModifier implements ModifierInterface
                     'config' => [
                         'label'         => __('Is Default'),
                         'componentType' => Field::NAME,
-                        'component'     => 'MageWorx_OptionFeatures/js/element/option-type-dependent-checkbox',
+                        'component'     => 'MageWorx_OptionFeatures/js/element/is-default',
                         'formElement'   => Checkbox::NAME,
                         'dataScope'     => Helper::KEY_IS_DEFAULT,
                         'dataType'      => Number::NAME,
@@ -236,7 +221,7 @@ class Features extends AbstractModifier implements ModifierInterface
                             'false' => Helper::IS_DEFAULT_FALSE,
                         ],
                         'fit'           => true,
-                        'sortOrder'     => $sortOrder,
+                        'sortOrder'     => $sortOrder
                     ],
                 ],
             ],
@@ -257,10 +242,42 @@ class Features extends AbstractModifier implements ModifierInterface
         }
 
         if ($this->helper->isQtyInputEnabled()) {
-            $fields[Helper::KEY_QTY_INPUT] = $this->getQtyInputConfig(65);
+            $fields[Helper::KEY_QTY_INPUT] = $this->getQtyInputConfig(63);
         }
 
+        $fields[Helper::KEY_IS_HIDDEN] = $this->getIsHiddenConfig(66);
+
         return $fields;
+    }
+
+    /**
+     * Is Hidden Option field config
+     *
+     * @param $sortOrder
+     * @return array
+     */
+    protected function getIsHiddenConfig($sortOrder)
+    {
+        return [
+            'arguments' => [
+                'data' => [
+                    'config' => [
+                        'label'         => __('Is Hidden'),
+                        'componentType' => Field::NAME,
+                        'component'     => 'MageWorx_OptionFeatures/js/element/is-hidden',
+                        'formElement'   => Checkbox::NAME,
+                        'dataScope'     => Helper::KEY_IS_HIDDEN,
+                        'dataType'      => Text::NAME,
+                        'sortOrder'     => $sortOrder,
+                        'prefer'        => 'toggle',
+                        'valueMap'      => [
+                            'true'  => '1',
+                            'false' => '0',
+                        ],
+                    ],
+                ],
+            ],
+        ];
     }
 
     /**
@@ -277,10 +294,12 @@ class Features extends AbstractModifier implements ModifierInterface
                     'config' => [
                         'label'         => __('Qty Input'),
                         'componentType' => Field::NAME,
+                        'component'     => 'MageWorx_OptionFeatures/js/element/option-filtered-qty-input-checkbox',
                         'formElement'   => Checkbox::NAME,
                         'dataScope'     => Helper::KEY_QTY_INPUT,
                         'dataType'      => Text::NAME,
                         'sortOrder'     => $sortOrder,
+                        'prefer'        => 'toggle',
                         'valueMap'      => [
                             'true'  => Helper::QTY_INPUT_TRUE,
                             'false' => Helper::QTY_INPUT_FALSE,
@@ -334,7 +353,6 @@ class Features extends AbstractModifier implements ModifierInterface
      */
     protected function getProductFeaturesFieldsConfig()
     {
-
         $children = [];
         if ($this->helper->isAbsoluteCostEnabled()) {
             $children[Helper::KEY_ABSOLUTE_COST] = $this->getAbsoluteCostConfig(5);
@@ -345,8 +363,14 @@ class Features extends AbstractModifier implements ModifierInterface
         if ($this->helper->isAbsolutePriceEnabled()) {
             $children[Helper::KEY_ABSOLUTE_PRICE] = $this->getAbsolutePriceConfig(9);
         }
+        if ($this->helper->isEnabledAdditionalProductPriceField()) {
+            $children[Helper::KEY_HIDE_ADDITIONAL_PRODUCT_PRICE] = $this->getHideAdditionalProductPriceConfig(11);
+        }
+        if ($this->helper->isEnabledShareableLink()) {
+            $children[Helper::KEY_SHAREABLE_LINK] = $this->getShareableLinkFieldConfig(15);
+        }
 
-        $fields = [
+        return [
             'global_config_container' => [
                 'arguments' => [
                     'data' => [
@@ -365,8 +389,6 @@ class Features extends AbstractModifier implements ModifierInterface
                 'children'  => $children
             ],
         ];
-
-        return $fields;
     }
 
     /**
@@ -453,6 +475,64 @@ class Features extends AbstractModifier implements ModifierInterface
                         ],
                         'fit'           => true,
                         'sortOrder'     => $sortOrder,
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Additional product price field config
+     *
+     * @param $sortOrder
+     * @return array
+     */
+    protected function getHideAdditionalProductPriceConfig($sortOrder)
+    {
+        return [
+            'arguments' => [
+                'data' => [
+                    'config' => [
+                        'label'         => __('Hide Additional Product Price Field'),
+                        'componentType' => Field::NAME,
+                        'formElement'   => Checkbox::NAME,
+                        'dataScope'     => Helper::KEY_HIDE_ADDITIONAL_PRODUCT_PRICE,
+                        'dataType'      => Number::NAME,
+                        'prefer'        => 'toggle',
+                        'valueMap'      => [
+                            'true'  => Helper::ABSOLUTE_PRICE_TRUE,
+                            'false' => Helper::ABSOLUTE_PRICE_FALSE
+                        ],
+                        'fit'           => true,
+                        'sortOrder'     => $sortOrder,
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Get Shareable Link Field config for product
+     *
+     * @param $sortOrder
+     * @return array
+     */
+    protected function getShareableLinkFieldConfig($sortOrder)
+    {
+        return [
+            'arguments' => [
+                'data' => [
+                    'config' => [
+                        'label'         => __('Shareable Link'),
+                        'componentType' => Field::NAME,
+                        'component'     => 'Magento_Ui/js/form/element/select',
+                        'formElement'   => Select::NAME,
+                        'dataScope'     => Helper::KEY_SHAREABLE_LINK,
+                        'dataType'      => Text::NAME,
+                        'disableLabel'  => true,
+                        'multiple'      => false,
+                        'options'       => $this->sourceConfig->getOptions(),
+                        'sortOrder'     => $sortOrder
                     ],
                 ],
             ],
@@ -564,25 +644,51 @@ class Features extends AbstractModifier implements ModifierInterface
      */
     protected function getImagesButtonConfig($sortOrder)
     {
+        $params = [
+            'provider'     => '${ $.provider }',
+            'dataScope'    => '${ $.dataScope }',
+            'loadImageUrl' => $this->urlBuilder->getUrl(
+                'mageworx_optionfeatures/form_image/load'
+            ),
+            'formName'     => $this->form,
+            'buttonName'   => '${ $.name }'
+        ];
+
+        if ($this->helperBase->checkModuleVersion('104.0.0')) {
+            $params['__disableTmpl'] = [
+                'provider'   => false,
+                'dataScope'  => false,
+                'buttonName' => false
+            ];
+        }
+
+        $mageworxAttributes = [
+            static::OPTION_VALUE_IMAGES_DATA => '${ $.dataScope }' . '.' . static::OPTION_VALUE_IMAGES_DATA
+        ];
+
+        if ($this->helperBase->checkModuleVersion('104.0.0')) {
+            $mageworxAttributes['__disableTmpl'] = [
+                static::OPTION_VALUE_IMAGES_DATA => false
+            ];
+        }
+
         return [
             'arguments' => [
                 'data' => [
                     'config' => [
-                        'displayAsLink' => false,
-                        'formElement'   => Container::NAME,
-                        'componentType' => Container::NAME,
-                        'component'     => 'MageWorx_OptionBase/component/button',
-                        'elementTmpl'   => 'MageWorx_OptionBase/button',
-                        'buttonClasses' => 'mageworx-icon images',
-                        'sortOrder'     => $sortOrder,
-                        'tooltipTpl'    => 'MageWorx_OptionBase/tooltip',
-                        'tooltip'       => [
+                        'displayAsLink'      => false,
+                        'formElement'        => Container::NAME,
+                        'componentType'      => Container::NAME,
+                        'component'          => 'MageWorx_OptionBase/component/button',
+                        'elementTmpl'        => 'MageWorx_OptionBase/button',
+                        'buttonClasses'      => 'mageworx-icon images',
+                        'sortOrder'          => $sortOrder,
+                        'tooltipTpl'         => 'MageWorx_OptionBase/tooltip',
+                        'tooltip'            => [
                             'description' => __('Images')
                         ],
-                        'mageworxAttributes' => [
-                            '${ $.dataScope }' . '.' . static::OPTION_VALUE_IMAGES_DATA
-                        ],
-                        'actions'       => [
+                        'mageworxAttributes' => $mageworxAttributes,
+                        'actions'            => [
                             [
                                 'targetName' => 'ns=' . $this->form . ', index='
                                     . static::OPTION_VALUE_IMAGES_MODAL_INDEX,
@@ -600,15 +706,7 @@ class Features extends AbstractModifier implements ModifierInterface
                                     . static::OPTION_VALUE_IMAGES_MODAL_INDEX . '.' . static::MODAL_CONTENT,
                                 'actionName' => 'loadImagesData',
                                 'params'     => [
-                                    [
-                                        'provider'     => '${ $.provider }',
-                                        'dataScope'    => '${ $.dataScope }',
-                                        'loadImageUrl' => $this->urlBuilder->getUrl(
-                                            'mageworx_optionfeatures/form_image/load'
-                                        ),
-                                        'formName'     => $this->form,
-                                        'buttonName'   => '${ $.name }'
-                                    ],
+                                    $params,
                                 ],
                             ],
                         ],
@@ -625,7 +723,7 @@ class Features extends AbstractModifier implements ModifierInterface
      */
     protected function getImagesHiddenFieldConfig()
     {
-        $fields = [];
+        $fields                                   = [];
         $fields[static::OPTION_VALUE_IMAGES_DATA] = $this->getImagesDataConfig(171);
 
         return $fields;

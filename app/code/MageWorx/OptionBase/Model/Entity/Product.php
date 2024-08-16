@@ -7,7 +7,7 @@ namespace MageWorx\OptionBase\Model\Entity;
 
 class Product extends Base
 {
-    protected $entityType = 'product';
+    protected string $entityType = 'product';
 
     /**
      * @return string

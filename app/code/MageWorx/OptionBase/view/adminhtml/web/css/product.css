@@ -1,7 +1,25 @@
 /**
- * Copyright © 2016 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
+#fileupload {
+    border-width: 75px;
+}
+
+.colorpicker_submit:before {
+    content: "OK";
+}
+
+.colorpicker_submit {
+    background: none !important;
+    color: white;
+    cursor: pointer;
+}
+
+.colorpicker_submit:hover {
+    color: orangered;
+}
 
 #product_options_container .data-table tbody > tr {
     height: 150px;
@@ -93,9 +111,15 @@
     width: 20%;
 }
 .admin__field-tooltip.mageworx-admin-tooltip {
-    margin-left: -66px;
-    margin-top: 0;
+    margin-left: -19px;
+    margin-top: -8px;
 }
+
+.admin__field-tooltip.mageworx-admin-tooltip .action-help {
+    height: 33px;
+    width: 33px;
+}
+
 .admin__field-tooltip.mageworx-admin-tooltip .admin__field-tooltip-action:before {
     opacity: 0;
 }

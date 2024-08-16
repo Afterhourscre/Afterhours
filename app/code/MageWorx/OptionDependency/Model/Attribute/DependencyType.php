@@ -1,32 +1,31 @@
 <?php
 /**
- * Copyright © 2018 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
 namespace MageWorx\OptionDependency\Model\Attribute;
 
+use Magento\Framework\DataObjectFactory;
 use Magento\Framework\App\ResourceConnection;
-use MageWorx\OptionDependency\Helper\Data as Helper;
-use MageWorx\OptionBase\Api\AttributeInterface;
+use MageWorx\OptionBase\Helper\Data as BaseHelper;
 use MageWorx\OptionBase\Model\Product\Option\AbstractAttribute;
+use MageWorx\OptionDependency\Helper\Data as Helper;
 
-class DependencyType extends AbstractAttribute implements AttributeInterface
+class DependencyType extends AbstractAttribute
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
+    const FIELD_MAGE_ONE_OPTIONS_IMPORT = '_custom_option_is_dependent';
 
-    /**
-     * @param ResourceConnection $resource
-     * @param Helper $helper
-     */
+    protected Helper $helper;
+
     public function __construct(
         ResourceConnection $resource,
-        Helper $helper
+        BaseHelper $baseHelper,
+        Helper $helper,
+        DataObjectFactory $dataObjectFactory
     ) {
         $this->helper = $helper;
-        parent::__construct($resource);
+        parent::__construct($resource, $baseHelper, $dataObjectFactory);
     }
 
     /**

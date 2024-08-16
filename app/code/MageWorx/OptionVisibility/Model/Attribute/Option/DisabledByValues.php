@@ -6,30 +6,11 @@
 
 namespace MageWorx\OptionVisibility\Model\Attribute\Option;
 
-use Magento\Framework\App\ResourceConnection;
 use MageWorx\OptionVisibility\Helper\Data as Helper;
-use MageWorx\OptionBase\Api\AttributeInterface;
 use MageWorx\OptionBase\Model\Product\Option\AbstractAttribute;
 
-class DisabledByValues extends AbstractAttribute implements AttributeInterface
+class DisabledByValues extends AbstractAttribute
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @param ResourceConnection $resource
-     * @param Helper $helper
-     */
-    public function __construct(
-        ResourceConnection $resource,
-        Helper $helper
-    ) {
-        $this->helper = $helper;
-        parent::__construct($resource);
-    }
-
     /**
      * {@inheritdoc}
      */

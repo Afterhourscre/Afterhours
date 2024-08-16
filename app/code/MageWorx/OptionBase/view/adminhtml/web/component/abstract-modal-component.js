@@ -76,9 +76,14 @@ define([
          * save and close modal
          */
         save: function () {
-            this.saveData();
-            this.updateButtonIcon();
-            this.toggleModal();
+            this.valid = true;
+            this.elems().forEach(this.validate, this);
+            if (this.valid) {
+                this.isActiveButton = false;
+                this.saveData();
+                this.updateButtonIcon();
+                this.toggleModal();
+            }
         },
 
         /**
@@ -116,7 +121,7 @@ define([
                 this.isActiveButton = true;
             } else if (conditionRule === this.conditionNonEmptyString && value !== '') {
                 this.isActiveButton = true;
-            } else if (conditionRule === this.conditionNonZero && (value !== '0' || value !== 0)) {
+            } else if (conditionRule === this.conditionNonZero && value !== '0' && value !== 0) {
                 this.isActiveButton = true;
             }
         },

@@ -9,5 +9,5 @@ use \Magento\Catalog\Model\ResourceModel\Product\Option\Value\Collection;
 
 interface FieldInterface
 {
-    public function addField(Collection $collection);
+    public function addField(Collection $collection): void;
 }

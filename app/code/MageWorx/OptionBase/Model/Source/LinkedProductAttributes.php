@@ -11,10 +11,7 @@ namespace MageWorx\OptionBase\Model\Source;
  */
 class LinkedProductAttributes
 {
-    /**
-     * @var array
-     */
-    protected $linkedAttributes = [];
+    protected array $linkedAttributes = [];
 
     /**
      * LinkedProductAttributes constructor.
@@ -33,12 +30,13 @@ class LinkedProductAttributes
     public function toOptionArray()
     {
         $options = [
-            ['value' =>  \Magento\Catalog\Api\Data\ProductAttributeInterface::CODE_NAME, 'label' => __('Name')],
+            ['value' => \Magento\Catalog\Api\Data\ProductAttributeInterface::CODE_NAME, 'label' => __('Name')],
             ['value' => \Magento\Catalog\Api\Data\ProductAttributeInterface::CODE_PRICE, 'label' => __('Price')],
         ];
 
         foreach ($this->linkedAttributes as $attribute) {
-            $options[] = ['value' => $attribute, 'label' => __(ucfirst($attribute))];
+            $label     = implode(' ', array_map('ucfirst', explode('_', $attribute)));
+            $options[] = ['value' => $attribute, 'label' => __($label)];
         }
 
         return $options;

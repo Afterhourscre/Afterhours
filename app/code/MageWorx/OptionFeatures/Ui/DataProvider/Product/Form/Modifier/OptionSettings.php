@@ -12,6 +12,7 @@ use Magento\Catalog\Ui\DataProvider\Product\Form\Modifier\CustomOptions;
 use Magento\Framework\Stdlib\ArrayManager;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Ui\Component\Container;
+use Magento\Ui\Component\Form\Element\Checkbox;
 use Magento\Ui\Component\Form\Element\DataType\Number;
 use Magento\Ui\Component\Form\Field;
 use Magento\Ui\Component\Form\Fieldset;
@@ -23,6 +24,7 @@ use Magento\Ui\Component\Form\Element\Select;
 use Magento\Ui\Component\Modal;
 use Magento\Framework\UrlInterface;
 use Magento\Framework\App\Request\Http;
+use MageWorx\OptionBase\Helper\Data as BaseHelper;
 
 class OptionSettings extends AbstractModifier implements ModifierInterface
 {
@@ -35,53 +37,26 @@ class OptionSettings extends AbstractModifier implements ModifierInterface
 
     const CONTAINER_HEADER_NAME = 'header';
 
-    /**
-     * @var UrlInterface
-     */
-    protected $urlBuilder;
+    protected UrlInterface $urlBuilder;
+    protected ArrayManager $arrayManager;
+    protected StoreManagerInterface $storeManager;
+    protected LocatorInterface $locator;
+    protected Helper $helper;
+    protected Http $request;
+    protected array $meta = [];
+    protected string $form = 'product_form';
+    protected BaseHelper $baseHelper;
 
     /**
-     * @var \Magento\Framework\Stdlib\ArrayManager
-     */
-    protected $arrayManager;
-
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
-    protected $storeManager;
-
-    /**
-     * @var \Magento\Catalog\Model\Locator\LocatorInterface
-     */
-    protected $locator;
-
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var Http
-     */
-    protected $request;
-
-    /**
-     * @var array
-     */
-    protected $meta = [];
-
-    /**
-     * @var string
-     */
-    protected $form = 'product_form';
-
-    /**
+     * OptionSettings constructor.
+     *
      * @param ArrayManager $arrayManager
      * @param StoreManagerInterface $storeManager
      * @param LocatorInterface $locator
      * @param Helper $helper
      * @param Http $request
      * @param UrlInterface $urlBuilder
+     * @param BaseHelper $baseHelper
      */
     public function __construct(
         ArrayManager $arrayManager,
@@ -89,7 +64,8 @@ class OptionSettings extends AbstractModifier implements ModifierInterface
         LocatorInterface $locator,
         Helper $helper,
         Http $request,
-        UrlInterface $urlBuilder
+        UrlInterface $urlBuilder,
+        BaseHelper $baseHelper
     ) {
         $this->arrayManager = $arrayManager;
         $this->storeManager = $storeManager;
@@ -97,6 +73,7 @@ class OptionSettings extends AbstractModifier implements ModifierInterface
         $this->helper       = $helper;
         $this->request      = $request;
         $this->urlBuilder   = $urlBuilder;
+        $this->baseHelper   = $baseHelper;
     }
 
     /**
@@ -160,55 +137,67 @@ class OptionSettings extends AbstractModifier implements ModifierInterface
      */
     protected function getOptionSettingsButtonConfig($sortOrder, $additionalForGroup = false)
     {
-        $field[static::OPTION_SETTINGS_BUTTON_NAME] = [
-            'arguments' => [
-                'data' => [
-                    'config' => [
-                        'labelVisible'       => true,
-                        'label'              => ' ',
-                        'formElement'        => Container::NAME,
-                        'componentType'      => Container::NAME,
-                        'component'          => 'MageWorx_OptionBase/component/button',
-                        'additionalForGroup' => $additionalForGroup,
-                        'additionalClasses'  => 'mageworx-icon-additional-container',
-                        'displayArea'        => 'insideGroup',
-                        'template'           => 'ui/form/components/button/container',
-                        'elementTmpl'        => 'MageWorx_OptionBase/button',
-                        'buttonClasses'      => 'mageworx-icon settings',
-                        'tooltipTpl'         => 'MageWorx_OptionBase/tooltip',
-                        'tooltip'            => [
-                            'description' => __('Option Settings')
-                        ],
-                        'mageworxAttributes' => $this->getEnabledAttributes(),
-                        'displayAsLink'      => false,
-                        'fit'                => true,
-                        'sortOrder'          => $sortOrder,
-                        'actions'            => [
-                            [
-                                'targetName' => 'ns=' . $this->form . ', index='
-                                    . static::OPTION_SETTINGS_MODAL_INDEX,
-                                'actionName' => 'openModal',
+        $params = [
+            'provider'                           => '${ $.provider }',
+            'dataScope'                          => '${ $.dataScope }',
+            'formName'                           => $this->form,
+            'buttonName'                         => '${ $.name }',
+            'isEnabledHideProductPageValuePrice' => $this->helper->isEnabledHideProductPageValuePrice(),
+            'pathHideValuePrice'                 => Helper::KEY_HIDE_PRODUCT_PAGE_VALUE_PRICE
+        ];
+
+        if ($this->baseHelper->checkModuleVersion('104.0.0')) {
+            $params['__disableTmpl'] = [
+                'provider'  => false,
+                'dataScope' => false,
+                'name'      => false
+            ];
+        }
+
+        return [
+            static::OPTION_SETTINGS_BUTTON_NAME => [
+                'arguments' => [
+                    'data' => [
+                        'config' => [
+                            'labelVisible'       => true,
+                            'label'              => ' ',
+                            'formElement'        => Container::NAME,
+                            'componentType'      => Container::NAME,
+                            'component'          => 'MageWorx_OptionBase/component/button',
+                            'additionalForGroup' => $additionalForGroup,
+                            'additionalClasses'  => 'mageworx-icon-additional-container',
+                            'displayArea'        => 'insideGroup',
+                            'template'           => 'ui/form/components/button/container',
+                            'elementTmpl'        => 'MageWorx_OptionBase/button',
+                            'buttonClasses'      => 'mageworx-icon settings',
+                            'tooltipTpl'         => 'MageWorx_OptionBase/tooltip',
+                            'tooltip'            => [
+                                'description' => __('Option Settings')
                             ],
-                            [
-                                'targetName' => 'ns=' . $this->form . ', index='
-                                    . static::OPTION_SETTINGS_MODAL_INDEX,
-                                'actionName' => 'reloadModal',
-                                'params'     => [
-                                    [
-                                        'provider'   => '${ $.provider }',
-                                        'dataScope'  => '${ $.dataScope }',
-                                        'formName'   => $this->form,
-                                        'buttonName' => '${ $.name }'
+                            'mageworxAttributes' => $this->getEnabledAttributes(),
+                            'displayAsLink'      => false,
+                            'fit'                => true,
+                            'sortOrder'          => $sortOrder,
+                            'actions'            => [
+                                [
+                                    'targetName' => 'ns=' . $this->form . ', index='
+                                        . static::OPTION_SETTINGS_MODAL_INDEX,
+                                    'actionName' => 'openModal',
+                                ],
+                                [
+                                    'targetName' => 'ns=' . $this->form . ', index='
+                                        . static::OPTION_SETTINGS_MODAL_INDEX,
+                                    'actionName' => 'reloadModal',
+                                    'params'     => [
+                                        $params,
                                     ],
                                 ],
                             ],
                         ],
                     ],
                 ],
-            ],
+            ]
         ];
-
-        return $field;
     }
 
     /**
@@ -287,15 +276,56 @@ class OptionSettings extends AbstractModifier implements ModifierInterface
                                     ],
                                 ],
                             ],
-                            'children'  => [
-                                Helper::KEY_OPTION_GALLERY_DISPLAY_MODE =>
-                                    $this->getOptionGalleryDisplayModeFieldsConfig(),
-                                Helper::KEY_OPTION_IMAGE_MODE           => $this->getOptionImageModeFieldConfig(),
-                                Helper::KEY_DIV_CLASS                   => $this->getDivClassFieldConfig(),
-                                Helper::KEY_SELECTION_LIMIT_FROM        => $this->getSelectionLimitFromFieldConfig(),
-                                Helper::KEY_SELECTION_LIMIT_TO          => $this->getSelectionLimitToFieldConfig()
-                            ]
+                            'children'  => $this->getOptionSettingsFieldsConfig()
                         ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * The custom option value fields config
+     *
+     * @return array
+     */
+    protected function getOptionSettingsFieldsConfig(): array
+    {
+        $fields = [];
+
+        $fields[Helper::KEY_OPTION_GALLERY_DISPLAY_MODE] =
+            $this->getOptionGalleryDisplayModeFieldsConfig();
+        $fields[Helper::KEY_OPTION_IMAGE_MODE]           = $this->getOptionImageModeFieldConfig();
+        $fields[Helper::KEY_DIV_CLASS]                   = $this->getDivClassFieldConfig();
+        $fields[Helper::KEY_SELECTION_LIMIT_FROM]        = $this->getSelectionLimitFromFieldConfig();
+        $fields[Helper::KEY_SELECTION_LIMIT_TO]          = $this->getSelectionLimitToFieldConfig();
+
+        if ($this->helper->isEnabledHideProductPageValuePrice()) {
+            $fields[Helper::KEY_HIDE_PRODUCT_PAGE_VALUE_PRICE] = $this->getIsHideValuePriceConfig(70);
+        }
+
+        return $fields;
+    }
+
+    protected function getIsHideValuePriceConfig(int $sortOrder): array
+    {
+        return [
+            'arguments' => [
+                'data' => [
+                    'config' => [
+                        'label'             => __('Hide Value Price On Product Page'),
+                        'componentType'     => Field::NAME,
+                        'formElement'       => Checkbox::NAME,
+                        'dataScope'         => Helper::KEY_HIDE_PRODUCT_PAGE_VALUE_PRICE,
+                        'dataType'          => Number::NAME,
+                        'additionalClasses' => 'admin__field-small',
+                        'prefer'            => 'toggle',
+                        'valueMap'          => [
+                            'true'  => Helper::IS_HIDE_VALUE_PRICE_ON_PRODUCT_PAGE_TRUE,
+                            'false' => Helper::IS_HIDE_VALUE_PRICE_ON_PRODUCT_PAGE_FALSE,
+                        ],
+                        'fit'               => true,
+                        'sortOrder'         => $sortOrder
                     ],
                 ],
             ],
@@ -368,6 +398,10 @@ class OptionSettings extends AbstractModifier implements ModifierInterface
                             1 => [
                                 'label' => __('Replace'),
                                 'value' => Helper::OPTION_IMAGE_MODE_REPLACE,
+                            ],
+                            2 => [
+                                'label' => __('Overlay'),
+                                'value' => Helper::OPTION_IMAGE_MODE_OVERLAY,
                             ],
                         ],
                         'disableLabel'  => true,
@@ -467,12 +501,25 @@ class OptionSettings extends AbstractModifier implements ModifierInterface
     public function getEnabledAttributes()
     {
         $attributes = [];
+        $dataScope  = '${ $.dataScope }';
 
-        $attributes[] = '${ $.dataScope }' . '.' . Helper::KEY_OPTION_IMAGE_MODE;
-        $attributes[] = '${ $.dataScope }' . '.' . Helper::KEY_OPTION_GALLERY_DISPLAY_MODE;
-        $attributes[] = '${ $.dataScope }' . '.' . Helper::KEY_DIV_CLASS;
-        $attributes[] = '${ $.dataScope }' . '.' . Helper::KEY_SELECTION_LIMIT_FROM;
-        $attributes[] = '${ $.dataScope }' . '.' . Helper::KEY_SELECTION_LIMIT_TO;
+        $attributes[Helper::KEY_OPTION_IMAGE_MODE]             = $dataScope . '.' . Helper::KEY_OPTION_IMAGE_MODE;
+        $attributes[Helper::KEY_OPTION_GALLERY_DISPLAY_MODE]   = $dataScope . '.' . Helper::KEY_OPTION_GALLERY_DISPLAY_MODE;
+        $attributes[Helper::KEY_DIV_CLASS]                     = $dataScope . '.' . Helper::KEY_DIV_CLASS;
+        $attributes[Helper::KEY_SELECTION_LIMIT_FROM]          = $dataScope . '.' . Helper::KEY_SELECTION_LIMIT_FROM;
+        $attributes[Helper::KEY_SELECTION_LIMIT_TO]            = $dataScope . '.' . Helper::KEY_SELECTION_LIMIT_TO;
+        $attributes[Helper::KEY_HIDE_PRODUCT_PAGE_VALUE_PRICE] = $dataScope . '.' . Helper::KEY_HIDE_PRODUCT_PAGE_VALUE_PRICE;
+
+        if ($this->baseHelper->checkModuleVersion('104.0.0')) {
+            $attributes['__disableTmpl'] = [
+                Helper::KEY_OPTION_IMAGE_MODE             => false,
+                Helper::KEY_OPTION_GALLERY_DISPLAY_MODE   => false,
+                Helper::KEY_DIV_CLASS                     => false,
+                Helper::KEY_SELECTION_LIMIT_FROM          => false,
+                Helper::KEY_SELECTION_LIMIT_TO            => false,
+                Helper::KEY_HIDE_PRODUCT_PAGE_VALUE_PRICE => false,
+            ];
+        }
 
         return $attributes;
     }

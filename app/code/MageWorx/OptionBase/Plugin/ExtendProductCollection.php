@@ -9,7 +9,7 @@ use \MageWorx\OptionBase\Model\ResourceModel\CollectionUpdaterFactory;
 
 class ExtendProductCollection
 {
-    protected $collectionUpdaterFactory;
+    protected CollectionUpdaterFactory $collectionUpdaterFactory;
 
     /**
      * BeforeLoad constructor.

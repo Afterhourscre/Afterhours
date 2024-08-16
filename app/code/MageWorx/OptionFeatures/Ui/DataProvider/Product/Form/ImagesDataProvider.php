@@ -21,20 +21,9 @@ use Magento\Framework\DataObject;
  */
 class ImagesDataProvider extends ProductDataProvider
 {
-    /**
-     * @var RequestInterface
-     */
-    protected $request;
-
-    /**
-     * @var ProductOptionRepository
-     */
-    protected $productOptionRepository;
-
-    /**
-     * @var ProductOptionValueModel
-     */
-    protected $productOptionValueModel;
+    protected RequestInterface $request;
+    protected ProductOptionRepository $productOptionRepository;
+    protected ProductOptionValueModel $productOptionValueModel;
 
     /**
      * @param string $name

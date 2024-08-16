@@ -9,4 +9,8 @@
     <event name="sales_quote_item_set_product">
         <observer name="mageworx_optionfeatures_collect_cost" instance="MageWorx\OptionFeatures\Observer\CollectQuoteItemCost"/>
     </event>
+    <event name="sales_order_shipment_save_after">
+        <observer name="mageworx_optionfeatures_subtract" instance="MageWorx\OptionFeatures\Observer\SubtractQtyMultiplierQty"/>
+    </event>
+
 </config>

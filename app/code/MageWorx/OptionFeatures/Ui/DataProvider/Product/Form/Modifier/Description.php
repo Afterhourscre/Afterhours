@@ -9,6 +9,7 @@ namespace MageWorx\OptionFeatures\Ui\DataProvider\Product\Form\Modifier;
 use Magento\Catalog\Model\Locator\LocatorInterface;
 use Magento\Catalog\Ui\DataProvider\Product\Form\Modifier\AbstractModifier;
 use Magento\Catalog\Ui\DataProvider\Product\Form\Modifier\CustomOptions;
+use Magento\Framework\Serialize\Serializer\Json as Serializer;
 use Magento\Framework\Stdlib\ArrayManager;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Ui\Component\Container;
@@ -17,6 +18,7 @@ use Magento\Ui\Component\Form\Element\DataType\Number;
 use Magento\Ui\Component\Form\Element\Wysiwyg;
 use Magento\Ui\Component\Form\Fieldset;
 use Magento\Ui\Component\Form\Field;
+use MageWorx\OptionBase\Helper\Data as HelperBase;
 use MageWorx\OptionBase\Ui\DataProvider\Product\Form\Modifier\ModifierInterface;
 use MageWorx\OptionFeatures\Helper\Data as Helper;
 use Magento\Ui\Component\Modal;
@@ -38,58 +40,29 @@ class Description extends AbstractModifier implements ModifierInterface
 
     const GLOBAL_DESCRIPTION_TEXTAREA = 'global_description_textarea';
 
-    /**
-     * @var UrlInterface
-     */
-    protected $urlBuilder;
+    protected UrlInterface $urlBuilder;
+    protected ArrayManager $arrayManager;
+    protected StoreManagerInterface $storeManager;
+    protected LocatorInterface $locator;
+    protected Helper $helper;
+    protected HelperBase $helperBase;
+    protected Http $request;
+    protected array $meta = [];
+    protected string $form = 'product_form';
+    protected array $storeIds = [];
+    protected Serializer $serializer;
 
     /**
-     * @var \Magento\Framework\Stdlib\ArrayManager
-     */
-    protected $arrayManager;
-
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
-    protected $storeManager;
-
-    /**
-     * @var \Magento\Catalog\Model\Locator\LocatorInterface
-     */
-    protected $locator;
-
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var Http
-     */
-    protected $request;
-
-    /**
-     * @var array
-     */
-    protected $meta = [];
-
-    /**
-     * @var string
-     */
-    protected $form = 'product_form';
-
-    /**
-     * @var array
-     */
-    protected $storeIds = [];
-
-    /**
+     * Description constructor.
+     *
      * @param ArrayManager $arrayManager
      * @param StoreManagerInterface $storeManager
      * @param LocatorInterface $locator
      * @param Helper $helper
      * @param Http $request
      * @param UrlInterface $urlBuilder
+     * @param HelperBase $helperBase
+     * @param Serializer $serializer
      */
     public function __construct(
         ArrayManager $arrayManager,
@@ -97,7 +70,9 @@ class Description extends AbstractModifier implements ModifierInterface
         LocatorInterface $locator,
         Helper $helper,
         Http $request,
-        UrlInterface $urlBuilder
+        UrlInterface $urlBuilder,
+        HelperBase $helperBase,
+        Serializer $serializer
     ) {
         $this->arrayManager = $arrayManager;
         $this->storeManager = $storeManager;
@@ -105,6 +80,8 @@ class Description extends AbstractModifier implements ModifierInterface
         $this->helper       = $helper;
         $this->request      = $request;
         $this->urlBuilder   = $urlBuilder;
+        $this->helperBase   = $helperBase;
+        $this->serializer   = $serializer;
     }
 
     /**
@@ -324,7 +301,8 @@ class Description extends AbstractModifier implements ModifierInterface
                             'add_widgets'    => false,
                             'add_images'     => false,
                             'use_container'  => true,
-                            'is_pagebuilder_enabled' => false
+                            'is_pagebuilder_enabled' => false,
+                            'enabled'        => (bool)$this->helper->isEnabledWysiwygForDescription()
                         ],
                     ],
                 ],
@@ -400,6 +378,36 @@ class Description extends AbstractModifier implements ModifierInterface
      */
     protected function getDescriptionButtonConfig($sortOrder, $additionalForGroup = false)
     {
+        $params = [
+            'provider'           => '${ $.provider }',
+            'dataScope'          => '${ $.dataScope }',
+            'formName'           => $this->form,
+            'buttonName'         => '${ $.name }',
+            'isWysiwygEnabled'   => (bool)$this->helper->isEnabledWysiwygForDescription(),
+            'storeIds'           => $this->serializer->serialize($this->storeIds),
+            'pathGroupContainer' => self::PATH_GROUP_CONTAINER,
+            'pathDescription'    => self::PATH_DESCRIPTION,
+            'pathUseGlobal'      => self::PATH_USE_GLOBAL
+        ];
+
+        if ($this->helperBase->checkModuleVersion('104.0.0')) {
+            $params['__disableTmpl'] = [
+                'provider'   => false,
+                'dataScope'  => false,
+                'buttonName' => false
+            ];
+        }
+
+        $mageworxAttributes = [
+            static::DESCRIPTION => '${ $.dataScope }' . '.' . static::DESCRIPTION
+        ];
+
+        if ($this->helperBase->checkModuleVersion('104.0.0')) {
+            $mageworxAttributes['__disableTmpl'] = [
+                static::DESCRIPTION => false
+            ];
+        }
+
         $field[static::DESCRIPTION_BUTTON_NAME] = [
             'arguments' => [
                 'data' => [
@@ -418,9 +426,7 @@ class Description extends AbstractModifier implements ModifierInterface
                         'tooltip'            => [
                             'description' => __('Description')
                         ],
-                        'mageworxAttributes' => [
-                            '${ $.dataScope }' . '.' . static::DESCRIPTION
-                        ],
+                        'mageworxAttributes' => $mageworxAttributes,
                         'displayAsLink'      => false,
                         'fit'                => true,
                         'sortOrder'          => $sortOrder,
@@ -435,17 +441,7 @@ class Description extends AbstractModifier implements ModifierInterface
                                     . static::DESCRIPTION_MODAL_INDEX,
                                 'actionName' => 'reloadModal',
                                 'params'     => [
-                                    [
-                                        'provider'           => '${ $.provider }',
-                                        'dataScope'          => '${ $.dataScope }',
-                                        'formName'           => $this->form,
-                                        'buttonName'         => '${ $.name }',
-                                        'isWysiwygEnabled'   => (bool)$this->helper->isEnabledWysiwygForDescription(),
-                                        'storeIds'           => json_encode($this->storeIds),
-                                        'pathGroupContainer' => self::PATH_GROUP_CONTAINER,
-                                        'pathDescription'    => self::PATH_DESCRIPTION,
-                                        'pathUseGlobal'      => self::PATH_USE_GLOBAL
-                                    ],
+                                    $params
                                 ],
                             ],
                         ],

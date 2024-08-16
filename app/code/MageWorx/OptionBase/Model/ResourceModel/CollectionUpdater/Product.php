@@ -8,38 +8,18 @@ namespace MageWorx\OptionBase\Model\ResourceModel\CollectionUpdater;
 
 use Magento\Framework\App\ResourceConnection;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
+use Magento\Framework\Profiler;
 use MageWorx\OptionBase\Helper\Data as BaseHelper;
 use MageWorx\OptionBase\Model\Product\CollectionUpdaters as ProductCollectionUpdaters;
 use Magento\Catalog\Api\Data\ProductInterface;
 
 class Product
 {
-    /**
-     * @var ResourceConnection
-     */
-    protected $resource;
+    protected ResourceConnection $resource;
+    protected ProductCollection $collection;
+    protected BaseHelper $baseHelper;
+    protected ProductCollectionUpdaters $productCollectionUpdaters;
 
-    /**
-     * @var ProductCollection
-     */
-    protected $collection;
-
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
-
-    /**
-     * @var ProductCollectionUpdaters
-     */
-    protected $productCollectionUpdaters;
-
-    /**
-     * @param ResourceConnection $resource
-     * @param ProductCollection $collection
-     * @param BaseHelper $baseHelper
-     * @param ProductCollectionUpdaters $productCollectionUpdaters
-     */
     public function __construct(
         ResourceConnection $resource,
         ProductCollection $collection,
@@ -54,10 +34,12 @@ class Product
 
     /**
      * Add updaters to collection
-     * @return string
+     * @return ProductCollection
+     * @throws \Zend_Db_Select_Exception
      */
     public function update()
     {
+        Profiler::start('APO1: Process PRODUCT collection by updaters');
         $alias = '';
         $productTableName = '';
         $templateTableName = '';
@@ -65,10 +47,12 @@ class Product
         $partFrom = $this->collection->getSelect()->getPart('from');
 
         foreach ($this->productCollectionUpdaters->getData() as $productCollectionUpdater) {
+            Profiler::start('APO1: process PRODUCT collection updater ' . get_class($productCollectionUpdater));
             $alias = $productCollectionUpdater->getTableAlias();
             $productTableName = $productCollectionUpdater->getProductTableName();
             $templateTableName = $productCollectionUpdater->getTemplateTableName();
             $attributeKeys = array_merge($attributeKeys, $productCollectionUpdater->getColumns());
+            Profiler::stop('APO1: process PRODUCT collection updater ' . get_class($productCollectionUpdater));
         }
 
         if (array_key_exists($alias, $partFrom)
@@ -77,6 +61,7 @@ class Product
             || empty($attributeKeys)
             || empty($alias)
         ) {
+            Profiler::stop('APO1: Process PRODUCT collection by updaters');
             return $this->collection;
         }
 
@@ -96,6 +81,7 @@ class Product
             $attributeKeys
         );
 
+        Profiler::stop('APO1: Process PRODUCT collection by updaters');
         return $this->collection;
     }
 }

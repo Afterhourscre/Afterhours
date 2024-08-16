@@ -14,7 +14,6 @@ class OptionDescription extends AbstractModel
     const OPTIONTEMPLATES_TABLE_NAME = 'mageworx_optiontemplates_group_option_description';
 
     const COLUMN_NAME_OPTION_DESCRIPTION_ID = 'option_description_id';
-    const COLUMN_NAME_MAGEWORX_OPTION_ID    = 'mageworx_option_id';
     const COLUMN_NAME_OPTION_ID             = 'option_id';
     const COLUMN_NAME_STORE_ID              = 'store_id';
     const COLUMN_NAME_DESCRIPTION           = 'description';

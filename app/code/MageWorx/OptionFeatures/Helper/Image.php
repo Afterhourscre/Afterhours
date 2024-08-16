@@ -18,39 +18,12 @@ use MageWorx\OptionFeatures\Model\Product\Option\Value\Media\Config;
 
 class Image extends AbstractHelper
 {
-    /**
-     * @var Config
-     */
-    protected $mediaConfig;
+    protected Config $mediaConfig;
+    protected Filesystem $filesystem;
+    protected WriteFactory $directoryWriteFactory;
+    protected UploaderFactory $uploaderFactory;
+    protected AdapterFactory $adapterFactory;
 
-    /**
-     * @var Filesystem
-     */
-    protected $filesystem;
-
-    /**
-     * @var WriteFactory
-     */
-    protected $directoryWriteFactory;
-
-    /**
-     * @var UploaderFactory
-     */
-    protected $uploaderFactory;
-
-    /**
-     * @var AdapterFactory
-     */
-    protected $adapterFactory;
-
-    /**
-     * @param Context $context
-     * @param Config $mediaConfig
-     * @param Filesystem $filesystem
-     * @param WriteFactory $directoryWriteFactory
-     * @param UploaderFactory $uploaderFactory
-     * @param AdapterFactory $adapterFactory
-     */
     public function __construct(
         Context $context,
         Config $mediaConfig,

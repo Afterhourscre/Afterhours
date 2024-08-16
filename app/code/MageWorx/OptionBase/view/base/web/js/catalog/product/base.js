@@ -8,25 +8,27 @@ define([
     'uiRegistry',
     'underscore',
     'mage/template',
-    'jquery/ui'
+    'jquery-ui-modules/widget'
 ], function ($, utils, registry, _, mageTemplate) {
     'use strict';
 
     $.widget('mageworx.optionBase', {
         options: {
             optionConfig: {},
+            systemConfig: {},
             productConfig: {},
             productQtySelector: '#qty',
             productPriceInfoSelector: '.product-info-price',
+            mageworxAdditionalPriceInfoSelector: '.mageworx-product-final-price',
             extendedOptionsConfig: {},
             priceHolderSelector: '.price-box',
             dateDropdownsSelector: '[data-role=calendar-dropdown]',
             optionsSelector: '.product-custom-option',
             optionHandlers: {},
             optionTemplate: '<%= data.label %>' +
-            '<% if (data.finalPrice.value) { %>' +
-            ' +<%- data.finalPrice.formatted %>' +
-            '<% } %>',
+                '<% if (data.finalPrice.value) { %>' +
+                ' +<%- data.finalPrice.formatted %>' +
+                '<% } %>',
             controlContainer: 'dd',
             priceTemplate: '<span class="price"><%- data.formatted %></span>',
             localePriceFormat: {},
@@ -34,6 +36,7 @@ define([
             productRegularPriceExclTax: 0.0,
             productFinalPriceInclTax: 0.0,
             productRegularPriceInclTax: 0.0,
+            configUrl: '',
             priceDisplayMode: 0,
             catalogPriceContainsTax: false,
             configurableContainerSelector: '[data-role=swatch-options]',
@@ -45,41 +48,21 @@ define([
          * @private
          */
         _init: function initPriceBundle() {
-            $(this.options.optionsSelector, this.getFormElement()).trigger('change');
-
             var self = this;
-            _.each( this.updaters, function(value, key) {
-                try {
-                    self.triggerAfterInitPrice(self.getUpdater(key));
-                } catch (e) {
-                    console.log('Error:');
-                    console.log(e);
-                }
-            });
-        },
-
-        onUpdatePrice: function onUpdatePrice(event, prices) {
-            return this.updatePrice(prices);
-        },
-
-        _create: function create() {
-            var self = this;
-            $(document).ready(function() {
-
-                registry.set('mageworxOptionBase', self);
-
+            $(document).ready(function () {
+                $('#product-addtocart-button').attr('disabled', true);
                 // Get existing updaters from registry
                 var updaters = registry.get('mageworxOptionUpdaters');
                 if (!updaters) {
                     updaters = {};
                 }
 
-                var sortOrderArray = Object.keys(updaters).sort(function(a, b) {
+                var sortOrderArray = Object.keys(updaters).sort(function (a, b) {
                     return a - b;
                 });
 
                 // Add each updater according to sort order
-                $.each(sortOrderArray, function( key, value ) {
+                $.each(sortOrderArray, function (key, value) {
                     if (!updaters.hasOwnProperty(value)) {
                         return;
                     }
@@ -89,7 +72,28 @@ define([
                 // Bind option change event listener
                 self.addOptionChangeListeners();
                 $('#product-options-wrapper').show();
+
+                _.each(self.updaters, function (value, key) {
+                    try {
+                        self.triggerAfterInitPrice(self.getUpdater(key));
+                    } catch (e) {
+                        console.log('Error:');
+                        console.log(e);
+                    }
+                });
+
+                self.processApplyChanges();
+                $('#product-addtocart-button').prop('disabled', false);
             });
+        },
+
+        onUpdatePrice: function onUpdatePrice(event, prices) {
+            return this.updatePrice(prices);
+        },
+
+        _create: function create() {
+            var self = this;
+            registry.set('mageworxOptionBase', self);
         },
 
         /**
@@ -100,6 +104,7 @@ define([
          */
         addUpdater: function addUpdater(name, updater) {
             var updaterInstance;
+            var self = this;
             try {
                 updaterInstance = this.getUpdater(name);
             } catch (e) {
@@ -107,17 +112,61 @@ define([
             }
 
             if (updaterInstance) {
-                return;
+                updaterInstance.options = updater.options;
+                if (self.options.productId != window.productId && !self.options.isInUpdateProcess) {
+                    self.getBaseConfig().then(function (data) {
+                        try {
+                            self.runUpdater(updaterInstance);
+                        } catch (e) {
+                            console.log('Error:');
+                            console.log(e);
+                        }
+                    }).catch(function (e) {
+                        console.log(e)
+                    });
+                } else if (self.options.productId == window.productId) {
+                    try {
+                        self.runUpdater(updaterInstance);
+                    } catch (e) {
+                        console.log('Error:');
+                        console.log(e);
+                    }
+                }
+            } else {
+                this.updaters[name] = updater;
+                try {
+                    updaterInstance = this.getUpdater(name);
+                    this.runUpdater(updaterInstance);
+                } catch (e) {
+                    console.log('Error:');
+                    console.log(e);
+                }
             }
+        },
 
-            this.updaters[name] = updater;
-            try {
-                updaterInstance = this.getUpdater(name);
-                this.runUpdater(updaterInstance);
-            } catch (e) {
-                console.log('Error:');
-                console.log(e);
-            }
+        getBaseConfig: function getBaseConfig() {
+            var self = this;
+            self.options.isInUpdateProcess = true;
+
+            return new Promise(function (resolve, reject) {
+                $.ajax({
+                    url: self.options.configUrl,
+                    data: {
+                        productId: window.productId
+                    },
+                    success: function (data) {
+                        $.each(data, function (index, element) {
+                            self.options[index] = JSON.parse(element);
+                        });
+                        self.options.isInUpdateProcess = false;
+                        resolve(data) // Resolve promise and go to then()
+                    },
+                    error: function (e) {
+                        self.options.isInUpdateProcess = false;
+                        reject(e) // Reject the promise and go to catch()
+                    }
+                });
+            });
         },
 
         /**
@@ -170,9 +219,7 @@ define([
 
             //for product qty
             $('body').on('change', this.options.productQtySelector, function () {
-                if (self.isAnyOptionSelected() || self.isNonSelectableOptionsUsed()) {
-                    self.processApplyChanges();
-                }
+                self.processApplyChanges();
             });
         },
 
@@ -180,29 +227,30 @@ define([
          * Collect and apply all logic from APO extensions which add something to option value title
          * example: price templates, stock messages, etc
          */
-        setOptionValueTitle: function setOptionValueTitle(newOptionConfig)
-        {
-            var form = this.element,
+        setOptionValueTitle: function setOptionValueTitle(newOptionConfig) {
+            var form = this.getFormElement(),
                 options = $('.product-custom-option', form),
                 self = this,
                 config = self.options,
-                optionConfig = config.optionConfig;
+                optionConfig = config.optionConfig,
+                priceSymbol = config.localePriceFormat.priceSymbol;
 
             if (!_.isUndefined(newOptionConfig)) {
                 optionConfig = newOptionConfig;
             }
 
-            this._updateSelectOptions(options.filter('select'), optionConfig);
-            this._updateInputOptions(options.filter('input'), optionConfig);
+            this._updateSelectOptions(options.filter('select'), optionConfig, priceSymbol);
+            this._updateInputOptions(options.filter('input[type!="hidden"]'), optionConfig, priceSymbol);
         },
 
         /**
          * Make changes to select options
          * @param options
          * @param opConfig
+         * @param priceSymbol
          */
-        _updateSelectOptions: function(options, opConfig)
-        {
+        _updateSelectOptions: function (options, opConfig, priceSymbol) {
+            var self = this;
             options.each(function (index, element) {
                 var $element = $(element);
 
@@ -214,8 +262,13 @@ define([
                     return true;
                 }
 
-                var optionId = utils.findOptionId($element),
-                    optionConfig = opConfig[optionId];
+                var optionId = utils.findOptionId($element);
+
+                if (!opConfig[optionId]) {
+                    return;
+                }
+                var optionConfig = opConfig[optionId],
+                    isHideValuePrice = self.isHideProductPageValuePrice(optionId);
 
                 $element.find('option').each(function (idx, option) {
                     var $option = $(option),
@@ -225,34 +278,13 @@ define([
                         return;
                     }
 
-                    var title = optionConfig[optionValue] && optionConfig[optionValue].name,
-                        valuePrice = utils.formatPrice(optionConfig[optionValue].prices.finalPrice.amount),
-                        stockMessage = '',
-                        specialPriceDisplayNode = '';
+                    if (!optionConfig[optionValue]) {
+                        return;
+                    }
 
-                    if (optionConfig[optionValue]) {
-                        if (!_.isEmpty(optionConfig[optionValue].special_price_display_node)) {
-                            specialPriceDisplayNode = optionConfig[optionValue].special_price_display_node;
-                        }
-                        if (!_.isEmpty(optionConfig[optionValue].stockMessage)) {
-                            stockMessage = optionConfig[optionValue].stockMessage;
-                        }
-                        if (!_.isEmpty(optionConfig[optionValue].title)) {
-                            title = optionConfig[optionValue].title;
-                        }
-                        if (!_.isEmpty(optionConfig[optionValue].valuePrice)) {
-                            valuePrice = optionConfig[optionValue].valuePrice;
-                        }
-                    }
-                    if (specialPriceDisplayNode) {
-                        $option.text(title + ' ' + specialPriceDisplayNode + ' ' + stockMessage);
-                    } else if (stockMessage) {
-                        if (parseFloat(optionConfig[optionValue].prices.finalPrice.amount) > 0) {
-                            $option.text(title + ' +' + valuePrice + ' ' + stockMessage);
-                        } else {
-                            $option.text(title + stockMessage);
-                        }
-                    }
+                    var optionValueConfig = optionConfig[optionValue];
+
+                    self.getOptionText($option, optionValueConfig, priceSymbol, isHideValuePrice);
                 });
             });
         },
@@ -261,9 +293,10 @@ define([
          * Make changes to select options
          * @param options
          * @param opConfig
+         * @param priceSymbol
          */
-        _updateInputOptions: function(options, opConfig)
-        {
+        _updateInputOptions: function (options, opConfig, priceSymbol) {
+            var self = this;
             options.each(function (index, element) {
                 var $element = $(element);
 
@@ -282,36 +315,81 @@ define([
                     return;
                 }
 
-                var optionConfig = opConfig[optionId],
-                    title = optionConfig[optionValue] && optionConfig[optionValue].name,
-                    valuePrice = utils.formatPrice(optionConfig[optionValue].prices.finalPrice.amount),
-                    stockMessage = '',
-                    specialPriceDisplayNode = '';
+                if (!opConfig[optionId]) {
+                    return;
+                }
 
-                if (optionConfig[optionValue]) {
-                    if (!_.isEmpty(optionConfig[optionValue].special_price_display_node)) {
-                        specialPriceDisplayNode = optionConfig[optionValue].special_price_display_node;
-                    }
-                    if (!_.isEmpty(optionConfig[optionValue].stockMessage)) {
-                        stockMessage = optionConfig[optionValue].stockMessage;
-                    }
-                    if (!_.isEmpty(optionConfig[optionValue].title)) {
-                        title = optionConfig[optionValue].title;
-                    }
-                    if (!_.isEmpty(optionConfig[optionValue].valuePrice)) {
-                        valuePrice = optionConfig[optionValue].valuePrice;
-                    }
+                var optionConfig = opConfig[optionId];
+
+                if (!optionConfig[optionValue]) {
+                    return;
                 }
-                if (specialPriceDisplayNode) {
-                    $element.next('label').text(title + ' ' + specialPriceDisplayNode + ' ' + stockMessage);
-                } else if (stockMessage) {
-                    if (parseFloat(optionConfig[optionValue].prices.finalPrice.amount) > 0) {
-                        $element.next('label').text(title + ' +' + valuePrice + ' ' + stockMessage);
-                    } else {
-                        $element.next('label').text(title + stockMessage);
-                    }
-                }
+                var optionValueConfig = optionConfig[optionValue],
+                    isHideValuePrice = self.isHideProductPageValuePrice(optionId);
+
+                self.getOptionText($element.next('label'), optionValueConfig, priceSymbol, isHideValuePrice);
             });
+        },
+
+        isHideProductPageValuePrice: function (optionId) {
+            return Boolean(Number(this.options.extendedOptionsConfig[optionId].hide_product_page_value_price));
+        },
+
+        /**
+         * Formatting information about the option text
+         * @param $option
+         * @param optionValueConfig
+         * @param priceSymbol
+         */
+        getOptionText: function ($option, optionValueConfig, priceSymbol, isHideValuePrice) {
+            var title = optionValueConfig && optionValueConfig.name,
+                valuePrice = utils.formatPrice(optionValueConfig.prices.finalPrice.amount),
+                stockMessage = '',
+                specialPriceDisplayNode = '',
+                exclPriceTitle = '';
+
+            if (optionValueConfig) {
+                if (!_.isEmpty(optionValueConfig.special_price_display_node)) {
+                    specialPriceDisplayNode = optionValueConfig.special_price_display_node;
+                }
+                if (!_.isEmpty(optionValueConfig.stockMessage)) {
+                    stockMessage = optionValueConfig.stockMessage;
+                }
+                if (!_.isEmpty(optionValueConfig.title)) {
+                    title = optionValueConfig.title;
+                }
+                if (isHideValuePrice) {
+                    $option.text(title + ' ' + stockMessage);
+                }
+                if (optionValueConfig.prices.basePrice.amount) {
+                    if (optionValueConfig.prices.finalPrice.amount
+                        && optionValueConfig.prices.finalPrice.amount > optionValueConfig.prices.basePrice.amount
+                    ) {
+                        valuePrice = optionValueConfig.prices.finalPrice.amount.toFixed(2);
+                    } else {
+                        valuePrice = optionValueConfig.prices.basePrice.amount;
+                    }
+                }
+            }
+            if (specialPriceDisplayNode) {
+                $option.text("");
+                $option.append('<span>' + title + ' ' + specialPriceDisplayNode + ' ' + stockMessage + '</span>');
+            } else if (stockMessage) {
+
+                if (this.options.productConfig.is_display_both_prices) {
+                    var exclPrice = priceSymbol + optionValueConfig.prices.basePrice.amount.toFixed(2);
+                    exclPriceTitle = $.mage.__('(Excl. tax: ') + exclPrice + ')';
+                }
+
+                if (parseFloat(optionValueConfig.prices.finalPrice.amount) > 0) {
+                    $option.text(title + ' +' + priceSymbol + valuePrice + ' ' + exclPriceTitle + ' ' + stockMessage);
+                } else if (parseFloat(optionValueConfig.prices.finalPrice.amount) < 0) {
+                    valuePrice = -valuePrice;
+                    $option.text(title + ' -' + priceSymbol + valuePrice + ' ' + exclPriceTitle + ' ' + stockMessage);
+                } else {
+                    $option.text(title + ' ' + stockMessage);
+                }
+            }
         },
 
         /**
@@ -333,13 +411,15 @@ define([
          */
         getFormElement: function () {
             var $form;
-            if (this.element.is('form')) {
+            if (this.options.systemConfig.area === 'adminhtml') {
+                $form = $('#product_composite_configure_form');
+            } else if (this.element.is('form')) {
                 $form = this.element;
             } else {
                 $form = this.element.closest('form');
             }
 
-            if ($form.length == 0) {
+            if ($form.length === 0) {
                 throw 'Invalid or empty form element';
             }
 
@@ -409,11 +489,71 @@ define([
             }, 110)
         },
 
+        /**
+         * Set product final price
+         * @param finalPrice
+         */
+        setAdditionalProductFinalPrice: function (finalPrice) {
+            var config = this.options,
+                format = config.priceFormat,
+                template = config.priceTemplate,
+                $pc = $(config.mageworxAdditionalPriceInfoSelector).find('[data-price-type="finalPrice"]'),
+                templateData = {};
+
+            if (_.isUndefined($pc)) {
+                return;
+            }
+
+            if (finalPrice < 0) {
+                finalPrice = 0;
+            }
+
+            template = mageTemplate(template);
+            templateData.data = {
+                value: finalPrice,
+                formatted: utils.formatPrice(finalPrice, format)
+            };
+
+            $pc.hide();
+            setTimeout(function () {
+                $pc.html(template(templateData));
+                $pc.fadeIn(500);
+            }, 110)
+        },
+
         setProductPriceExclTax: function (priceExcludeTax) {
             var config = this.options,
                 format = config.priceFormat,
                 template = config.priceTemplate,
                 $pc = $(config.productPriceInfoSelector).find('[data-price-type="basePrice"]'),
+                templateData = {};
+
+            if (_.isUndefined($pc)) {
+                return;
+            }
+
+            if (priceExcludeTax < 0) {
+                priceExcludeTax = 0;
+            }
+
+            template = mageTemplate(template);
+            templateData.data = {
+                value: priceExcludeTax,
+                formatted: utils.formatPrice(priceExcludeTax, format)
+            };
+
+            $pc.hide();
+            setTimeout(function () {
+                $pc.html(template(templateData));
+                $pc.fadeIn(500);
+            }, 110)
+        },
+
+        setAdditionalProductPriceExclTax: function (priceExcludeTax) {
+            var config = this.options,
+                format = config.priceFormat,
+                template = config.priceTemplate,
+                $pc = $(config.mageworxAdditionalPriceInfoSelector).find('[data-price-type="basePrice"]'),
                 templateData = {};
 
             if (_.isUndefined($pc)) {
@@ -446,6 +586,38 @@ define([
                 format = config.priceFormat,
                 template = config.priceTemplate,
                 $pc = $(config.productPriceInfoSelector).find('[data-price-type="oldPrice"]'),
+                templateData = {};
+
+            if (_.isUndefined($pc)) {
+                return;
+            }
+
+            if (regularPrice < 0) {
+                regularPrice = 0;
+            }
+
+            template = mageTemplate(template);
+            templateData.data = {
+                value: regularPrice,
+                formatted: utils.formatPrice(regularPrice, format)
+            };
+
+            $pc.hide();
+            setTimeout(function () {
+                $pc.html(template(templateData));
+                $pc.fadeIn(500);
+            }, 110)
+        },
+
+        /**
+         * Set product regular price
+         * @param regularPrice
+         */
+        setAdditionalProductRegularPrice: function (regularPrice) {
+            var config = this.options,
+                format = config.priceFormat,
+                template = config.priceTemplate,
+                $pc = $(config.mageworxAdditionalPriceInfoSelector).find('[data-price-type="oldPrice"]'),
                 templateData = {};
 
             if (_.isUndefined($pc)) {
@@ -503,202 +675,6 @@ define([
                 }
             });
             return isUsed;
-        },
-
-        /**
-         * Get summary price from all selected options
-         *
-         * @param {number} withTax
-         * @param {boolean} isRegularPrice
-         * @returns {number}
-         */
-        calculateSelectedOptionsPrice: function (withTax, isRegularPrice) {
-            var self = this,
-                form = this.getFormElement(),
-                options = $(this.options.optionsSelector, form),
-                config = this.options,
-                processedDatetimeOptions = [],
-                price = 0;
-
-            options.filter('select').each(function (index, element) {
-                var $element = $(element),
-                    optionId = utils.findOptionId($element),
-                    optionConfig = config.optionConfig && config.optionConfig[optionId],
-                    values = $element.val();
-
-                if (_.isUndefined(values) || !values) {
-                    return;
-                }
-
-                if (!Array.isArray(values)) {
-                    values = [values];
-                }
-
-                $(values).each(function (i, e) {
-                    if (_.isUndefined(optionConfig[e])) {
-                        if (_.isUndefined(optionConfig.prices)) {
-                            return;
-                        }
-
-                        var dateDropdowns = $element.parent().find(self.options.dateDropdownsSelector);
-                        if (_.isUndefined(dateDropdowns)) {
-                            return;
-                        }
-
-                        if ($element.closest('.field').css('display') == 'none') {
-                            $element.val('');
-                            return;
-                        }
-
-                        var optionConfigCurrent = self.getDateDropdownConfig(optionConfig, dateDropdowns);
-                        if (_.isUndefined(optionConfigCurrent.prices) ||
-                            $.inArray(optionId, processedDatetimeOptions) != -1) {
-                            return;
-                        }
-                        processedDatetimeOptions.push(optionId);
-                    } else {
-                        var optionConfigCurrent = optionConfig[e];
-                    }
-
-                    var qty = !_.isUndefined(optionConfigCurrent['qty']) ? optionConfigCurrent['qty'] : 1,
-                        actualPrice = self.getActualPrice(optionId, e, qty, isRegularPrice),
-                        actualFinalPrice = actualPrice,
-                        actualBasePrice = actualPrice;
-                    if (!actualFinalPrice) {
-                        actualFinalPrice = parseFloat(optionConfigCurrent.prices.finalPrice.amount);
-                    }
-                    if (!actualBasePrice) {
-                        actualBasePrice = parseFloat(optionConfigCurrent.prices.basePrice.amount);
-                    }
-                    if (withTax) {
-                        price += actualFinalPrice * qty;
-                    } else {
-                        price += actualBasePrice * qty;
-                    }
-                });
-            });
-
-            options.filter('input[type="radio"], input[type="checkbox"]').each(function (index, element) {
-                var $element = $(element),
-                    optionId = utils.findOptionId($element),
-                    optionConfig = config.optionConfig && config.optionConfig[optionId],
-                    value = $element.val();
-
-                if (!$element.is(':checked')) {
-                    return;
-                }
-
-                if (typeof value == 'undefined' || !value) {
-                    return;
-                }
-
-                var qty = !_.isUndefined(optionConfig[value]['qty']) ? optionConfig[value]['qty'] : 1,
-                    actualPrice = self.getActualPrice(optionId, value, qty, isRegularPrice),
-                    actualFinalPrice = actualPrice,
-                    actualBasePrice = actualPrice;
-                if (!actualFinalPrice) {
-                    actualFinalPrice = parseFloat(optionConfig[value].prices.finalPrice.amount);
-                }
-                if (!actualBasePrice) {
-                    actualBasePrice = parseFloat(optionConfig[value].prices.basePrice.amount);
-                }
-                if (withTax) {
-                    price += actualFinalPrice * qty;
-                } else {
-                    price += actualBasePrice * qty;
-                }
-            });
-
-            options.filter('input[type="text"], textarea, input[type="file"]').each(function (index, element) {
-                var $element = $(element),
-                    optionId = utils.findOptionId($element),
-                    optionConfig = config.optionConfig && config.optionConfig[optionId],
-                    value = $element.val();
-
-                if (typeof value == 'undefined' || !value) {
-                    if ($('#delete-options_' + optionId + '_file').length < 1) {
-                        return;
-                    }
-                }
-
-                if ($element.closest('.field').css('display') == 'none') {
-                    $element.val('');
-                    return;
-                }
-
-                var qty = typeof optionConfig['qty'] != 'undefined' ? optionConfig['qty'] : 1;
-                if (withTax) {
-                    price += parseFloat(optionConfig.prices.finalPrice.amount) * qty;
-                } else {
-                    price += parseFloat(optionConfig.prices.basePrice.amount) * qty;
-                }
-            });
-
-            return price;
-        },
-
-        /**
-         * Get actual price of option considering special/tier prices
-         *
-         * @param {number} optionId
-         * @param {number} valueId
-         * @param {number} qty
-         * @param {boolean} isRegularPrice
-         * @returns {number}
-         */
-        getActualPrice: function (optionId, valueId, qty, isRegularPrice)
-        {
-            var config = this.options,
-                specialPrice = null,
-                tierPrices = null,
-                price = null,
-                totalQty = 0,
-                suitableTierPrice = null,
-                suitableTierPriceQty = null,
-                productQty = $(config.productQtySelector).val(),
-                isOneTime = this.isOneTimeOption(optionId);
-            if (_.isUndefined(config.extendedOptionsConfig[optionId].values)) {
-                return price;
-            }
-
-            if (isOneTime) {
-                totalQty = parseFloat(qty);
-            } else {
-                totalQty = parseFloat(productQty) * parseFloat(qty);
-            }
-
-            if (!isRegularPrice) {
-                if (!_.isUndefined(config.extendedOptionsConfig[optionId].values[valueId].special_price)) {
-                    specialPrice = config.extendedOptionsConfig[optionId].values[valueId].special_price;
-                }
-            } else {
-                if (!_.isUndefined(config.optionConfig[optionId][valueId].prices.oldPrice.amount)) {
-                    specialPrice = config.optionConfig[optionId][valueId].prices.oldPrice.amount;
-                }
-            }
-
-            if (!_.isUndefined(config.extendedOptionsConfig[optionId].values[valueId].tier_price)) {
-                tierPrices = $.parseJSON(config.extendedOptionsConfig[optionId].values[valueId].tier_price);
-                if (_.isUndefined(tierPrices[totalQty])) {
-                    $.each(tierPrices, function(index, tierPrice) {
-                        if (suitableTierPriceQty < index && totalQty >= index) {
-                            suitableTierPrice = tierPrice;
-                            suitableTierPriceQty = index;
-                        }
-                    });
-                } else {
-                    suitableTierPrice = tierPrices[totalQty];
-                    suitableTierPriceQty = totalQty;
-                }
-            }
-
-            if (suitableTierPrice && (suitableTierPrice.price < specialPrice || specialPrice === null)) {
-                price = suitableTierPrice.price;
-            } else {
-                price = specialPrice;
-            }
-
-            return price;
         },
 
         /**
@@ -789,8 +765,7 @@ define([
         },
 
 
-        getDateDropdownConfig: function (optionConfig, siblings)
-        {
+        getDateDropdownConfig: function (optionConfig, siblings) {
             var isNeedToUpdate = true;
 
             siblings.each(function (index, el) {
@@ -810,7 +785,7 @@ define([
         isAnyOptionSelected: function isAnyOptionSelected() {
             var isAnyOptionSelected = false,
                 self = this;
-            $.each(self.getApoData(), function( index, value ) {
+            $.each(self.getApoData(), function (index, value) {
                 if (!_.isUndefined(value) && value.length > 0) {
                     isAnyOptionSelected = true;
                 }
@@ -843,6 +818,84 @@ define([
             if (index !== -1) {
                 window.newlyShowedOptionValues.splice(index, 1);
             }
+        },
+
+        getSelectedData: function getSelectedData() {
+            if (_.isUndefined(window.apoSelectedData)) {
+                window.apoSelectedData = {};
+            }
+            return window.apoSelectedData;
+        },
+
+        collectSelectedData: function collectSelectedData() {
+            window.apoSelectedData = {};
+
+            var self = this,
+                form = this.getFormElement(),
+                config = this.options,
+                options = $(config.optionsSelector, form);
+
+            options.filter('select').each(function (index, element) {
+                var $element = $(element),
+                    optionId = utils.findOptionId($element),
+                    optionConfig = config.optionConfig && config.optionConfig[optionId],
+                    values = $element.val();
+
+                if (_.isUndefined(values) || !values) {
+                    return;
+                }
+
+                if (!Array.isArray(values)) {
+                    values = [values];
+                }
+
+                $(values).each(function (i, valueId) {
+                    if (_.isUndefined(optionConfig[valueId])) {
+                        if (_.isUndefined(optionConfig.prices)) {
+                            return;
+                        }
+
+                        var dateDropdowns = $element.parent().find(config.dateDropdownsSelector);
+                        if (!_.isUndefined(dateDropdowns)) {
+                            return;
+                        }
+
+                        if ($element.closest('.field').css('display') == 'none') {
+                            $element.val('');
+                            return;
+                        }
+                    }
+
+                    if (Array.isArray(window.apoSelectedData[optionId])) {
+                        window.apoSelectedData[optionId].push(valueId);
+                    } else {
+                        window.apoSelectedData[optionId] = [];
+                        window.apoSelectedData[optionId].push(valueId);
+                    }
+                });
+            });
+
+            options.filter('input[type="radio"], input[type="checkbox"]').each(function (index, element) {
+                var $element = $(element),
+                    optionId = utils.findOptionId($element),
+                    optionConfig = config.optionConfig && config.optionConfig[optionId],
+                    valueId = $element.val();
+
+                if (!$element.is(':checked')) {
+                    return;
+                }
+
+                if (_.isUndefined(valueId) || !valueId) {
+                    return;
+                }
+
+                if (Array.isArray(window.apoSelectedData[optionId])) {
+                    window.apoSelectedData[optionId].push(valueId);
+                } else {
+                    window.apoSelectedData[optionId] = [];
+                    window.apoSelectedData[optionId].push(valueId);
+                }
+            });
         }
     });
 

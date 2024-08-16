@@ -15,15 +15,8 @@ class Value extends \Magento\Catalog\Model\ResourceModel\Product\Option\Value
     const TABLE_NAME_CATALOG_PRODUCT_OPTION_TYPE_PRICE = 'catalog_product_option_type_price';
     const TABLE_NAME_CATALOG_PRODUCT_OPTION_TYPE_TITLE = 'catalog_product_option_type_title';
 
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
-
-    /**
-     * @var OptionValueAttributes
-     */
-    protected $optionValueAttributes;
+    protected BaseHelper $baseHelper;
+    protected OptionValueAttributes $optionValueAttributes;
 
     /**
      * Class constructor

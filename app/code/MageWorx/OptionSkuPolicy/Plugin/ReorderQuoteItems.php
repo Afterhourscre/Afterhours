@@ -16,14 +16,8 @@ use MageWorx\OptionSkuPolicy\Helper\Data as Helper;
  */
 class ReorderQuoteItems
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
+    protected Helper $helper;
 
-    /**
-     * @param Helper $helper
-     */
     public function __construct(
         Helper $helper
     ) {

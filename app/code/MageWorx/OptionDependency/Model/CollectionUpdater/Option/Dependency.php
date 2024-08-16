@@ -5,6 +5,7 @@
  */
 namespace MageWorx\OptionDependency\Model\CollectionUpdater\Option;
 
+use Magento\Framework\Exception\LocalizedException;
 use MageWorx\OptionBase\Model\Product\Option\AbstractUpdater;
 use MageWorx\OptionDependency\Model\Config;
 
@@ -36,7 +37,7 @@ class Dependency extends AbstractUpdater
      */
     public function getOnConditionsAsString()
     {
-        return $this->getTableAlias().'.child_option_id = main_table.option_id';
+        return $this->getTableAlias().'.dp_child_option_id = main_table.option_id';
     }
 
     /**
@@ -66,36 +67,48 @@ class Dependency extends AbstractUpdater
         $entityType = $conditions['entity_type'];
         $tableName = $this->getTableName($entityType);
 
-        $this->resource->getConnection()->query('SET SESSION group_concat_max_len = 100000;');
-
         $statement = $this->resource->getConnection()->select()
             ->from(
                 $tableName,
                 [
-                    'child_option_id',
+                    'dp_child_option_id',
                     'dependency' => 'concat(
                             \'[\',
-                            group_concat(concat(\'["\', parent_option_id, \'","\', parent_option_type_id, \'"]\')),
+                            group_concat(concat(\'["\', dp_parent_option_id, \'","\', dp_parent_option_type_id, \'"]\')),
                             \']\'
                         )',
                 ]
             );
 
-        if (!empty($conditions['entity_id'])) {
+        if (!empty($conditions['entity_ids'])) {
             if ($entityType == 'group') {
-                $statement->where("child_option_type_id = '0' AND group_id = ?", $conditions['entity_id']);
+                $statement->where(
+                    "dp_child_option_type_id = '0' AND group_id "
+                    . $this->helper->getComparisonConditionPart($conditions['entity_ids'])
+                );
             } else {
                 $statement->where(
-                    "child_option_type_id = '0' AND product_id = ?",
-                    $conditions['row_id'] ? $conditions['row_id'] : $conditions['entity_id']
+                    "dp_child_option_type_id = '0' AND product_id " . $this->helper->getComparisonConditionPart(
+                        $conditions['row_ids']
+                            ? $conditions['row_ids']
+                            : $conditions['entity_ids']
+                    )
                 );
             }
         } else {
-            $statement->where('child_option_type_id = ?', '0');
+            $statement->where('dp_child_option_type_id = ?', '0');
         }
 
-        $statement->group('child_option_id');
+        $statement->group('dp_child_option_id');
 
-        return new \Zend_Db_Expr('('.$statement->assemble().')');
+        return new \Zend_Db_Expr('(' . $statement->assemble() . ')');
+    }
+
+    /**
+     * @throws LocalizedException
+     */
+    public function determineJoinNecessity(): bool
+    {
+        return !$this->systemHelper->isFrontend();
     }
 }

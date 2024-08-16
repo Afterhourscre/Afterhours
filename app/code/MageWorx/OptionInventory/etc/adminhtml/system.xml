@@ -16,17 +16,33 @@
             <resource>MageWorx_OptionInventory::config_optioninventory</resource>
             <group id="optioninventory" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label><![CDATA[Option Inventory]]></label>
-                <field id="display_option_inventory_on_frontend" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label><![CDATA[Display Option Inventory on Front-end]]></label>
+                <field id="enable" translate="label" type="select" sortOrder="5" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label><![CDATA[Enable Option Inventory Functionality]]></label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="disable_out_of_stock_options" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label><![CDATA[Out-Of-Stock options]]></label>
-                    <source_model>MageWorx\OptionInventory\Model\Source\HideOutOfStockOptions</source_model>
+                <field id="display_option_inventory_on_frontend" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label><![CDATA[Display Option Qty on Front-end]]></label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="display_out_of_stock_message" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label><![CDATA[Display Out-Of-Stock message]]></label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="display_out_of_stock_message_on_options_level" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label><![CDATA[Display Out-Of-Stock message on options level]]></label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Display 'out of stock' message on options level if all option values are out of stock.]]></comment>
+                </field>
+                <field id="disable_out_of_stock_options" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label><![CDATA[Out-Of-Stock options]]></label>
+                    <source_model>MageWorx\OptionInventory\Model\Source\HideOutOfStockOptions</source_model>
+                </field>
+                <field id="require_hidden_out_of_stock_options" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label><![CDATA[Show required 'Out of stock' options]]></label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="mageworx_apo/optioninventory/disable_out_of_stock_options">0</field>
+                    </depends>
                 </field>
             </group>
         </section>

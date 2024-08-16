@@ -15,30 +15,11 @@ use MageWorx\OptionBase\Model\Product\Option\Value\Attributes as OptionValueAttr
 
 class AroundDuplicateOptionValue
 {
-    /**
-     * @var BaseEntityModel
-     */
-    protected $baseEntityModel;
-
-    /**
-     * @var OptionBaseHelper
-     */
-    protected $helper;
-
-    /**
-     * @var HttpRequest
-     */
-    protected $request;
-
-    /**
-     * @var Registry
-     */
-    protected $registry;
-
-    /**
-     * @var OptionValueAttributes
-     */
-    protected $optionValueAttributes;
+    protected BaseEntityModel $baseEntityModel;
+    protected OptionBaseHelper $helper;
+    protected HttpRequest $request;
+    protected Registry $registry;
+    protected OptionValueAttributes $optionValueAttributes;
 
     public function __construct(
         OptionValueAttributes $optionValueAttributes,

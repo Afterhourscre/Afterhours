@@ -12,46 +12,31 @@ use MageWorx\OptionBase\Helper\Data as OptionBaseHelper;
 use \Magento\Framework\App\Request\Http as HttpRequest;
 use \Magento\Framework\Registry;
 use MageWorx\OptionBase\Model\Product\Option\Attributes as OptionAttributes;
+use MageWorx\OptionTemplates\Model\ResourceModel\Group as GroupResourceModel;
 
 class AroundDuplicateOption
 {
-    /**
-     * @var BaseEntityModel
-     */
-    protected $baseEntityModel;
-
-    /**
-     * @var OptionBaseHelper
-     */
-    protected $helper;
-
-    /**
-     * @var HttpRequest
-     */
-    protected $request;
-
-    /**
-     * @var Registry
-     */
-    protected $registry;
-
-    /**
-     * @var OptionAttributes
-     */
-    protected $optionAttributes;
+    protected BaseEntityModel $baseEntityModel;
+    protected OptionBaseHelper $helper;
+    protected HttpRequest $request;
+    protected Registry $registry;
+    protected OptionAttributes $optionAttributes;
+    protected GroupResourceModel $groupResourceModel;
 
     public function __construct(
         OptionAttributes $optionAttributes,
         BaseEntityModel $baseEntityModel,
         OptionBaseHelper $helper,
         HttpRequest $request,
-        Registry $registry
+        Registry $registry,
+        GroupResourceModel $groupResourceModel
     ) {
-        $this->optionAttributes = $optionAttributes;
-        $this->baseEntityModel = $baseEntityModel;
-        $this->helper = $helper;
-        $this->request = $request;
-        $this->registry = $registry;
+        $this->optionAttributes   = $optionAttributes;
+        $this->baseEntityModel    = $baseEntityModel;
+        $this->helper             = $helper;
+        $this->request            = $request;
+        $this->registry           = $registry;
+        $this->groupResourceModel = $groupResourceModel;
     }
 
     public function aroundDuplicate($subject, \Closure $proceed, $object, $oldProductId, $newProductId)
@@ -156,6 +141,9 @@ class AroundDuplicateOption
         if (!isset($mapOptionId)) {
             $this->registry->register('mapOptionId', $mapId);
         }
+
+        // relation template
+        $this->groupResourceModel->duplicateTemplateRelations($newProductId, $oldProductId);
 
         return $object;
     }

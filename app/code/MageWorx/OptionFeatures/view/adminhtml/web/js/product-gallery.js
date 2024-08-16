@@ -8,7 +8,7 @@ define([
     'underscore',
     'mage/template',
     'uiRegistry',
-    'jquery/ui',
+    'jquery-ui-modules/widget',
     'baseImage',
     'productGallery'
 ], function ($, _, mageTemplate, registry) {

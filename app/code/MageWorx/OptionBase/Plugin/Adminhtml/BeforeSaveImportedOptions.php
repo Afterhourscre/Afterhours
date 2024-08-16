@@ -13,30 +13,19 @@ use \Magento\Framework\App\Request\Http as HttpRequest;
 
 class BeforeSaveImportedOptions
 {
-    /**
-     * @var BaseEntityModel
-     */
-    protected $baseEntityModel;
-
-    /**
-     * @var OptionBaseHelper
-     */
-    protected $helper;
-
-    /**
-     * @var HttpRequest
-     */
-    protected $request;
+    protected BaseEntityModel $baseEntityModel;
+    protected OptionBaseHelper $helper;
+    protected HttpRequest $request;
 
     public function __construct(
         BaseEntityModel $baseEntityModel,
         OptionBaseHelper $helper,
         HttpRequest $request
     ) {
-    
+
         $this->baseEntityModel = $baseEntityModel;
-        $this->helper = $helper;
-        $this->request = $request;
+        $this->helper          = $helper;
+        $this->request         = $request;
     }
 
     public function beforeSave($object, $product)
@@ -44,11 +33,14 @@ class BeforeSaveImportedOptions
         $currentProductId = $this->helper->isEnterprise() ?
             $product->getRowId() :
             $product->getId();
-            
-        if (isset($this->request->getParam('product')['options'])) {
-            $postOptions = $this->request->getParam('product')['options'];
-            $options = $this->getImportedOptions($postOptions, $currentProductId);
-        } else {
+
+        if (!isset($this->request->getParam('product')['options'])) {
+            return [$product];
+        }
+
+        $postOptions = $this->request->getParam('product')['options'];
+        $options     = $this->getImportedOptions($postOptions, $currentProductId);
+        if (!$options) {
             return [$product];
         }
 
@@ -105,7 +97,7 @@ class BeforeSaveImportedOptions
      */
     private function updateProductOptions($product, $options)
     {
-        $productOptions = $product->getOptions();
+        $productOptions  = $product->getOptions();
         $existingOptions = array_keys($options);
 
         if (!empty($productOptions)

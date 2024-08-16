@@ -35,11 +35,11 @@ class Config extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     /**
      * Load array of dependencies by $columns.
      * Dependencies can be:
-     * 1. 'child_option_id' => 'parent_option_type_id'
-     * 2. 'child_option_type_id' => 'parent_option_type_id'
+     * 1. 'dp_child_option_id' => 'dp_parent_option_type_id'
+     * 2. 'dp_child_option_type_id' => 'dp_parent_option_type_id'
      * Then the result array processed in the Model\Config.
      *
-     * @param int $productId
+     * @param int|array $productId
      * @param array $columns
      * @return array
      */
@@ -59,7 +59,7 @@ class Config extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
 
     /**
      * Load array of option types.
-     * ['mageworx_option_id' => 'type']
+     * ['option_id' => 'type']
      *
      * @param int $productId
      * @return array
@@ -79,7 +79,7 @@ class Config extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     }
 
     /**
-     * Load mageworx_option_id array by option_id array
+     * Load option_id array by option_id array
      *
      * @param array $ids
      * @return array
@@ -100,7 +100,7 @@ class Config extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     }
 
     /**
-     * Load mageworx_option_type_id array by option_type_id array
+     * Load option_type_id array by option_type_id array
      *
      * @param array $ids
      * @return array
@@ -135,10 +135,10 @@ class Config extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
                        )
                        ->join(
                            ['dependency_table' => $this->getTable('mageworx_option_dependency')],
-                           'main_table.option_type_id = dependency_table.parent_option_type_id',
-                           ['parent_option_type_id']
+                           'main_table.option_type_id = dependency_table.dp_parent_option_type_id',
+                           ['dp_parent_option_type_id']
                        )
-                       ->where('dependency_table.parent_option_type_id IN (?)', $parentValueId);
+                       ->where('dependency_table.dp_parent_option_type_id IN (?)', $parentValueId);
 
         return $this->getConnection()->fetchAll($select);
     }

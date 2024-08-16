@@ -13,22 +13,9 @@ use MageWorx\OptionSwatches\Helper\Data as Helper;
 
 class Swatches extends Template
 {
-    /**
-     * @var EncoderInterface
-     */
-    protected $jsonEncoder;
+    protected EncoderInterface $jsonEncoder;
+    protected Helper $helper;
 
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @param Context $context
-     * @param EncoderInterface $jsonEncoder
-     * @param Helper $helper
-     * @param array $data
-     */
     public function __construct(
         Context $context,
         EncoderInterface $jsonEncoder,

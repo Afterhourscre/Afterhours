@@ -24,31 +24,11 @@ class Content extends Widget
      */
     protected $_template = 'catalog/product/helper/gallery.phtml';
 
-    /**
-     * @var Config
-     */
-    protected $mediaConfig;
+    protected Config $mediaConfig;
+    protected EncoderInterface $jsonEncoder;
+    protected Image $imageFactory;
+    private ImageHelper $imageHelper;
 
-    /**
-     * @var EncoderInterface
-     */
-    protected $jsonEncoder;
-    /**
-     * @var Image
-     */
-    protected $imageFactory;
-    /**
-     * @var ImageHelper
-     */
-    private $imageHelper;
-
-    /**
-     * @param Context $context
-     * @param EncoderInterface $jsonEncoder
-     * @param Config $mediaConfig
-     * @param ImageHelper $imageHelper
-     * @param array $data
-     */
     public function __construct(
         Context $context,
         EncoderInterface $jsonEncoder,
@@ -67,7 +47,7 @@ class Content extends Widget
      */
     public function getUploaderUrl()
     {
-        return $this->_urlBuilder->addSessionParam()->getUrl('mageworx_optionfeatures/option_value_gallery/upload');
+        return (string)$this->_urlBuilder->getUrl('mageworx_optionfeatures/option_value_gallery/upload');
     }
 
     /**
@@ -77,7 +57,7 @@ class Content extends Widget
      */
     public function getUploaderHtml()
     {
-        return $this->getChildHtml('uploader');
+        return (string)$this->getChildHtml('uploader');
     }
 
     /**
@@ -85,7 +65,7 @@ class Content extends Widget
      */
     public function getAddImagesButton()
     {
-        return $this->getButtonHtml(
+        return (string)$this->getButtonHtml(
             __('Add New Images'),
             $this->getJsObjectName() . '.showUploader()',
             'add',
@@ -126,7 +106,7 @@ class Content extends Widget
                 }
             }
 
-            return $this->jsonEncoder->encode($images);
+            return (string)$this->jsonEncoder->encode($images);
         }
 
         return '[]';
@@ -141,7 +121,7 @@ class Content extends Widget
     private function sortImagesByPosition($images)
     {
         if (is_array($images)) {
-            usort($images, function ($imageA, $imageB) {
+            usort($images, function ($imageA, $imageB): int {
                 return ($imageA['position'] < $imageB['position']) ? -1 : 1;
             });
         }
@@ -203,7 +183,7 @@ class Content extends Widget
         );
 
         $this->getUploader()->getConfig()->setUrl(
-            $this->_urlBuilder->addSessionParam()->getUrl('mageworx_optionfeatures/option_value_gallery/upload')
+            $this->_urlBuilder->getUrl('mageworx_optionfeatures/option_value_gallery/upload')
         )->setFileField(
             'image'
         )->setFilters(

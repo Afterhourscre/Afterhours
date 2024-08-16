@@ -18,6 +18,24 @@ define([
         },
 
         /**
+         * Initialize variables
+         *
+         * @param params
+         */
+        initVariables: function (params) {
+            this.entityProvider = params.provider;
+            this.entityDataScope = params.dataScope;
+            this.buttonName = params.buttonName;
+            this.isSchedule = params.isSchedule;
+            if (this.entityProvider === 'catalogstaging_update_form.catalogstaging_update_form_data_source') {
+                this.isSchedule = true;
+            }
+            this.formName = params.formName;
+            this.isEnabledHideProductPageValuePrice = params.isEnabledHideProductPageValuePrice;
+            this.pathHideValuePrice = params.pathHideValuePrice;
+        },
+
+        /**
          * Initialize fields
          */
         initFields: function () {
@@ -44,6 +62,14 @@ define([
                 selectionLimitToField.show();
                 this.initField('selection_limit_to');
             }
+
+            if (this.isEnabledHideProductPageValuePrice) {
+                this.isHideValuePriceCheckbox = registry.get(
+                    this.formName + '.' + this.formName + '.' + this.pathModal + '.' + this.pathHideValuePrice
+                );
+                this.isHideValuePriceCheckbox.show();
+                this.initField('hide_product_page_value_price');
+            }
         },
 
         /**
@@ -55,6 +81,10 @@ define([
             this.processDataItem('div_class', this.conditionNonEmptyString);
             this.processDataItem('selection_limit_from', this.conditionNonZero);
             this.processDataItem('selection_limit_to', this.conditionNonZero);
+
+            if (this.isEnabledHideProductPageValuePrice) {
+                this.processDataItem('hide_product_page_value_price', this.conditionGreaterThanZero);
+            }
         }
     });
 });

@@ -3,11 +3,13 @@
  * Copyright © 2016 MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
 namespace MageWorx\OptionLink\Helper;
 
 use \MageWorx\OptionLink\Helper\Data as HelperData;
 use \MageWorx\OptionBase\Model\Source\LinkedProductAttributes as LinkAttributesModel;
 use \Magento\Framework\App\Helper\Context;
+use \Magento\Eav\Model\Config as EavConfig;
 
 /**
  * OptionLink Attribute Helper.
@@ -17,64 +19,35 @@ class Attribute extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Map of attributes of a product which are replaced with the appropriate fields of options
      *
-     * @var array
+     * @var array|null
      */
-    protected $fieldsMap = [
-        'name' => [
-            'option_name' => 'title',
-            'type' => 'attribute',
-            'joinType' => 'left',
-        ],
-        'price' => [
-            'option_name' => 'price',
-            'type' => 'attribute',
-            'joinType' => 'left',
-        ],
-        'cost' => [
-            'option_name' => 'cost',
-            'type' => 'attribute',
-            'joinType' => 'left',
-        ],
-        'weight' => [
-            'option_name' => 'weight',
-            'type' => 'attribute',
-            'joinType' => 'left',
-        ],
-        'qty' => [
-            'option_name' => 'qty',
-            'type' => 'field',
-            'alias' => 'qty',
-            'table' => 'cataloginventory_stock_item',
-            'field' => 'qty',
-            'bind' => 'product_id=entity_id',
-            'cond' => '{{table}}.stock_id=1',
-            'joinType' => 'left',
-        ]
-    ];
+    protected ?array $fieldsMap = null;
+    protected Data $helperData;
+    protected LinkAttributesModel $linkAttributesModel;
+    protected EavConfig $eavConfig;
 
-    /**
-     * @var \MageWorx\OptionLink\Helper\Data
-     */
-    protected $helperData;
-
-    protected $linkAttributesModel;
-
-    /**
-     * Attribute constructor.
-     *
-     * @param Data $helperData
-     * @param LinkAttributesModel $linkAttributesModel
-     * @param Context $context
-     */
     public function __construct(
         HelperData $helperData,
         LinkAttributesModel $linkAttributesModel,
-        Context $context
+        Context $context,
+        EavConfig $eavConfig
     ) {
-    
-        $this->helperData = $helperData;
+        $this->helperData          = $helperData;
         $this->linkAttributesModel = $linkAttributesModel;
+        $this->eavConfig           = $eavConfig;
         parent::__construct($context);
+    }
+
+    /**
+     * @param $attributeName
+     * @return int|mixed|null
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function isAttributeExist($attributeCode)
+    {
+        return true; // temporary fix
+
+        return $this->eavConfig->getAttribute('catalog_product', $attributeCode)->getAttributeId();
     }
 
     /**
@@ -112,7 +85,7 @@ class Attribute extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getAllLinkAttributesAsFields()
     {
-        $result = [];
+        $result     = [];
         $attributes = $this->linkAttributesModel->toOptionArray();
 
         foreach ($attributes as $attribute) {
@@ -130,8 +103,16 @@ class Attribute extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @return array
      */
-    public function getFieldsMap()
+    public function getFieldsMap(): array
     {
+        if (null === $this->fieldsMap) {
+            $object = new \Magento\Framework\DataObject();
+            $object->setFieldsMap($this->getDefaultFieldsMap());
+            $this->_eventManager->dispatch('mw_optionlink_helper_attribute_prepare_fields_map', ['object' => $object]);
+
+            $this->fieldsMap = $object->getFieldsMap();
+        }
+
         return $this->fieldsMap;
     }
 
@@ -152,5 +133,41 @@ class Attribute extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         return $attributes;
+    }
+
+    protected function getDefaultFieldsMap(): array
+    {
+        return [
+            'name'   => [
+                'option_name' => 'title',
+                'type'        => 'attribute',
+                'joinType'    => 'left',
+            ],
+            'price'  => [
+                'option_name' => 'price',
+                'type'        => 'attribute',
+                'joinType'    => 'left',
+            ],
+            'cost'   => [
+                'option_name' => 'cost',
+                'type'        => 'attribute',
+                'joinType'    => 'left',
+            ],
+            'weight' => [
+                'option_name' => 'weight',
+                'type'        => 'attribute',
+                'joinType'    => 'left',
+            ],
+            'qty'    => [
+                'option_name' => 'qty',
+                'type'        => 'field',
+                'alias'       => 'qty',
+                'table'       => 'cataloginventory_stock_item',
+                'field'       => 'qty',
+                'bind'        => 'product_id=entity_id',
+                'cond'        => '{{table}}.stock_id=1',
+                'joinType'    => 'left',
+            ]
+        ];
     }
 }

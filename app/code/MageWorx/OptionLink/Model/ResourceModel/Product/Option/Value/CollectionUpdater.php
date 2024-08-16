@@ -3,6 +3,7 @@
  * Copyright © 2016 MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
 namespace MageWorx\OptionLink\Model\ResourceModel\Product\Option\Value;
 
 use \MageWorx\OptionLink\Helper\Attribute as HelperAttribute;
@@ -18,15 +19,8 @@ class CollectionUpdater
 
     const KEY_FIELD_SKU_IS_VALID = 'sku_is_valid';
 
-    /**
-     * @var \MageWorx\OptionLink\Helper\Attribute
-     */
-    protected $helperAttribute;
-
-    /**
-     * @var \Magento\Framework\ObjectManagerInterface
-     */
-    protected $objectManager = null;
+    protected HelperAttribute $helperAttribute;
+    protected ?ObjectManager $objectManager = null;
 
     /**
      * CollectionUpdater constructor.
@@ -39,7 +33,7 @@ class CollectionUpdater
         ObjectManager $objectManager
     ) {
         $this->helperAttribute = $helperAttribute;
-        $this->objectManager = $objectManager;
+        $this->objectManager   = $objectManager;
     }
 
     /**
@@ -54,7 +48,7 @@ class CollectionUpdater
 
         $collection->getSelect()->joinLeft(
             [self::KEY_TABLE_OPTIONLINK_PRODUCT => $productTable],
-            self::KEY_TABLE_OPTIONLINK_PRODUCT.'.sku = main_table.sku'
+            self::KEY_TABLE_OPTIONLINK_PRODUCT .'.sku = main_table.sku'
         );
 
         return $this;
@@ -70,17 +64,21 @@ class CollectionUpdater
      */
     public function canAddField(Collection $collection, $fieldName)
     {
+        if (!$this->helperAttribute->isAttributeExist($fieldName)) {
+            return false;
+        }
         $checkFields = ['title', 'price'];
-        $from = $collection->getSelect()->getPart('from');
 
         if (!in_array($fieldName, $checkFields)) {
             return true;
         }
 
+        $from = $collection->getSelect()->getPart('from');
+
         $coincidence = 0;
         foreach ($from as $tableAlias => $table) {
-            if ($tableAlias == 'default_value_'.$fieldName ||
-                $tableAlias == 'store_value_'.$fieldName) {
+            if ($tableAlias == 'default_value_' . $fieldName ||
+                $tableAlias == 'store_value_' . $fieldName) {
                 $coincidence++;
             }
         }
@@ -145,28 +143,7 @@ class CollectionUpdater
 
         // set diff columns, custom columns will be set later
         $collection->getSelect()
-            ->columns($describe);
-
-        return $this;
-    }
-
-    /**
-     * Add helper fields to collection sql.
-     * You can add fields what you need.
-     *
-     * @param Collection $collection
-     * @return $this
-     */
-    public function addHelperFields($collection)
-    {
-        $collection->getSelect()
-            ->columns(
-                [
-                    self::KEY_FIELD_SKU_IS_VALID => new \Zend_Db_Expr(
-                        'IF('.self::KEY_TABLE_OPTIONLINK_PRODUCT.'.sku IS NULL, 0, 1)'
-                    )
-                ]
-            );
+                   ->columns($describe);
 
         return $this;
     }
@@ -184,17 +161,19 @@ class CollectionUpdater
 
         $this->joinProductAttributes($collection);
 
-        return new \Zend_Db_Expr('('.$collection->getSelect()->assemble().')');
+        return new \Zend_Db_Expr('(' . $collection->getSelect()->assemble() . ')');
     }
 
     /**
      * Join attributes selected in setting to product table.
      *
-     * @param $collection
+     * @param \Magento\Catalog\Model\ResourceModel\Product\Collection $collection
      * @return $this
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
-    protected function joinProductAttributes($collection)
-    {
+    protected function joinProductAttributes(
+        \Magento\Catalog\Model\ResourceModel\Product\Collection $collection
+    ): CollectionUpdater {
         $attributes = $this->helperAttribute->getFieldsMap();
 
         foreach ($attributes as $name => $attribute) {
@@ -208,12 +187,20 @@ class CollectionUpdater
                         $attribute['cond'],
                         $attribute['joinType']
                     );
+            } elseif ($attribute['type'] == 'custom' && $attribute['joinType'] == 'left') {
+                $collection->getSelect()->joinLeft(
+                    $attribute['table'],
+                    $attribute['cond'],
+                    $attribute['cols']
+                );
             } else {
-                $collection
-                    ->addAttributeToSelect(
-                        $name,
-                        $attribute['joinType']
-                    );
+                if ($this->helperAttribute->isAttributeExist($name)) {
+                    $collection
+                        ->addAttributeToSelect(
+                            $name,
+                            $attribute['joinType']
+                        );
+                }
             }
         }
 

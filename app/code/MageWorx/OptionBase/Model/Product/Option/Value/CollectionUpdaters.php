@@ -7,10 +7,19 @@ namespace MageWorx\OptionBase\Model\Product\Option\Value;
 
 class CollectionUpdaters
 {
+    private array $data = [];
+
     /**
-     * @var array
+     * Excluded value attributes from the main collection for performance reasons
+     *
+     * @var array|string[] $attributesToExclude
      */
-    private $data = [];
+    protected array $attributesToExclude = [
+        'mageworx_title',
+        'mageworx_option_type_price',
+        'option_type_description',
+        'option_value_images'
+    ];
 
     /**
      * @param array $data
@@ -40,5 +49,13 @@ class CollectionUpdaters
         }
 
         return isset($this->data[$key]) ? $this->data[$key] : null;
+    }
+
+    /**
+     * Get excluded attributes
+     */
+    public function getAttributesToExclude(): array
+    {
+        return $this->attributesToExclude;
     }
 }

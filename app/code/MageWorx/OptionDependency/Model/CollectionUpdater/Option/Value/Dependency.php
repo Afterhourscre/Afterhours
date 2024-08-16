@@ -3,8 +3,10 @@
  * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
 namespace MageWorx\OptionDependency\Model\CollectionUpdater\Option\Value;
 
+use Magento\Framework\Exception\LocalizedException;
 use MageWorx\OptionBase\Model\Product\Option\AbstractUpdater;
 use MageWorx\OptionDependency\Model\Config;
 
@@ -36,7 +38,7 @@ class Dependency extends AbstractUpdater
      */
     public function getOnConditionsAsString()
     {
-        return $this->getTableAlias().'.child_option_type_id = main_table.option_type_id';
+        return $this->getTableAlias() . '.dp_child_option_type_id = main_table.option_type_id';
     }
 
     /**
@@ -44,7 +46,7 @@ class Dependency extends AbstractUpdater
      */
     public function getColumns()
     {
-        return ['dependency' => $this->getTableAlias().'.dependency'];
+        return ['dependency' => $this->getTableAlias() . '.dependency'];
     }
 
     /**
@@ -66,16 +68,14 @@ class Dependency extends AbstractUpdater
         $entityType = $conditions['entity_type'];
         $tableName = $this->getTableName($entityType);
 
-        $this->resource->getConnection()->query('SET SESSION group_concat_max_len = 100000;');
-
         $statement = $this->resource->getConnection()->select()
             ->from(
                 $tableName,
                 [
-                    'child_option_type_id',
+                    'dp_child_option_type_id',
                     'dependency' => 'concat(
                             \'[\',
-                            group_concat(concat(\'["\', parent_option_id, \'","\', parent_option_type_id, \'"]\')),
+                            group_concat(concat(\'["\', dp_parent_option_id, \'","\', dp_parent_option_type_id, \'"]\')),
                             \']\'
                         )',
                 ]
@@ -87,27 +87,40 @@ class Dependency extends AbstractUpdater
             $optionTypeIds = $this->helper->findOptionTypeIdByConditions($conditions);
 
             if (is_array($optionTypeIds) && count($optionTypeIds) > 0) {
-                $statement->where("child_option_type_id IN(" . implode(',', $optionTypeIds) . ")");
+                $statement->where("dp_child_option_type_id IN (" . implode(',', $optionTypeIds) . ")");
                 $skipFurtherConditionsFlag = true;
             }
         }
 
         if (!$skipFurtherConditionsFlag) {
-            if ($conditions && !empty($conditions['entity_id'])) {
+            if ($conditions && !empty($conditions['entity_ids'])) {
                 if ($entityType == 'group') {
-                    $statement->where("child_option_type_id <> '0' AND group_id = ?", $conditions['entity_id']);
+                    $statement->where("dp_child_option_type_id <> '0' AND group_id "
+                        . $this->helper->getComparisonConditionPart($conditions['entity_ids'])
+                    );
                 } else {
                     $statement->where(
-                        "child_option_type_id <> '0' AND product_id = ?",
-                        $conditions['row_id'] ? $conditions['row_id'] : $conditions['entity_id']
+                        "dp_child_option_type_id <> '0' AND product_id " . $this->helper->getComparisonConditionPart(
+                            $conditions['row_ids']
+                                ? $conditions['row_ids']
+                                : $conditions['entity_ids']
+                        )
                     );
                 }
             } else {
-                $statement->where('child_option_type_id <> ?', '0');
+                $statement->where('dp_child_option_type_id <> ?', '0');
             }
         }
-        $statement->group('child_option_type_id');
+        $statement->group('dp_child_option_type_id');
 
-        return new \Zend_Db_Expr('('.$statement->assemble().')');
+        return new \Zend_Db_Expr('(' . $statement->assemble() . ')');
+    }
+
+    /**
+     * @throws LocalizedException
+     */
+    public function determineJoinNecessity(): bool
+    {
+        return !$this->systemHelper->isFrontend();
     }
 }

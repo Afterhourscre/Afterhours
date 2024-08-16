@@ -13,6 +13,13 @@
     <type name="MageWorx\OptionTemplates\Model\Group\Copier">
         <plugin name="duplicateDependency" type="MageWorx\OptionDependency\Plugin\Adminhtml\DuplicateDependency" sortOrder="1" disabled="false"/>
     </type>
+    <type name="Magento\Sales\Controller\Adminhtml\Order\Create\ConfigureQuoteItems">
+        <plugin name="mageworx-optiondependency-admin-order-create-configure-quote-items"
+                type="MageWorx\OptionDependency\Plugin\Adminhtml\OrderCreateConfigureQuoteItems"
+                sortOrder="10"
+                disabled="false"
+        />
+    </type>
 
     <virtualType name="MageWorx\OptionBase\Ui\DataProvider\Product\Form\Modifier\Pool">
         <arguments>

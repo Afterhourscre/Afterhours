@@ -9,6 +9,7 @@ use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\RawFactory;
 use Magento\Framework\Controller\Result\Raw;
+use Magento\Framework\Serialize\Serializer\Json as Serializer;
 use Magento\Framework\View\Result\PageFactory;
 
 class Load extends Action
@@ -18,28 +19,33 @@ class Load extends Action
      *
      * @var PageFactory
      */
-    protected $pageFactory;
+    protected PageFactory $pageFactory;
 
     /**
      * Raw factory
      *
      * @var RawFactory
      */
-    protected $rawFactory;
+    protected RawFactory $rawFactory;
+    protected Serializer $serializer;
 
     /**
      * Load constructor.
+     *
      * @param Context $context
      * @param PageFactory $pageFactory
      * @param RawFactory $rawFactory
+     * @param Serializer $serializer
      */
     public function __construct(
         Context $context,
         PageFactory $pageFactory,
-        RawFactory $rawFactory
+        RawFactory $rawFactory,
+        Serializer $serializer
     ) {
-        $this->rawFactory = $rawFactory;
+        $this->rawFactory  = $rawFactory;
         $this->pageFactory = $pageFactory;
+        $this->serializer  = $serializer;
 
         return parent::__construct($context);
     }
@@ -65,7 +71,7 @@ class Load extends Action
         }
 
         /** @var  $result */
-        $result = $this->rawFactory->create()->setContents(json_encode($response));
+        $result = $this->rawFactory->create()->setContents($this->serializer->serialize($response));
 
         return $result;
     }

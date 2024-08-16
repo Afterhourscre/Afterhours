@@ -70,14 +70,12 @@ class Title extends AbstractUpdater
         $entityType = $conditions['entity_type'];
         $tableName  = $this->getTableName($entityType);
 
-        $this->resource->getConnection()->query('SET SESSION group_concat_max_len = 100000;');
-
         $selectExpr = "SELECT " . OptionTitle::FIELD_OPTION_ID . " as "
             . OptionTitle::FIELD_OPTION_ID_ALIAS . ","
             . " CONCAT('[',"
             . " GROUP_CONCAT(CONCAT("
             . "'{\"store_id\"',':\"',store_id,'\",',"
-            . "'\"title\"',':\"',title,'\"}'"
+            . "'\"title\"',':\"', REPLACE(title,'\"','&quot;'),'\"}'"
             . ")),"
             . "']')"
             . " AS " . OptionTitle::KEY_MAGEWORX_OPTION_TITLE . " FROM " . $tableName;
@@ -88,5 +86,14 @@ class Title extends AbstractUpdater
         $selectExpr .= " GROUP BY option_id";
 
         return new \Zend_Db_Expr('(' . $selectExpr . ')');
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function determineJoinNecessity(): bool
+    {
+        // Loaded separately
+        return false;
     }
 }

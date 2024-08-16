@@ -23,15 +23,8 @@ use MageWorx\OptionFeatures\Ui\DataProvider\Product\Form\Modifier\Features;
  */
 class ItemPool
 {
-    /**
-     * @var ImagesCollectionFactory
-     */
-    protected $imagesCollectionFactory;
-
-    /**
-     * @var Helper
-     */
-    protected $helper;
+    protected ImagesCollectionFactory $imagesCollectionFactory;
+    protected Helper $helper;
 
     /**
      * ItemPool constructor.
@@ -62,15 +55,11 @@ class ItemPool
             return $result;
         }
 
-        $processImageModes = [
-            Helper::OPTION_IMAGE_MODE_REPLACE,
-        ];
-
         if (empty($result['options'])) {
             return $result;
         }
 
-        $optionsShouldBeProcessed = [];
+        $optionsToBeProcessed = [];
         // Check image mode in all options
         foreach ($result['options'] as $optionData) {
             if (empty($optionData['option_id'])) {
@@ -85,19 +74,32 @@ class ItemPool
             /** @var \Magento\Catalog\Model\Product $product */
             $product = $item->getProduct();
             $productOption = $product->getOptionById($optionData['option_id']);
-            if (!empty($productOption[Helper::KEY_OPTION_IMAGE_MODE]) &&
-                in_array($productOption[Helper::KEY_OPTION_IMAGE_MODE], $processImageModes)
-            ) {
-                $optionsShouldBeProcessed[] = $productOption;
+            if (empty($productOption[Helper::KEY_OPTION_IMAGE_MODE])) {
+                continue;
+            }
+            if ($productOption[Helper::KEY_OPTION_IMAGE_MODE] == Helper::OPTION_IMAGE_MODE_REPLACE) {
+                $optionsToBeProcessed['replace'][] = $productOption;
+            } elseif ($productOption[Helper::KEY_OPTION_IMAGE_MODE] == Helper::OPTION_IMAGE_MODE_OVERLAY) {
+                $optionsToBeProcessed['overlay'][] = $productOption;
             }
         }
 
         // Do nothing with product without replace mode
-        if (empty($optionsShouldBeProcessed)) {
+        if (empty($optionsToBeProcessed)) {
             return $result;
         }
 
-        $imageData = $this->getSelectedOptionsImageData($optionsShouldBeProcessed, $item);
+        $imageData = null;
+        if (!empty($optionsToBeProcessed['replace'])) {
+            $imageData = $this->getReplaceImageData($optionsToBeProcessed['replace'], $item);
+        }
+        if (!empty($optionsToBeProcessed['overlay'])) {
+            if (!$imageData && isset($result['product_image'])) {
+                $imageData = $result['product_image'];
+            }
+            $imageData = $this->getOverlayImageData($optionsToBeProcessed['overlay'], $imageData, $item);
+        }
+
         if (!empty($imageData)) {
             $result['product_image'] = $imageData;
         }
@@ -115,11 +117,78 @@ class ItemPool
      * @important Method uses recursion and can call itself if suitable image is not found
      * in the current option or value
      *
+     * @param \Magento\Catalog\Model\Product\Option[] $optionsToBeProcessed Options with processable image mode
+     * @param array $imageData
+     * @param QuoteItem $quoteItem
+     * @return array
+     */
+    private function getOverlayImageData(array $optionsToBeProcessed, $imageData, QuoteItem $quoteItem)
+    {
+        if (empty($optionsToBeProcessed)) {
+            return null;
+        }
+
+        $imageHeight = 75;
+        $imageWidth  = 75;
+
+        $selectedValues = $this->helper->getSelectedValuesFromQuoteItem($optionsToBeProcessed, $quoteItem);
+
+        /** @var ImagesCollection $imageCollection */
+        $imageCollection = $this->imagesCollectionFactory
+            ->create()
+            ->addFieldToFilter(
+                'option_type_id',
+                $selectedValues
+            )->addFieldToFilter(
+                'overlay_image',
+                1
+            );
+
+        $overlayImages = [];
+        foreach ($imageCollection->getItems() as $overlayImage) {
+            if (!$overlayImage || !$overlayImage->getValue()) {
+                continue;
+            }
+
+            $overlayImages[] = $overlayImage;
+        }
+
+        $baseImageUrl = $imageData['src'] ?? '';
+        if (is_object($imageData) && !$baseImageUrl) {
+            $baseImageUrl = $imageData->getUrl();
+        }
+        $imageUrl = $this->helper->getOverlayImageUrl($baseImageUrl, $overlayImages, $imageWidth, $imageHeight);
+
+        $alt = $imageData['label'] ?? '';
+        if (is_object($imageData) && !$alt) {
+            $alt = $imageData->getAlt();
+        }
+
+        $data = [
+            'src' => $imageUrl,
+            'alt' => $alt,
+            'width' => $imageWidth,
+            'height' => $imageHeight,
+        ];
+
+        return $data;
+    }
+
+    /**
+     * Search most suitable image using sort order and returns its data in array:
+     * 'src' => string image url in pub/media,
+     * 'alt' => string,
+     * 'width' => int,
+     * 'height' => int
+     *
+     * @important Method uses recursion and can call itself if suitable image is not found
+     * in the current option or value
+     *
      * @param \Magento\Catalog\Model\Product\Option[] $optionsShouldBeProcessed Options with processable image mode
      * @param QuoteItem $quoteItem
      * @return array
      */
-    private function getSelectedOptionsImageData(array $optionsShouldBeProcessed, QuoteItem $quoteItem)
+    private function getReplaceImageData(array $optionsShouldBeProcessed, QuoteItem $quoteItem)
     {
         if (empty($optionsShouldBeProcessed)) {
             return null;
@@ -194,6 +263,6 @@ class ItemPool
 
         array_pop($optionsShouldBeProcessed);
 
-        return $this->getSelectedOptionsImageData($optionsShouldBeProcessed, $quoteItem);
+        return $this->getReplaceImageData($optionsShouldBeProcessed, $quoteItem);
     }
 }

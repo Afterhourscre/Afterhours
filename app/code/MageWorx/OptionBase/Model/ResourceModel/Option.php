@@ -16,15 +16,8 @@ class Option extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     const CATALOG_PRODUCT_OPTION_TABLE_NAME = 'catalog_product_option';
     const CATALOG_PRODUCT_ENTITY_TABLE_NAME = 'catalog_product_entity';
 
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
+    protected BaseHelper $baseHelper;
 
-    /**
-     * @param Context $context
-     * @param BaseHelper $baseHelper
-     */
     public function __construct(
         Context $context,
         BaseHelper $baseHelper
@@ -156,42 +149,18 @@ class Option extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
         }
     }
 
-    /**
-     * Set required_options flag for products
-     *
-     * @param array $productIds
-     * @return void
+    /** Update has_options, required_options, mageworx_is_require flags for products
+     * @param $data
+     * @param $productIds
      */
-    public function setRequiredOptionsStatus($productIds)
+    public function updateProductStatusAttributes($data, $productIds)
     {
-        if (empty($productIds) || !is_array($productIds)) {
-            return;
-        }
         $tableName = $this->getTable(static::CATALOG_PRODUCT_ENTITY_TABLE_NAME);
-        $data      = [
-            'required_options' => 1,
-        ];
-        $sql       = $this->baseHelper->getLinkField() . " IN (" . implode(',', $productIds) . ")";
-        $this->getConnection()->update($tableName, $data, $sql);
-    }
-
-    /**
-     * Set has_options flag for products
-     *
-     * @param array $productIds
-     * @return void
-     */
-    public function setHasOptionsStatus($productIds)
-    {
-        if (empty($productIds) || !is_array($productIds)) {
-            return;
-        }
-        $tableName = $this->getTable(static::CATALOG_PRODUCT_ENTITY_TABLE_NAME);
-        $data      = [
-            'has_options' => 1,
-        ];
-        $sql       = $this->baseHelper->getLinkField() . " IN (" . implode(',', $productIds) . ")";
-        $this->getConnection()->update($tableName, $data, $sql);
+        $this->getConnection()->update(
+            $tableName,
+            $data,
+            [$this->baseHelper->getLinkField() . ' IN(?)' => $productIds]
+        );
     }
 
     /**
@@ -248,5 +217,27 @@ class Option extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
         $sql    = $select->deleteFromSelect('relation');
 
         $this->getConnection()->query($sql);
+    }
+
+
+    /**
+     * Get array of option types.
+     * ['option_id' => 'type']
+     *
+     * @param int $productId
+     * @return array
+     */
+    public function getOptionTypes($productId)
+    {
+        $connection = $this->getConnection();
+
+        $select = $connection->select()->from(
+            $this->getTable(static::CATALOG_PRODUCT_OPTION_TABLE_NAME),
+            ['option_id', 'type']
+        )->where(
+            'product_id = ' . $productId
+        );
+
+        return $connection->fetchPairs($select);
     }
 }

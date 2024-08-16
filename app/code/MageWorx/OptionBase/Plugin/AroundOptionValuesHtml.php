@@ -1,12 +1,13 @@
 <?php
 /**
- * Copyright © 2016 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+declare(strict_types=1);
+
 namespace MageWorx\OptionBase\Plugin;
 
 use \Magento\Catalog\Block\Product\View\Options\Type\Select;
-use \Laminas\Stdlib\StringWrapper\MbString;
 use MageWorx\OptionBase\Model\Product\Option\Value\AdditionalHtmlData;
 
 /**
@@ -14,25 +15,13 @@ use MageWorx\OptionBase\Model\Product\Option\Value\AdditionalHtmlData;
  */
 class AroundOptionValuesHtml
 {
-    /**
-     * @var MbString
-     */
-    protected $mbString;
+    protected AdditionalHtmlData $additionalHtmlData;
+    protected \DOMXPath $xpath;
+    protected string $selectedOptionValuesFlag;
 
-    /**
-     * @var AdditionalHtmlData
-     */
-    protected $additionalHtmlData;
-
-    /**
-     * @param MbString $mbString
-     * @param AdditionalHtmlData $additionalHtmlData
-     */
     public function __construct(
-        MbString $mbString,
         AdditionalHtmlData $additionalHtmlData
     ) {
-        $this->mbString = $mbString;
         $this->additionalHtmlData = $additionalHtmlData;
     }
 
@@ -46,11 +35,10 @@ class AroundOptionValuesHtml
         $result = $proceed();
         $option = $subject->getOption();
 
-        $dom = new \DOMDocument();
+        $dom                     = new \DOMDocument();
         $dom->preserveWhiteSpace = false;
 
-        $this->mbString->setEncoding('UTF-8', 'html-entities');
-        $result = $this->mbString->convert($result);
+        $result = mb_encode_numericentity($result, [0x80, 0x10FFFF, 0, ~0], 'UTF-8');
 
         libxml_use_internal_errors(true);
         $dom->loadHTML($result);
@@ -60,28 +48,22 @@ class AroundOptionValuesHtml
             $additionalHtmlItem->getAdditionalHtml($dom, $option);
         }
 
-        $xpath = new \DOMXPath($dom);
+        $this->xpath = new \DOMXPath($dom);
 
-        $count = 1;
+        $count                          = 1;
+        $this->selectedOptionValuesFlag = '';
         foreach ($option->getValues() as $value) {
             $count++;
-
-            $select =
-                $xpath->query('//option[@value="'.$value->getId().'"]')->item(0);
-
-            $input =
-                $xpath->query('//div/div[descendant::label[@for="options_'.$option->getId().'_'.$count.'"]]')->item(0);
-
-            $element = $select ? $select : $input;
+            $element = $this->getOptionValueXPath($value->getId(), $option->getId(), $count);
 
             if ($element) {
-                $element->setAttribute("data-option_type_id", $value->getOptionTypeId());
+                $element->setAttribute('data-option_type_id', $value->getOptionTypeId());
             }
         }
 
         $resultBody = $dom->getElementsByTagName('body')->item(0);
-        $result = $this->getInnerHtml($resultBody);
-        return $result;
+
+        return $this->getInnerHtml($resultBody);
     }
 
     /**
@@ -90,12 +72,40 @@ class AroundOptionValuesHtml
      */
     protected function getInnerHtml(\DOMElement $node)
     {
-        $innerHTML= '';
-        $children = $node->childNodes;
+        $innerHTML = '';
+        $children  = $node->childNodes;
         foreach ($children as $child) {
             $innerHTML .= $child->ownerDocument->saveXML($child);
         }
 
         return $innerHTML;
+    }
+
+    protected function getOptionValueXPath(string $valueId, string $optionId, int $count): ?\DOMNode
+    {
+        switch ($this->selectedOptionValuesFlag) {
+            case 'select':
+                return $this->getSelectXpath($valueId);
+            case 'input':
+                return $this->getInputXpath($optionId, $count);
+            default:
+                $select = $this->getSelectXpath($valueId);
+                $input  = $this->getInputXpath($optionId, $count);
+
+                $this->selectedOptionValuesFlag = $select ? 'select' : 'input';
+
+                return $select ?: $input;
+        }
+    }
+
+    protected function getSelectXpath(string $valueId): ?\DOMNode
+    {
+        return $this->xpath->query('//option[@value="' . $valueId . '"]')->item(0);
+    }
+
+    protected function getInputXpath(string $optionId, int $count): ?\DOMNode
+    {
+        return $this->xpath->query('//div/div[descendant::label[@for="options_' . $optionId . '_' . $count . '"]]')
+                           ->item(0);
     }
 }

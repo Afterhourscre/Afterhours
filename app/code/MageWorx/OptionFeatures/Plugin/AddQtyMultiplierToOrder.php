@@ -11,20 +11,9 @@ use MageWorx\OptionFeatures\Model\QtyMultiplier;
 
 class AddQtyMultiplierToOrder
 {
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
+    protected BaseHelper $baseHelper;
+    protected QtyMultiplier $qtyMultiplier;
 
-    /**
-     * @var QtyMultiplier
-     */
-    protected $qtyMultiplier;
-
-    /**
-     * @param BaseHelper $baseHelper
-     * @param QtyMultiplier $qtyMultiplier
-     */
     public function __construct(
         BaseHelper $baseHelper,
         QtyMultiplier $qtyMultiplier
@@ -44,13 +33,14 @@ class AddQtyMultiplierToOrder
     public function beforeSubmit($subject, $quote, $orderData = [])
     {
         if ($quote->getAllVisibleItems() && !$quote->getIsQtyMultiplierApplied()) {
-            $quoteItems = $quote->getAllItems();
+            $quoteItems             = $quote->getAllItems();
+            $isQtyMultiplierApplied = false;
             /** @var \Magento\Quote\Model\Quote\Item $quoteItem */
             foreach ($quoteItems as $quoteItem) {
                 $buyRequest = $quoteItem->getBuyRequest();
                 /** @var array $options */
                 $options = $buyRequest->getOptions();
-                if (!$options || !is_array($options)) {
+                if (!$options) {
                     continue;
                 }
 
@@ -63,14 +53,15 @@ class AddQtyMultiplierToOrder
                     continue;
                 }
 
-                $infoBuyRequest = $quoteItem->getOptionByCode('info_buyRequest');
+                $isQtyMultiplierApplied = true;
+                $infoBuyRequest         = $quoteItem->getOptionByCode('info_buyRequest');
                 $buyRequest->setData('qty_multiplier_qty', $qtyMultiplierTotalQty);
                 $infoBuyRequest->setValue($this->baseHelper->encodeBuyRequestValue($buyRequest->getData()));
                 $quoteItem->addOption($infoBuyRequest);
             }
 
 
-            $quote->setIsQtyMultiplierApplied(true);
+            $quote->setIsQtyMultiplierApplied($isQtyMultiplierApplied);
         }
 
         return [$quote, $orderData];

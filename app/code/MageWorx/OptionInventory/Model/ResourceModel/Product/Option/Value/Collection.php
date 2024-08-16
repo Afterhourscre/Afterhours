@@ -15,10 +15,7 @@ use MageWorx\OptionBase\Helper\Data as OptionBaseHelper;
  */
 class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Option\Value\Collection
 {
-    /**
-     * @var OptionBaseHelper
-     */
-    protected $helper;
+    protected OptionBaseHelper $helper;
 
     /**
      * @param \Magento\Framework\Data\Collection\EntityFactoryInterface $entityFactory

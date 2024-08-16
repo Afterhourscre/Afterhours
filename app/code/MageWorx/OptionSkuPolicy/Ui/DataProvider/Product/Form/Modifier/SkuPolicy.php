@@ -22,31 +22,11 @@ use MageWorx\OptionSkuPolicy\Model\Config\Source\SkuPolicyMode as SourceConfig;
  */
 class SkuPolicy extends AbstractModifier implements ModifierInterface
 {
-    /**
-     * @var array
-     */
-    protected $meta = [];
+    protected array $meta = [];
+    protected Helper $helper;
+    protected LocatorInterface $locator;
+    protected SourceConfig $sourceConfig;
 
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var LocatorInterface
-     */
-    protected $locator;
-
-    /**
-     * @var SourceConfig
-     */
-    protected $sourceConfig;
-
-    /**
-     * @param Helper $helper
-     * @param SourceConfig $sourceConfig
-     * @param LocatorInterface $locator
-     */
     public function __construct(
         Helper $helper,
         SourceConfig $sourceConfig,

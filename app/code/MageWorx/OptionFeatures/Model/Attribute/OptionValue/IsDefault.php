@@ -3,43 +3,34 @@
  * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
 namespace MageWorx\OptionFeatures\Model\Attribute\OptionValue;
 
+use Magento\Framework\DataObjectFactory;
 use Magento\Framework\App\ResourceConnection;
 use MageWorx\OptionFeatures\Helper\Data as Helper;
 use MageWorx\OptionBase\Helper\System as SystemHelper;
-use MageWorx\OptionBase\Api\AttributeInterface;
+use MageWorx\OptionBase\Helper\Data as BaseHelper;
 use MageWorx\OptionFeatures\Model\OptionTypeIsDefault;
 use MageWorx\OptionFeatures\Model\ResourceModel\OptionTypeIsDefault\Collection as IsDefaultCollection;
 use MageWorx\OptionFeatures\Model\OptionTypeIsDefaultFactory as IsDefaultFactory;
 use MageWorx\OptionBase\Model\Product\Option\AbstractAttribute;
 
-class IsDefault extends AbstractAttribute implements AttributeInterface
+class IsDefault extends AbstractAttribute
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
+    const FIELD_MAGE_ONE_OPTIONS_IMPORT = '_custom_option_row_default';
 
-    /**
-     * @var SystemHelper
-     */
-    protected $systemHelper;
-
-    /**
-     * @var IsDefaultFactory
-     */
-    protected $isDefaultFactory;
-
-    /**
-     * @var IsDefaultCollection
-     */
-    protected $isDefaultCollection;
+    protected Helper $helper;
+    protected SystemHelper $systemHelper;
+    protected IsDefaultFactory $isDefaultFactory;
+    protected IsDefaultCollection $isDefaultCollection;
 
     /**
      * @param ResourceConnection $resource
      * @param IsDefaultFactory $isDefaultFactory
+     * @param DataObjectFactory $dataObjectFactory
      * @param IsDefaultCollection $isDefaultCollection
+     * @param BaseHelper $baseHelper
      * @param Helper $helper
      * @param SystemHelper $systemHelper
      */
@@ -47,14 +38,16 @@ class IsDefault extends AbstractAttribute implements AttributeInterface
         ResourceConnection $resource,
         IsDefaultFactory $isDefaultFactory,
         IsDefaultCollection $isDefaultCollection,
+        DataObjectFactory $dataObjectFactory,
         Helper $helper,
+        BaseHelper $baseHelper,
         SystemHelper $systemHelper
     ) {
-        $this->helper = $helper;
-        $this->systemHelper = $systemHelper;
-        $this->isDefaultFactory = $isDefaultFactory;
+        $this->helper              = $helper;
+        $this->systemHelper        = $systemHelper;
+        $this->isDefaultFactory    = $isDefaultFactory;
         $this->isDefaultCollection = $isDefaultCollection;
-        parent::__construct($resource);
+        parent::__construct($resource, $baseHelper, $dataObjectFactory);
     }
 
     /**
@@ -80,7 +73,7 @@ class IsDefault extends AbstractAttribute implements AttributeInterface
     {
         $map = [
             'product' => OptionTypeIsDefault::TABLE_NAME,
-            'group' => OptionTypeIsDefault::OPTIONTEMPLATES_TABLE_NAME
+            'group'   => OptionTypeIsDefault::OPTIONTEMPLATES_TABLE_NAME
         ];
         if (!$type) {
             return $map[$this->entity->getType()];
@@ -108,7 +101,7 @@ class IsDefault extends AbstractAttribute implements AttributeInterface
                     }
                     if ($value[$this->getName()] == 1 && !$isDefaultValueAlreadySelected) {
                         $isDefaults[$value['option_type_id']] = $value[$this->getName()];
-                        $isDefaultValueAlreadySelected = true;
+                        $isDefaultValueAlreadySelected        = true;
                     } else {
                         $isDefaults[$value['option_type_id']] = 0;
                     }
@@ -145,8 +138,8 @@ class IsDefault extends AbstractAttribute implements AttributeInterface
             }
             $data['save'][] = [
                 OptionTypeIsDefault::COLUMN_NAME_OPTION_TYPE_ID => $itemKey,
-                OptionTypeIsDefault::COLUMN_NAME_STORE_ID => 0,
-                $this->getName() => $itemValue
+                OptionTypeIsDefault::COLUMN_NAME_STORE_ID       => 0,
+                $this->getName()                                => $itemValue
             ];
         }
         if (!$data) {
@@ -170,7 +163,7 @@ class IsDefault extends AbstractAttribute implements AttributeInterface
         if (!$optionValueIds) {
             return;
         }
-        $tableName = $this->resource->getTableName($this->getTableName());
+        $tableName  = $this->resource->getTableName($this->getTableName());
         $conditions = OptionTypeIsDefault::COLUMN_NAME_OPTION_TYPE_ID .
             " IN (" . "'" . implode("','", $optionValueIds) . "'" . ")";
         $this->resource->getConnection()->delete($tableName, $conditions);
@@ -187,7 +180,7 @@ class IsDefault extends AbstractAttribute implements AttributeInterface
     public function processDuplicate($newId, $oldId, $entityType = 'product')
     {
         $connection = $this->resource->getConnection();
-        $table = $this->resource->getTableName($this->getTableName($entityType));
+        $table      = $this->resource->getTableName($this->getTableName($entityType));
 
         $select = $connection->select()->from(
             $table,
@@ -211,5 +204,53 @@ class IsDefault extends AbstractAttribute implements AttributeInterface
             ]
         );
         $connection->query($insertSelect);
+    }
+
+    /**
+     * Prepare data from Magento 1 product csv for future import
+     *
+     * @param array $systemData
+     * @param array $productData
+     * @param array $optionData
+     * @param array $preparedOptionData
+     * @param array $valueData
+     * @param array $preparedValueData
+     * @return void
+     */
+    public function prepareOptionsMageOne($systemData, $productData, $optionData, &$preparedOptionData, $valueData = [], &$preparedValueData = [])
+    {
+        if (!empty($preparedOptionData[Helper::KEY_IS_HIDDEN])) {
+            $preparedValueData[static::getName()] = 1;
+            return;
+        }
+
+        if (!isset($valueData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT])) {
+            return;
+        }
+        $preparedValueData[static::getName()] = $valueData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT];
+    }
+
+    /**
+     * Collect data for magento2 product import
+     *
+     * @param array $data
+     * @return array|null
+     */
+    public function collectImportDataMageTwo($data)
+    {
+        if (!$this->hasOwnTable()) {
+            return null;
+        }
+
+        if (!isset($data['custom_option_row_is_default'])) {
+            return null;
+        }
+
+        $this->entity = $this->dataObjectFactory->create();
+        $this->entity->setType('product');
+
+        $defaults = [];
+        $defaults[$data['custom_option_row_id']] = $data['custom_option_row_' . $this->getName()];;
+        return $this->collectDefaults($defaults);
     }
 }

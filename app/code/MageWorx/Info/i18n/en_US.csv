@@ -3,15 +3,19 @@
 "These are the extensions that will help you enhance your customers shopping experience and improve your store sales performance.","These are the extensions that will help you enhance your customers shopping experience and improve your store sales performance."
 Review(s),Review(s)
 "Get it","Get it"
+"Join our family of trusted partners","Join our family of trusted partners"
+"We help partners give their businesses.","We help partners give their businesses."
+"Become a Partner","Become a Partner"
 "My Purchased Extensions","My Purchased Extensions"
-"These are the MageWorx extensions you've purchased on our website or Magento Marketplace. If you enjoy using our products, would you mind taking a moment to rate them? It won't take you more than a minute.","These are the MageWorx extensions you've purchased on our website or Magento Marketplace. If you enjoy using our products, would you mind taking a moment to rate them? It won't take you more than a minute."
+"These are the MageWorx extensions you've purchased. If you enjoy using our products,
+                      would you mind taking a moment to rate them? It won't take you more than a minute.","These are the MageWorx extensions you've purchased. If you enjoy using our products,
+                      would you mind taking a moment to rate them? It won't take you more than a minute."
 "Update Info","Update Info"
-"User Guide","User Guide"
 " Version %1 available!"," Version %1 available!"
+"Latest" version","Latest" version"
 "See Change Log","See Change Log"
-"Need Magento services?","Need Magento services?"
-"Visit Staylime &mdash; out trusted development partner.","Visit Staylime &mdash; out trusted development partner."
-"Visit Staylime's website","Visit Staylime's website"
+"User Guide","User Guide"
+"Rate it","Rate it"
 "We are sorry you had a disappointing experience with MageWorx. Please, take a few minutes to share what went wrong & help us improve your experience.","We are sorry you had a disappointing experience with MageWorx. Please, take a few minutes to share what went wrong & help us improve your experience."
 Message,Message
 "Enter your email address so that we could get back to you ASAP.","Enter your email address so that we could get back to you ASAP."
@@ -27,7 +31,22 @@ Send,Send
 "MageWorx Extensions","MageWorx Extensions"
 Settings,Settings
 Notifications,Notifications
+"System Information","System Information"
+"Main Settings","Main Settings"
 "Notify me about MageWorx Updates","Notify me about MageWorx Updates"
 "Notify me about MageWorx Hot offers and Exlcusive deals","Notify me about MageWorx Hot offers and Exlcusive deals"
 Extensions,Extensions
 "Enable Extension Info Autoload","Enable Extension Info Autoload"
+"Memory limit","Memory limit"
+"Max input vars","Max input vars"
+"Post max size","Post max size"
+"Max execution time","Max execution time"
+"PHP version","PHP version"
+"Path to php.ini","Path to php.ini"
+"Server Time","Server Time"
+"Magento Mode","Magento Mode"
+"Magento Path","Magento Path"
+"Permission Denied","Permission Denied"
+"PHP Information","PHP Information"
+"Magento Information","Magento Information"
+

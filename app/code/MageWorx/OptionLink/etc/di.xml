@@ -6,7 +6,31 @@
  */
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-     <!-- Plugins -->
+    <!-- Data -->
+    <type name="MageWorx\OptionBase\Model\Product\Option\Value\Attributes">
+        <arguments>
+            <argument name="data" xsi:type="array">
+                <item name="sku_is_valid" xsi:type="object">MageWorx\OptionLink\Model\Attribute\OptionValue\SkuIsValid</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="MageWorx\OptionLink\Observer\UpdatePriceTypeOptionValueAttributesObserver">
+        <arguments>
+            <argument name="attributeUpdaters" xsi:type="array">
+                <item name="price" xsi:type="object">MageWorx\OptionLink\Model\OptionValueAttributeUpdater\Price</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="MageWorx\OptionInventory\Model\Product\LinkedAttributes">
+        <arguments>
+            <argument name="data" xsi:type="array">
+                <item name="linkedAttributes" xsi:type="object">MageWorx\OptionLink\Helper\Attribute</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Plugins -->
     <type name="Magento\Catalog\Model\ResourceModel\Product\Option\Value\Collection">
         <plugin name="beforeLoad" type="MageWorx\OptionLink\Plugin\BeforeLoad" sortOrder="10" disabled="false"/>
     </type>

@@ -7,10 +7,7 @@ namespace MageWorx\OptionBase\Model\Product\Option;
 
 class CollectionUpdaters
 {
-    /**
-     * @var array
-     */
-    private $data = [];
+    private array $data = [];
 
     /**
      * @param array $data

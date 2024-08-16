@@ -6,61 +6,52 @@
 
 namespace MageWorx\OptionAdvancedPricing\Model\Product\Option\Value;
 
+use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Option;
-use Magento\Framework\Pricing\Helper\Data as PricingHelper;
+use Magento\Framework\Pricing\PriceCurrencyInterface;
 use MageWorx\OptionBase\Helper\Data as BaseHelper;
+use MageWorx\OptionBase\Helper\Price as BasePriceHelper;
+use MageWorx\OptionBase\Model\HiddenDependents as HiddenDependentsModel;
 use MageWorx\OptionAdvancedPricing\Helper\Data as Helper;
 use MageWorx\OptionAdvancedPricing\Model\TierPrice as TierPriceModel;
 use Magento\Catalog\Api\Data\ProductCustomOptionValuesInterface;
 
 class AdditionalHtml
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
+    protected Helper $helper;
+    protected BaseHelper $baseHelper;
+    protected BasePriceHelper $basePriceHelper;
+    protected PriceCurrencyInterface $priceCurrency;
+    protected Option $option;
+    protected Product $product;
+    protected TierPriceModel $tierPriceModel;
+    protected \DOMDocument $dom;
+    protected HiddenDependentsModel $hiddenDependentsModel;
 
     /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
-
-    /**
-     * @var PricingHelper
-     */
-    protected $pricingHelper;
-
-    /**
-     * @var Option
-     */
-    protected $option;
-
-    /**
-     * @var TierPriceModel
-     */
-    protected $tierPriceModel;
-
-    /**
-     * @var \DOMDocument
-     */
-    protected $dom;
-
-    /**
+     * AdditionalHtml constructor.
+     *
      * @param Helper $helper
      * @param BaseHelper $baseHelper
+     * @param BasePriceHelper $basePriceHelper
      * @param TierPriceModel $tierPriceModel
-     * @param PricingHelper $pricingHelper
+     * @param PriceCurrencyInterface $priceCurrency
+     * @param HiddenDependentsModel $hiddenDependentsModel
      */
     public function __construct(
         Helper $helper,
         BaseHelper $baseHelper,
+        BasePriceHelper $basePriceHelper,
         TierPriceModel $tierPriceModel,
-        PricingHelper $pricingHelper
+        PriceCurrencyInterface $priceCurrency,
+        HiddenDependentsModel $hiddenDependentsModel
     ) {
-        $this->helper         = $helper;
-        $this->baseHelper     = $baseHelper;
-        $this->pricingHelper  = $pricingHelper;
-        $this->tierPriceModel = $tierPriceModel;
+        $this->helper                = $helper;
+        $this->baseHelper            = $baseHelper;
+        $this->basePriceHelper       = $basePriceHelper;
+        $this->priceCurrency         = $priceCurrency;
+        $this->tierPriceModel        = $tierPriceModel;
+        $this->hiddenDependentsModel = $hiddenDependentsModel;
     }
 
     /**
@@ -74,8 +65,9 @@ class AdditionalHtml
             return;
         }
 
-        $this->dom    = $dom;
-        $this->option = $option;
+        $this->dom     = $dom;
+        $this->option  = $option;
+        $this->product = $option->getProduct();
 
         if ($this->baseHelper->isCheckbox($this->option) || $this->baseHelper->isRadio($this->option)) {
             $this->addHtmlToMultiSelectionOption();
@@ -102,6 +94,7 @@ class AdditionalHtml
         ) {
             return true;
         }
+
         return false;
     }
 
@@ -128,26 +121,63 @@ class AdditionalHtml
      */
     protected function getTierPriceHtml($value)
     {
-        $tierPrices = $this->tierPriceModel->getSuitableTierPrices($value);
+        $tierPrices = $this->tierPriceModel->getSuitableTierPrices($value, true);
         if (!$tierPrices) {
             return '';
         }
-        $index = 1;
-        $html  = '<ul id="value_' . $value->getOptionTypeId()
-            . '_tier_price" class="prices-tier items" style="display: none">';
+
+        $index         = 1;
+        $hiddenValues  = $this->hiddenDependentsModel->getHiddenValues($value->getOption()->getProduct());
+        $hiddenOptions = $this->hiddenDependentsModel->getHiddenOptions($value->getOption()->getProduct());
+
+        $display = 'style="display: none"';
+        if ($value->getIsDefault()
+            && !in_array($value->getOptionTypeId(), $hiddenValues)
+            && !in_array($value->getOption()->getOptionId(), $hiddenOptions)
+        ) {
+            $display = 'style="display: block"';
+        }
+        $html = '<ul id="value_' . $value->getOptionTypeId()
+            . '_tier_price" class="prices-tier items" ' . $display . '>';
+
+        $isPriceDisplayModeBothTax    = $this->basePriceHelper->isPriceDisplayModeBothTax();
+        $isPriceDisplayModeIncludeTax = $this->basePriceHelper->isPriceDisplayModeIncludeTax();
+
         foreach ($tierPrices as $tierPriceItem) {
             $index++;
             $html .= '<li class="item">';
-            $html .= __(
-                'Buy %1 for %2 each and <strong class="benefit">save<span class="percent tier-%3">&nbsp;%4</span>%</strong>',
-                $tierPriceItem['qty'],
-                htmlentities($this->pricingHelper->currency($tierPriceItem['price'], true, false)),
-                $index,
-                $tierPriceItem['percent']
-            );
+            $for  = '<span class="price-container price-tier_price tax weee">';
+            $for  .= '<span class="price-wrapper price-including-tax">';
+            $for  .= '<span class="price">';
+            if ($isPriceDisplayModeBothTax) {
+                $formattedTierPriceInclTax = $this->priceCurrency->format($tierPriceItem['price_incl_tax']);
+                $formattedTierPrice        = $this->priceCurrency->format($tierPriceItem['price']);
+
+                $for .= $this->baseHelper->getConvertEncoding($formattedTierPriceInclTax);
+                $for .= '</span></span>' . ' ';
+                $for .= '<span data-label="' . __('Excl. Tax') . '" class="price-wrapper price-excluding-tax">';
+                $for .= '<span class="price">';
+                $for .= $this->baseHelper->getConvertEncoding($formattedTierPrice);
+            } elseif ($isPriceDisplayModeIncludeTax) {
+                $for .= htmlentities($this->priceCurrency->format($tierPriceItem['price_incl_tax'], false));
+            } else {
+                $for .= htmlentities($this->priceCurrency->format($tierPriceItem['price'], false));
+            }
+            $for .= '</span></span></span>';
+
+            $qtyAndTitle = $tierPriceItem['qty'];
+            if ($this->baseHelper->isMultiselect($value->getOption())) {
+                $qtyAndTitle = $tierPriceItem['qty'] . ' (' . $value->getTitle() . ')';
+            }
+
+            $html .= $this->baseHelper->getConvertEncoding(__('Buy %1 for %2 each and', $qtyAndTitle, $for));
+            $html .= ' ' . '<strong class="benefit">' . __('save');
+            $html .= '<span class="percent tier-' . $index . '">' . ' ' . $tierPriceItem['percent'] . '</span>%';
+            $html .= '</strong>';
             $html .= '</li>';
         }
         $html .= '</ul>';
+
         return $html;
     }
 

@@ -3,6 +3,7 @@
  * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+declare(strict_types=1);
 
 namespace MageWorx\OptionImportExport\Model\MageTwo;
 
@@ -23,6 +24,7 @@ use MageWorx\OptionImportExport\Helper\Data as Helper;
 use MageWorx\OptionFeatures\Helper\Image as ImageHelper;
 use MageWorx\OptionTemplates\Model\OptionSaver;
 use MageWorx\OptionTemplates\Model\ResourceModel\Product as ProductResourceModel;
+use MageWorx\OptionLink\Model\OptionValueSkuVlidator as OptionValueSkuValidator;
 
 class ImportTemplateHandler
 {
@@ -237,6 +239,11 @@ class ImportTemplateHandler
     protected $canSkipTemplatesApplying = false;
 
     /**
+     * @var OptionValueSkuValidator
+     */
+    protected $optionValueSkuValidator;
+
+    /**
      * ImportTemplateHandler constructor.
      *
      * @param ProductAttributes $productAttributes
@@ -266,21 +273,23 @@ class ImportTemplateHandler
         GroupOptionFactory $groupOptionFactory,
         ResourceConnection $resource,
         OptionSaver $optionSaver,
-        ProductResourceModel $productResourceModel
+        ProductResourceModel $productResourceModel,
+        OptionValueSkuValidator $optionValueSkuValidator
     ) {
-        $this->productAttributes    = $productAttributes;
-        $this->optionAttributes     = $optionAttributes;
-        $this->valueAttributes      = $valueAttributes;
-        $this->baseHelper           = $baseHelper;
-        $this->helper               = $helper;
-        $this->imageHelper          = $imageHelper;
-        $this->groupFactory         = $groupFactory;
-        $this->groupOptionFactory   = $groupOptionFactory;
-        $this->eventManager         = $eventManager;
-        $this->productResourceModel = $productResourceModel;
-        $this->optionSaver          = $optionSaver;
-        $this->resource             = $resource;
-        $this->mediaDirectory       = $filesystem->getDirectoryWrite('media');
+        $this->productAttributes      = $productAttributes;
+        $this->optionAttributes       = $optionAttributes;
+        $this->valueAttributes        = $valueAttributes;
+        $this->baseHelper             = $baseHelper;
+        $this->helper                 = $helper;
+        $this->imageHelper            = $imageHelper;
+        $this->groupFactory           = $groupFactory;
+        $this->groupOptionFactory     = $groupOptionFactory;
+        $this->eventManager           = $eventManager;
+        $this->productResourceModel   = $productResourceModel;
+        $this->optionSaver            = $optionSaver;
+        $this->resource               = $resource;
+        $this->optionValueSkuValidator = $optionValueSkuValidator;
+        $this->mediaDirectory         = $filesystem->getDirectoryWrite('media');
     }
 
     /**
@@ -345,9 +354,10 @@ class ImportTemplateHandler
     protected function setEquivalentMaps($map)
     {
         if (!empty($map['mageworx_optiontemplates_import_from_customer_groups'])) {
-            $this->customerEquivalentMap          = $map['mageworx_optiontemplates_import_from_customer_groups'];
-            $this->customerEquivalentMap['32000'] = '32000';
+            $this->customerEquivalentMap = $map['mageworx_optiontemplates_import_from_customer_groups'];
         }
+        $this->customerEquivalentMap[BaseHelper::ALL_CUSTOMER_GROUP_ID] = BaseHelper::ALL_CUSTOMER_GROUP_ID;
+
         if (!empty($map['mageworx_optiontemplates_import_from_stores'])) {
             $this->storeEquivalentMap = $map['mageworx_optiontemplates_import_from_stores'];
         }
@@ -373,7 +383,7 @@ class ImportTemplateHandler
             return;
         }
         $this->isPermissionToApplyTemplatesCollected = true;
-        $this->canSkipTemplatesApplying = !$map['mageworx_optiontemplates_import_is_need_to_apply_templates'];
+        $this->canSkipTemplatesApplying              = !$map['mageworx_optiontemplates_import_is_need_to_apply_templates'];
     }
 
     /**
@@ -572,12 +582,14 @@ class ImportTemplateHandler
                     __("Selectable option doesn't have values")
                 );
             }
+
             return;
         }
 
         foreach ($data['values'] as $valueData) {
             $this->validateValueDefaults($valueData);
             $this->validateValueAttributes($valueData);
+
         }
     }
 
@@ -728,9 +740,9 @@ class ImportTemplateHandler
             return;
         }
 
-        $options = $data['options'];
+        $options          = $data['options'];
         $optionAttributes = $this->optionAttributes->getData();
-        $valueAttributes = $this->valueAttributes->getData();
+        $valueAttributes  = $this->valueAttributes->getData();
 
         foreach ($options as $optionData) {
             foreach ($optionAttributes as $optionAttribute) {
@@ -880,6 +892,7 @@ class ImportTemplateHandler
             $preparedOptions[] = $this->groupOptionFactory->create()->setData($optionData);
             $sortOrderCounter++;
         }
+
         return $preparedOptions;
     }
 
@@ -1103,12 +1116,14 @@ class ImportTemplateHandler
     {
         if (empty($optionData['store_view']) || !is_string($optionData['store_view'])) {
             $optionData['store_view'] = null;
+
             return;
         }
 
         $storeViews = $this->baseHelper->jsonDecode($optionData['store_view']);
         if (!is_array($storeViews)) {
             $optionData['store_view'] = null;
+
             return;
         }
 
@@ -1138,12 +1153,14 @@ class ImportTemplateHandler
     {
         if (empty($optionData['customer_group']) || !is_string($optionData['customer_group'])) {
             $optionData['customer_group'] = null;
+
             return;
         }
 
         $customerGroups = $this->baseHelper->jsonDecode($optionData['customer_group']);
         if (!is_array($customerGroups)) {
             $optionData['customer_group'] = null;
+
             return;
         }
 
@@ -1189,6 +1206,7 @@ class ImportTemplateHandler
 
             $this->prepareValueStoreSpecificData($fromValue, 'special_price');
             $this->prepareValueStoreSpecificData($fromValue, 'tier_price');
+            $this->prepareSkuIsValidData($fromValue);
 
             $valueAttributes = $this->valueAttributes->getData();
             foreach ($valueAttributes as $valueAttribute) {
@@ -1204,6 +1222,20 @@ class ImportTemplateHandler
     }
 
     /**
+     * {@inheritdoc}
+     */
+    protected function prepareSkuIsValidData(array & $value): void
+    {
+        if ($value['sku'] &&
+            $this->optionValueSkuValidator->isOptionValueSkuIsValid($value['sku'])
+        ) {
+            $value['sku_is_valid'] = true;
+        } else {
+            $value['sku_is_valid'] = false;
+        }
+    }
+
+    /**
      * Change customer groups to M2 equivalent
      *
      * @param array $value
@@ -1214,12 +1246,14 @@ class ImportTemplateHandler
     {
         if (empty($value[$key]) || !is_string($value[$key])) {
             $value[$key] = null;
+
             return;
         }
 
         $valueData = $this->baseHelper->jsonDecode($value[$key]);
         if (!is_array($valueData)) {
             $value[$key] = null;
+
             return;
         }
 
@@ -1239,8 +1273,8 @@ class ImportTemplateHandler
      * Check image presence in M2 media APO directory
      *
      * @param array $option
-     * @throws FileSystemException
      * @return void
+     * @throws FileSystemException
      */
     protected function checkImages($option)
     {

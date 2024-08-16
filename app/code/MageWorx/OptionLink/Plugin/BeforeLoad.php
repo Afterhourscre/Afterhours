@@ -17,30 +17,11 @@ use \Magento\Framework\Registry;
  */
 class BeforeLoad
 {
-    /**
-     * @var \MageWorx\OptionLink\Helper\Attribute
-     */
-    protected $helperAttribute;
-
-    /**
-     * @var \MageWorx\OptionLink\Model\ResourceModel\Product\Option\Value\FieldFactory
-     */
-    protected $optionFieldFactory;
-
-    /**
-     * @var \MageWorx\OptionLink\Model\ResourceModel\Product\Option\Value\CollectionUpdater
-     */
-    protected $collectionUpdater;
-    
-    /**
-     * @var \Magento\Framework\ObjectManagerInterface|null
-     */
-    protected $objectManager = null;
-
-    /**
-     * @var \Magento\Framework\Registry
-     */
-    protected $registry;
+    protected HelperAttribute $helperAttribute;
+    protected FieldFactory $optionFieldFactory;
+    protected CollectionUpdater $collectionUpdater;
+    protected ?ObjectManager $objectManager = null;
+    protected Registry $registry;
 
     /**
      * BeforeLoad constructor.
@@ -97,8 +78,6 @@ class BeforeLoad
                 $this->optionFieldFactory->create($field)->addField($collection);
             }
         }
-
-        $this->collectionUpdater->addHelperFields($collection);
 
         return [$printQuery, $logQuery];
     }

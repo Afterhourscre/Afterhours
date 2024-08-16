@@ -8,21 +8,85 @@
 
 $field = $block->getField();
 ?>
-<div class="field input file <?= /* @noEscape */ $field->getRequired() ? 'required' : ''; ?>">
+<div class="field input file <?= /* @noEscape */ $field->getRequired() ? 'required' : ''; ?>" style="width:100%">
     <label class="label" for="<?= $block->escapeHtmlAttr($block->getFieldHtmlId()); ?>">
         <span><?= $block->escapeHtml($field->getTitle()); ?></span>
     </label>
     <div class="control validation-block">
         <div class="upload-wrapper-<?= $block->escapeHtmlAttr($field->getId()); ?>"
              data-bind="scope: 'uploader-<?= $block->escapeHtmlAttr($field->getId()); ?>'">
-            <!-- ko template: getTemplate() --><!-- /ko -->
+            
+             <input
+                id="upload-field-<?= $block->escapeHtmlAttr($field->getId()); ?>" 
+                type="file" name="fileuploader" multiple />
+
+            <input  type="hidden"
+                name="<?= $block->escapeHtmlAttr($block->getFieldHtmlName()); ?>"
+                id="<?= $block->escapeHtmlAttr($block->getFieldHtmlId()); ?>"
+                value="<?= $block->escapeHtmlAttr($block->getDefaultValue()); ?>"/>
+
+        </div>
+
+        <div id="upload-list-<?= $block->escapeHtmlAttr($field->getId()); ?>">
         </div>
     </div>
     <?php if ($block->getComment()) : ?>
         <p class="note"><span><?= $block->escapeHtml($block->getComment()); ?></span></p>
     <?php endif; ?>
 </div>
+<script type="text/javascript">
+    require(['jquery','Magento_Ui/js/modal/alert'], function($, alert){
+        $(document).ready(function() {
+            const field = '#<?= $block->getFieldHtmlId() ?>';
+            const list = '#upload-list-<?= $block->escapeHtmlAttr($field->getId()); ?>';
 
+            $('#upload-field-<?= $block->escapeHtmlAttr($field->getId()); ?>').change(function() {
+
+                var files = $('#upload-field-<?= $block->escapeHtmlAttr($field->getId()); ?>')[0].files;
+                var formData = new FormData();
+                
+                $.each(files, function(i, file) {
+                    formData.append('files', file);
+                });
+
+                $.ajax({
+                    url: '<?= $block->escapeJs($block->escapeUrl($block->getUrl(
+                                    'customform/form/upload',
+                                    ['field_id' => $field->getId()]
+                                ))); ?>',  // Backend script to handle the upload
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    showLoader: true,
+                    success: function(response) {
+
+                        if(!response.error){
+                            const t = $(field).val().split(',');
+                            t.push('tmp/catalog/product' + response.file);
+                            $(field).val(t.join(","));
+                            $(list).append("<b>"+response.name+"</b><br/>");
+                            alert({
+                                title: $.mage.__('Success'),
+                                content: $.mage.__('File Uploaded Successfully!'),
+                            });
+                        }else{
+                            alert({
+                                title: $.mage.__('Error'),
+                                content: $.mage.__(response.error),
+                            });
+                        }
+                        
+                    },
+                    error: function() {
+
+                    }
+                });
+            });
+        });
+    });
+</script>
+<?php return ?>
 <script type="text/x-magento-init">
     {
         ".upload-wrapper-<?= $block->escapeJs($block->escapeHtmlAttr($field->getId())); ?>": {

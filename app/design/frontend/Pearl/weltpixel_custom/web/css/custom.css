@@ -29,3 +29,9 @@
     display: none;
 }
 
+
+/*load more items*/
+.products .product-items .ias-load-more {
+    position: relative;
+    top: 5em;
+}

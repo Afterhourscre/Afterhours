@@ -264,8 +264,8 @@ class FrontendOptionsEditActionControllerSaveObserver implements ObserverInterfa
                 }
                 //ignore _characterset admin options in frontend generation
                 //they are used only in google font url creation
-                $characterSetOption = strpos($id, '_characterset');
-                if (($characterSetOption === false) && trim(strlen($frontendValue))) {
+               $characterSetOption = strpos($id, '_characterset');
+                if ($characterSetOption === false && is_string($frontendValue) && trim(strlen($frontendValue))) {
                     if (in_array($id, $fontFamilyOptions)) {
                         if (!$frontendValue) {
                             continue;

@@ -232,7 +232,6 @@ class EmailSender
 
         foreach ($form->getFieldCollection() as $field) {
             /** @var \Mageside\MultipleCustomForms\Model\CustomForm\Field $field */
-
             if ($field->getType() == 'file' && isset($data[Field::FIELD_PREFIX . $field->getId()])) {
                 $files = explode(
                     ",",

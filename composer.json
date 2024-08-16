@@ -13,7 +13,8 @@
         "worldpay/worldpay-lib-php": "^2.1",
         "pelago/emogrifier": "^7.0",
         "elasticsearch/elasticsearch": "~7.17.0",
-        "laminas/laminas-serializer": "^2.8"
+        "laminas/laminas-serializer": "^2.8",
+        "magefan/module-login-as-customer": "2.3.4"
     },
     "require-dev": {
         "allure-framework/allure-phpunit": "^2",

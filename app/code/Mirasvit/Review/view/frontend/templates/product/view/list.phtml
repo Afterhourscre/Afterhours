@@ -1,0 +1,119 @@
+<?php
+
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Helper\SecureHtmlRenderer;
+use Mirasvit\Review\Block\Product\View\ListView;
+
+/**
+ * @var ListView           $block
+ * @var SecureHtmlRenderer $secureRenderer
+ */
+
+$_items    = $block->getReviewsCollection()->getItems();
+$direction = $block->getRequest()->getParam('direction') == 'asc' ? 'checked' : '';
+?>
+
+<div class="block review-list" id="customer-reviews">
+    <?= $block->getChildBlock('review.summary')->setReviewSummary($block->getReviewSummary())->toHtml() ?>
+
+    <?php if ($block->isShowGallery()): ?>
+        <div class="block-title">
+            <strong><?= $block->escapeHtml(__('Photos from Customers')) ?></strong>
+        </div>
+        <?= $block->getChildBlock('summary.gallery')->setProductId((int)$block->getProduct()->getId())->toHtml(); ?>
+    <?php endif; ?>
+
+    <?php if (!$block->getHideTitle()): ?>
+        <div class="block-title">
+            <strong><?= $block->escapeHtml(__('Customer Reviews')) ?></strong>
+        </div>
+    <?php endif ?>
+
+    <?php if ($block->isDisplayFilters()): ?>
+        <div class="mst-review-toolbar" id="filter_sorting">
+            <div class="mst-review-filters">
+                <div class="rating-label"><?= $block->escapeHtml(__('Reviews By Rating')) ?>:</div>
+                <div class="rating-summary">
+                    <?php foreach ($block->getFilterOptions() as $filterOption): ?>
+                        <div class="mst-rating-option <?= $block->getReviewsCount($filterOption['value']) == 0 ? ' mst-rating-option-disabled' : '' ?>">
+                            <label>
+                                <div class="rating-result" title="<?= $filterOption['value'] * 20 ?>%">
+                                    <span for="filter_rating" style="width:<?= $filterOption['value'] * 20 ?>%"><span><?= $block->escapeHtml($filterOption['value']) ?></span></span>
+                                    <input type="checkbox" style="display: none" name="filter_rating" value="<?= $block->escapeHtml($filterOption['value']) ?>"
+                                        <?= $filterOption['checked'] ? 'checked' : ' '; ?>
+                                        <?= $block->getReviewsCount($filterOption['value']) == 0 ? 'disabled' : '' ?>>
+                                </div>
+                                <?php if ($filterOption['checked']): ?>
+                                    <strong>
+                                        <span> <?= ' (' . $block->escapeHtml($block->getReviewsCount($filterOption['value'])) . ')'; ?></span>
+                                    </strong>
+                                <?php else: ?>
+                                    <span> <?= ' (' . $block->escapeHtml($block->getReviewsCount($filterOption['value'])) . ')'; ?></span>
+                                <?php endif; ?>
+                            </label>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <div class="mst-review-sorting">
+                <?php if ($block->getVerifiedReviewsCount()): ?>
+                <div class="mst-review-filter">
+                    <input
+                        type="checkbox"
+                        id="verified_buyers"
+                        name="verified_buyers"
+                        value="is_verified_buyer"
+                        <?= $block->getRequest()->getParam('is_verified_buyer') ? 'checked' : '' ?>
+                    />
+                    <label for="verified_buyers"><?= $block->escapeHtml(__('Verified Buyers')) ?></label>
+                </div>
+                <?php endif; ?>
+                <span class="mst-review-sorting-label"><?= $block->escapeHtml(__('Sort by')) ?></span>
+                <select name="sorting" id="sorting">
+                    <?php foreach ($block->getSortingOptions() as $sortingOption): ?>
+                        <option value="<?= $block->escapeHtml($sortingOption['value']); ?>" <?= $sortingOption ['selected'] ? 'selected' : '' ?>>
+                            <?= $block->escapeHtml($sortingOption['label']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <?php if (count($_items)): ?>
+    <div class="block-content">
+
+        <div class="toolbar review-toolbar">
+            <?= $block->getChildHtml('toolbar') ?>
+        </div>
+        <ol class="items review-items">
+            <?php foreach ($_items as $_review): ?>
+                <li class="item review-item" itemscope itemprop="review" itemtype="http://schema.org/Review">
+                    <?=
+                    $block->getChildBlock('mst.product.review')
+                        ->setReview($_review)
+                        ->toHtml();
+                    ?>
+                </li>
+            <?php endforeach; ?>
+        </ol>
+        <div class="toolbar review-toolbar">
+            <?= $block->getChildHtml('toolbar') ?>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php if ($block->isDisplayFilters()): ?>
+    <script type="text/x-magento-init">
+    {
+        "*": {
+            "Mirasvit_Review/js/sorting-filtering": {
+                "productReviewUrl": "<?= $block->escapeJs($block->getProductReviewUrl()) ?>",
+                "reviewsTabSelector": "#tab-label-reviews"
+            }
+        }
+    }
+    </script>
+<?php endif; ?>

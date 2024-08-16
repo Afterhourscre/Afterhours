@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">mst_review_form.mst_review_form_data_source</item>
+            <item name="deps" xsi:type="string">mst_review_form.mst_review_form_data_source</item>
+        </item>
+
+        <item name="config" xsi:type="array">
+            <item name="dataScope" xsi:type="string">data</item>
+            <item name="namespace" xsi:type="string">mst_review_form</item>
+        </item>
+
+        <item name="template" xsi:type="string">templates/form/collapsible</item>
+
+        <item name="buttons" xsi:type="array">
+            <item name="back" xsi:type="string">Mirasvit\Review\Ui\Review\Form\Control\BackButton</item>
+            <item name="delete" xsi:type="string">Mirasvit\Review\Ui\Review\Form\Control\DeleteButton</item>
+            <item name="prev" xsi:type="string">Mirasvit\Review\Ui\Review\Form\Control\PrevButton</item>
+            <item name="next" xsi:type="string">Mirasvit\Review\Ui\Review\Form\Control\NextButton</item>
+            <item name="save_prev" xsi:type="string">Mirasvit\Review\Ui\Review\Form\Control\SaveAndPrevButton</item>
+            <item name="save_next" xsi:type="string">Mirasvit\Review\Ui\Review\Form\Control\SaveAndNextButton</item>
+            <item name="save" xsi:type="string">Mirasvit\Review\Ui\Review\Form\Control\SaveButton</item>
+        </item>
+    </argument>
+
+    <dataSource name="mst_review_form_data_source">
+        <argument name="dataProvider" xsi:type="configurableObject">
+            <argument name="class" xsi:type="string">Mirasvit\Review\Ui\Review\Form\DataProvider</argument>
+            <argument name="name" xsi:type="string">mst_review_form_data_source</argument>
+            <argument name="primaryFieldName" xsi:type="string">review_id</argument>
+            <argument name="requestFieldName" xsi:type="string">review_id</argument>
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="submit_url" xsi:type="url" path="*/*/save"/>
+                </item>
+            </argument>
+        </argument>
+        <argument name="data" xsi:type="array">
+            <item name="js_config" xsi:type="array">
+                <item name="component" xsi:type="string">Magento_Ui/js/form/provider</item>
+            </item>
+        </argument>
+    </dataSource>
+
+    <fieldset name="general" sortOrder="1">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="label" xsi:type="string">Review Details</item>
+                <item name="collapsible" xsi:type="boolean">false</item>
+                <item name="opened" xsi:type="boolean">true</item>
+            </item>
+        </argument>
+
+        <field name="review_id">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                </item>
+            </argument>
+        </field>
+
+        <field name="product_id">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                </item>
+            </argument>
+        </field>
+
+        <field name="entity_pk_value">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                </item>
+            </argument>
+        </field>
+
+        <field name="product" formElement="input" sortOrder="10">
+            <settings>
+                <elementTmpl>ui/form/element/html</elementTmpl>
+                <label translate="true">Product</label>
+                <imports>
+                    <link name="value">${ $.provider }:data.product</link>
+                </imports>
+            </settings>
+        </field>
+
+        <field name="author" formElement="input" sortOrder="20">
+            <settings>
+                <elementTmpl>ui/form/element/html</elementTmpl>
+                <label translate="true">Author</label>
+                <imports>
+                    <link name="value">${ $.provider }:data.author</link>
+                </imports>
+            </settings>
+        </field>
+
+        <field name="ip" formElement="input" sortOrder="21">
+            <settings>
+                <elementTmpl>ui/form/element/text</elementTmpl>
+                <label translate="true">IP</label>
+                <imports>
+                    <link name="value">${ $.provider }:data.ip</link>
+                </imports>
+            </settings>
+        </field>
+
+        <field name="country" formElement="input" sortOrder="22">
+            <settings>
+                <elementTmpl>ui/form/element/text</elementTmpl>
+                <label translate="true">Country</label>
+                <imports>
+                    <link name="value">${ $.provider }:data.country</link>
+                </imports>
+            </settings>
+        </field>
+
+        <field name="location" formElement="input" sortOrder="23">
+            <settings>
+                <elementTmpl>ui/form/element/text</elementTmpl>
+                <label translate="true">Location</label>
+                <imports>
+                    <link name="value">${ $.provider }:data.location</link>
+                </imports>
+            </settings>
+        </field>
+
+        <field name="rating_summary" formElement="input" sortOrder="25">
+            <settings>
+                <elementTmpl>ui/form/element/html</elementTmpl>
+                <label translate="true">Rating Summary</label>
+                <imports>
+                    <link name="value">${ $.provider }:data.rating_summary</link>
+                </imports>
+                <additionalClasses>
+                    <class name="field-summary-rating">true</class>
+                </additionalClasses>
+            </settings>
+        </field>
+
+        <field name="rating_detailed" formElement="input" sortOrder="28">
+            <settings>
+                <elementTmpl>ui/form/element/html</elementTmpl>
+                <label translate="true">Detailed Rating</label>
+                <imports>
+                    <link name="value">${ $.provider }:data.rating_detailed</link>
+                </imports>
+                <additionalClasses>
+                    <class name="field-detailed-rating">true</class>
+                </additionalClasses>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+        </field>
+
+        <field name="status_id" formElement="select" sortOrder="30">
+            <settings>
+                <dataType>text</dataType>
+                <label translate="true">Status</label>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+            <formElements>
+                <select>
+                    <settings>
+                        <options class="Mirasvit\Review\Model\Config\Source\StatusSource"/>
+                    </settings>
+                </select>
+            </formElements>
+        </field>
+
+        <field name="nickname" formElement="input" sortOrder="40">
+            <settings>
+                <visible>true</visible>
+                <elementTmpl>ui/form/element/input</elementTmpl>
+                <label translate="true">Nickname</label>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+        </field>
+
+        <field name="title" formElement="input" sortOrder="50">
+            <settings>
+                <visible>true</visible>
+                <elementTmpl>ui/form/element/input</elementTmpl>
+                <label translate="true">Summary of Review</label>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+        </field>
+
+        <field name="detail" sortOrder="60">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="formElement" xsi:type="string">textarea</item>
+                    <item name="cols" xsi:type="number">15</item>
+                    <item name="rows" xsi:type="number">10</item>
+                    <item name="label" translate="true" xsi:type="string">Review</item>
+                    <item name="dataType" translate="true" xsi:type="string">text</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+
+        <field name="display_pros_cons" formElement="hidden">
+            <settings>
+                <dataType>bool</dataType>
+            </settings>
+        </field>
+
+        <field name="pros" sortOrder="70">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="formElement" xsi:type="string">textarea</item>
+                    <item name="cols" xsi:type="number">15</item>
+                    <item name="rows" xsi:type="number">10</item>
+                    <item name="label" translate="true" xsi:type="string">Pros</item>
+                    <item name="dataType" translate="true" xsi:type="string">text</item>
+                    <item name="imports" xsi:type="array">
+                        <item name="visible" xsi:type="string">${ $.provider }:data.display_pros_cons</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+
+        <field name="cons" sortOrder="80">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="formElement" xsi:type="string">textarea</item>
+                    <item name="cols" xsi:type="number">15</item>
+                    <item name="rows" xsi:type="number">10</item>
+                    <item name="label" translate="true" xsi:type="string">Cons</item>
+                    <item name="dataType" translate="true" xsi:type="string">text</item>
+                    <item name="imports" xsi:type="array">
+                        <item name="visible" xsi:type="string">${ $.provider }:data.display_pros_cons</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+
+        <field name="photos" formElement="hidden">
+            <settings>
+                <dataType>text</dataType>
+            </settings>
+        </field>
+    </fieldset>
+</form>

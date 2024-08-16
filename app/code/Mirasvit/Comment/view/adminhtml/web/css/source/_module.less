@@ -1,0 +1,218 @@
+@message-admin-background:    #ecfaff;
+@message-admin-color:         #4b8dcb;
+
+@message-approved-background: #f7ffec;
+@message-approved-color:      #98cb4b;
+
+@message-pending-background:  #fffbea;
+@message-pending-color:       #ffd500;
+
+@message-rejected-background: #ffdde2;
+@message-rejected-color:      #ff7672;
+
+@message-border-style:        3px solid;
+
+.mst-comment__container {
+    .admin__fieldset {
+        padding-top:    1rem;
+        padding-bottom: 1rem;
+    }
+
+    .mst-comment__tree {
+        .mst-comment__wrapper {
+            margin: 5px 0;
+
+            .mst-comment {
+                padding:  1rem 1.5rem 1.5rem;
+                position: relative;
+
+                &.admin {
+                    background:  @message-admin-background;
+                    border-left: @message-border-style @message-admin-color;
+                }
+
+                &.pending {
+                    background:  @message-pending-background;
+                    border-left: @message-border-style @message-pending-color;
+                }
+
+                &.approved {
+                    background:  @message-approved-background;
+                    border-left: @message-border-style @message-approved-color;
+                }
+
+                &.rejected {
+                    background:  @message-rejected-background;
+                    border-left: @message-border-style @message-rejected-color;
+                }
+
+                .link {
+                    position: absolute;
+                    right:    1rem;
+                    bottom:   5px;
+                    cursor:   pointer;
+                    color:    #008bdb;
+                }
+            }
+
+            .mst-comment__form {
+                .admin__field-control {
+                    width:        ~'calc(100% - 30px)';
+                    padding-left: 1rem;
+                }
+            }
+
+            .mst-comment__header {
+                display:         flex;
+                justify-content: space-between;
+                align-items:     center;
+
+                .mst-comment__meta {
+                    padding: 5px;
+
+                    .author {
+                        font-weight: 600;
+                        display:     block;
+
+                        a {
+                            font-weight: normal;
+                        }
+                    }
+
+                    time {
+                        color: #999;
+                    }
+                }
+
+                .mst-comment__toolbar {
+                    display:     flex;
+                    height:      35px;
+                    align-items: center;
+                    padding:     5px;
+
+                    .mst-comment__status {
+                        margin-right: 12px;
+
+                        &.approved {
+                            color: @message-approved-color;
+                        }
+
+                        &.pending {
+                            color: @message-pending-color;
+                        }
+
+                        &.rejected {
+                            color: @message-rejected-color;
+                        }
+                    }
+
+                    .mst-comment__status-form {
+                        margin-right: 12px;
+                        display: flex;
+
+                        select {
+                            margin-right: .5rem;
+                        }
+                    }
+
+                    .toolbar-button {
+                        font-family:      @icons-admin__font-name;
+                        font-style:       normal;
+                        font-weight:      400;
+                        line-height:      1;
+                        background-color: inherit;
+                        border:           none;
+                        border-radius:    100%;
+                        width:            25px;
+                        height:           16px;
+                        text-shadow:      none;
+                        padding:          0;
+                        font-size:        2rem;
+                        cursor:           pointer;
+                        color:            #666666
+                    }
+
+                    .mst-comment__delete {
+                        &::before {
+                            content:     @icon-delete__content;
+                            margin-left: 5px;
+                        }
+
+                        &:hover {
+                            text-decoration: none;
+                        }
+                    }
+
+                    .mst-comment__status-form__open {
+                        &::before {
+                            content: @icon-edit__content;
+                        }
+                    }
+
+                    .mst-comment__status-form__close {
+                        &::before {
+                            content: @icon-close-mage__content;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .hidden {
+        display: none!important;
+    }
+}
+
+.blog-post-edit {
+    [data-index="comments"] {
+        & > .admin__fieldset-wrapper-content {
+            & > .admin__fieldset {
+                padding-top: 0;
+
+                .mst-comment__container {
+                    & > .admin__fieldset-wrapper-content {
+                        & > .mst-comment__form {
+                            display: none;
+                        }
+
+                        .admin__field-label {
+                            &::before {
+                                content: none;
+                            }
+                        }
+                    }
+
+                    .fieldset-wrapper-title {
+                        display: none;
+                    }
+                }
+            }
+        }
+
+        .mst-comment__form {
+            .admin__field-control {
+                width: 100% !important;
+            }
+        }
+    }
+}
+
+.mst-comment-details {
+    padding-top: 0!important;
+
+    .title {
+        font-weight: 500;
+        font-size:   1.6rem;
+        display:     block;
+        margin:      2rem 1rem;
+    }
+
+    .mst-comment-details__entity {
+        ul {
+            width:       50%!important;
+            line-height: 3rem;
+            list-style:  none;
+        }
+    }
+}

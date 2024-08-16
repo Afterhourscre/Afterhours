@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Mirasvit_Review::review" title="Advanced Reviews" module="Mirasvit_Review"
+             resource="Mirasvit_Review::review" sortOrder="100" parent="Magento_Backend::marketing"/>
+        <add id="Mirasvit_Review::review_all" title="All Reviews" module="Mirasvit_Review"
+             resource="Mirasvit_Review::review_all" sortOrder="100" parent="Mirasvit_Review::review"
+             action="mst_review/review"/>
+        <remove id="Magento_Review::catalog_reviews_ratings_pending"/>
+        <remove id="Magento_Review::catalog_reviews_ratings_reviews_all"/>
+    </menu>
+</config>

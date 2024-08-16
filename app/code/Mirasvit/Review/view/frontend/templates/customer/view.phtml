@@ -1,0 +1,43 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+/**
+ * @var \Magento\Review\Block\Customer\View $block
+ * @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer
+ */
+
+$product = $block->getProductData();
+?>
+<?php if ($product->getId()): ?>
+    <div class="customer-review view">
+        <div class="product-details">
+            <div class="product-media">
+                <a class="product-photo" href="<?= $block->escapeUrl($product->getProductUrl()) ?>">
+                    <?php /* customer_account_product_review_page */ ?>
+                    <?= $block->getImage($block->getProductData(), 'customer_account_product_review_page')->toHtml() ?>
+                </a>
+            </div>
+            <div class="product-info">
+                <h2 class="product-name"><?= $block->escapeHtml($product->getName()) ?></h2>
+                <?php if ($block->getRating() && $block->getRating()->getSize()): ?>
+                    <span class="rating-average-label"><?= $block->escapeHtml(__('Average Customer Rating:')) ?></span>
+                    <?= $block->getReviewsSummaryHtml($product) ?>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="review-details">
+            <?= $block->getChildBlock('mst.product.review')->setReview($block->getReviewData())->toHtml() ?>
+        </div>
+    </div>
+    <div class="actions-toolbar">
+        <div class="secondary">
+            <a class="action back" href="<?= $block->escapeUrl($block->getBackUrl()) ?>">
+                <span><?= $block->escapeHtml(__('Back to My Reviews')) ?></span>
+            </a>
+        </div>
+    </div>
+<?php endif; ?>

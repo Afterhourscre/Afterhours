@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../Magento/Store/etc/config.xsd">
+    <default>
+        <mst_review>
+            <general>
+                <default_sorting>created_at-desc</default_sorting>
+                <order_status>complete</order_status>
+            </general>
+            <media>
+                <max_number_files>5</max_number_files>
+            </media>
+            <notifications>
+                <is_admin_notifications_enabled>1</is_admin_notifications_enabled>
+                <is_email_notifications_enabled>0</is_email_notifications_enabled>
+            </notifications>
+        </mst_review>
+    </default>
+</config>

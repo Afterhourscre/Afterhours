@@ -1,0 +1,140 @@
+<?php
+declare(strict_types=1);
+
+use Mirasvit\Comment\Api\Data\CommentInterface;
+use Mirasvit\Comment\Block\Adminhtml\Comment\Tree;
+
+/** @var Tree $block */
+
+$items = $block->getItems();
+
+if (!$items) {
+    return '';
+}
+
+?>
+
+<div class="mst-comment__tree">
+    <?php foreach ($items as $item): ?>
+        <?php /** @var CommentInterface $item */ ?>
+        <div class="mst-comment__wrapper"
+             data-comment-id="<?= $item->getId() ?>"
+             data-level="<?= $item->getLevel() ?>"
+            <?php if ($item->getParentId()): ?>
+                data-parent-id="<?= $item->getParentId() ?>"
+            <?php endif; ?>
+            <?php if ($item->getLevel() > 1): ?>
+             style="margin-left: 25px;"
+             <?php endif; ?>
+        >
+            <div class="mst-comment__header">
+                <div class="mst-comment__meta">
+                    <span class="author">
+                        <span><?= $block->escapeHtml($item->getNickname()) ?></span>
+                        <?php if ($customer = $block->getCustomer($item->getCustomerId())): ?>
+                            <a href="<?= $block->getUrl('customer/index/edit', ['id' => $customer->getId()]) ?>" target="_blank">
+                                <?= $customer->getFirstName() ?> <?= $customer->getLastName() ?>
+                            </a>
+                        <?php endif; ?>
+                    </span>
+                    <time><?= $block->formatDate($item->getCreatedAt(), 2, 1) ?></time>
+                </div>
+                <div class="mst-comment__toolbar">
+                    <?php if (!$item->getIsAdmin()): ?>
+<!--                    <div>-->
+                        <span class="mst-comment__status <?= $item->getStatus() ?>"><?= $block->getStatusLabel($item->getStatus()) ?></span>
+                        <?php if ($block->isAllowedToEditComments()): ?>
+                        <form action="<?= $block->getUrl('mst_comment/comment/update') ?>" class="mst-comment__status-form hidden">
+                            <input type="hidden" name="form_key" value="<?= $block->getFormKey() ?>"/>
+                            <input type="hidden" name="<?= CommentInterface::ID ?>" value="<?= $item->getId() ?>"/>
+                            <select class="admin__control-select" name="<?= CommentInterface::STATUS ?>">
+                                <?php foreach ($block->getStatusOptions() as $status): ?>
+                                    <option value="<?= $status['value'] ?>" <?= $status['value'] == $item->getStatus() ? 'selected' : '' ?>>
+                                        <?= $status['label'] ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <button type="submit" class="mst-comment__status-form__submit"><?= __('Save') ?></button>
+                        </form>
+<!--                    </div>-->
+                        <span class="mst-comment__status-form__open toolbar-button" onclick="showStatusForm(event)">
+                            <span class="hidden"><?= __('Change status') ?></span>
+                        </span>
+                        <span class="mst-comment__status-form__close toolbar-button hidden" onclick="hideStatusForm(event)">
+                            <span class="hidden"><?= __('Hide form') ?></span>
+                        </span>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                    <?php if ($block->isAllowedToEditComments()): ?>
+                    <span class="mst-comment__delete toolbar-button" onclick="deleteComment(event)">
+                        <span class="hidden"><?= __('Delete') ?></span>
+                    </span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div class="mst-comment <?= $item->getIsAdmin() ? 'admin' : 'user' ?> <?= $item->getIsAdmin() ? '' : $item->getStatus() ?>">
+                <div class="mst-comment__message"><?= $block->escapeHtml($item->getContent()) ?></div>
+                <?php if ($block->isAllowedToEditComments()): ?>
+                <span class="mst-comment__form-show link" onclick="showCommentForm(event)"><?= __('Reply') ?></span>
+                <span class="mst-comment__form-hide hidden link" onclick="hideCommentForm(event)"><?= __('Hide form') ?></span>
+                <?php endif; ?>
+            </div>
+
+            <div class="mst-comment__form-wrapper hidden">
+                <?= $block->getCommmentFormHtml($item->getId()) ?>
+            </div>
+
+            <?php if ($children = $item->getChildren()): ?>
+                <?= $block->setItems($children)->toHtml() ?>
+            <?php endif; ?>
+        </div>
+    <?php endforeach; ?>
+
+    <script>
+        function showCommentForm(e) {
+            const comment = e.target.closest('.mst-comment__wrapper');
+            comment.querySelector('.mst-comment__form-wrapper').classList.remove('hidden')
+            comment.querySelector('.mst-comment__form-hide').classList.remove('hidden')
+            comment.querySelector('.mst-comment__form-show').classList.add('hidden')
+        }
+
+        function hideCommentForm(e) {
+            const comment = e.target.closest('.mst-comment__wrapper');
+            comment.querySelector('.mst-comment__form-wrapper').classList.add('hidden')
+            comment.querySelector('.mst-comment__form-hide').classList.add('hidden')
+            comment.querySelector('.mst-comment__form-show').classList.remove('hidden')
+        }
+
+        function showStatusForm(e) {
+            const toolbar = e.target.closest('.mst-comment__toolbar');
+
+            toolbar.querySelector('.mst-comment__status-form').classList.remove('hidden');
+            toolbar.querySelector('.mst-comment__status-form__close').classList.remove('hidden');
+            toolbar.querySelector('.mst-comment__status-form__open').classList.add('hidden');
+            toolbar.querySelector('.mst-comment__status').classList.add('hidden');
+        }
+
+        function hideStatusForm(e) {
+            const toolbar = e.target.closest('.mst-comment__toolbar');
+
+            toolbar.querySelector('.mst-comment__status-form').classList.add('hidden');
+            toolbar.querySelector('.mst-comment__status-form__close').classList.add('hidden');
+            toolbar.querySelector('.mst-comment__status-form__open').classList.remove('hidden');
+            toolbar.querySelector('.mst-comment__status').classList.remove('hidden');
+        }
+
+        function deleteComment(e) {
+            let deleteUrl = "<?= $block->getUrl('mst_comment/comment/delete/') . CommentInterface::ID . '/' ?>";
+
+            const commentWraper = e.target.closest('.mst-comment__wrapper');
+            const commentId     = commentWraper.dataset.commentId;
+
+            deleteUrl += commentId;
+
+            deleteConfirm(
+                "<?= __('Are you sure you wan\'t to delete the comment?') ?>",
+                deleteUrl
+            )
+        }
+    </script>
+</div>

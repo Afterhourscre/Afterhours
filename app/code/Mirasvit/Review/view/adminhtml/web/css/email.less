@@ -1,0 +1,64 @@
+@font-family__base: "Open Sans";
+
+body {
+    margin:  0;
+    padding: 0;
+}
+
+html,
+body {
+    background-color: #ffffff;
+    font-family:      @font-family__base;
+    font-size:        14px;
+}
+
+.main {
+    width: 100%;
+}
+
+h1 {
+    margin-top: 0;
+    color:      #514943;
+}
+
+h2 {
+    color:          #41362f;
+    margin:         0 0 10px 0;
+    text-transform: uppercase;
+    font-size:      12px;
+    font-weight:    600;
+
+    small {
+        color: #857d78;
+    }
+}
+
+.wrapper {
+    margin:  0 auto;
+    width:   100%;
+    padding: 20px;
+
+    td {
+        padding: 5px;
+
+        &.label {
+            font-weight:    600;
+            vertical-align: baseline;
+        }
+    }
+}
+
+.rating-box {
+    font-size:   0;
+    height:      13px;
+    line-height: 0;
+    margin:      4px 0 0;
+    overflow:    hidden;
+    width:       90px;
+
+    .rating {
+        height: 13px;
+    }
+}
+
+

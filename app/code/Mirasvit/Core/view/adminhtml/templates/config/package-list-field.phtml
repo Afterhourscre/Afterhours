@@ -1,11 +1,16 @@
 <?php
+
+use Mirasvit\Core\Service\CspService;
+
 /** @var \Mirasvit\Core\Block\Adminhtml\Config\PackageListField $block */
+
 if ($block->isMarketplace()) {
     return;
 }
 $packages           = $block->getPackageList();
 $displayedPool      = [];
 $inRequirementsPool = [];
+$nonce              = CspService::getNonce();
 
 foreach ($packages as $package) {
     if (strpos($package->getPackage(), 'sample-data') !== false) {
@@ -116,7 +121,7 @@ foreach ($packages as $package) {
     </fieldset>
 
 
-    <script type="text/javascript">
+    <script <?php if ($nonce): ?> nonce="<?= $block->escapeHtml($nonce) ?>"<?php endif; ?> type="text/javascript">
         //<![CDATA[
         require(['prototype'], function () {
             Fieldset.applyCollapse('packages');
@@ -125,7 +130,7 @@ foreach ($packages as $package) {
     </script>
 </div>
 
-<script type="text/x-magento-init">
+<script <?php if ($nonce): ?> nonce="<?= $block->escapeHtml($nonce) ?>"<?php endif; ?> type="text/x-magento-init">
 {
     "*": {
         "Magento_Ui/js/core/app": {

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widgets xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Widget:etc/widget.xsd">
+    <widget class="Mirasvit\Review\Block\Widget\ReviewGallery" id="mst_review_widget_review_gallery">
+        <label translate="true">Advanced Reviews: Gallery</label>
+        <description translate="true">Reviews Photo Gallery</description>
+        <parameters>
+            <parameter name="title" xsi:type="text" visible="true">
+                <label translate="true">Frontend title</label>
+                <value>Reviews</value>
+            </parameter>
+            <parameter name="sort_order" xsi:type="select" visible="true" source_model="Mirasvit\Review\Model\Config\Source\SortingSource">
+                <label translate="true">Sort Order</label>
+            </parameter>
+            <parameter name="limit" xsi:type="text" visible="true">
+                <label translate="true">Max number of reviews</label>
+                <value>20</value>
+            </parameter>
+        </parameters>
+    </widget>
+    <widget class="Mirasvit\Review\Block\Widget\ReviewGrid" id="mst_review_widget_review_grid">
+        <label translate="true">Advanced Reviews: Masonry Grid</label>
+        <description translate="true">Reviews Masonry Grid</description>
+        <parameters>
+            <parameter name="title" xsi:type="text" visible="true">
+                <label translate="true">Frontend title</label>
+                <value>All Reviews</value>
+            </parameter>
+            <parameter name="sort_order" xsi:type="select" visible="true" source_model="Mirasvit\Review\Model\Config\Source\SortingSource">
+                <label translate="true">Sort Order</label>
+            </parameter>
+            <parameter name="page_size" xsi:type="text" visible="true">
+                <label translate="true">Number of reviews per page</label>
+                <value>20</value>
+            </parameter>
+        </parameters>
+    </widget>
+    <widget class="Mirasvit\Review\Block\Widget\Rating" id="mst_review_widget_review_rating">
+        <label translate="true">Advanced Reviews: Overall Rating</label>
+        <description translate="true">Reviews Overall Rating</description>
+        <parameters>
+            <parameter name="title" xsi:type="text" visible="true">
+                <label translate="true">Frontend title</label>
+            </parameter>
+        </parameters>
+    </widget>
+</widgets>

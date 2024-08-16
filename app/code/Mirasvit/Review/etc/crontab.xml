@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
+    <group id="mst_review">
+        <job name="reindex_review" instance="\Mirasvit\Review\Cron\ReindexReviewCron" method="execute">
+            <schedule>*/15 * * * *</schedule>
+        </job>
+        <job name="aggregate_review" instance="\Mirasvit\Review\Cron\AggregateCron" method="execute">
+            <schedule>*/15 * * * *</schedule>
+        </job>
+    </group>
+</config>

@@ -1,0 +1,27 @@
+<?php
+
+/** @var \Mirasvit\Comment\Block\Adminhtml\Notification\Details $block */
+
+?>
+
+<div class="mst-comment-details admin__fieldset">
+    <span class="title">
+        <?= $block->escapeHtml(__('You have %1 pending comment(s) for:', $block->getPendingCommentsCount())) ?>
+    </span>
+
+    <?php foreach ($block->getPendingCommentsData() as $type => $data): ?>
+    <div class="mst-comment-details__entity admin__field">
+        <strong class="admin__field-label"><?= $block->escapeHtml($block->getEntityLabel($type)) ?></strong>
+        <ul class="admin__field-control">
+            <?php foreach ($data as $id => $count): ?>
+                <li>
+                    <?= $block->escapeHtml(__('%1 pending comment(s) for %2 with ID %3.', $count, $type, $id)) ?>
+                    <a href="<?= $block->getCommentEntityLink($type, (int)$id) ?>" target="_blank">
+                        <?= $block->escapeHtml(__('View comments.')) ?>
+                    </a>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+    <?php endforeach; ?>
+</div>

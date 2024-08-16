@@ -1,0 +1,49 @@
+<?php
+declare(strict_types=1);
+
+/** @var \Mirasvit\Review\Block\Widget\ReviewGrid $block */
+
+$reviews    = $block->getReviews();
+$identifier = $block->getIdentifier();
+?>
+
+<?php if (!count($reviews)): ?>
+    <div class="message info empty">
+        <div><?= $escaper->escapeHtml(__('We can\'t find reviews to display.')) ?></div>
+    </div>
+<?php else: ?>
+    <div class="reviews-masonry-container hidden">
+        <?php if ($title = $block->getTitle()): ?>
+            <div class="review-widget-title">
+                <span class="title" role="heading"><?= $block->escapeHtml($block->getTitle()) ?></span>
+            </div>
+        <?php endif; ?>
+        <div class="review-grid grid" data-review-grid="<?= $block->escapeHtml($identifier) ?>">
+            <?php foreach ($reviews as $review): ?>
+                <?= $block->getReviewBlock()->setNameInLayout('mst.review-' . $review->getId())->setReview($review)->toHtml() ?>
+            <?php endforeach ?>
+        </div>
+        <?php if ($block->getTotalSize() > $block->getPageSize()): ?>
+            <div class="load-reviews">
+                <button class="action primary" id="load-reviews">
+                    <span class="button-loader"></span>
+                    <span class="button-label"><?= $block->escapeHtml(__('Load More')) ?></span>
+                </button>
+            </div>
+        <?php endif; ?>
+    </div>
+    <script type="text/x-magento-init"><?= \Mirasvit\Core\Service\SerializeService::encode([
+            '[data-review-grid="' . $identifier . '"]' => [
+                'Mirasvit_Review/js/review/masonry-grid' => [
+                    'gridSelector' => '[data-review-grid="' . $identifier . '"]',
+                    'itemSelector' => '.review-grid-item',
+                    'requestUrl'   => $block->getRequestUrl(),
+                    'loaderUrl'    => '',
+                    'totalSize'    => $block->getTotalSize(),
+                    'pageSize'     => $block->getPageSize(),
+                    'loaded'       => $block->getPageSize(),
+                    'sortOrder'    => $block->getData('sort_order'),
+                ],
+            ],
+        ]) ?></script>
+<?php endif; ?>

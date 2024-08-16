@@ -1,0 +1,51 @@
+<?php
+declare(strict_types=1);
+
+/** @var \Mirasvit\Review\Block\Widget\Rating $block */
+
+$reviewsCount  = $block->getReviewsCount();
+
+if (!$reviewsCount) {
+    return '';
+}
+
+$overallRating = $block->getOverallRating();
+
+?>
+
+<div class="rating-widget">
+    <?php if ($title = $block->getTitle()): ?>
+        <div class="review-widget-title">
+            <span class="title" role="heading"><?= $block->escapeHtml($block->getTitle()) ?></span>
+        </div>
+    <?php endif; ?>
+
+    <div class="rating-content">
+        <div class="rating-summary rating-overall">
+            <div class="rating-result" title="<?= $overallRating * 20 ?>%">
+                <span style="width:<?= $overallRating * 20 ?>%"><span><?= $block->escapeHtml($overallRating) ?></span></span>
+            </div>
+            <div class="review-count">
+                <span class="label"><?= (string)__('%1 Reviews', $reviewsCount) ?></span>
+            </div>
+        </div>
+        <div class="rating-counts">
+        <?php for ($i = 5; $i >= 1; $i--): ?>
+        <?php $ratingCount = $block->getReviewsCount($i); ?>
+            <div class="rating-summary">
+                <div class="rating-result" title="<?= $i * 20 ?>%">
+                    <span for="filter_rating" style="width:<?= $i * 20 ?>%"><span><?= $block->escapeHtml($i) ?></span></span>
+                </div>
+                <div class="bar">
+                    <div class="progress" style="width: <?= ($ratingCount/$reviewsCount)*100 ?>%"></div>
+                </div>
+                <div class="review-count">
+                    <span class="label">(<?= $block->escapeHtml($ratingCount) ?>)</span>
+                </div>
+            </div>
+        <?php endfor; ?>
+        </div>
+    </div>
+</div>
+
+

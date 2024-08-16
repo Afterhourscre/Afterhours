@@ -1,0 +1,42 @@
+<?php
+declare(strict_types=1);
+
+/** @var \Mirasvit\Review\Block\Product\Review\Gallery $block */
+
+$identifier = $block->getIdentifier();
+?>
+
+<?php if ($images = $block->getImages()): ?>
+    <?php if ($title = $block->getTitle()): ?>
+        <div class="review-widget-title">
+            <span class="title" role="heading"><?= $block->escapeHtml($block->getTitle()) ?></span>
+        </div>
+    <?php endif; ?>
+    <div class="review-gallery-wrapper" data-review-gallery-id="<?= $block->escapeHtmlAttr($identifier) ?>">
+        <div class="swiper-wrapper loading image-hidden">
+            <div class="loading-mask" data-role="loader">
+                <div class="loader">
+                    <img alt="Loading..." src="<?= $block->escapeUrl($block->getViewFileUrl('images/loader-2.gif')); ?>">
+                </div>
+            </div>
+            <?php foreach ($images as $image): ?>
+                <div class="swiper-slide" data-review-id="<?= $block->escapeHtmlAttr($image->getReviewId()) ?>">
+                    <img src="<?= $block->escapeUrl($block->getImageUrl($image)) ?>"/>
+                </div>
+            <?php endforeach; ?>
+        </div>
+        <div class="swiper-button-next nav-button"></div>
+        <div class="swiper-button-prev nav-button"></div>
+    </div>
+
+    <script type="text/x-magento-init"><?= \Mirasvit\Core\Service\SerializeService::encode([
+            '[data-review-gallery-id=' . $identifier . ']' => [
+                'Mirasvit_Review/js/review/gallery' => [
+                    'selector'       => '[data-review-gallery-id=' . $identifier . ']',
+                    'widgetTemplate' => $block->getWidgetTemplate(),
+                    'requestUrl'     => $block->getReviewRequestUrl(),
+                    'loaderUrl'      => $block->getViewFileUrl('images/loader-2.gif')
+                ],
+            ],
+        ]) ?></script>
+<?php endif; ?>

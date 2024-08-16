@@ -1,0 +1,44 @@
+<?php
+declare(strict_types=1);
+
+use Mirasvit\Comment\Api\Data\CommentInterface;
+use Mirasvit\Comment\Block\Comment\Form;
+
+/** @var Form $block */
+
+$formId   = $block->getFormId();
+$parentId = $block->getParentId();
+?>
+
+<div class="mst-comment__form">
+    <form action="<?= $block->getSubmitUrl() ?>" method="post" id="<?= $formId ?>">
+        <input type="hidden" name="form_key" value="<?= $block->getFormKey() ?>"/>
+        <input type="hidden" name="<?= CommentInterface::REL_ENTITY_TYPE ?>" value="<?= $block->getEntityType() ?>"/>
+        <input type="hidden" name="<?= CommentInterface::REL_ENTITY_ID ?>" value="<?= $block->getEntityId() ?>"/>
+        <?php if ($parentId): ?>
+            <input type="hidden" name="<?= CommentInterface::PARENT_ID ?>" value="<?= $parentId ?>"/>
+        <?php endif; ?>
+        <div class="fieldset comment-fieldset admin__fieldset">
+            <div class="field required admin__field comment-field">
+                <?php if (!$parentId): ?>
+                    <label for="<?= CommentInterface::CONTENT ?>" class="label admin__field-label">
+                        <span><?= __('Message') ?></span>
+                    </label>
+                <?php endif; ?>
+                <div class="admin__field-control">
+                    <textarea class="admin__control-textarea" name="<?= CommentInterface::CONTENT ?>" rows="6"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="fieldset comment-fieldset admin__fieldset">
+            <div class="field required admin__field comment-button">
+                <?php if (!$parentId): ?>
+                    <div class="admin__field-label"></div>
+                <?php endif; ?>
+                <div class="admin__field-control">
+                    <button type="submit" class="action submit primary"><?= __('Add Comment') ?></button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

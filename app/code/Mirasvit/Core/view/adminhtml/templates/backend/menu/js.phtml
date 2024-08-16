@@ -1,4 +1,13 @@
-<script>
+<?php
+
+use Mirasvit\Core\Service\CspService;
+
+/** @var \Magento\Backend\Block\Template $block */
+
+$nonce = CspService::getNonce();
+
+?>
+<script<?php if ($nonce): ?> nonce="<?= $block->escapeHtml($nonce) ?>"<?php endif; ?>>
     require([
         'jquery'
     ], function ($) {

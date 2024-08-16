@@ -97,6 +97,8 @@ class Post extends \Magento\Framework\App\Action\Action
                 return $this->getResult($form);
             }
 
+            
+
             $submissionType = $form->getSubmissionType();
 
             if ($submissionType == 'db' || $submissionType == 'both') {
@@ -119,6 +121,8 @@ class Post extends \Magento\Framework\App\Action\Action
                     $errors = true;
                 }
             }
+
+            
 
             if ($errors) {
                 $this->addMessage('Something went wrong while sending request. Please contact us.', 'error', $form);

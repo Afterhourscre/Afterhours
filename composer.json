@@ -14,7 +14,8 @@
         "pelago/emogrifier": "^7.0",
         "elasticsearch/elasticsearch": "~7.17.0",
         "laminas/laminas-serializer": "^2.8",
-        "magefan/module-login-as-customer": "2.3.4"
+        "magefan/module-login-as-customer": "2.3.4",
+        "cweagans/composer-patches": "^1.7"
     },
     "require-dev": {
         "allure-framework/allure-phpunit": "^2",
@@ -68,14 +69,35 @@
         }
     ],
     "extra": {
-        "magento-force": "override"
+        "magento-force": "override",
+        "patches": {
+            "magento/module-catalog": {
+                "APSB24-61": "patches/composer/magento/module_catalog/Model/Product/Option/Type/File/acsd-60551-composer.patch"
+            },
+            "magento/theme-adminhtml-backend": {
+                "APSB24-40": "patches/composer/magento/VULN-27015-2.4.7x_v2.composer.patch"
+            },
+            "magento/theme-frontend-blank": {
+                "APSB24-40": "patches/composer/magento/VULN-27015-2.4.7x_v2.composer.patch"
+            },
+            "magento/theme-frontend-luma": {
+                "APSB24-40": "patches/composer/magento/VULN-27015-2.4.7x_v2.composer.patch"
+            },
+            "magento/module-jwt-user-token": {
+                "APSB24-40": "patches/composer/magento/VULN-27015-2.4.7x_v2.composer.patch"
+            },
+            "magento/framework/Webapi": {
+                "APSB24-40": "patches/composer/magento/VULN-27015-2.4.7x_v2.composer.patch"
+            }
+        }
     },
     "config": {
         "allow-plugins": {
             "magento/magento-composer-installer": true,
             "magento/inventory-composer-installer": true,
             "magento/composer-dependency-version-audit-plugin": true,
-            "dealerdirect/phpcodesniffer-composer-installer": true
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "cweagans/composer-patches": true
         }
     }
 }

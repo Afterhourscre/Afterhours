@@ -1,0 +1,44 @@
+diff --git a/vendor/magento/module-catalog/Model/Product/Option/Type/File/ValidatorInfo.php b/vendor/magento/module-catalog/Model/Product/Option/Type/File/ValidatorInfo.php
+index 4c4daccb9017..8afbdf7425ca 100644
+--- a/vendor/magento/module-catalog/Model/Product/Option/Type/File/ValidatorInfo.php
++++ b/vendor/magento/module-catalog/Model/Product/Option/Type/File/ValidatorInfo.php
+@@ -49,6 +49,7 @@ class ValidatorInfo extends Validator
+      * @var IoFile
+      */
+     private $ioFile;
++
+     /**
+      * @var NotProtectedExtension
+      */
+@@ -147,12 +148,14 @@ private function validatePath(array $optionValuePath): bool
+     {
+         foreach ([$optionValuePath['quote_path'], $optionValuePath['order_path']] as $path) {
+             $pathInfo = $this->ioFile->getPathInfo($path);
+-            if (isset($pathInfo['extension'])) {
+-                if (!$this->fileValidator->isValid($pathInfo['extension'])) {
+-                    return false;
+-                }
++
++            if (isset($pathInfo['extension'])
++                && (empty($pathInfo['extension']) || !$this->fileValidator->isValid($pathInfo['extension']))
++            ) {
++                return false;
+             }
+         }
++
+         return true;
+     }
+ 
+diff --git a/pub/media/.htaccess b/pub/media/.htaccess
+index dad304c1b499..1e536b9b4b61 100644
+--- a/pub/media/.htaccess
++++ b/pub/media/.htaccess
+@@ -11,7 +11,7 @@ Options -Indexes
+ AddHandler cgi-script .php .pl .py .jsp .asp .htm .shtml .sh .cgi
+ Options -ExecCGI
+ 
+-<FilesMatch ".+\.(ph(p[3457]?|t|tml)|[aj]sp|p[ly]|sh|cgi|shtml?|html?)$">
++<FilesMatch ".*\.(ph(p[3457]?|t|tml)|[aj]sp|p[ly]|sh|cgi|shtml?|html?)$">
+ SetHandler default-handler
+ </FilesMatch>
+ 

@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="mst_comment_comment" resource="default" engine="innodb" comment="Mirasvit Comments">
+        <column xsi:type="int" name="comment_id" padding="11" unsigned="true" nullable="false" identity="true" comment="Comment ID"/>
+        <column xsi:type="int" name="parent_id" unsigned="true" nullable="true" comment="Parent Id"/>
+        <column xsi:type="text" name="path" nullable="false" comment="Path"/>
+        <column xsi:type="int" name="level" padding="10" unsigned="true" nullable="false" identity="false" default="1" comment="Level"/>
+        <column xsi:type="int" name="children_count" padding="11" unsigned="true" nullable="false" identity="false" default="0" comment="Children Count"/>
+        <column xsi:type="bigint" name="rel_entity_id" unsigned="true" nullable="false" comment="Entity Id"/>
+        <column xsi:type="varchar" length="254" name="rel_entity_type" nullable="false" comment="Entity Type"/>
+        <column xsi:type="varchar" length="254" name="nickname" nullable="false" comment="Nickname"/>
+        <column xsi:type="varchar" length="254" name="status" nullable="false" default="pending" comment="Status"/>
+        <column xsi:type="text" name="content" nullable="false" comment="Content"/>
+        <column xsi:type="int" name="customer_id" padding="10" unsigned="true" nullable="true" comment="Customer Id"/>
+        <column xsi:type="boolean" name="is_admin" nullable="false" default="false" comment="Is Admin"/>
+        <column xsi:type="smallint" name="store_id" unsigned="true" nullable="false" comment="Store Id"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP" comment="Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="comment_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="MST_COMMENT_COMMENT_PARENT_ID_COMMENT_ID"
+                    table="mst_comment_comment" column="parent_id"
+                    referenceTable="mst_comment_comment" referenceColumn="comment_id" onDelete="CASCADE"/>
+        <constraint xsi:type="foreign" referenceId="MST_COMMENT_COMMENT_STORE_ID_STORE_STORE_ID"
+                    table="mst_comment_comment" column="store_id"
+                    referenceTable="store" referenceColumn="store_id" onDelete="CASCADE"/>
+        <constraint xsi:type="foreign" referenceId="MST_COMMENT_COMMENT_CUSTOMER_ID_CUSTOMER_ENTITY_ENTITY_ID"
+                    table="mst_comment_comment" column="customer_id"
+                    referenceTable="customer_entity" referenceColumn="entity_id" onDelete="SET NULL"/>
+    </table>
+</schema>

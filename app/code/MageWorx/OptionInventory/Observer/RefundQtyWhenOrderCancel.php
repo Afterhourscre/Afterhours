@@ -15,19 +15,20 @@ use \MageWorx\OptionInventory\Model\RefundQty;
  */
 class RefundQtyWhenOrderCancel implements ObserverInterface
 {
-    /**
-     * @var RefundQty
-     */
-    protected $refundQtyModel;
+    protected RefundQty $refundQtyModel;
+    protected \MageWorx\OptionInventory\Helper\Data $helperData;
 
     /**
      * OrderCancel constructor.
+     *
      * @param RefundQty $refundQtyModel
      */
     public function __construct(
-        RefundQty $refundQtyModel
+        RefundQty $refundQtyModel,
+        \MageWorx\OptionInventory\Helper\Data $helperData
     ) {
         $this->refundQtyModel = $refundQtyModel;
+        $this->helperData     = $helperData;
     }
 
     /**
@@ -36,9 +37,11 @@ class RefundQtyWhenOrderCancel implements ObserverInterface
      */
     public function execute(EventObserver $observer)
     {
-        $items = $observer->getEvent()->getOrder()->getAllItems();
+        if ($this->helperData->isEnabledOptionInventory()) {
+            $items = $observer->getEvent()->getOrder()->getAllItems();
 
-        $this->refundQtyModel->refund($items, 'qty_canceled');
+            $this->refundQtyModel->refund($items, 'qty_canceled');
+        }
 
         return $this;
     }

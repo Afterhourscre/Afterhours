@@ -14,6 +14,9 @@ use Magento\Framework\Encryption\EncryptorInterface;
 use MageCloud\CloudwaysManager\Helper\Data as HelperData;
 use MageCloud\CloudwaysManager\Model\Serializer;
 use Magento\Framework\App\ObjectManager;
+use Laminas\Http\Client as HttpClient;
+use Laminas\Http\Request;
+use Laminas\Http\Response as LaminasResponse;
 
 /**
  * API manager for Cloudways
@@ -192,24 +195,24 @@ abstract class AbstractManager extends \Magento\Framework\DataObject
      * @return bool
      */
     public function prepareApiUrl($action)
-    {
-        $apiEndpoint = $this->helperData->getApiEndpoint();
-        if (!$action) {
-            return false;
-        }
-
-        $url = sprintf($apiEndpoint . '%s', $action);
-        $method = $this->getRequestMethod();
-        $params = $this->getParams();
-        // for 'GET" method parameter(s) should be used only as a query string in url
-        if (($method == \Zend_Http_Client::GET) && (!empty($params))) {
-            $this->resetParams();
-            $url = sprintf($apiEndpoint . '%s?%s', $action, http_build_query($params));
-        }
-        $this->setApiUrl($url);
-
-        return true;
+{
+    $apiEndpoint = $this->helperData->getApiEndpoint();
+    if (!$action) {
+        return false;
     }
+
+    $url = sprintf($apiEndpoint . '%s', $action);
+    $method = $this->getRequestMethod();
+    $params = $this->getParams();
+    // For 'GET' method, parameters should be used only as a query string in URL
+    if (($method == Request::METHOD_GET) && (!empty($params))) {
+        $this->resetParams();
+        $url = sprintf($apiEndpoint . '%s?%s', $action, http_build_query($params));
+    }
+    $this->setApiUrl($url);
+
+    return true;
+}
 
     /**
      * Prepare API authorization post params for request
@@ -338,7 +341,7 @@ abstract class AbstractManager extends \Magento\Framework\DataObject
     /**
      * @param string $method
      */
-    public function setRequestMethod($method = \Zend_Http_Client::POST)
+    public function setRequestMethod($method = Request::METHOD_POST)
     {
         $this->requestMethod = $method;
     }
@@ -572,7 +575,7 @@ abstract class AbstractManager extends \Magento\Framework\DataObject
                 ]);
                 return $this;
             }
-            $result = \Zend_Http_Response::fromString($result);
+            $result = LaminasResponse::fromString($result);
             $responseBody = $result->getBody();
             $result = $this->serializer->unserialize($responseBody);
             if (!array_key_exists('success', $result)) {

@@ -1,5 +1,10 @@
 <?php
+use Mirasvit\Core\Service\CspService;
+
 /** @var \Mirasvit\Core\Block\Adminhtml\Manual $block */
+
+$nonce = CspService::getNonce();
+
 ?>
 <div class="mst-core__manual">
     <a href="<?= $block->escapeUrl($block->getManualUrl()) ?>"
@@ -9,7 +14,7 @@
     </a>
 </div>
 <?php if ($block->getPosition() == 'bottom'): ?>
-    <script type="text/javascript">
+    <script<?php if ($nonce): ?> nonce="<?= $block->escapeHtml($nonce) ?>"<?php endif; ?> type="text/javascript">
         var helpLink = document.getElementById("m__manual_link");
         var width = helpLink.clientWidth;
         var margin = -width / 2;

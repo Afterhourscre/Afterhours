@@ -12,6 +12,7 @@ use Magento\Backend\Model\Session as BackendSession;
 use MageWorx\OptionImportExport\Model\MageTwo\ImportTemplateHandler as ImportTemplateHandler;
 use Psr\Log\LoggerInterface as Logger;
 use MageWorx\OptionBase\Model\ActionMode;
+use Magento\Store\Model\StoreManagerInterface;
 
 class ImportTemplateMageTwo extends \Magento\Backend\App\Action
 {
@@ -43,6 +44,11 @@ class ImportTemplateMageTwo extends \Magento\Backend\App\Action
     protected $actionMode;
 
     /**
+     * @var StoreManagerInterface
+     */
+    protected $storeManager;
+
+    /**
      * @param Context $context
      * @param ImportTemplateHandler $importTemplateHandler
      * @param Logger $logger
@@ -54,12 +60,14 @@ class ImportTemplateMageTwo extends \Magento\Backend\App\Action
         Logger $logger,
         BackendSession $backendSession,
         ImportTemplateHandler $importTemplateHandler,
-        ActionMode $actionMode
+        ActionMode $actionMode,
+        StoreManagerInterface $storeManager
     ) {
         $this->importTemplateHandler = $importTemplateHandler;
         $this->logger                = $logger;
         $this->backendSession        = $backendSession;
         $this->actionMode            = $actionMode;
+        $this->storeManager          = $storeManager;
         parent::__construct($context);
     }
 
@@ -72,6 +80,13 @@ class ImportTemplateMageTwo extends \Magento\Backend\App\Action
 
             $file = $this->getRequest()->getFiles('mageworx_mage_two_templates_only_file');
             $map  = $this->getRequest()->getParams();
+
+            $storeManagerDataList = $this->storeManager->getStores();
+            $storeData            = [];
+            foreach ($storeManagerDataList as $store) {
+                $storeData[$store['store_id']] = $store['store_id'];
+            }
+            $map['mageworx_optiontemplates_import_from_stores'] = $storeData;
 
             if ($file && !empty($file['tmp_name'])) {
                 $this->actionMode->setActionMode(ActionMode::ACTION_IMPORT);
@@ -109,6 +124,7 @@ class ImportTemplateMageTwo extends \Magento\Backend\App\Action
         /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
         $resultRedirect->setUrl($this->_redirect->getRedirectUrl());
+
         return $resultRedirect;
     }
 

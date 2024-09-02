@@ -35,7 +35,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const COLUMN_NAME_IMAGE_SIZE_X   = 'image_size_x';
     const COLUMN_NAME_IMAGE_SIZE_Y   = 'image_size_y';
     const COLUMN_NAME_SORT_ORDER     = 'sort_order';
-    const COLUMN_NAME_IS_CHANGED     = 'is_changed';
 
     const COLUMN_NAME_OPTION_PRICE_ID      = 'option_price_id';
     const COLUMN_NAME_STORE_ID             = 'store_id';

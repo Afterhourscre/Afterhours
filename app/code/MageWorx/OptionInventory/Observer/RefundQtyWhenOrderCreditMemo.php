@@ -15,19 +15,21 @@ use \MageWorx\OptionInventory\Model\RefundQty;
  */
 class RefundQtyWhenOrderCreditMemo implements ObserverInterface
 {
-    /**
-     * @var RefundQty
-     */
-    protected $refundQtyModel;
+    protected RefundQty $refundQtyModel;
+    protected \MageWorx\OptionInventory\Helper\Data $helperData;
 
     /**
-     * OrderCreditMemo constructor.
+     * RefundQtyWhenOrderCreditMemo constructor.
+     *
      * @param RefundQty $refundQtyModel
+     * @param \MageWorx\OptionInventory\Helper\Data $helperData
      */
     public function __construct(
-        RefundQty $refundQtyModel
+        RefundQty $refundQtyModel,
+        \MageWorx\OptionInventory\Helper\Data $helperData
     ) {
         $this->refundQtyModel = $refundQtyModel;
+        $this->helperData     = $helperData;
     }
 
     /**
@@ -36,12 +38,23 @@ class RefundQtyWhenOrderCreditMemo implements ObserverInterface
      */
     public function execute(EventObserver $observer)
     {
-        $creditmemo = $observer->getEvent()->getCreditmemo();
-        $order = $creditmemo->getOrder();
+        if ($this->helperData->isEnabledOptionInventory()) {
+            $creditmemo = $observer->getEvent()->getCreditmemo();
+            $order      = $creditmemo->getOrder();
 
-        $items = $order->getAllItems();
+            $items = $order->getAllItems();
+            $creditMemoItems = $creditmemo->getItems();
+            foreach ($items as $item) {
+                foreach ($creditMemoItems as $creditMemoItem) {
+                    if ($creditMemoItem->getOrderItemId() == $item->getItemId()) {
+                        $item->setQty($creditMemoItem->getQty());
+                    }
+                }
 
-        $this->refundQtyModel->refund($items, 'qty_refunded');
+            }
+
+            $this->refundQtyModel->refund($items, 'qty_refunded');
+        }
 
         return $this;
     }

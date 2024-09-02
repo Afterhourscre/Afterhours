@@ -16,28 +16,28 @@ class Options extends \Magento\Framework\View\Element\Template
     /**
      * All options titles formatted to html
      *
-     * @var html
+     * @var string
      */
-    protected $collectedTitleFields;
+    protected string $collectedTitleFields;
 
     /**
      * All options formatted to html
      *
-     * @var html
+     * @var string
      */
-    protected $collectedOptionFields;
+    protected string $collectedOptionFields;
 
     /**
      * $options collected array options titles from child modules like OptionInventory
      * @var array
      */
-    protected $titles = [];
+    protected array $titles = [];
 
     /**
      * $options collected array options from child modules like OptionInventory
      * @var array
      */
-    protected $options = [];
+    protected array $options = [];
 
     /**
      * Options constructor.
@@ -48,7 +48,7 @@ class Options extends \Magento\Framework\View\Element\Template
         $titles = [],
         $options = []
     ) {
-    
+
         $this->titles = $titles;
         $this->options = $options;
     }
@@ -56,7 +56,7 @@ class Options extends \Magento\Framework\View\Element\Template
     /**
      * Retrieve options titles
      *
-     * @return html
+     * @return string
      */
     public function getTitlesHtml()
     {
@@ -68,7 +68,7 @@ class Options extends \Magento\Framework\View\Element\Template
     /**
      * Retrieve options
      *
-     * @return html
+     * @return string
      */
     public function getOptionsHtml()
     {
@@ -80,7 +80,7 @@ class Options extends \Magento\Framework\View\Element\Template
     /**
      * Collect all options titles to one html string
      *
-     * @return html
+     * @return string
      */
     protected function collectTitleFields()
     {

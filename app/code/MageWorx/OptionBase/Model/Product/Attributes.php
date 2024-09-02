@@ -1,20 +1,18 @@
 <?php
 /**
- * Copyright © 2017 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
 namespace MageWorx\OptionBase\Model\Product;
 
+use MageWorx\OptionBase\Api\Data\AttributeDataInterface;
 /**
  * Class Attributes
  * @package MageWorx\OptionBase\Model\Option
  */
-class Attributes
+class Attributes implements AttributeDataInterface
 {
-    /**
-     * @var array
-     */
-    private $data = [];
+    private array $data;
 
     /**
      * Attributes constructor.
@@ -27,23 +25,24 @@ class Attributes
     }
 
     /**
-     * @return array
+     * Prepare attribute data to array
+     *
      */
-    public function toArray()
+    public function toArray(): array
     {
         return $this->data;
     }
 
     /**
-     * @param null $key
-     * @return mixed|null
+     * Get attribute data
+     *
      */
-    public function getData($key = null)
+    public function getData(?string $key = null)
     {
-        if (!$key) {
+        if ($key === null) {
             return $this->data;
         }
 
-        return isset($this->data[$key]) ? $this->data[$key] : null;
+        return $this->data[$key] ?? null;
     }
 }

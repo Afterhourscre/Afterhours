@@ -1,7 +1,12 @@
 <?php
+
+use Mirasvit\Core\Service\CspService;
+
 /** @var \Mirasvit\Core\Block\Adminhtml\Menu $block */
+
+$nonce = CspService::getNonce();
 ?>
-<style>
+<style <?php if ($nonce): ?> nonce="<?= $block->escapeHtml($nonce) ?>"<?php endif; ?>>
     .page-title-wrapper .page-title {
         display: none;
     }

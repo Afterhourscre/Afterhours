@@ -14,7 +14,6 @@ class OptionStoreView extends AbstractModel
     const OPTIONTEMPLATES_TABLE_NAME = 'mageworx_optiontemplates_group_option_store_view';
 
     const COLUMN_NAME_VISIBILITY_STORE_VIEW_ID = 'visibility_store_view_id';
-    const COLUMN_NAME_MAGEWORX_OPTION_ID       = 'mageworx_option_id';
     const COLUMN_NAME_OPTION_ID                = 'option_id';
     const COLUMN_NAME_STORE_ID                 = 'customer_store_id';
 

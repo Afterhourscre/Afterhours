@@ -5,6 +5,8 @@
  */
 namespace MageWorx\OptionBase\Api;
 
+use Magento\Catalog\Api\Data\ProductInterface;
+
 interface AttributeInterface
 {
     /**
@@ -60,14 +62,10 @@ interface AttributeInterface
     public function processDuplicate($newId, $oldId, $entityType = 'product');
 
     /**
-     * Validate Magento 1 template import
-     * @param array $optionData
+     * Load attribute data from DB for specified entities
+     * @param ProductInterface $product
+     * @param int[] $ids
+     * @return array - array of loaded data by ids
      */
-    public function validateTemplateImportMageOne($optionData);
-
-    /**
-     * Import Magento 1 template data
-     * @param array $optionData
-     */
-    public function importTemplateMageOne($optionData);
+    public function loadAttributeData(ProductInterface $product, array $ids): array;
 }

@@ -8,9 +8,10 @@ namespace MageWorx\Info\Helper;
 
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Module\Manager as ModuleManager;
 use Magento\Store\Model\ScopeInterface;
-use Laminas\Http\Client as HttpClient;
-use Laminas\Http\Request as HttpRequest;
+use Magento\Framework\Serialize\SerializerInterface;
+
 
 class Data extends AbstractHelper
 {
@@ -64,7 +65,7 @@ class Data extends AbstractHelper
     /**
      * @var string
      */
-    const EXTENSION_REVIEW_URL = self::MAGEWORX_SITE . '/infoprovider/index/review';
+    const EXTENSION_REVIEW_URL = self::MAGEWORX_SITE . '/rest/V1/info/review';
 
     /**
      * @var \Magento\Framework\App\Config\Storage\WriterInterface
@@ -100,6 +101,16 @@ class Data extends AbstractHelper
     protected $configCollectionFactory;
 
     /**
+     * @var \Magento\Framework\Module\Manager
+     */
+    protected $moduleManager;
+
+    /**
+     * @var SerializerInterface
+     */
+    private $serializer;
+
+    /**
      * Data constructor.
      *
      * @param \MageWorx\Info\Model\MetaPackageList $metaPackageList
@@ -109,23 +120,28 @@ class Data extends AbstractHelper
      * @param \Magento\Framework\HTTP\Adapter\CurlFactory $curlFactory
      * @param \Magento\Framework\App\ProductMetadataInterface $productMetadata
      * @param \Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory $configCollectionFactory
+     * @param SerializerInterface $serializer
      */
     public function __construct(
+        ModuleManager $moduleManager,
         \MageWorx\Info\Model\MetaPackageList $metaPackageList,
         Context $context,
         \Magento\Framework\App\Config\Storage\WriterInterface $configWriter,
         \Magento\Framework\App\CacheInterface $cacheManager,
         \Magento\Framework\HTTP\Adapter\CurlFactory $curlFactory,
         \Magento\Framework\App\ProductMetadataInterface $productMetadata,
-        \Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory $configCollectionFactory
+        \Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory $configCollectionFactory,
+        SerializerInterface $serializer
     ) {
         parent::__construct($context);
+        $this->moduleManager           = $moduleManager;
         $this->metaPackageList         = $metaPackageList;
         $this->configWriter            = $configWriter;
         $this->cacheManager            = $cacheManager;
         $this->curlFactory             = $curlFactory;
         $this->productMetadata         = $productMetadata;
         $this->configCollectionFactory = $configCollectionFactory;
+        $this->serializer              = $serializer;
     }
 
     /**
@@ -161,6 +177,11 @@ class Data extends AbstractHelper
         );
     }
 
+    public function isNotificationExtensionEnabled()
+    {
+        return $this->moduleManager->isEnabled('Magento_AdminNotification');
+    }
+
     /**
      * @return array
      */
@@ -175,7 +196,7 @@ class Data extends AbstractHelper
 
         $result = $configCollection->count() ? $configCollection->getFirstItem()->getValue() : '';
 
-        return json_decode($result,true);
+        return json_decode($result, true);
     }
 
 
@@ -193,7 +214,7 @@ class Data extends AbstractHelper
 
         $result = $configCollection->count() ? $configCollection->getFirstItem()->getValue() : '';
 
-        return json_decode($result,true);
+        return json_decode($result, true);
     }
 
     /**
@@ -306,7 +327,7 @@ class Data extends AbstractHelper
             ]
         );
 
-        $curl->write(HttpRequest::METHOD_GET, self::EXTENSION_LIST_URL . '?date=' . date('Y-m-d'), '1.0');
+        $curl->write('GET', self::EXTENSION_LIST_URL . '?date=' . date('Y-m-d'), '1.0');
         $data = $curl->read();
         if ($data === false) {
             return false;
@@ -340,10 +361,12 @@ class Data extends AbstractHelper
 
     /**
      * @param array $data
-     * @return array[]|bool|false|string|string[]
+     * @return bool
      */
     public function sendReviewData($data)
     {
+        unset($data["form_key"]);
+
         $curl = $this->curlFactory->create();
         $curl->setConfig(
             [
@@ -354,16 +377,15 @@ class Data extends AbstractHelper
                 'timeout'   => 2,
             ]
         );
-        $curl->write(\Zend_Http_Client::POST, $this->getReviewUrl(), '1.1', [], $data);
+
+        $review = $this->serializer->serialize(["review" => $data]);
+
+        $curl->write('POST', $this->getReviewUrl(), '1.1', ["Content-Type: application/json"], $review);
         $result = $curl->read();
-        if ($result === false) {
-            return false;
-        }
         $result = preg_split('/^\r?$/m', $result, 2);
         $result = trim($result[1]);
         $curl->close();
 
-        return $result;
+        return $result === 'true';
     }
-
 }

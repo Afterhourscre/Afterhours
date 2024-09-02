@@ -1,0 +1,66 @@
+<!--@subject {{trans "%subject" subject=$subject}} @-->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="initial-scale=1.0, width=device-width"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+</head>
+<body>
+
+{{inlinecss file="Mirasvit_Review::css/email.css"}}
+
+<table class="wrapper" width="100%">
+    <tr>
+        <td class="wrapper-inner" align="center">
+            <table class="main" align="center">
+                <tr>
+                    <td class="main-content" colspan="2">
+                        <h1>{{var subject}}</h1>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="label">{{trans "Nickname"}}:</td>
+                    <td>{{var nickname}}</td>
+                </tr>
+                <tr>
+                    <td class="label">{{trans "Title"}}:</td>
+                    <td>{{var title}}</td>
+                </tr>
+                <tr>
+                    <td class="label">{{trans "Detail"}}:</td>
+                    <td>{{var detail}}</td>
+                </tr>
+                {{if rating}}
+                <tr>
+                    <td class="label">{{trans "Rating Summary"}}:</td>
+                    <td>
+                        <div class="rating-box" style="background: url({{view url='images/rating-bg.png'}}) repeat-x 0 0;">
+                            <div class="rating" title="{{var rating}}%" style="width: {{var rating}}%; background: url({{view url='images/rating-bg.png'}}) repeat-x 0 -13px;"></div>
+                        </div>
+                    </td>
+                </tr>
+                {{/if}}
+                {{if pros}}
+                <tr>
+                    <td class="label">{{trans "Pros"}}:</td>
+                    <td>{{var pros|raw}}</td>
+                </tr>
+                {{/if}}
+                {{if cons}}
+                <tr>
+                    <td class="label">{{trans "Cons"}}:</td>
+                    <td>{{var cons|raw}}</td>
+                </tr>
+                {{/if}}
+                {{if images}}
+                <tr>
+                    <td class="label">{{trans "Images"}}:</td>
+                    <td>{{var images|raw}}</td>
+                </tr>
+                {{/if}}
+            </table>
+        </td>
+    </tr>
+</table>

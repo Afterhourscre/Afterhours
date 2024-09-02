@@ -95,6 +95,7 @@ class Option extends \Magento\Catalog\Model\Product\Option implements ProductCus
     public function saveOptions()
     {
         $groupOptionIds = [];
+
         foreach ($this->getOptions() as $option) {
             if (is_array($option)) {
                 $option = $this->dataObjectFactory->create($option);
@@ -173,6 +174,10 @@ class Option extends \Magento\Catalog\Model\Product\Option implements ProductCus
 
                 $groupOptionIds[] = $this->getData('option_id');
             }
+        }
+
+        if (empty($this->getOptions())) {
+            $this->getResource()->deleteOldOptions($this->getProduct()->getId());
         }
 
         $this->_registry->unregister('mageworx_optiontemplates_group_option_ids');

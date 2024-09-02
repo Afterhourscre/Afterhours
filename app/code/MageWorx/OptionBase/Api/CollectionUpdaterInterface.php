@@ -40,4 +40,14 @@ interface CollectionUpdaterInterface
      * @return string
      */
     public function getTableAlias();
+
+    /**
+     * Determines the necessity of performing a join operation.
+     *
+     * This method checks if a join operation is necessary based on certain conditions.
+     * It returns a boolean value indicating whether the join operation is necessary or not.
+     *
+     * @return bool True if a join operation is necessary, false otherwise. Default is true.
+     */
+    public function determineJoinNecessity(): bool;
 }

@@ -9,7 +9,7 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-core
- * @version   1.4.37
+ * @version   1.4.40
  * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
@@ -42,7 +42,7 @@ class Load extends Action
         $dataBlock = $this->objectManager->create($class);
 
         $to   = new \DateTime();
-        $from = (new \DateTime())->sub(new \DateInterval('P' . $dateRange . 'D'));
+        $from = (new \DateTime())->sub(new \DateInterval('P' . ($dateRange !== 0 ? $dateRange : 1) . 'D'));
 
         $result = $dataBlock
             ->setDateRange($from, $to)

@@ -3,6 +3,7 @@
  * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+declare(strict_types=1);
 
 namespace MageWorx\OptionVisibility\Model;
 
@@ -11,23 +12,14 @@ use Magento\Catalog\Model\Product\Option\Type\DefaultType;
 use MageWorx\OptionBase\Helper\Data as BaseHelper;
 use MageWorx\OptionBase\Helper\CustomerVisibility as VisibilityHelper;
 use MageWorx\OptionVisibility\Helper\Data as Helper;
+use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
+use Magento\Catalog\Api\Data\ProductInterface;
 
 class Validator implements ValidatorInterface
 {
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
+    protected BaseHelper $baseHelper;
+    protected VisibilityHelper $visibilityHelper;
 
-    /**
-     * @var VisibilityHelper
-     */
-    protected $visibilityHelper;
-
-    /**
-     * @param BaseHelper $baseHelper
-     * @param VisibilityHelper $visibilityHelper
-     */
     public function __construct(
         BaseHelper $baseHelper,
         VisibilityHelper $visibilityHelper
@@ -39,48 +31,43 @@ class Validator implements ValidatorInterface
     /**
      * Run validation process for add to cart action
      *
-     * @param DefaultType $subject
-     * @param array $values
-     * @return bool
      */
-    public function canValidateAddToCart($subject, $values)
+    public function canValidateAddToCart(DefaultType $subject, array $values): bool
     {
         $option = $subject->getOption();
-
-
-        return $this->process($subject->getOption());
+        return $this->process($option);
     }
 
     /**
      * Run validation process for cart and checkout
      *
-     * @param \Magento\Catalog\Api\Data\ProductInterface $product
-     * @param \Magento\Catalog\Api\Data\CustomOptionInterface $option
-     * @return bool
      */
-    public function canValidateCartCheckout($product, $option)
+    public function canValidateCartCheckout(ProductInterface $product, ProductCustomOptionInterface $option): bool
     {
         return $this->process($option);
     }
 
     /**
-     * @param $option
-     * @return bool
+     * Process validation
      */
-    protected function process($option)
+    protected function process(ProductCustomOptionInterface $option): bool
     {
         if (!empty($option[Helper::KEY_DISABLED]) || !empty($option[Helper::KEY_DISABLED_BY_VALUES])) {
             return false;
         }
 
-        $values = $option->getValues() ?: [];
+        if (!$this->baseHelper->isSelectableOption($option->getType())) {
+            return true;
+        }
+
+        $values = $option->getValues();
 
         foreach ($values as $value) {
-            if (!empty($value[Helper::KEY_DISABLED])) {
-                return false;
+            if (empty($value[Helper::KEY_DISABLED])) {
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 }

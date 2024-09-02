@@ -3,6 +3,7 @@
  * Copyright © 2017 MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
 namespace MageWorx\OptionFeatures\Plugin\Checkout;
 
 use Magento\Checkout\Model\DefaultConfigProvider as OriginalDefaultConfigProvider;
@@ -14,6 +15,7 @@ use MageWorx\OptionFeatures\Model\ResourceModel\Image\CollectionFactory as Image
 
 /**
  * Class DefaultConfigProvider
+ *
  * @package MageWorx\OptionFeatures\Plugin\Checkout
  *
  * Main goal is to replace quote item image in the checkout page to the corresponding image based on the custom options
@@ -21,22 +23,15 @@ use MageWorx\OptionFeatures\Model\ResourceModel\Image\CollectionFactory as Image
  */
 class DefaultConfigProvider
 {
-    /**
-     * @var ImagesCollectionFactory
-     */
-    protected $imagesCollectionFactory;
-
-    /**
-     * @var Helper
-     */
-    protected $helper;
+    protected ImagesCollectionFactory $imagesCollectionFactory;
+    protected Helper $helper;
 
     public function __construct(
         ImagesCollectionFactory $imagesCollectionFactory,
         Helper $helper
     ) {
         $this->imagesCollectionFactory = $imagesCollectionFactory;
-        $this->helper = $helper;
+        $this->helper                  = $helper;
     }
 
     /**
@@ -48,43 +43,111 @@ class DefaultConfigProvider
      */
     public function afterGetConfig(OriginalDefaultConfigProvider $subject, array $result)
     {
-        $processImageModes = [
-            Helper::OPTION_IMAGE_MODE_REPLACE,
-        ];
-
         if (empty($result['quoteItemData'])) {
             return $result;
         }
 
         foreach ($result['quoteItemData'] as $index => $quoteItemData) {
-            // Do nothing for product without options
             if (empty($quoteItemData['product']['options'])) {
                 continue;
             }
 
-            $optionsShouldBeProcessed = [];
-            // Check image mode in all options
+            $optionsToBeProcessed = [];
+            /** @var \Magento\Catalog\Model\Product\Option $option */
             foreach ($quoteItemData['product']['options'] as $option) {
-                if (!empty($option[Helper::KEY_OPTION_IMAGE_MODE]) &&
-                    in_array($option[Helper::KEY_OPTION_IMAGE_MODE], $processImageModes)
-                ) {
-                    $optionsShouldBeProcessed[] = $option;
+                if (empty($option[Helper::KEY_OPTION_IMAGE_MODE])) {
+                    continue;
+                }
+                if ($option[Helper::KEY_OPTION_IMAGE_MODE] == Helper::OPTION_IMAGE_MODE_REPLACE) {
+                    $optionsToBeProcessed['replace'][] = $option;
+                } elseif ($option[Helper::KEY_OPTION_IMAGE_MODE] == Helper::OPTION_IMAGE_MODE_OVERLAY) {
+                    $optionsToBeProcessed['overlay'][] = $option;
                 }
             }
 
-            // Do nothing with product without replace mode
-            if (empty($optionsShouldBeProcessed)) {
+            if (empty($optionsToBeProcessed)) {
                 continue;
             }
 
-            $imageUrl = $this->getSelectedOptionsImageUrl($index, $result, $optionsShouldBeProcessed);
+            $quoteItemId = $result['quoteItemData'][$index]['item_id'];
+            /** @var \Magento\Quote\Model\Quote\Item $quoteItem */
+            $quoteItem = $this->findQuoteItemByIdInConfig($quoteItemId, $result);
+            if (!$quoteItem) {
+                continue;
+            }
+
+            $imageUrl = null;
+            if (!empty($optionsToBeProcessed['replace'])) {
+                $selectedValues = $this->helper->getSelectedValuesFromQuoteItem($optionsToBeProcessed['replace'], $quoteItem);
+                if (!empty($selectedValues)) {
+                    $imageUrl = $this->getReplaceImageUrl($index, $result, $optionsToBeProcessed['replace']);
+                }
+            }
+            if (!empty($optionsToBeProcessed['overlay'])) {
+                $selectedValues = $this->helper->getSelectedValuesFromQuoteItem($optionsToBeProcessed['overlay'], $quoteItem);
+                if (!empty($selectedValues)) {
+                    $imageUrl = $this->getOverlayImageUrl($index, $result, $imageUrl, $optionsToBeProcessed['overlay']);
+                }
+            }
+
             if ($imageUrl) {
-                $result['quoteItemData'][$index]['thumbnail'] = $imageUrl;
+                $result['quoteItemData'][$index]['thumbnail']          = $imageUrl;
                 $result['imageData'][$quoteItemData['item_id']]['src'] = $imageUrl;
             }
         }
 
         return $result;
+    }
+
+    /**
+     * Process overlay images
+     *
+     * @param int $index Quote Item index in config
+     * @param array $result Config
+     * @param string $imageUrl
+     * @param \Magento\Catalog\Model\Product\Option[] $optionsToBeProcessed Options with processable image mode
+     * @return string|null
+     */
+    private function getOverlayImageUrl($index, $result, $imageUrl, $optionsToBeProcessed)
+    {
+        if (empty($optionsToBeProcessed)) {
+            return null;
+        }
+
+        $imageWidth    = 75;
+        $imageHeight   = 75;
+        $sortedOptions = $this->helper->sortOptions($optionsToBeProcessed);
+
+        $quoteItemId = $result['quoteItemData'][$index]['item_id'];
+        /** @var \Magento\Quote\Model\Quote\Item $quoteItem */
+        $quoteItem = $this->findQuoteItemByIdInConfig($quoteItemId, $result);
+        if (!$quoteItem) {
+            return null;
+        }
+
+        $selectedValues = $this->helper->getSelectedValuesFromQuoteItem($optionsToBeProcessed, $quoteItem);
+
+        /** @var ImagesCollection $imageCollection */
+        $imageCollection = $this->imagesCollectionFactory
+            ->create()
+            ->addFieldToFilter(
+                'option_type_id',
+                $selectedValues
+            )->addFieldToFilter(
+                'overlay_image',
+                1
+            );
+
+        $overlayImages = [];
+        foreach ($imageCollection->getItems() as $overlayImage) {
+            if (!$overlayImage || !$overlayImage->getValue()) {
+                continue;
+            }
+
+            $overlayImages[] = $overlayImage;
+        }
+
+        return (string)$this->helper->getOverlayImageUrl($imageUrl, $overlayImages, $imageWidth, $imageHeight);
     }
 
     /**
@@ -97,21 +160,20 @@ class DefaultConfigProvider
      * @param array $result Config
      * @param \Magento\Catalog\Model\Product\Option[] $optionsShouldBeProcessed Options with processable image mode
      * @return string|null
-     * @throws NoSuchEntityException
      */
-    private function getSelectedOptionsImageUrl($index, $result, $optionsShouldBeProcessed)
+    private function getReplaceImageUrl($index, $result, $optionsShouldBeProcessed)
     {
         if (empty($optionsShouldBeProcessed)) {
             return null;
         }
 
-        $imageWidth = 75;
-        $imageHeight = 75;
+        $imageWidth    = 75;
+        $imageHeight   = 75;
         $sortedOptions = $this->helper->sortOptions($optionsShouldBeProcessed);
         /** @var \Magento\Catalog\Model\Product\Option $lastOption */
-        $lastOption = end($sortedOptions);
+        $lastOption   = end($sortedOptions);
         $lastOptionId = $lastOption->getId();
-        $quoteItemId = $result['quoteItemData'][$index]['item_id'];
+        $quoteItemId  = $result['quoteItemData'][$index]['item_id'];
         /** @var \Magento\Quote\Model\Quote\Item $quoteItem */
         $quoteItem = $this->findQuoteItemByIdInConfig($quoteItemId, $result);
         if (!$quoteItem) {
@@ -124,7 +186,7 @@ class DefaultConfigProvider
             return $this->renew($index, $result, $optionsShouldBeProcessed);
         }
 
-        $optionValue = $quoteItemOption->getValue();
+        $optionValue          = $quoteItemOption->getValue();
         $optionValuesReversed = array_reverse(explode(',', $optionValue));
         foreach ($optionValuesReversed as $value) {
             /** @var \Magento\Catalog\Model\Product\Option\Value $valueModel */
@@ -149,10 +211,10 @@ class DefaultConfigProvider
             }
             $imageUrl = $this->helper->getImageUrl($imageModel->getValue(), $imageHeight, $imageWidth);
 
-            return $imageUrl;
+            return (string)$imageUrl;
         }
 
-        return $this->renew($index, $result, $optionsShouldBeProcessed);
+        return (string)$this->renew($index, $result, $optionsShouldBeProcessed);
     }
 
     /**
@@ -182,7 +244,7 @@ class DefaultConfigProvider
      * @param $index
      * @param $result
      * @param $optionsShouldBeProcessed
-     * @return array|null
+     * @return string|null
      */
     private function renew($index, $result, $optionsShouldBeProcessed)
     {
@@ -192,6 +254,6 @@ class DefaultConfigProvider
 
         array_pop($optionsShouldBeProcessed);
 
-        return $this->getSelectedOptionsImageUrl($index, $result, $optionsShouldBeProcessed);
+        return (string)$this->getReplaceImageUrl($index, $result, $optionsShouldBeProcessed);
     }
 }

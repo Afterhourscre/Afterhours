@@ -6,55 +6,52 @@
 
 namespace MageWorx\OptionVisibility\Model\Attribute\Option;
 
+use Magento\Framework\DataObjectFactory;
 use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\Serialize\Serializer\Json as Serializer;
 use MageWorx\OptionVisibility\Helper\Data as Helper;
+use MageWorx\OptionBase\Helper\Data as BaseHelper;
 use MageWorx\OptionBase\Helper\System as SystemHelper;
 use MageWorx\OptionVisibility\Model\OptionStoreView as StoreViewModel;
 use MageWorx\OptionBase\Model\Product\Option\AbstractAttribute;
 
 class StoreView extends AbstractAttribute
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
+    const FIELD_MAGE_ONE_OPTIONS_IMPORT = '_custom_option_store_views';
 
+    protected Helper $helper;
+    protected SystemHelper $systemHelper;
+    protected ResourceConnection $resource;
     /**
-     * @var SystemHelper
-     */
-    protected $systemHelper;
-
-    /**
-     * @var ResourceConnection
-     */
-    protected $resource;
-
-    /**
-     * @var mixed
+     * @var \MageWorx\OptionBase\Model\Entity\Group|\MageWorx\OptionBase\Model\Entity\Product
      */
     protected $entity;
-
-    /**
-     * @var StoreViewModel
-     */
-    protected $storeViewModel;
+    protected StoreViewModel $storeViewModel;
+    protected Serializer $serializer;
 
     /**
      * @param ResourceConnection $resource
      * @param Helper $helper
+     * @param BaseHelper $baseHelper
+     * @param DataObjectFactory $dataObjectFactory
      * @param SystemHelper $systemHelper
      * @param StoreViewModel $storeViewModel
+     * @param Serializer $serializer
      */
     public function __construct(
         ResourceConnection $resource,
         Helper $helper,
         StoreViewModel $storeViewModel,
-        SystemHelper $systemHelper
+        DataObjectFactory $dataObjectFactory,
+        BaseHelper $baseHelper,
+        SystemHelper $systemHelper,
+        Serializer $serializer
     ) {
         $this->helper         = $helper;
         $this->systemHelper   = $systemHelper;
         $this->storeViewModel = $storeViewModel;
-        parent::__construct($resource);
+        $this->serializer     = $serializer;
+        parent::__construct($resource, $baseHelper, $dataObjectFactory);
     }
 
     /**
@@ -83,7 +80,7 @@ class StoreView extends AbstractAttribute
      * @param string $type
      * @return string
      */
-    public function getTableName($type = '')
+    public function getTableName($type = ''): string
     {
         $map = [
             'product' => StoreViewModel::TABLE_NAME,
@@ -93,7 +90,7 @@ class StoreView extends AbstractAttribute
             return $map[$this->entity->getType()];
         }
 
-        return $map[$type];
+        return (string)$map[$type];
     }
 
     /**
@@ -105,7 +102,7 @@ class StoreView extends AbstractAttribute
      */
     public function collectData($entity, array $options)
     {
-        if (!$this->helper->isVisibilityStoreViewEnabled()) {
+        if (!$this->helper->isVisibilityStoreViewEnabled() && !$this->baseHelper->isAPOImportAction()) {
             return [];
         }
 
@@ -135,7 +132,11 @@ class StoreView extends AbstractAttribute
             $data['delete'][] = [
                 StoreViewModel::COLUMN_NAME_OPTION_ID => $itemKey,
             ];
-            $decodedJsonData  = json_decode($itemValue, true);
+            if ($itemValue) {
+                $decodedJsonData = $this->serializer->unserialize($itemValue);
+            } else {
+                $decodedJsonData = null;
+            }
             if (empty($decodedJsonData) || !is_array($decodedJsonData)) {
                 continue;
             }
@@ -239,7 +240,7 @@ class StoreView extends AbstractAttribute
     public function importTemplateMageOne($data)
     {
         if (!isset($data['store_views']) || !is_array($data['store_views'])) {
-            return json_encode([]);
+            return $this->serializer->serialize([]);
         }
         $preparedData = [];
         foreach ($data['store_views'] as $storeId) {
@@ -248,6 +249,172 @@ class StoreView extends AbstractAttribute
             ];
         }
 
-        return json_encode($preparedData);
+        return $this->serializer->serialize($preparedData);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function importTemplateMageTwo($data)
+    {
+        if (!isset($data['store_view']) || !is_array($data['store_view'])) {
+            return $this->serializer->serialize([]);
+        }
+        $preparedData = [];
+        foreach ($data['store_view'] as $storeId) {
+            $preparedData[] = [
+                StoreViewModel::COLUMN_NAME_STORE_ID => $storeId
+            ];
+        }
+
+        return $this->serializer->serialize($preparedData);
+    }
+
+    /**
+     * Collect system data (customer group ids, store ids) from Magento 1 product csv
+     *
+     * @param array $systemData
+     * @param array $productData
+     * @param array $optionData
+     * @param array $valueData
+     */
+    public function collectOptionsSystemDataMageOne(&$systemData, $productData, $optionData, $valueData = [])
+    {
+        if (!isset($optionData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT])
+            || $optionData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT] === ''
+        ) {
+            return;
+        }
+
+        $storeViews = explode(',', $optionData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT]);
+        foreach ($storeViews as $storeView) {
+            $systemData['store'][$storeView] = $storeView;
+        }
+    }
+
+    /**
+     * Collect system data (customer group ids, store ids) from Magento 2 template data
+     *
+     * @param array $data
+     * @return array
+     */
+    public function collectTemplateSystemDataMageTwo($data)
+    {
+        return $this->collectStoresDataByKey($data, 'store_view');
+    }
+
+    /**
+     * Prepare data from Magento 1 product csv for future import
+     *
+     * @param array $systemData
+     * @param array $productData
+     * @param array $optionData
+     * @param array $preparedOptionData
+     * @param array $valueData
+     * @param array $preparedValueData
+     * @return void
+     */
+    public function prepareOptionsMageOne(
+        $systemData,
+        $productData,
+        $optionData,
+        &$preparedOptionData,
+        $valueData = [],
+        &$preparedValueData = []
+    ) {
+        if (!isset($optionData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT])
+            || $optionData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT] === ''
+        ) {
+            return;
+        }
+
+        $isStoreExist = false;
+        $data         = [];
+        $storeViews   = explode(',', $optionData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT]);
+        foreach ($storeViews as $storeView) {
+            if (!$this->hasStoreEquivalent($systemData, $storeView)) {
+                continue;
+            }
+            $isStoreExist = true;
+            $data[]       = [
+                StoreViewModel::COLUMN_NAME_STORE_ID => $systemData['map']['store'][$storeView]
+            ];
+        }
+        if (!$isStoreExist) {
+            $preparedOptionData['disabled'] = 1;
+        }
+        $preparedOptionData[static::getName()] = $this->baseHelper->jsonEncode($data);
+    }
+
+    /**
+     * Collect data for magento2 product export
+     *
+     * @param array $row
+     * @param array $data
+     * @return void
+     */
+    public function collectExportDataMageTwo(&$row, $data)
+    {
+        $prefix        = 'custom_option_';
+        $attributeData = null;
+        if (!empty($data[$this->getName()])) {
+            $attributeData = $this->baseHelper->jsonDecode($data[$this->getName()]);
+        }
+        if (empty($attributeData) || !is_array($attributeData)) {
+            $row[$prefix . $this->getName()] = null;
+            return;
+        }
+        $result = [];
+        foreach ($attributeData as $datum) {
+            $parts = [];
+            foreach ($datum as $datumKey => $datumValue) {
+                $datumValue = $this->encodeSymbols($datumValue);
+                $parts[]    = $datumKey . '=' . $datumValue . '';
+            }
+            $result[] = implode(',', $parts);
+        }
+        $row[$prefix . $this->getName()] = $result ? implode('|', $result) : null;
+    }
+
+    /**
+     * Collect data for magento2 product import
+     *
+     * @param array $data
+     * @return array|null
+     */
+    public function collectImportDataMageTwo($data)
+    {
+        if (!$this->hasOwnTable()) {
+            return null;
+        }
+
+        if (!isset($data['custom_option_' . $this->getName()])) {
+            return null;
+        }
+
+        $this->entity = $this->dataObjectFactory->create();
+        $this->entity->setType('product');
+
+        $storeViews   = [];
+        $preparedData = [];
+        $iterator     = 0;
+
+        $attributeData = $data['custom_option_' . $this->getName()];
+        if (empty($attributeData)) {
+            return $this->collectStoreView($storeViews);
+        }
+
+        $step1 = explode('|', $attributeData);
+        foreach ($step1 as $step1Item) {
+            $step2 = explode(',', $step1Item);
+            foreach ($step2 as $step2Item) {
+                $step3Item                              = explode('=', $step2Item);
+                $step3Item[1]                           = $this->decodeSymbols($step3Item[1]);
+                $preparedData[$iterator][$step3Item[0]] = $step3Item[1];
+            }
+            $iterator++;
+        }
+        $storeViews[$data['custom_option_id']] = $this->baseHelper->jsonEncode($preparedData);
+        return $this->collectStoreView($storeViews);
     }
 }

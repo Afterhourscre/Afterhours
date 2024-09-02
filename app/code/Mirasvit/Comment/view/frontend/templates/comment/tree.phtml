@@ -1,0 +1,60 @@
+<?php
+declare(strict_types=1);
+
+use Mirasvit\Comment\Block\Comment\Tree;
+
+/** @var Tree $block */
+
+$items = $block->getItems();
+
+if (!$items) {
+    return '';
+}
+
+?>
+
+<div class="mst-comment__tree">
+    <?php foreach ($items as $item): ?>
+        <div class="mst-comment__wrapper"
+             data-comment-id="<?= $item->getId() ?>"
+             data-level="<?= $item->getLevel() ?>"
+            <?php if ($item->getParentId()): ?>
+                data-parent-id="<?= $item->getParentId() ?>"
+            <?php endif; ?>
+        >
+            <div class="mst-comment <?= $item->getIsAdmin() ? 'admin' : 'user' ?> <?= $item->getIsAdmin() ? '' : $item->getStatus() ?>"
+                 style="margin-left: <?= 35 * ($item->getLevel() - 1) ?>px;">
+                <div class="mst-comment__meta">
+                    <span class="mst-comment__author">
+                        <strong><?= $block->escapeHtml($item->getNickname()) ?></strong>
+                        <?php if ($item->getIsAdmin()): ?>
+                        <span class="mst-comment__admin"><?= __('store rep.') ?></span>
+                        <?php endif; ?>
+                    </span>
+                    <time><?= $block->getFormattedDate($item->getCreatedAt()) ?></time>
+                </div>
+                <div class="mst-comment__message"><?= $block->escapeHtml($item->getContent()) ?></div>
+                <?php if ($block->isCommentAllowed()): ?>
+                <span class="mst-comment__reply reply link" onclick="toggleCommentForm(event)"><?= __('Reply') ?></span>
+                <?php endif; ?>
+            </div>
+            <div class="mst-comment__form-wrapper hidden" style="margin-left: <?= 35 * ($item->getLevel() - 1) ?>px;">
+                <?= $block->getCommmentFormHtml($item->getId()) ?>
+            </div>
+
+            <?php if ($children = $item->getChildren()): ?>
+                <?= $block->setItems($children)->toHtml() ?>
+            <?php endif; ?>
+        </div>
+    <?php endforeach; ?>
+    <?php if ($block->isCommentAllowed()): ?>
+    <script>
+        function toggleCommentForm(e) {
+            e.target.classList.toggle('active');
+
+            const comment = e.target.closest('.mst-comment__wrapper');
+            comment.querySelector('.mst-comment__form-wrapper').classList.toggle('hidden')
+        }
+    </script>
+    <?php endif; ?>
+</div>

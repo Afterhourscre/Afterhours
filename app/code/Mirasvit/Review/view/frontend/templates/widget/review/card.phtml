@@ -1,0 +1,106 @@
+<?php
+declare(strict_types=1);
+
+/** @var \Mirasvit\Review\Block\Widget\Review\Card $block */
+
+$review = $block->getReview();
+?>
+
+<?php if (!$review) {
+    return '';
+} ?>
+<div class="review-grid-item grid-item">
+    <div class="review-grid-item-card">
+        <?php if ($imageUrl = $block->getMainImageUrl()): ?>
+            <img src="<?= $block->escapeUrl($imageUrl) ?>" alt="<?= $block->escapeHtmlAttr($review->getTitle()) ?>" class="review-image"/>
+        <?php endif; ?>
+
+        <div class="review-title" itemprop="name">
+            <?= $block->escapeHtml($review->getTitle()) ?>
+        </div>
+
+        <?php if (count($review->getRatingVotes())): ?>
+            <div class="review-ratings">
+                <?php foreach ($review->getRatingVotes() as $_vote): ?>
+                    <div class="rating-summary item"
+                         itemprop="reviewRating" itemscope itemtype="http://schema.org/Rating">
+                        <span class="label rating-label">
+                            <span><?= $block->escapeHtml($_vote->getRatingCode()) ?></span>
+                        </span>
+                        <div class="rating-result"
+                             id="review_<?= /* @noEscape */
+                             $review->getReviewId()
+                             . '_vote_'
+                             . $_vote->getVoteId() ?>"
+                             title="<?= $block->escapeHtmlAttr($_vote->getPercent()) ?>%">
+                            <meta itemprop="worstRating" content="1"/>
+                            <meta itemprop="bestRating" content="100"/>
+                            <span style="width: <?= $block->escapeHtmlAttr($_vote->getPercent()) ?>%">
+                                <span itemprop="ratingValue">
+                                    <?= $block->escapeHtml($_vote->getPercent()) ?>%
+                                </span>
+                            </span>
+                        </div>
+                        <?= /* @noEscape */
+                        $secureRenderer->renderStyleAsTag(
+                            'width:' . $_vote->getPercent() . '%',
+                            'div#review_' . $review->getReviewId()
+                            . '_vote_' . $_vote->getVoteId() . ' span'
+                        ) ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <div class="review-product">
+            <a href="<?= $block->escapeUrl($review->getProduct()->getProductUrl()) ?>"><?= $block->escapeHtml($review->getProduct()->getName()) ?></a>
+            <?php if ($block->displayProductOption()): ?>
+                <small class="review-product-option">
+                    <?= /* @noEscape */$block->getProductOptions($review); ?>
+                </small>
+            <?php endif; ?>
+        </div>
+
+        <div class="review-content-container">
+            <div class="review-content" itemprop="description">
+                <?= /* @noEscape */
+                nl2br($block->escapeHtml($review->getDetail())) ?>
+            </div>
+        </div>
+
+        <div class="review-details">
+            <div class="review-details__author">
+                <p class="review-author">
+            <span class="review-details-label">
+                <?= $block->escapeHtml(__('Review by')) ?>
+            </span>
+                    <span class="review-details-value nickname" itemprop="author">
+                    <?= $block->escapeHtml($review->getNickname()) ?>
+                </span>
+                    <?php if ($block->displayVerifiedBuyer() && $review->getIsVerifiedBuyer()): ?>
+                        <span style="color: #00b306">Verified Buyer</span>
+                    <?php endif; ?>
+                </p>
+                <p class="review-date">
+            <span class="review-details-label">
+                <?= $block->escapeHtml(__('Posted on')) ?>
+            </span>
+                    <time class="review-details-value" itemprop="datePublished"
+                          datetime="<?= $block->escapeHtmlAttr($block->getFormattedDate($review->getCreatedAt())) ?>">
+                        <?= $block->escapeHtml($block->getFormattedDate($review->getCreatedAt())) ?>
+                    </time>
+                </p>
+            </div>
+            <?php if ($block->getLocation($review)): ?>
+                <div class="review-country">
+                    <span>
+                        <?= /* @noEscape */ $block->getLocation($review); ?>
+                    </span>
+                    <?php if ($block->getCountryCode($review)): ?>
+                        <div class="flag flag-<?= $block->escapeHtmlAttr($block->getCountryCode($review)) ?>"></div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>

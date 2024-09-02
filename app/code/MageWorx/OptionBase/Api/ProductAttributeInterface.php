@@ -3,44 +3,58 @@
  * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
 namespace MageWorx\OptionBase\Api;
 
 interface ProductAttributeInterface
 {
     /**
-     * Get array of attribute keys
-     * @return array
+     * Get name of attribute
+     *
+     * @return string
      */
-    public function getKeys();
+    public function getName();
 
     /**
      * Get table name, used when attribute use individual tables
+     *
      * @return string
      */
     public function getTableName();
 
     /**
-     * Apply attribute data
+     * Collect product attribute data
+     *
      * @param \MageWorx\OptionBase\Model\Entity\Group|\MageWorx\OptionBase\Model\Entity\Product $entity
      * @return void
      */
-    public function applyData($entity);
+    public function collectData($entity);
 
     /**
-     * Clear attribute data
+     * Delete old product attribute data
+     *
+     * @param $data
      * @return void
      */
-    public function clearData();
+    public function deleteOldData(array $data);
 
     /**
-     * Get object item by product ID
-     * @param \Magento\Catalog\Model\Product $product
-     * @return \Magento\Framework\DataObject|null
+     * Get priority value of attribute
+     *
+     * @return null|int|string
      */
-    public function getItemByProduct($product);
+    public function getPriorityValue();
+
+    /**
+     * Get default value of attribute
+     *
+     * @return int|string
+     */
+    public function getDefaultValue();
 
     /**
      * Validate Magento 1 template import
+     *
      * @param array $groupData
      * @throws \Magento\Framework\Exception\LocalizedException
      * @return void
@@ -48,9 +62,51 @@ interface ProductAttributeInterface
     public function validateTemplateImportMageOne($groupData);
 
     /**
+     * Validate Magento 2 template import
+     *
+     * @param array $groupData
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @return void
+     */
+    public function validateTemplateImportMageTwo($groupData);
+
+    /**
      * Import Magento 1 template data
+     *
      * @param array $groupData
      * @return array
      */
     public function importTemplateMageOne($groupData);
+
+    /**
+     * Import Magento 2 template data
+     *
+     * @param array $groupData
+     * @return array
+     */
+    public function importTemplateMageTwo($groupData);
+
+    /**
+     * Prepare Magento 1 product attributes for import
+     *
+     * @param array $productAttributesData
+     * @param array $data
+     * @return void
+     */
+    public function prepareOptionsMageOne(&$productAttributesData, $data);
+
+    /**
+     * Flag to check if attribute should be skipped during Magento 2 export
+     *
+     * @return bool
+     */
+    public function shouldSkipExportMageTwo();
+
+    /**
+     * Collect data for Magento2 product import
+     *
+     * @param array $data
+     * @return array|null
+     */
+    public function collectImportDataMageTwo($data);
 }

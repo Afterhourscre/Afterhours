@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="mirasvit" translate="label" sortOrder="550">
+            <label>Mirasvit Extensions</label>
+        </tab>
+
+        <section id="mst_comment" showInDefault="1" showInWebsite="1" showInStore="1" type="text" translate="label" sortOrder="100">
+            <label>Comments</label>
+            <tab>mirasvit</tab>
+            <resource>Mirasvit_Comment::comment_settings</resource>
+
+            <group id="general" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10">
+                <label>General Settings</label>
+
+                <field id="is_enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Comments</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+
+                <field id="allow_guest" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Allow Guests to Write Comments</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="is_enabled">1</field>
+                    </depends>
+                </field>
+
+                <field id="autoapprove" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Automatically Approve Comments</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="is_enabled">1</field>
+                    </depends>
+                </field>
+
+                <field id="date_format" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Date Format</label>
+                    <source_model>Mirasvit\Comment\Model\Config\Source\DateFormatSource</source_model>
+                    <depends>
+                        <field id="is_enabled">1</field>
+                    </depends>
+                </field>
+
+                <field id="is_admin_notifications_enabled" translate="label" type="select" sortOrder="50" showInDefault="1">
+                    <label>Enable Admin Notifications</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="is_enabled">1</field>
+                    </depends>
+                    <comment><![CDATA[
+                        If enabled, system admin message will be added about pending comments
+                    ]]></comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

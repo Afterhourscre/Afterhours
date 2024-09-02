@@ -1,73 +1,70 @@
 <?php
 /**
- * Copyright © 2016 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+declare(strict_types=1);
+
 namespace MageWorx\OptionInventory\Helper;
 
+use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product as ProductModel;
 use \Magento\CatalogInventory\Api\StockRegistryInterface as StockRegistry;
+use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
+use MageWorx\OptionBase\Helper\Data as BaseHelper;
+use MageWorx\OptionInventory\Model\Product\LinkedAttributes as LinkedAttributes;
+use MageWorx\OptionInventory\Model\ResourceModel\Product\Option\ManageStockOptionCollection;
 
 /**
  * OptionInventory Stock Helper.
+ *
  * @package MageWorx\OptionInventory\Helper
  */
-class Stock extends \Magento\Framework\App\Helper\AbstractHelper
+class Stock extends AbstractHelper
 {
-
-    const MANAGE_STOCK_ENABLED = '1';
+    const MANAGE_STOCK_ENABLED  = '1';
     const MANAGE_STOCK_DISABLED = '0';
 
-    /**
-     * Product model
-     *
-     * @var ProductModel
-     */
-    protected $product;
+    protected ProductModel $product;
+    protected StockRegistry $stockRegistry;
+    protected Data $helperData;
+    protected BaseHelper $baseHelper;
+    protected LinkedAttributes $linkedAttributes;
+    protected ProductRepositoryInterface $productRepository;
+    protected ManageStockOptionCollection $manageStockOptionCollection;
 
-    /**
-     * @var StockRegistry
-     */
-    protected $stockRegistry;
-
-    /**
-     * OptionInventory Data Helper
-     *
-     * @var Data
-     */
-    protected $helperData;
-
-    /**
-     * Stock constructor.
-     *
-     * @param Data $helperData
-     * @param ProductModel $product
-     * @param Context $context
-     */
     public function __construct(
-        \MageWorx\OptionInventory\Helper\Data $helperData,
+        Data $helperData,
         ProductModel $product,
         StockRegistry $stockRegistry,
-        Context $context
+        Context $context,
+        BaseHelper $baseHelper,
+        LinkedAttributes $linkedAttributes,
+        ProductRepositoryInterface $productRepository,
+        ManageStockOptionCollection $manageStockOptionCollection
     ) {
-    
-        $this->helperData = $helperData;
-        $this->product = $product;
-        $this->stockRegistry = $stockRegistry;
+        $this->helperData        = $helperData;
+        $this->product           = $product;
+        $this->stockRegistry     = $stockRegistry;
+        $this->baseHelper        = $baseHelper;
+        $this->linkedAttributes  = $linkedAttributes;
+        $this->productRepository = $productRepository;
+        $this->manageStockOptionCollection = $manageStockOptionCollection;
         parent::__construct($context);
     }
 
     /**
      * Check if option value is out of stock
      *
-     * @param \Magento\Catalog\Model\Product\Option\Value $option
+     * @param \Magento\Catalog\Api\Data\ProductCustomOptionValuesInterface $value
      * @return bool
      */
-    public function isOutOfStockOption($option)
+    public function isOutOfStockOption(\Magento\Catalog\Api\Data\ProductCustomOptionValuesInterface $value): bool
     {
-        $manageStock = $option->getManageStock();
-        $qty = $option->getQty();
+        $manageStock = $value->getManageStock();
+        $qty         = $value->getQty();
+
 
         if (!$manageStock) {
             return false;
@@ -81,23 +78,18 @@ class Stock extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * Floating option value qty
-     *
-     * @param int|float $qty
      * @param int $productId
-     * @param null|\Magento\Catalog\Model\Product $product
-     * @return float|int
+     * @return bool
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function floatingQty($qty, $productId, $product = null)
+    public function isfloatingQty(int $productId): bool
     {
-        if ($this->isTemplateGroup($productId, $product)) {
-            return (float)$qty;
+        if (!$productId) {
+            return true;
         }
 
-        if ($product) {
-            $this->product = $product;
-        } elseif (!$this->product) {
-            $this->product->load($productId);
+        if (!$this->product) {
+            $this->productRepository->getById($productId);
         }
 
         $stockData = $this->product->getStockData();
@@ -116,7 +108,7 @@ class Stock extends \Magento\Framework\App\Helper\AbstractHelper
             $isQtyDecimal = (bool)$stockData->getIsQtyDecimal();
         }
 
-        return $isQtyDecimal ? (float)$qty : (int)$qty;
+        return $isQtyDecimal ?: false;
     }
 
     /**
@@ -126,7 +118,7 @@ class Stock extends \Magento\Framework\App\Helper\AbstractHelper
      * @param \DOMElement $elementTitle
      * @param string $stockMessage
      */
-    public function setStockMessage($dom, $elementTitle, $stockMessage = '')
+    public function setStockMessage(\DOMDocument $dom, \DOMElement $elementTitle, string $stockMessage = ''): void
     {
         $elementTitle->nodeValue = htmlentities($elementTitle->nodeValue . $stockMessage);
     }
@@ -134,23 +126,21 @@ class Stock extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Retrieve stock message
      *
-     * @param \Magento\Catalog\Model\Product\Option\Value $value
+     * @param \Magento\Catalog\Api\Data\ProductCustomOptionValuesInterface $value
      * @return string
      */
-    public function getStockMessage($value, $productId)
-    {
+    public function getStockMessage(
+        \Magento\Catalog\Api\Data\ProductCustomOptionValuesInterface $value,
+        string $productId
+    ): string {
         $stockMessage = '';
 
-        $isDisplayOptionInventory = $this->helperData->isDisplayOptionInventoryOnFrontend();
+        $isDisplayOptionInventory   = $this->helperData->isDisplayOptionInventoryOnFrontend();
         $isDisplayOutOfStockMessage = $this->helperData->isDisplayOutOfStockMessage();
 
-        $valueManageStock = $value->getManageStock();
-        if (!$valueManageStock) {
-            return $stockMessage;
-        }
+        $formattedQty = $this->isfloatingQty((int)$productId) ? (float)$value->getQty() : (int)$value->getQty();
 
-        $valueQty = $this->floatingQty($value->getQty(), $productId);
-        $inventoryMessage = '(' . $valueQty . ')';
+        $inventoryMessage  = '(' . $formattedQty . ')';
         $outOfStockMessage = '(' . __('Out Of Stock') . ')';
 
         if ($isDisplayOutOfStockMessage) {
@@ -160,7 +150,7 @@ class Stock extends \Magento\Framework\App\Helper\AbstractHelper
             $stockMessage .= $isDisplayOptionInventory ? $inventoryMessage : '';
         }
 
-        return $stockMessage;
+        return (string)$stockMessage;
     }
 
     /**
@@ -168,7 +158,7 @@ class Stock extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @param \DOMElement $element
      */
-    public function disableOutOfStockOption($element)
+    public function disableOutOfStockOption(\DOMElement $element): void
     {
         if ($element) {
             $element->setAttribute('disabled', 'disabled');
@@ -180,7 +170,7 @@ class Stock extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @param \DOMElement $element
      */
-    public function hideOutOfStockOption($element)
+    public function hideOutOfStockOption(\DOMElement $element): void
     {
         if ($element) {
             $element->parentNode->removeChild($element);
@@ -193,7 +183,7 @@ class Stock extends \Magento\Framework\App\Helper\AbstractHelper
      * @param array $options
      * @return array
      */
-    public function getRequestedValuesId($options)
+    public function getRequestedValuesId(array $options): array
     {
         $valuesId = [];
 
@@ -213,32 +203,57 @@ class Stock extends \Magento\Framework\App\Helper\AbstractHelper
      * Retrieve options values id from product options
      *
      * @param array $options
+     * @param array $manageStockOptions
      * @return array
      */
-    public function getOptionValuesId($options)
+    public function getOptionValueIds(array $options, $manageStockOptions): array
     {
-        $optionValuesId = [];
+        $optionValueIds = [];
 
         foreach ($options as $optionId => $values) {
+            if (!in_array($optionId, $manageStockOptions)) {
+                continue;
+            }
+
             if (!is_array($values)) {
                 $values = [$values => []];
             }
-            $optionValuesId = array_merge($optionValuesId, array_keys($values));
+            $optionValueIds = array_merge($optionValueIds, array_keys($values));
         }
 
-        return $optionValuesId;
+        return $optionValueIds;
     }
 
     /**
-     * If product is null and productId is null
-     * then it's template group
+     * Linked qty validator (from OptionLink)
      *
-     * @param null|int $productId
-     * @param null|\Magento\Catalog\Model\Product $product
      * @return bool
      */
-    protected function isTemplateGroup($productId, $product)
+    public function validateLinkedQtyField(): bool
     {
-        return !$productId && !$product;
+        $linkedAttributesData = $this->linkedAttributes->getData('linkedAttributes');
+        if (!$linkedAttributesData) {
+            return false;
+        }
+
+        $linkedFields = $linkedAttributesData->getConvertedAttributesToFields();
+        if (!in_array('qty', $linkedFields) ||
+            !$this->baseHelper->isModuleEnabled('Magento_InventorySalesAdminUi')
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Gat data with option Ids which contain manage_stock values
+     *
+     * @param array $optionIds
+     * @return array
+     */
+    public function getOptionsContainManageStockValues(array $optionIds): array
+    {
+        return $this->manageStockOptionCollection->getOptionsContainsManageStockValues($optionIds);
     }
 }

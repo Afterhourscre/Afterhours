@@ -48,7 +48,7 @@ class Data extends AbstractHelper
      */
     public function getDefaultSkuPolicy($store = null)
     {
-        return $this->scopeConfig->getValue(
+        return (string)$this->scopeConfig->getValue(
             self::XML_PATH_DEFAULT_SKU_POLICY,
             ScopeInterface::SCOPE_STORE,
             $store

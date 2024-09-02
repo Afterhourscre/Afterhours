@@ -9,14 +9,8 @@ use MageWorx\OptionFeatures\Helper\Data as Helper;
 
 class ModifyWishlistItemPrice
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
+    protected Helper $helper;
 
-    /**
-     * @param Helper $helper
-     */
     public function __construct(
         Helper $helper
     ) {

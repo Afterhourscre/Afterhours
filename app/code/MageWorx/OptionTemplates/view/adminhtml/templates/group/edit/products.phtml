@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2018 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
 
@@ -11,7 +11,7 @@ $gridJsObjectName = $blockGrid->getJsObjectName();
 ?>
 <?= $block->getGridHtml() ?>
 <input type="hidden" name="group_products"
-       id="<?= $block->getFieldId() ?>"
+       id="<?= $block->escapeHtmlAttr($block->getFieldId()) ?>"
        data-form-part="mageworx_optiontemplates_group_form"
        value=""
 />
@@ -19,9 +19,9 @@ $gridJsObjectName = $blockGrid->getJsObjectName();
     {
         "*": {
             "MageWorx_OptionTemplates/js/assign-products": {
-                "fieldId": "<?= $block->getFieldId() ?>",
-                "selectedProducts": <?= $block->getProductsJson() ?>,
-                "gridJsObjectName": <?= '"' . $gridJsObjectName . '"' ?: '{}' ?>
+                "fieldId": "<?= $block->escapeHtml($block->getFieldId()) ?>",
+                "selectedProducts": <?= /* @noEscape */ $block->getProductsJson() ?>,
+                "gridJsObjectName": <?= '"' . $block->escapeJs($gridJsObjectName) . '"' ?: '{}' ?>
             }
         }
     }

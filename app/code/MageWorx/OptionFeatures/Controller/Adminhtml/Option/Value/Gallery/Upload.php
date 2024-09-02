@@ -8,6 +8,7 @@ namespace MageWorx\OptionFeatures\Controller\Adminhtml\Option\Value\Gallery;
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\Controller\Result\RawFactory;
+use Magento\Framework\Serialize\Serializer\Json as Serializer;
 use MageWorx\OptionFeatures\Helper\Image as ImageHelper;
 
 class Upload extends Action
@@ -19,29 +20,22 @@ class Upload extends Action
      */
     const ADMIN_RESOURCE = 'Magento_Catalog::products';
 
-    /**
-     * @var RawFactory
-     */
-    protected $resultRawFactory;
+    protected RawFactory $resultRawFactory;
 
-    /**
-     * @var ImageHelper
-     */
-    protected $imageHelper;
+    protected ImageHelper $imageHelper;
 
-    /**
-     * @param Context $context
-     * @param RawFactory $resultRawFactory
-     * @param ImageHelper $imageHelper
-     */
+    protected Serializer $serializer;
+
     public function __construct(
         Context $context,
         RawFactory $resultRawFactory,
-        ImageHelper $imageHelper
+        ImageHelper $imageHelper,
+        Serializer $serializer
     ) {
         parent::__construct($context);
         $this->resultRawFactory = $resultRawFactory;
-        $this->imageHelper = $imageHelper;
+        $this->imageHelper      = $imageHelper;
+        $this->serializer       = $serializer;
     }
 
     /**
@@ -62,7 +56,7 @@ class Upload extends Action
         /** @var \Magento\Framework\Controller\Result\Raw $response */
         $response = $this->resultRawFactory->create();
         $response->setHeader('Content-type', 'text/plain');
-        $response->setContents(json_encode($result));
+        $response->setContents($this->serializer->serialize($result));
 
         return $response;
     }

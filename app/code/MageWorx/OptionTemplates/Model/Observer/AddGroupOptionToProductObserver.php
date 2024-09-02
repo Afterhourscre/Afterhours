@@ -10,8 +10,10 @@ use Magento\Catalog\Model\ResourceModel\Product\Option\CollectionFactory as Prod
 use Magento\Framework\Event\Observer;
 use MageWorx\OptionBase\Helper\Data as BaseHelper;
 use MageWorx\OptionTemplates\Model\ResourceModel\Group\CollectionFactory as GroupCollectionFactory;
-use MageWorx\OptionTemplates\Model\ProductAttributes;
+use MageWorx\OptionTemplates\Model\ProductAttributes as ProductAttributesEntity;
+use MageWorx\OptionBase\Model\Product\Attributes as ProductAttributes;
 use MageWorx\OptionBase\Model\ResourceModel\DataSaver;
+use MageWorx\OptionTemplates\Model\ResourceModel\Group as GroupResourceModel;
 
 /**
  * Observer class for add option groups to product
@@ -42,9 +44,20 @@ class AddGroupOptionToProductObserver implements \Magento\Framework\Event\Observ
     protected $productOptionCollectionFactory;
 
     /**
+     *
+     * @var GroupResourceModel
+     */
+    protected $groupResourceModel;
+
+    /**
      * @var BaseHelper
      */
     protected $baseHelper;
+
+    /**
+     * @var ProductAttributesEntity
+     */
+    protected $productAttributesEntity;
 
     /**
      * @var ProductAttributes
@@ -67,7 +80,9 @@ class AddGroupOptionToProductObserver implements \Magento\Framework\Event\Observ
      * @param \MageWorx\OptionTemplates\Model\OptionSaver $optionSaver
      * @param BaseHelper $baseHelper
      * @param GroupCollectionFactory $groupCollectionFactory
+     * @param GroupResourceModel $groupResourceModel
      * @param ProductAttributes $productAttributes
+     * @param ProductAttributesEntity $productAttributesEntity
      * @param ProductOptionCollectionFactory $productOptionCollectionFactory
      * @param DataSaver $dataSaver
      */
@@ -75,15 +90,19 @@ class AddGroupOptionToProductObserver implements \Magento\Framework\Event\Observ
         \Magento\Framework\Registry $registry,
         \MageWorx\OptionTemplates\Model\OptionSaver $optionSaver,
         GroupCollectionFactory $groupCollectionFactory,
+        GroupResourceModel $groupResourceModel,
         BaseHelper $baseHelper,
         ProductAttributes $productAttributes,
+        ProductAttributesEntity $productAttributesEntity,
         ProductOptionCollectionFactory $productOptionCollectionFactory,
         DataSaver $dataSaver
     ) {
         $this->registry                       = $registry;
         $this->optionSaver                    = $optionSaver;
         $this->groupCollectionFactory         = $groupCollectionFactory;
+        $this->groupResourceModel             = $groupResourceModel;
         $this->baseHelper                     = $baseHelper;
+        $this->productAttributesEntity              = $productAttributesEntity;
         $this->productAttributes              = $productAttributes;
         $this->productOptionCollectionFactory = $productOptionCollectionFactory;
         $this->dataSaver                      = $dataSaver;
@@ -135,14 +154,15 @@ class AddGroupOptionToProductObserver implements \Magento\Framework\Event\Observ
             $this->optionSaver->setIsTemplateSave(false);
             /** @var \MageWorx\OptionTemplates\Model\ResourceModel\Group\Collection $collection */
             $collection = $this->groupCollectionFactory->create()->addFieldToFilter('group_id', $groupIds);
+
             /** @var \MageWorx\OptionTemplates\Model\Group $group */
             foreach ($collection as $group) {
                 if (in_array($group->getId(), $addedGroupIds)) {
                     $post['product']   = array_merge(
                         $post['product'],
-                        $this->productAttributes->getProductAttributesFromGroup($group)
+                        $this->productAttributesEntity->getProductAttributesFromGroup($group)
                     );
-                    $modProductOptions = $this->optionSaver->addNewOptionProcess($modProductOptions, $group);
+                    $modProductOptions = $this->optionSaver->addNewOptionProcess($modProductOptions, '', $group);
                 }
                 if (in_array($group->getId(), $deletedGroupIds)) {
                     if ($keepOptionOnUnlink) {
@@ -156,6 +176,9 @@ class AddGroupOptionToProductObserver implements \Magento\Framework\Event\Observ
                     }
                 }
             }
+
+            $notRemovedGroupIds = array_diff($issetGroupIds, $deletedGroupIds);
+            $this->applyProductAttributePriorityValue($post, array_merge($notRemovedGroupIds, $addedGroupIds));
         }
 
         $registryIds = [
@@ -166,26 +189,54 @@ class AddGroupOptionToProductObserver implements \Magento\Framework\Event\Observ
 
         $this->registry->register('mageworx_optiontemplates_relation_data', $registryIds, true);
 
-        //compatibility for 2.2.x
-        $modProductOptions = $this->apply22xCompatibilityFix($modProductOptions, $post);
+        $modProductOptions = $this->applyUseDefaults($modProductOptions, $post);
 
         $post['product']['options'] = $modProductOptions;
         $request->setPostValue($post);
     }
 
     /**
-     * Apply 2.1.10+/2.2.x compatibility fix for options, option/value titles
+     * Apply product attributes
+     *
+     * @param array $post
+     * @param array $groupIds
+     * @return void
+     */
+    protected function applyProductAttributePriorityValue(&$post, $groupIds)
+    {
+        $attributes = $this->productAttributes->getData();
+        if (!$attributes || !is_array($attributes)) {
+            return;
+        }
+
+        /** @var \MageWorx\OptionBase\Api\ProductAttributeInterface $attribute */
+        foreach ($attributes as $attribute) {
+            $priorityValue = $attribute->getPriorityValue();
+            if (!isset($priorityValue)) {
+                continue;
+            }
+            if ($this->groupResourceModel->hasPriorityValue(
+                $attribute->getName(),
+                $priorityValue,
+                $groupIds
+            )) {
+                $post['product'] = array_merge(
+                    $post['product'],
+                    [$attribute->getName() => $priorityValue]
+                );
+            }
+        }
+    }
+
+    /**
+     * Apply use_default for options, option/value titles
      *
      * @param array $modProductOptions
      * @param array $post
      * @return array
      */
-    protected function apply22xCompatibilityFix($modProductOptions, $post)
+    protected function applyUseDefaults($modProductOptions, $post)
     {
-        if (!$this->baseHelper->checkModuleVersion('101.0.10')) {
-            return $modProductOptions;
-        }
-
         $optionTypeIds = [];
 
         foreach ($modProductOptions as $optionKey => $optionData) {

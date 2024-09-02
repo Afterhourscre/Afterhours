@@ -15,40 +15,13 @@ use Magento\Framework\App\ResourceConnection;
 
 class DuplicateDependency
 {
-    /**
-     * @var OptionBaseHelper
-     */
-    protected $helper;
-
-    /**
-     * @var HttpRequest
-     */
-    protected $request;
-
-    /**
-     * @var Registry
-     */
-    protected $registry;
-
-    /**
-     * @var ResourceConnection
-     */
-    protected $resource;
-
-    /**
-     * @var \Magento\Framework\DB\Adapter\AdapterInterface
-     */
-    protected $connection;
-
-    /**
-     * @var DependencyAttribute
-     */
-    protected $dependencyAttribute;
-
-    /**
-     * @var bool
-     */
-    protected $isGroup;
+    protected OptionBaseHelper $helper;
+    protected HttpRequest $request;
+    protected Registry $registry;
+    protected ResourceConnection $resource;
+    protected \Magento\Framework\DB\Adapter\AdapterInterface $connection;
+    protected DependencyAttribute $dependencyAttribute;
+    protected bool $isGroup;
 
     /**
      * @param OptionBaseHelper $helper
@@ -146,10 +119,10 @@ class DuplicateDependency
             ->from(
                 $this->resource->getTableName($this->dependencyAttribute->getTableName($this->getEntityTypeName())),
                 [
-                    'child_option_id',
-                    'child_option_type_id',
-                    'parent_option_id',
-                    'parent_option_type_id',
+                    'dp_child_option_id',
+                    'dp_child_option_type_id',
+                    'dp_parent_option_id',
+                    'dp_parent_option_type_id',
                     $this->getEntityFieldName()
                 ]
             )
@@ -170,15 +143,15 @@ class DuplicateDependency
     protected function updateDependency($dependency, $newEntityId, $mapOptionId, $mapOptionTypeId)
     {
         foreach ($dependency as $id => $row) {
-            $dependency[$id]['child_option_id'] = $mapOptionId[$row['child_option_id']];
-            $dependency[$id]['parent_option_id'] = $mapOptionId[$row['parent_option_id']];
+            $dependency[$id]['dp_child_option_id'] = $mapOptionId[$row['dp_child_option_id']];
+            $dependency[$id]['dp_parent_option_id'] = $mapOptionId[$row['dp_parent_option_id']];
 
-            if (empty($mapOptionTypeId[$row['child_option_type_id']])) {
-                $mapOptionTypeId[$row['child_option_type_id']] = "";
+            if (empty($mapOptionTypeId[$row['dp_child_option_type_id']])) {
+                $mapOptionTypeId[$row['dp_child_option_type_id']] = "";
             }
 
-            $dependency[$id]['child_option_type_id'] = $mapOptionTypeId[$row['child_option_type_id']];
-            $dependency[$id]['parent_option_type_id'] = $mapOptionTypeId[$row['parent_option_type_id']];
+            $dependency[$id]['dp_child_option_type_id'] = $mapOptionTypeId[$row['dp_child_option_type_id']];
+            $dependency[$id]['dp_parent_option_type_id'] = $mapOptionTypeId[$row['dp_parent_option_type_id']];
             $dependency[$id][$this->getEntityFieldName()] = $newEntityId;
         }
 

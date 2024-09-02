@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <update handle="catalog_product_view"/>
+    <body>
+        <referenceContainer name="content">
+            <referenceBlock name="product.info.product_additional_data" class="Mirasvit\Review\Block\Product\View\ListView" template="Mirasvit_Review::product/view/list.phtml">
+                <block name="mst.product.review.summary" as="review.summary" class="Mirasvit\Review\Block\Product\Review\Summary" template="Mirasvit_Review::review/summary.phtml">
+                    <block name="mst.product.review_summary.proscons" as="summary.proscons" class="Mirasvit\Review\Block\Product\Review\ProsCons" template="Mirasvit_Review::review/proscons.phtml" />
+                </block>
+                <block name="mst.product.review_summary.gallery" as="summary.gallery" class="Mirasvit\Review\Block\Product\Review\Gallery" template="Mirasvit_Review::review/gallery.phtml" />
+                <block name="mst.product.review" class="Mirasvit\Review\Block\Product\Review" template="Mirasvit_Review::review.phtml">
+                    <block name="mst.product.review.proscons" as="proscons" class="Mirasvit\Review\Block\Product\Review\ProsCons" template="Mirasvit_Review::review/proscons.phtml" />
+                    <block name="mst.product.review.gallery" as="review.gallery" class="Mirasvit\Review\Block\Product\Review\Gallery" template="Mirasvit_Review::review/gallery.phtml" />
+                </block>
+            </referenceBlock>
+        </referenceContainer>
+    </body>
+</page>

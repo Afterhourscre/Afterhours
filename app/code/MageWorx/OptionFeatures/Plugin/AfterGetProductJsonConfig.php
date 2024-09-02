@@ -11,26 +11,10 @@ use MageWorx\OptionFeatures\Helper\Data as Helper;
 
 class AfterGetProductJsonConfig
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
+    protected Helper $helper;
+    protected EncoderInterface $jsonEncoder;
+    protected DecoderInterface $jsonDecoder;
 
-    /**
-     * @var EncoderInterface
-     */
-    protected $jsonEncoder;
-
-    /**
-     * @var DecoderInterface
-     */
-    protected $jsonDecoder;
-
-    /**
-     * @param Helper $helper
-     * @param EncoderInterface $jsonEncoder
-     * @param DecoderInterface $jsonDecoder
-     */
     public function __construct(
         Helper $helper,
         EncoderInterface $jsonEncoder,
@@ -48,7 +32,7 @@ class AfterGetProductJsonConfig
      * @param $result
      * @return string
      */
-    public function afterGetProductJsonConfig($subject, $result)
+    public function afterGetProductJsonConfig($subject, $result): string
     {
         $resultDecoded = $this->jsonDecoder->decode($result);
         if (!$this->helper->isAbsolutePriceEnabled()) {
@@ -56,6 +40,6 @@ class AfterGetProductJsonConfig
         }
         $resultEncoded = $this->jsonEncoder->encode($resultDecoded);
 
-        return $resultEncoded;
+        return (string)$resultEncoded;
     }
 }

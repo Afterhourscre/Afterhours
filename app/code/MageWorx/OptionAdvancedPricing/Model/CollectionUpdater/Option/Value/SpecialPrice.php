@@ -6,11 +6,32 @@
 
 namespace MageWorx\OptionAdvancedPricing\Model\CollectionUpdater\Option\Value;
 
+use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\App\State;
+use Magento\Framework\Exception\LocalizedException;
+use MageWorx\OptionAdvancedPricing\Helper\Data as AdvancedPricingHelper;
+use MageWorx\OptionBase\Helper\Data as BaseHelper;
+use MageWorx\OptionBase\Helper\System as SystemHelper;
 use MageWorx\OptionBase\Model\Product\Option\AbstractUpdater;
 use MageWorx\OptionAdvancedPricing\Model\SpecialPrice as SpecialPriceModel;
 
 class SpecialPrice extends AbstractUpdater
 {
+    private AdvancedPricingHelper $advancedPricingHelper;
+    private State                 $state;
+
+    public function __construct(
+        ResourceConnection    $resource,
+        BaseHelper            $helper,
+        SystemHelper          $systemHelper,
+        AdvancedPricingHelper $advancedPricingHelper,
+        State                 $state
+    ) {
+        parent::__construct($resource, $helper, $systemHelper);
+        $this->advancedPricingHelper = $advancedPricingHelper;
+        $this->state                 = $state;
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -70,10 +91,9 @@ class SpecialPrice extends AbstractUpdater
         $entityType = $conditions['entity_type'];
         $tableName  = $this->getTableName($entityType);
 
-        $this->resource->getConnection()->query('SET SESSION group_concat_max_len = 100000;');
-
         $selectExpr = "SELECT " . SpecialPriceModel::COLUMN_OPTION_TYPE_ID . " as "
             . SpecialPriceModel::FIELD_OPTION_TYPE_ID_ALIAS . ","
+            . SpecialPriceModel::COLUMN_COMMENT . " as " . SpecialPriceModel::FIELD_COMMENT_ALIAS . ","
             . " CONCAT('[',"
             . " GROUP_CONCAT(CONCAT("
             . "'{\"price\"',':\"',IFNULL(price,''),'\",',"
@@ -96,5 +116,18 @@ class SpecialPrice extends AbstractUpdater
         $selectExpr .= " GROUP BY option_type_id";
 
         return new \Zend_Db_Expr('(' . $selectExpr . ')');
+    }
+
+    /**
+     * @throws LocalizedException
+     */
+    public function determineJoinNecessity(): bool
+    {
+        /** If the special pricing feature is disabled, you do not need to add this information to the request. */
+        if (!$this->advancedPricingHelper->isSpecialPriceEnabled()) {
+            return false;
+        }
+
+        return !$this->systemHelper->isFrontend();
     }
 }

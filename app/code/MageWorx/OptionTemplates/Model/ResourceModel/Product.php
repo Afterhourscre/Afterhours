@@ -21,4 +21,19 @@ class Product extends ProductModel
                ->where('entity_id IN ('.implode(',', $productIds).')');
         return $this->_resource->getConnection()->fetchAll($select);
     }
+    /**
+     * @param array $productSkus
+     * @param string $linkField
+     * @return array
+     */
+    public function getExistProducts($productSkus, $linkField)
+    {
+        $select = $this->_resource
+            ->getConnection()
+            ->select()
+            ->from($this->_resource->getTableName('catalog_product_entity'), ['sku', $linkField])
+            ->where("sku IN (?)", $productSkus);
+
+        return $this->_resource->getConnection()->fetchPairs($select);
+    }
 }

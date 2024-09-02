@@ -6,57 +6,59 @@
 
 namespace MageWorx\OptionFeatures\Model\Attribute\OptionValue;
 
+use Magento\Framework\DataObjectFactory;
 use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\Serialize\Serializer\Json as Serializer;
 use Magento\Store\Model\Store;
-use MageWorx\OptionFeatures\Helper\Data as Helper;
+use Magento\Cms\Model\Template\FilterProvider as FilterProvider;
 use MageWorx\OptionBase\Helper\System as SystemHelper;
-use MageWorx\OptionBase\Api\AttributeInterface;
+use MageWorx\OptionBase\Helper\Data as BaseHelper;
+use MageWorx\OptionBase\Model\Product\Option\AbstractAttribute;
+use MageWorx\OptionFeatures\Helper\Data as Helper;
 use MageWorx\OptionFeatures\Model\OptionTypeDescription;
 use MageWorx\OptionFeatures\Model\ResourceModel\OptionTypeDescription\Collection as DescriptionCollection;
 use MageWorx\OptionFeatures\Model\OptionTypeDescriptionFactory as DescriptionFactory;
-use MageWorx\OptionBase\Model\Product\Option\AbstractAttribute;
 
-class Description extends AbstractAttribute implements AttributeInterface
+class Description extends AbstractAttribute
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
+    const FIELD_MAGE_ONE_OPTIONS_IMPORT = '_custom_option_row_description';
+
+    protected FilterProvider $filterProvider;
+    protected Helper $helper;
+    protected SystemHelper $systemHelper;
+    protected DescriptionFactory $descriptionFactory;
+    protected DescriptionCollection $descriptionCollection;
+    protected Serializer $serializer;
 
     /**
-     * @var SystemHelper
-     */
-    protected $systemHelper;
-
-    /**
-     * @var DescriptionFactory
-     */
-    protected $descriptionFactory;
-
-    /**
-     * @var DescriptionCollection
-     */
-    protected $descriptionCollection;
-
-    /**
+     * @param FilterProvider $filterProvider
      * @param ResourceConnection $resource
      * @param DescriptionFactory $descriptionFactory
      * @param DescriptionCollection $descriptionCollection
+     * @param BaseHelper $baseHelper
+     * @param DataObjectFactory $dataObjectFactory
      * @param Helper $helper
      * @param SystemHelper $systemHelper
+     * @param Serializer $serializer
      */
     public function __construct(
+        FilterProvider $filterProvider,
         ResourceConnection $resource,
         DescriptionFactory $descriptionFactory,
         DescriptionCollection $descriptionCollection,
         Helper $helper,
-        SystemHelper $systemHelper
+        BaseHelper $baseHelper,
+        DataObjectFactory $dataObjectFactory,
+        SystemHelper $systemHelper,
+        Serializer $serializer
     ) {
         $this->helper                = $helper;
+        $this->filterProvider        = $filterProvider;
         $this->systemHelper          = $systemHelper;
         $this->descriptionFactory    = $descriptionFactory;
         $this->descriptionCollection = $descriptionCollection;
-        parent::__construct($resource);
+        $this->serializer            = $serializer;
+        parent::__construct($resource, $baseHelper, $dataObjectFactory);
     }
 
     /**
@@ -84,10 +86,8 @@ class Description extends AbstractAttribute implements AttributeInterface
             'product' => OptionTypeDescription::TABLE_NAME,
             'group'   => OptionTypeDescription::OPTIONTEMPLATES_TABLE_NAME
         ];
-        if (!$type) {
-            return $map[$this->entity->getType()];
-        }
-        return $map[$type];
+
+        return $type ? $map[$type] : $map[$this->entity->getType()];
     }
 
     /**
@@ -95,7 +95,7 @@ class Description extends AbstractAttribute implements AttributeInterface
      */
     public function collectData($entity, array $options)
     {
-        if (!$this->helper->isValueDescriptionEnabled()) {
+        if (!$this->helper->isValueDescriptionEnabled() && !$this->baseHelper->isAPOImportAction()) {
             return [];
         }
 
@@ -131,21 +131,24 @@ class Description extends AbstractAttribute implements AttributeInterface
             $data['delete'][] = [
                 OptionTypeDescription::COLUMN_NAME_OPTION_TYPE_ID => $itemKey,
             ];
-            $decodedJsonData  = json_decode($itemValue, true);
+            $decodedJsonData  = $itemValue ? $this->serializer->unserialize(
+                preg_replace('/\r?\n/', '', $itemValue)
+            ) : null;
             if (empty($decodedJsonData) || !is_array($decodedJsonData)) {
                 continue;
             }
             foreach ($decodedJsonData as $dataItem) {
                 $description = str_replace(PHP_EOL, '', $dataItem[OptionTypeDescription::COLUMN_NAME_DESCRIPTION]);
                 $description = str_replace('\\', '', $description);
+                $description = preg_replace('/[[:cntrl:]]/', ' ', (string)$description);
                 if ($description === '') {
                     continue;
                 }
                 $data['save'][] = [
                     OptionTypeDescription::COLUMN_NAME_OPTION_TYPE_ID => $itemKey,
-                    OptionTypeDescription::COLUMN_NAME_STORE_ID                =>
+                    OptionTypeDescription::COLUMN_NAME_STORE_ID       =>
                         $dataItem[OptionTypeDescription::COLUMN_NAME_STORE_ID],
-                    OptionTypeDescription::COLUMN_NAME_DESCRIPTION             =>
+                    OptionTypeDescription::COLUMN_NAME_DESCRIPTION    =>
                         htmlspecialchars($description, ENT_COMPAT, 'UTF-8', false)
                 ];
             }
@@ -153,6 +156,7 @@ class Description extends AbstractAttribute implements AttributeInterface
         if (!$data) {
             return [];
         }
+
         return $data;
     }
 
@@ -186,11 +190,15 @@ class Description extends AbstractAttribute implements AttributeInterface
     public function prepareDataForFrontend($object)
     {
         $storeId = $this->systemHelper->resolveCurrentStoreId();
-        $decodedJsonData  = !empty($object->getData($this->getName())) ? json_decode($object->getData($this->getName()), true) : null;
+
+        $jsonDataToDecode = $object->getData($this->getName());
+        $decodedJsonData = $jsonDataToDecode ? $this->serializer->unserialize($jsonDataToDecode) : null;
+
         if (empty($decodedJsonData) || !is_array($decodedJsonData)) {
             return [$this->getName() => ''];
         }
-        $description = '';
+
+        $description             = '';
         $defaultStoreDescription = '';
         foreach ($decodedJsonData as $dataItem) {
             if ($dataItem[OptionTypeDescription::COLUMN_NAME_STORE_ID] == 0) {
@@ -200,8 +208,10 @@ class Description extends AbstractAttribute implements AttributeInterface
                 $description = $dataItem[OptionTypeDescription::COLUMN_NAME_DESCRIPTION];
             }
         }
-        $description = $description ?: $defaultStoreDescription;
-        return [$this->getName() => htmlspecialchars_decode($description)];
+        $description        = $description ?: $defaultStoreDescription;
+        $decodedDescription = $this->filterProvider->getPageFilter()->filter(htmlspecialchars_decode($description));
+
+        return [$this->getName() => $decodedDescription];
     }
 
     /**
@@ -215,7 +225,7 @@ class Description extends AbstractAttribute implements AttributeInterface
     public function processDuplicate($newId, $oldId, $entityType = 'product')
     {
         $connection = $this->resource->getConnection();
-        $table = $this->resource->getTableName($this->getTableName($entityType));
+        $table      = $this->resource->getTableName($this->getTableName($entityType));
 
         $select = $connection->select()->from(
             $table,
@@ -263,6 +273,204 @@ class Description extends AbstractAttribute implements AttributeInterface
                 OptionTypeDescription::COLUMN_NAME_DESCRIPTION => $data['description']
             ];
         }
-        return json_encode($descriptions);
+
+        return $this->serializer->serialize($descriptions);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function importTemplateMageTwo($data)
+    {
+        return isset($data[$this->getName()]) ? $data[$this->getName()] : null;
+    }
+
+    /**
+     * Collect system data (customer group ids, store ids) from Magento 1 product csv
+     *
+     * @param array $systemData
+     * @param array $productData
+     * @param array $optionData
+     * @param array $valueData
+     */
+    public function collectOptionsSystemDataMageOne(&$systemData, $productData, $optionData, $valueData = [])
+    {
+        if (empty($valueData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT])
+            || !is_array($valueData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT])
+        ) {
+            return;
+        }
+
+        foreach ($valueData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT] as $datumStore => $datumValue) {
+            $systemData['store'][$datumStore] = $datumStore;
+        }
+    }
+
+    /**
+     * Collect system data (customer group ids, store ids) from Magento 2 template data
+     *
+     * @param array $data
+     * @return array
+     */
+    public function collectTemplateSystemDataMageTwo($data)
+    {
+        return $this->collectStoresDataByKey($data, 'description');
+    }
+
+    /**
+     * Prepare data from Magento 1 product csv for future import
+     *
+     * @param array $systemData
+     * @param array $productData
+     * @param array $optionData
+     * @param array $preparedOptionData
+     * @param array $valueData
+     * @param array $preparedValueData
+     * @return void
+     */
+    public function prepareOptionsMageOne(
+        $systemData,
+        $productData,
+        $optionData,
+        &$preparedOptionData,
+        $valueData = [],
+        &$preparedValueData = []
+    ) {
+        if (empty($valueData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT])
+            || !is_array($valueData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT])
+        ) {
+            return;
+        }
+
+        $data = [];
+        foreach ($valueData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT] as $datumStore => $datumValue) {
+            if (!$this->hasStoreEquivalent($systemData, $datumStore)) {
+                continue;
+            }
+            $data[] = [
+                OptionTypeDescription::COLUMN_NAME_STORE_ID    => $systemData['map']['store'][$datumStore],
+                OptionTypeDescription::COLUMN_NAME_DESCRIPTION => $datumValue,
+            ];
+        }
+        $preparedValueData[static::getName()] = $this->baseHelper->jsonEncode($data);
+    }
+
+    /**
+     * Collect data for magento2 product export
+     *
+     * @param array $row
+     * @param array $data
+     * @return void
+     */
+    public function collectExportDataMageTwo(&$row, $data)
+    {
+        $prefix        = 'custom_option_row_';
+        $attributeData = null;
+        if (!empty($data[$this->getName()])) {
+            $attributeData = $this->baseHelper->jsonDecode($data[$this->getName()]);
+        }
+        if (empty($attributeData) || !is_array($attributeData)) {
+            $row[$prefix . $this->getName()] = null;
+
+            return;
+        }
+        $result = [];
+        foreach ($attributeData as $datum) {
+            $parts = [];
+            foreach ($datum as $datumKey => $datumValue) {
+                $datumValue = $this->encodeSymbols($datumValue);
+                $parts[]    = $datumKey . '=' . $datumValue . '';
+            }
+            $result[] = implode(',', $parts);
+        }
+        $row[$prefix . $this->getName()] = $result ? implode('|', $result) : null;
+    }
+
+    /**
+     * Collect data for magento2 product import
+     *
+     * @param array $data
+     * @return array|null
+     */
+    public function collectImportDataMageTwo($data)
+    {
+        if (!$this->hasOwnTable()) {
+            return null;
+        }
+
+        if (!isset($data['custom_option_row_' . $this->getName()])) {
+            return null;
+        }
+
+        $this->entity = $this->dataObjectFactory->create();
+        $this->entity->setType('product');
+
+        $descriptions = [];
+        $preparedData = [];
+        $iterator     = 0;
+
+        $attributeData = $data['custom_option_row_' . $this->getName()];
+        if (empty($attributeData)) {
+            return $this->collectDescriptions($descriptions);
+        }
+
+        $step1 = explode('|', $attributeData);
+        foreach ($step1 as $step1Item) {
+            $step2 = explode(',', $step1Item);
+            foreach ($step2 as $step2Item) {
+                $step3Item                              = explode('=', $step2Item);
+                $step3Item[1]                           = $this->decodeSymbols($step3Item[1]);
+                $preparedData[$iterator][$step3Item[0]] = $step3Item[1];
+            }
+            $iterator++;
+        }
+        $descriptions[$data['custom_option_row_id']] = $this->baseHelper->jsonEncode($preparedData);
+
+        return $this->collectDescriptions($descriptions);
+    }
+
+    /**
+     * Get value description data
+     *
+     * @param array $optionTypeIds
+     * @return array
+     */
+    public function getValueAttributesData(array $optionTypeIds): array
+    {
+        /* Can get description data for current storeId in future
+         * At this time all description data needed for: API, GraphQL, Admin product page, Import/Export m2
+         */
+        $connection             = $this->resource->getConnection();
+        $optionTypeDescriptions = $connection->select()->from(
+            $this->resource->getTableName(OptionTypeDescription::TABLE_NAME),
+        )->where('option_type_id IN (?)', $optionTypeIds);
+
+        return $this->transformToJson($optionTypeDescriptions->query()->fetchAll());
+    }
+
+    /**
+     * Transform descriptions to json like:
+     * [{"store_id":"0","description":"test"},{"store_id":"1","description":"default
+     * test"},{"store_id":"2","description":"nl_NL test"}]
+     *
+     * @param array $optionTypeDescriptionsData
+     * @return array
+     */
+    protected function transformToJson(array $optionTypeDescriptionsData): array
+    {
+        $descriptions = [];
+        foreach ($optionTypeDescriptionsData as $item) {
+            $descriptions[$item['option_type_id']][] =
+                [
+                    OptionTypeDescription::COLUMN_NAME_STORE_ID    => $item['store_id'],
+                    OptionTypeDescription::COLUMN_NAME_DESCRIPTION => $item['description']
+                ];
+        }
+        $result = [];
+
+        foreach ($descriptions as $key => $description) {
+            $result[$key] = $this->serializer->serialize($description);
+        }
+        return $result;
     }
 }

@@ -11,6 +11,7 @@ use Magento\Catalog\Model\Product;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Data\Form;
 use Magento\Framework\Registry;
+use Magento\Framework\Serialize\Serializer\Json as Serializer;
 use Magento\Framework\View\Element\AbstractBlock;
 use Magento\Framework\View\Element\Context;
 use Magento\Store\Model\StoreManagerInterface;
@@ -24,73 +25,46 @@ class Gallery extends AbstractBlock
      *
      * @var string
      */
-    protected $fieldNameSuffix = 'product';
+    protected string $fieldNameSuffix = 'product';
 
     /**
      * Gallery html id
      *
      * @var string
      */
-    protected $htmlId = 'optionfeatures_media_gallery';
+    protected string $htmlId = 'optionfeatures_media_gallery';
 
     /**
      * Gallery name
      *
      * @var string
      */
-    protected $name = 'optionfeatures[media_gallery]';
+    protected string $name = 'optionfeatures[media_gallery]';
 
     /**
      * Html id for data scope
      *
      * @var string
      */
-    protected $image = 'image';
+    protected string $image = 'image';
+    protected string $formName = 'product_form';
+    protected StoreManagerInterface $storeManager;
+    protected Form $form;
+    protected Registry $registry;
+    protected Image $imageFactory;
+    protected array $mediaAttributes = [];
+    protected Helper $helper;
+    protected array $imagesData = [];
+    protected ResourceConnection $resource;
+    protected Serializer $serializer;
 
     /**
-     * @var string
+     * @return string
      */
-    protected $formName = 'product_form';
-
-    /**
-     * @var StoreManagerInterface
-     */
-    protected $storeManager;
-
-    /**
-     * @var Form
-     */
-    protected $form;
-
-    /**
-     * @var Registry
-     */
-    protected $registry;
-
-    /**
-     * @var Image
-     */
-    protected $imageFactory;
-
-    /**
-     * @var array
-     */
-    protected $mediaAttributes = [];
-
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var array
-     */
-    protected $imagesData = [];
-
-    /**
-     * @var ResourceConnection
-     */
-    protected $resource;
+    public function getName()
+    {
+        return (string)$this->name;
+    }
 
     /**
      * @param ResourceConnection $resource
@@ -100,6 +74,7 @@ class Gallery extends AbstractBlock
      * @param Form $form
      * @param Image $imageFactory
      * @param Helper $helper
+     * @param Serializer $serializer
      * @param array $data
      */
     public function __construct(
@@ -110,23 +85,17 @@ class Gallery extends AbstractBlock
         Form $form,
         Image $imageFactory,
         Helper $helper,
+        Serializer $serializer,
         $data = []
     ) {
-        $this->resource = $resource;
+        $this->resource     = $resource;
         $this->storeManager = $storeManager;
-        $this->registry = $registry;
-        $this->form = $form;
+        $this->registry     = $registry;
+        $this->form         = $form;
         $this->imageFactory = $imageFactory;
-        $this->helper = $helper;
+        $this->helper       = $helper;
+        $this->serializer   = $serializer;
         parent::__construct($context, $data);
-    }
-
-    /**
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
     }
 
     /**
@@ -134,7 +103,7 @@ class Gallery extends AbstractBlock
      */
     public function getFieldNameSuffix()
     {
-        return $this->fieldNameSuffix;
+        return (string)$this->fieldNameSuffix;
     }
 
     /**
@@ -142,7 +111,7 @@ class Gallery extends AbstractBlock
      */
     public function getDataScopeHtmlId()
     {
-        return $this->image;
+        return (string)$this->image;
     }
 
     /**
@@ -160,7 +129,7 @@ class Gallery extends AbstractBlock
      */
     public function toHtml()
     {
-        return $this->getContentHtml();
+        return (string)$this->getContentHtml();
     }
 
     /**
@@ -172,8 +141,8 @@ class Gallery extends AbstractBlock
     {
         /* @var $content \MageWorx\OptionFeatures\Block\Adminhtml\Gallery\Content */
         $this->getLayout()
-            ->addBlock('MageWorx\OptionFeatures\Block\Adminhtml\Gallery\Content', 'gallery_content')
-            ->setTemplate('MageWorx_OptionFeatures::catalog/product/helper/gallery.phtml');
+             ->addBlock('MageWorx\OptionFeatures\Block\Adminhtml\Gallery\Content', 'gallery_content')
+             ->setTemplate('MageWorx_OptionFeatures::catalog/product/helper/gallery.phtml');
         $content = $this->getLayout()->getBlock('gallery_content');
 
         $this->getImages();
@@ -185,7 +154,7 @@ class Gallery extends AbstractBlock
         $galleryJs = $content->getJsObjectName();
         $content->getUploader()->getConfig()->setMegiaGallery($galleryJs);
 
-        return $content->toHtml();
+        return (string)$content->toHtml();
     }
 
     /**
@@ -193,7 +162,7 @@ class Gallery extends AbstractBlock
      */
     protected function getImages()
     {
-        $data = [];
+        $data         = [];
         $optionTypeId = $this->getRequest()->getParam('option_type_id');
         $this->initMediaAttributes();
         $post = $this->getRequest()->getParam('data') ? $this->getRequest()->getParam('data') : [];
@@ -212,19 +181,26 @@ class Gallery extends AbstractBlock
                 }
             }
         } elseif ($post) {
-            $images = json_decode($post, true);
+            $images = $this->serializer->unserialize($post);
+
+            if (!is_array($images)) {
+                $this->imagesData = $data;
+
+                return;
+            }
+
             foreach ($images as $image) {
                 if (!empty($image['removed'])) {
                     continue;
                 }
                 $data['images'][] = [
-                    'value_id' => $image[Image::COLUMN_OPTION_TYPE_IMAGE_ID],
+                    'value_id'          => $image[Image::COLUMN_OPTION_TYPE_IMAGE_ID],
                     'custom_media_type' => $image['custom_media_type'],
-                    'file' => $image[Image::COLUMN_VALUE],
-                    'color' => $image[Image::COLUMN_COLOR],
-                    'label' => htmlspecialchars_decode($image[Image::COLUMN_TITLE_TEXT]),
-                    'position' => $image[Image::COLUMN_SORT_ORDER],
-                    'disabled' => $image[Image::COLUMN_HIDE_IN_GALLERY]
+                    'file'              => $image[Image::COLUMN_VALUE],
+                    'color'             => $image[Image::COLUMN_COLOR],
+                    'label'             => htmlspecialchars_decode($image[Image::COLUMN_TITLE_TEXT]),
+                    'position'          => $image[Image::COLUMN_SORT_ORDER],
+                    'disabled'          => $image[Image::COLUMN_HIDE_IN_GALLERY]
                 ];
                 foreach ($this->helper->getImageAttributes() as $attributeCode => $attributeLabel) {
                     if (!empty($image[$attributeCode])) {
@@ -235,19 +211,19 @@ class Gallery extends AbstractBlock
         } else {
             if ($this->getRequest()->getParam('form_name') == 'mageworx_optiontemplates_group_form') {
                 $connection = $this->resource->getConnection();
-                $select = $connection->select()
-                    ->from($this->resource->getTableName(Image::OPTIONTEMPLATES_TABLE_NAME))
-                    ->where(Image::COLUMN_OPTION_TYPE_ID . ' = "' . $optionTypeId . '"');
+                $select     = $connection->select()
+                                         ->from($this->resource->getTableName(Image::OPTIONTEMPLATES_TABLE_NAME))
+                                         ->where(Image::COLUMN_OPTION_TYPE_ID . ' = "' . $optionTypeId . '"');
                 $imageItems = $connection->fetchAll($select);
 
                 foreach ($imageItems as $item) {
                     $data['images'][$item['option_type_image_id']] = [
-                        'value_id' => $item['option_type_image_id'],
-                        'position' => $item['sort_order'],
-                        'file' => $item['value'],
-                        'label' => $item['title_text'],
-                        'custom_media_type' => $item['media_type'],
-                        'color' => $item['color'],
+                        'value_id'                    => $item['option_type_image_id'],
+                        'position'                    => $item['sort_order'],
+                        'file'                        => $item['value'],
+                        'label'                       => $item['title_text'],
+                        'custom_media_type'           => $item['media_type'],
+                        'color'                       => $item['color'],
                         Image::COLUMN_HIDE_IN_GALLERY => $item[Image::COLUMN_HIDE_IN_GALLERY],
                     ];
                     foreach ($this->helper->getImageAttributes() as $attributeCode => $attributeLabel) {
@@ -262,12 +238,12 @@ class Gallery extends AbstractBlock
 
                 foreach ($collection->getItems() as $collectionItem) {
                     $data['images'][$collectionItem->getOptionTypeImageId()] = [
-                        'value_id' => $collectionItem->getOptionTypeImageId(),
-                        'position' => $collectionItem->getSortOrder(),
-                        'file' => $collectionItem->getValue(),
-                        'label' => $collectionItem->getTitleText(),
-                        'custom_media_type' => $collectionItem->getMediaType(),
-                        'color' => $collectionItem->getColor(),
+                        'value_id'                    => $collectionItem->getOptionTypeImageId(),
+                        'position'                    => $collectionItem->getSortOrder(),
+                        'file'                        => $collectionItem->getValue(),
+                        'label'                       => $collectionItem->getTitleText(),
+                        'custom_media_type'           => $collectionItem->getMediaType(),
+                        'color'                       => $collectionItem->getColor(),
                         Image::COLUMN_HIDE_IN_GALLERY => $collectionItem->getData(Image::COLUMN_HIDE_IN_GALLERY),
                     ];
                     foreach ($this->helper->getImageAttributes() as $attributeCode => $attributeLabel) {
@@ -289,7 +265,7 @@ class Gallery extends AbstractBlock
     {
         foreach ($this->helper->getImageAttributes() as $attributeCode => $attributeLabel) {
             $this->mediaAttributes[$attributeCode] = [
-                'code' => $attributeCode,
+                'code'  => $attributeCode,
                 'label' => $attributeLabel,
                 'value' => '',
             ];
@@ -298,6 +274,7 @@ class Gallery extends AbstractBlock
 
     /**
      * Set media attribute value
+     *
      * @param $code
      * @param $value
      */
@@ -311,6 +288,6 @@ class Gallery extends AbstractBlock
      */
     protected function getHtmlId()
     {
-        return $this->htmlId;
+        return (string)$this->htmlId;
     }
 }

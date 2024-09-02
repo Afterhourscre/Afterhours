@@ -9,10 +9,7 @@ use MageWorx\OptionBase\Api\ValidatorInterface;
 
 class ValidationResolver
 {
-    /**
-     * @var array
-     */
-    private $validators = [];
+    private array $validators = [];
 
     /**
      * @param array $validators

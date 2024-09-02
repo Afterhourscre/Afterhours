@@ -6,32 +6,33 @@
 
 namespace MageWorx\OptionAdvancedPricing\Block;
 
-use Magento\Framework\Json\EncoderInterface;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
+use Magento\Framework\Registry;
+use MageWorx\OptionBase\Model\ResourceModel\Option as OptionModel;
+use MageWorx\OptionBase\Helper\Data as BaseHelper;
 
 class Config extends Template
 {
-    /**
-     * @var EncoderInterface
-     */
-    protected $jsonEncoder;
+    protected BaseHelper $baseHelper;
+    protected OptionModel $optionModel;
+    protected Registry $registry;
+    protected string $jsonData = '';
 
-    /**
-     * @param Context $context
-     * @param EncoderInterface $jsonEncoder
-     * @param array $data
-     */
     public function __construct(
         Context $context,
-        EncoderInterface $jsonEncoder,
+        BaseHelper $baseHelper,
+        OptionModel $optionModel,
+        Registry $registry,
         array $data = []
     ) {
         parent::__construct(
             $context,
             $data
         );
-        $this->jsonEncoder = $jsonEncoder;
+        $this->baseHelper  = $baseHelper;
+        $this->optionModel = $optionModel;
+        $this->registry    = $registry;
     }
 
     /**
@@ -39,8 +40,29 @@ class Config extends Template
      */
     public function getJsonData()
     {
-        $data = [];
+        if (!empty($this->jsonData)) {
+            return $this->jsonData;
+        }
 
-        return $this->jsonEncoder->encode($data);
+        $data = [
+            'optionTypes' => $this->getOptionTypes()
+        ];
+
+        $this->jsonData = $this->baseHelper->jsonEncode($data);
+
+        return $this->jsonData;
+    }
+
+    /**
+     * Get option types ('option_id' => 'type') in json
+     *
+     * @return array
+     */
+    public function getOptionTypes()
+    {
+        $linkField = $this->baseHelper->getLinkField();
+        $product = $this->registry->registry('product');
+
+        return $this->optionModel->getOptionTypes($product->getData($linkField));
     }
 }

@@ -13,8 +13,9 @@ define([
     'uiLayout',
     'uiCollection',
     'uiRegistry',
-    'mage/translate'
-], function (ko, utils, _, layout, uiCollection, registry, $t) {
+    'mage/translate',
+    'jquery'
+], function (ko, utils, _, layout, uiCollection, registry, $t, $) {
     'use strict';
 
     /**
@@ -549,6 +550,7 @@ define([
                     data = this.createHeaderTemplate(cell.config);
                     cell.config.labelVisible = false;
                     _.extend(data, {
+                        defaultLabelVisible: data.visible(),
                         label: cell.config.label,
                         name: cell.name,
                         required: !!cell.config.validation,
@@ -625,15 +627,12 @@ define([
          * @param {Array} data
          */
         parsePagesData: function (data) {
-            var pages;
-
             this.relatedData = this.deleteProperty ?
                 _.filter(data, function (elem) {
                     return elem && elem[this.deleteProperty] !== this.deleteValue;
                 }, this) : data;
 
-            pages = Math.ceil(this.relatedData.length / this.pageSize) || 1;
-            this.pages(pages);
+            this._updatePagesQuantity();
         },
 
         /**
@@ -662,7 +661,7 @@ define([
 
             startIndex = page || this.startIndex;
 
-            return dataRecord.slice(startIndex, this.startIndex + this.pageSize);
+            return dataRecord.slice(startIndex, this.startIndex + parseInt(this.pageSize, 10));
         },
 
         /**
@@ -703,6 +702,49 @@ define([
             }
 
             this.addChild(ctx, index, prop);
+            var recordScope = this._elems.last(); // get object of currently added row
+            var object = this;
+
+            // wait when currently added row was added and fill it with saved data
+            $.when(registry.promise(recordScope)).then(function (record) {
+                object.restoreRecordId();
+            });
+
+        },
+
+        restoreRecordId: function () {
+            var dataSourceKey = 'catalogstaging_update_form.catalogstaging_update_form_data_source';
+            var entity = registry.get(dataSourceKey);
+
+            if (_.isUndefined(entity)) {
+                var dataSourceKey = 'product_form.product_form_data_source',
+                    entity = registry.get(dataSourceKey);
+                if (_.isUndefined(entity)) {
+                    var dataSourceKey = 'mageworx_optiontemplates_group_form.mageworx_optiontemplates_group_form_data_source',
+                        entity = registry.get(dataSourceKey);
+                    if (_.isUndefined(entity)) {
+                        return;
+                    }
+                    var dataPath = 'data.mageworx_optiontemplates_group.options.',
+                        options = entity.data.mageworx_optiontemplates_group.options;
+                } else {
+                    var dataPath = 'data.product.options.',
+                        options = entity.data.product.options;
+                }
+            } else {
+                var dataPath = 'data.product.options.',
+                    options = entity.data.product.options;
+            }
+
+            if (!_.isUndefined(options) && options.length > 0) {
+                $(options).each(function (optionKey, optionData) {
+                    if (!_.isUndefined(optionData.values) && optionData.values.length > 0) {
+                        $(optionData.values).each(function (valueKey, valueData) {
+                            registry.get(dataSourceKey).set(dataPath + optionKey + '.values.' + valueKey + '.record_id', valueKey);
+                        });
+                    }
+                });
+            }
         },
 
         /**
@@ -891,6 +933,18 @@ define([
         },
 
         /**
+         * Update number of pages.
+         *
+         * @private
+         * @return void
+         */
+        _updatePagesQuantity: function () {
+            var pages = Math.ceil(this.relatedData.length / this.pageSize) || 1;
+
+            this.pages(pages);
+        },
+
+        /**
          * Reduce the number of pages
          *
          * @private
@@ -965,6 +1019,22 @@ define([
         reload: function () {
             this.clear();
             this.initChildren(false, true);
+            this._updatePagesQuantity();
+
+            /* After change page size need to check existing current page */
+            this._reducePages();
+        },
+
+        /**
+         * Update page size based on select change event.
+         * The value needs to be retrieved from select as ko value handler is executed after the event handler.
+         *
+         * @param {Object} component
+         * @param {jQuery.Event} event
+         */
+        updatePageSize: function (component, event) {
+            this.pageSize = $(event.target).val();
+            this.reload();
         },
 
         /**
@@ -1040,6 +1110,13 @@ define([
             this.showSpinner(true);
             this.getChildItems().forEach(function (data, index) {
                 this.addChild(data, this.startIndex + index);
+                var recordScope = this._elems.last(); // get object of currently added row
+                var object = this;
+                // wait when currently added row was added and fill it with saved data
+                $.when(registry.promise(recordScope)).then(function (record) {
+                    object.restoreRecordId();
+                });
+
             }, this);
 
             return this;
@@ -1133,13 +1210,17 @@ define([
          * Update whether value differs from default value
          */
         setDifferedFromDefault: function () {
-            var recordData = utils.copy(this.recordData());
+            var recordData;
 
-            Array.isArray(recordData) && recordData.forEach(function (item) {
-                delete item['record_id'];
-            });
+            if (this.default) {
+                recordData = utils.copy(this.recordData());
 
-            this.isDifferedFromDefault(!_.isEqual(recordData, this.default));
+                Array.isArray(recordData) && recordData.forEach(function (item) {
+                    delete item['record_id'];
+                });
+
+                this.isDifferedFromDefault(!_.isEqual(recordData, this.default));
+            }
         },
 
         /**

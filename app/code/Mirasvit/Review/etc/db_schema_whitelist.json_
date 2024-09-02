@@ -1,0 +1,51 @@
+{
+    "mst_review_details_additional": {
+        "column": {
+            "review_id": true,
+            "pros": true,
+            "cons": true,
+            "ip": true,
+            "country": true,
+            "country_iso": true,
+            "location": true,
+            "product_ids": true,
+            "product_info": true,
+            "is_verified_buyer": true,
+            "reindexed_at": true
+        },
+        "constraint": {
+            "MST_REVIEW_DETAIL_ADDITIONAL_REVIEW_ID_REVIEW_REVIEW_ID": true
+        }
+    },
+    "mst_review_summary": {
+        "column": {
+            "summary_id": true,
+            "product_id": true,
+            "store_id": true,
+            "detail": true,
+            "pros": true,
+            "cons": true,
+            "generated_at": true,
+            "last_review_id": true,
+            "processed_reviews": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    },
+    "mst_review_media": {
+        "column": {
+            "media_id": true,
+            "review_id": true,
+            "product_id": true,
+            "type": true,
+            "value": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "MST_REVIEW_MEDIA_REVIEW_ID_REVIEW_REVIEW_ID": true,
+            "MST_REVIEW_MEDIA_PRODUCT_ID_CATALOG_PRODUCT_ENTITY_ENTITY_ID": true
+            
+        }
+    }
+}

@@ -19,22 +19,15 @@ use \Magento\Framework\Event\Observer as EventObserver;
  */
 class UpdateOptionValuesBeforeGroupSave implements ObserverInterface
 {
-    /**
-     * @var \MageWorx\OptionLink\Helper\Attribute
-     */
-    protected $helperAttribute;
-
-    /**
-     * @var \MageWorx\OptionLink\Model\OptionValue
-     */
-    protected $modelOptionValue;
+    protected HelperAttribute $helperAttribute;
+    protected ModelOptionValue $modelOptionValue;
 
     /**
      * Store manager
      *
      * @var \Magento\Store\Model\StoreManagerInterface
      */
-    protected $storeManager;
+    protected StoreManager $storeManager;
 
     /**
      * UpdateOptionValuesBeforeGroupSave constructor.
@@ -48,7 +41,7 @@ class UpdateOptionValuesBeforeGroupSave implements ObserverInterface
         ModelOptionValue $modelOptionValue,
         StoreManager $storeManager
     ) {
-    
+
         $this->helperAttribute = $helperAttribute;
         $this->modelOptionValue = $modelOptionValue;
         $this->storeManager = $storeManager;
@@ -81,7 +74,7 @@ class UpdateOptionValuesBeforeGroupSave implements ObserverInterface
 
             $data['options'][$opKey]['values'] = $currentValues;
         }
-        
+
         $observer->getRequest()->setParam('mageworx_optiontemplates_group', $data);
 
         return $this;

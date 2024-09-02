@@ -1,5 +1,5 @@
 define([
-        "jquery", "Magento_Ui/js/modal/modal", 'jquery/ui', 'mage/translate'
+        "jquery", "Magento_Ui/js/modal/modal", 'mage/translate'
     ], function($){
         var MwReviewModal = {
             initModal: function(config, elemen) {

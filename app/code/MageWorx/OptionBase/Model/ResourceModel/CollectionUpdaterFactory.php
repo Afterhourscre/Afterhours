@@ -14,9 +14,8 @@ class CollectionUpdaterFactory
     /**
      * Mapper for collection updater
      *
-     * @var \Magento\Framework\ObjectManagerInterface
      */
-    protected $map = [
+    protected array $map = [
         'MageWorx\OptionTemplates\Model\ResourceModel\Group\Option\Collection' => [
             'instance' => 'MageWorx\OptionBase\Model\ResourceModel\CollectionUpdater\Option'
         ],

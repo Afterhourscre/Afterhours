@@ -17,15 +17,9 @@ use Magento\Framework\UrlInterface;
  */
 class ReportActions extends Column
 {
-    /**
-     * @var PriceCurrencyInterface
-     */
-    protected $backendHelper;
-
-    /**
-     * @var UrlInterface
-     */
-    protected $urlBuilder;
+    // TODO unused ?
+    protected BackendHelper $backendHelper;
+    protected UrlInterface $urlBuilder;
 
     /**
      * ReportActions constructor.

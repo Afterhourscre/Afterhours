@@ -59,6 +59,10 @@ define([
             this.formName = params.formName;
             this.isSpecialPriceEnabled = params.isSpecialPriceEnabled;
             this.isTierPriceEnabled = params.isTierPriceEnabled;
+            this.isValidSku = registry.get(this.entityProvider).get(this.entityDataScope).sku_is_valid === '1';
+            this.linkedFields = !_.isUndefined(registry.get(this.entityProvider).get('data.product.option_link_fields'))
+                ? registry.get(this.entityProvider).get('data.product.option_link_fields')
+                : {};
         },
 
         /**
@@ -75,8 +79,12 @@ define([
             this.specialPriceDynamicRows = registry.get(
                 this.formName + '.' + this.formName + '.' + this.dynamicRowsPath + '.special_pricing'
             );
+
             this.specialPriceDynamicRows.recordData([]);
             this.specialPriceDynamicRows.clear();
+            if (!_.isUndefined(this.linkedFields.special_price)) {
+                this.specialPriceDynamicRows.disabled(this.isValidSku);
+            }
             if (specialPriceData === null) {
                 return;
             }
@@ -89,6 +97,7 @@ define([
             } else {
                 registry.get(this.entityProvider).set(this.dynamicRowsDataScope + '.special_pricing', specialPriceData);
             }
+
             this.specialPriceDynamicRows.initChildren();
         },
 
@@ -107,6 +116,10 @@ define([
             );
             this.tierPriceDynamicRows.recordData([]);
             this.tierPriceDynamicRows.clear();
+
+            if (!_.isUndefined(this.linkedFields.tier_price)) {
+                this.tierPriceDynamicRows.disabled(this.isValidSku);
+            }
             if (tierPriceData === null) {
                 return;
             }
@@ -116,6 +129,7 @@ define([
             } else {
                 registry.get(this.entityProvider).set(this.dynamicRowsDataScope + '.tier_pricing', tierPriceData);
             }
+
             this.tierPriceDynamicRows.initChildren();
         },
 
@@ -150,7 +164,7 @@ define([
          */
         saveSpecialPrice: function () {
             var specialPrices = [];
-            this.specialPriceDynamicRows.getChildItems().forEach(function (data, index) {
+            this.specialPriceDynamicRows.relatedData.forEach(function (data, index) {
                 specialPrices.push(data);
             });
             var jsonData = specialPrices.length ? JSON.stringify(specialPrices) : "";
@@ -164,7 +178,7 @@ define([
          */
         saveTierPrice: function () {
             var tierPrices = [];
-            this.tierPriceDynamicRows.getChildItems().forEach(function (data, index) {
+            this.tierPriceDynamicRows.relatedData.forEach(function (data, index) {
                 tierPrices.push(data);
             });
             var jsonData = tierPrices.length ? JSON.stringify(tierPrices) : "";

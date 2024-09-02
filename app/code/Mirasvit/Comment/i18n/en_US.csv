@@ -1,0 +1,48 @@
+"Blog Post","Blog Post"
+"Product Review","Product Review"
+Other,Other
+"Please select the comment to delete","Please select the comment to delete"
+"Comment with ID %1 does not exist","Comment with ID %1 does not exist"
+"Can not save the answer. Related entity type or ID is not set","Can not save the answer. Related entity type or ID is not set"
+"Can not add reply to the comment with ID %1. This comment no longer exist","Can not add reply to the comment with ID %1. This comment no longer exist"
+"Your comment is succesfully added.","Your comment is succesfully added."
+"Please select the comment to change status","Please select the comment to change status"
+"Unable to update comment with ID %1. Invalid status ""%2""","Unable to update comment with ID %1. Invalid status ""%2"""
+"Comment with ID %1 already has the status ""%2""","Comment with ID %1 already has the status ""%2"""
+"Status of the comment with ID %1 was updated successfully","Status of the comment with ID %1 was updated successfully"
+"Comments from guests are not allowed","Comments from guests are not allowed"
+"Thank you for posting the comment.","Thank you for posting the comment."
+" Your comment will be displayed after moderation."," Your comment will be displayed after moderation."
+Pending,Pending
+Approved,Approved
+Rejected,Rejected
+"Mirasvit Comments: You have %1 pending comment(s).","Mirasvit Comments: You have %1 pending comment(s)."
+"View Details","View Details"
+"Can not update children counts. Comment with ID %1 does not exist","Can not update children counts. Comment with ID %1 does not exist"
+"Can't find any comments","Can't find any comments"
+"You are not allowed to see comments","You are not allowed to see comments"
+Message,Message
+"Add Comment","Add Comment"
+Save,Save
+"Change status","Change status"
+"Hide form","Hide form"
+Delete,Delete
+Reply,Reply
+"Are you sure you wan't to delete the comment?","Are you sure you wan't to delete the comment?"
+"You have %1 pending comment(s) for:","You have %1 pending comment(s) for:"
+"%1 pending comment(s) for %2 with ID %3.","%1 pending comment(s) for %2 with ID %3."
+"View comments.","View comments."
+Comments,Comments
+"Write a comment","Write a comment"
+"Comments (%1)","Comments (%1)"
+Nickname,Nickname
+"Only registered users can write comments. Please <a href=""%1"">Sign in</a> or <a href=""%2"">create an account</a>","Only registered users can write comments. Please <a href=""%1"">Sign in</a> or <a href=""%2"">create an account</a>"
+"store rep.","store rep."
+"Mirasvit Extensions","Mirasvit Extensions"
+"Enable Comments","Enable Comments"
+"Allow Guests to Write Comments","Allow Guests to Write Comments"
+"Automatically Approve Comments","Automatically Approve Comments"
+"Date Format","Date Format"
+"Enable Admin Notifications","Enable Admin Notifications"
+"Comments Count","Comments Count"
+Details,Details

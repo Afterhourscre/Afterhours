@@ -3,6 +3,7 @@
  * Copyright © 2016 MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
 namespace MageWorx\OptionLink\Helper;
 
 use \Magento\Store\Model\ScopeInterface;
@@ -15,23 +16,20 @@ use \MageWorx\OptionFeatures\Helper\Data as FeaturesHelper;
  */
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
+    const KEY_SKU_IS_VALID = 'sku_is_valid';
+
     /**
      * XML config path linked product attributes by SKU
      */
     const XML_PATH_LINKED_PRODUCT_ATTRIBUTES = 'mageworx_apo/optionlink/linked_product_attributes';
 
-    /**
-     * @var HelperBase
-     */
-    protected $helperBase;
-
-    /**
-     * @var FeaturesHelper
-     */
-    protected $featuresHelper;
+    protected HelperBase $helperBase;
+    protected FeaturesHelper $featuresHelper;
+    protected ?array $linkedProductAttributesByStoreId;
 
     /**
      * Data constructor.
+     *
      * @param HelperBase $helperBase
      * @param FeaturesHelper $featuresHelper
      * @param Context $context
@@ -52,13 +50,28 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param int|null $storeId
      * @return string
      */
-    public function getLinkedProductAttributes($storeId = null)
+    public function getLinkedProductAttributes(int $storeId = null): string
     {
-        return $this->scopeConfig->getValue(
-            self::XML_PATH_LINKED_PRODUCT_ATTRIBUTES,
-            ScopeInterface::SCOPE_STORE,
-            $storeId
-        );
+        $storeIdKey = ($storeId === null) ? 'null' : $storeId;
+
+        if (!isset($this->linkedProductAttributesByStoreId[$storeIdKey])) {
+            $linkedProductAttributes = (string)$this->scopeConfig->getValue(
+                self::XML_PATH_LINKED_PRODUCT_ATTRIBUTES,
+                ScopeInterface::SCOPE_STORE,
+                $storeId
+            );
+
+            $object = new \Magento\Framework\DataObject();
+            $object->setLinkedProductAttributes($linkedProductAttributes);
+            $this->_eventManager->dispatch(
+                'mw_optionlink_helper_data_prepare_linked_product_attributes',
+                ['object' => $object, 'store_id' => $storeId]
+            );
+
+            $this->linkedProductAttributesByStoreId[$storeIdKey] = $object->getLinkedProductAttributes();
+        }
+
+        return $this->linkedProductAttributesByStoreId[$storeIdKey];
     }
 
     /**
@@ -67,7 +80,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param int|null $storeId
      * @return array
      */
-    public function getLinkedProductAttributesAsArray($storeId = null)
+    public function getLinkedProductAttributesAsArray(int $storeId = null): array
     {
         $linkedProductAttributes = $this->getLinkedProductAttributes($storeId);
         if (!$linkedProductAttributes) {

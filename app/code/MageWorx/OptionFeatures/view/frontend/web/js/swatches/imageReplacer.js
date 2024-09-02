@@ -4,8 +4,7 @@
  */
 define(
     [
-        'jquery',
-        'jquery/ui'
+        'jquery'
     ],
     function ($) {
 
@@ -51,7 +50,7 @@ define(
                     if (!this.candidates.hasOwnProperty(key)) {
                         continue;
                     }
-                    if (prevKey < key) {
+                    if (parseInt(prevKey) < parseInt(key)) {
                         lastCandidate = this.candidates[key];
                     }
                     prevKey = key;

@@ -1,11 +1,13 @@
 <?php
 /**
- * Copyright © 2018 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+declare(strict_types=1);
 
 namespace MageWorx\OptionDependency\Model;
 
+use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Framework\Model\AbstractExtensibleModel;
 
@@ -19,21 +21,30 @@ class Config extends AbstractExtensibleModel
     const TABLE_NAME                 = 'mageworx_option_dependency';
     const OPTIONTEMPLATES_TABLE_NAME = 'mageworx_optiontemplates_group_option_dependency';
 
-    const COLUMN_NAME_DEPENDENCY_ID                  = 'dependency_id';
-    const COLUMN_NAME_CHILD_OPTION_ID                = 'child_option_id';
-    const COLUMN_NAME_CHILD_MAGEWORX_OPTION_ID       = 'child_mageworx_option_id';
-    const COLUMN_NAME_CHILD_OPTION_TYPE_ID           = 'child_option_type_id';
-    const COLUMN_NAME_CHILD_MAGEWORX_OPTION_TYPE_ID  = 'child_mageworx_option_type_id';
-    const COLUMN_NAME_PARENT_OPTION_ID               = 'parent_option_id';
-    const COLUMN_NAME_PARENT_MAGEWORX_OPTION_ID      = 'parent_mageworx_option_id';
-    const COLUMN_NAME_PARENT_OPTION_TYPE_ID          = 'parent_option_type_id';
-    const COLUMN_NAME_PARENT_MAGEWORX_OPTION_TYPE_ID = 'parent_mageworx_option_type_id';
-    const COLUMN_NAME_PRODUCT_ID                     = 'product_id';
-    const COLUMN_NAME_GROUP_ID                       = 'group_id';
-    const COLUMN_NAME_IS_PROCESSED                   = 'is_processed';
-    const COLUMN_NAME_OPTION_TYPE_TITLE_ID           = 'option_type_title_id';
-    const COLUMN_NAME_OPTION_TITLE_ID                = 'option_title_id';
-    const COLUMN_NAME_OPTION_DEPENDENCY_TYPE         = 'dependency_type';
+    const KEY_DEPENDENCY        = 'dependency';
+    const KEY_DEPENDENCY_TYPE   = 'dependency_type';
+    const KEY_DEPENDENCY_RULES  = 'dependency_rules';
+    const KEY_HIDDEN_DEPENDENTS = 'hidden_dependents';
+
+    const COLUMN_NAME_DEPENDENCY               = 'dependency';
+    const COLUMN_NAME_DEPENDENCY_ID            = 'dependency_id';
+    const COLUMN_NAME_DP_CHILD_OPTION_ID       = 'dp_child_option_id';
+    const COLUMN_NAME_DP_CHILD_OPTION_TYPE_ID  = 'dp_child_option_type_id';
+    const COLUMN_NAME_DP_PARENT_OPTION_ID      = 'dp_parent_option_id';
+    const COLUMN_NAME_DP_PARENT_OPTION_TYPE_ID = 'dp_parent_option_type_id';
+    const COLUMN_NAME_PRODUCT_ID               = 'product_id';
+    const COLUMN_NAME_GROUP_ID                 = 'group_id';
+    const COLUMN_NAME_IS_PROCESSED_DP_COLUMNS  = 'is_processed_dp_columns';
+    const COLUMN_NAME_OPTION_TYPE_TITLE_ID     = 'option_type_title_id';
+    const COLUMN_NAME_OPTION_TITLE_ID          = 'option_title_id';
+    const COLUMN_NAME_OPTION_DEPENDENCY_TYPE   = 'dependency_type';
+
+    protected array $productOptions = [];
+    protected array $optionParents = [];
+    protected array $valuesParents = [];
+    protected array $optionIdByIds = [];
+    protected array $optionTypeIdByIds = [];
+    protected array $dependencyOptionsByProduct = [];
 
     /**
      * Set resource model and Id field name
@@ -50,53 +61,59 @@ class Config extends AbstractExtensibleModel
     /**
      * Get product options
      *
-     * @param integer $productId
-     * @return array
      */
-    public function allProductOptions($productId)
+    public function allProductOptions(int $productId): array
     {
-        return $data = $this->_getResource()->allProductOptions($productId);
+        if (!array_key_exists($productId, $this->productOptions)) {
+            $this->productOptions[$productId] = $this->_getResource()->allProductOptions($productId);
+        }
+
+        return $this->productOptions[$productId];
     }
 
     /**
-     * Get 'child_option_id' - 'parent_option_type_id' pairs
+     * Get 'dp_child_option_id' - 'dp parent_option_type_id' pairs
      *
-     * @param integer $productId
-     * @return array
      */
-    public function getOptionParents($productId)
+    public function getOptionParents(int $productId): array
     {
-        $columns = ['child_option_id', 'parent_option_type_id'];
-        $data    = $this->_getResource()
-                        ->loadDependencies($productId, $columns);
+        if (!array_key_exists($productId, $this->optionParents)) {
+            $columns = ['dp_child_option_id', 'dp_parent_option_type_id'];
+            $data    = $this->_getResource()
+                            ->loadDependencies($productId, $columns);
 
-        return $this->compactArray($data, $columns);
+            $this->optionParents[$productId] = $this->compactArray($data, $columns);
+        }
+
+        return $this->optionParents[$productId];
     }
 
     /**
-     * Get 'child_option_type_id' - 'parent_option_type_id' pairs in json
+     * Get 'dp_child_option_type_id' - 'dp_parent_option_type_id' pairs in json
      *
-     * @param integer $productId
-     * @return array
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function getValueParents($productId)
+    public function getValueParents(int $productId): array
     {
-        $columns = ['child_option_type_id', 'parent_option_type_id'];
-        $data    = $this->_getResource()
-                        ->loadDependencies($productId, $columns);
+        if (!array_key_exists($productId, $this->valuesParents)) {
+            $columns                         = ['dp_child_option_type_id', 'dp_parent_option_type_id'];
+            $data                            = $this->_getResource()
+                                                    ->loadDependencies($productId, $columns);
+            $this->valuesParents[$productId] = $this->compactArray($data, $columns);
+        }
 
-        return $this->compactArray($data, $columns);
+        return $this->valuesParents[$productId];
     }
 
     /**
-     * Get 'parent_option_type_id' - 'child_option_id' pairs in json
+     * Get 'dp_parent_option_type_id' - 'dp_child_option_id' pairs in json
      *
      * @param integer $productId
      * @return array
      */
     public function getOptionChildren($productId)
     {
-        $columns = ['parent_option_type_id', 'child_option_id'];
+        $columns = ['dp_parent_option_type_id', 'dp_child_option_id'];
         $data    = $this->_getResource()
                         ->loadDependencies($productId, $columns);
 
@@ -104,14 +121,14 @@ class Config extends AbstractExtensibleModel
     }
 
     /**
-     * Get 'parent_option_type_id' - 'child_option_type_id' pairs in json
+     * Get 'new parent_option_type_id' - 'new child_option_type_id' pairs in json
      *
      * @param integer $productId
      * @return array
      */
     public function getValueChildren($productId)
     {
-        $columns = ['parent_option_type_id', 'child_option_type_id'];
+        $columns = ['dp_parent_option_type_id', 'dp_child_option_type_id'];
         $data    = $this->_getResource()
                         ->loadDependencies($productId, $columns);
 
@@ -119,7 +136,7 @@ class Config extends AbstractExtensibleModel
     }
 
     /**
-     * Get option types ('mageworx_option_id' => 'type') in json
+     * Get option types ('option_id' => 'type') in json
      *
      * @param integer $productId
      * @return array
@@ -140,30 +157,35 @@ class Config extends AbstractExtensibleModel
      */
     public function getAndDependencyOptions($product)
     {
-        $config = [];
-        /** @var \Magento\Catalog\Model\Product\Option[] $options */
-        $options = $product->getOptions();
-        foreach ($options as $option) {
-            if ($option->getDependencyType()) {
-                $config[$option->getData('option_id')] = (bool)$option->getDependencyType();
-            }
-            if (empty($option->getValues())) {
-                continue;
-            }
-            /** @var \Magento\Catalog\Model\Product\Option\Value $value */
-            foreach ($option->getValues() as $value) {
-                if (is_array($value)) {
-                    if (empty($value['option_type_id'])) {
-                        continue;
+        if (!array_key_exists($product->getId(), $this->dependencyOptionsByProduct)) {
+
+            $config = [];
+            /** @var \Magento\Catalog\Model\Product\Option[] $options */
+            $options = $product->getOptions();
+            foreach ($options as $option) {
+                if ($option->getDependencyType()) {
+                    $config[$option->getData('option_id')] = (bool)$option->getDependencyType();
+                }
+                if (empty($option->getValues())) {
+                    continue;
+                }
+                /** @var \Magento\Catalog\Model\Product\Option\Value $value */
+                foreach ($option->getValues() as $value) {
+                    if (is_array($value)) {
+                        if (empty($value['option_type_id'])) {
+                            continue;
+                        }
+                        $config[$value['option_type_id']] = (bool)$value['dependency_type'];
+                    } elseif ($value->getDependencyType()) {
+                        $config[$value->getData('option_type_id')] = (bool)$value->getDependencyType();
                     }
-                    $config[$value['option_type_id']] = (bool)$value['dependency_type'];
-                } elseif ($value->getDependencyType()) {
-                    $config[$value->getData('option_type_id')] = (bool)$value->getDependencyType();
                 }
             }
+
+            $this->dependencyOptionsByProduct[$product->getId()] = $config;
         }
 
-        return $config;
+        return $this->dependencyOptionsByProduct[$product->getId()];
     }
 
     /**
@@ -175,18 +197,22 @@ class Config extends AbstractExtensibleModel
      */
     public function convertToId($code = 'option', $ids = [])
     {
+        $key      = hash('sha256', implode('/', $ids));
         $resource = $this->_getResource();
 
-        switch ($code) {
-            case 'option':
-                $data = $resource->loadOptionId($ids);
-                break;
-            case 'value':
-                $data = $resource->loadOptionTypeId($ids);
-                break;
+        if ($code == 'option') {
+            if (!array_key_exists($key, $this->optionIdByIds)) {
+                $this->optionIdByIds[$key] = $resource->loadOptionId($ids);
+            }
+
+            return $this->optionIdByIds[$key];
         }
 
-        return $data;
+        if (!array_key_exists($key, $this->optionTypeIdByIds)) {
+            $this->optionTypeIdByIds[$key] = $resource->loadOptionTypeId($ids);
+        }
+
+        return $this->optionTypeIdByIds[$key];
     }
 
     /**
@@ -225,14 +251,13 @@ class Config extends AbstractExtensibleModel
     /**
      * Check if it is needed to validate dependent option
      *
-     * @param \Magento\Catalog\Model\Product\Option $option
-     * @param array $frontOptions
-     * @param ProductInterface $product
-     * @param integer $productId
-     * @return bool
      */
-    public function isNeedDependentOptionValidation($option, $frontOptions, $product, $productId)
-    {
+    public function isNeedDependentOptionValidation(
+        ProductCustomOptionInterface $option,
+        array $frontOptions,
+        ProductInterface $product,
+        int $productId
+    ): bool {
         $allProductOptions    = $this->allProductOptions($productId);
         $selectedValues       = $this->convertToId('value', $this->getSelectedValues($frontOptions));
         $optionParents        = $this->getOptionParents($productId);
@@ -240,7 +265,7 @@ class Config extends AbstractExtensibleModel
         $andDependencyOptions = $this->getAndDependencyOptions($product);
         $optionId             = $allProductOptions[$option->getId()];
 
-        if (is_null($option->getValues())) {
+        if ($this->isSelectableOptionType($option->getType()) && is_null($option->getValues())) {
             return false;
         }
 
@@ -256,16 +281,7 @@ class Config extends AbstractExtensibleModel
         // AND dependency: if all of parents are selected - return true
         $parentSelected = true;
         if (!empty($option->getValues())) {
-            $optionTypeIds = [];
-            foreach ($option->getValues() as $optionValue) {
-                if (is_array($optionValue)) {
-                    if (!empty($value['option_type_id'])) {
-                        $optionTypeIds[] = $value['option_type_id'];
-                    }
-                } else {
-                    $optionTypeIds[] = $optionValue->getOptionTypeId();
-                }
-            }
+            $optionTypeIds = $this->getOptionTypeIds($option);
 
             $parentSelected       = false;
             $disableRequireOption = false;
@@ -366,7 +382,7 @@ class Config extends AbstractExtensibleModel
     protected function isDisabledParentOption($prepareData, $parentValueId)
     {
         foreach ($prepareData as $value) {
-            if ($value['parent_option_type_id'] == $parentValueId) {
+            if ($value['dp_parent_option_type_id'] == $parentValueId) {
                 return (bool)$value['disabled'];
             }
         }
@@ -397,6 +413,13 @@ class Config extends AbstractExtensibleModel
                 $values = [$values];
             }
 
+            /* Order Editor provides extra data from buyRequest when editing an order
+               url - the parameter is not important for us
+            */
+            if (isset($values['url'])) {
+                unset($values['url']);
+            }
+
             $result = array_merge($result, $values);
         }
 
@@ -420,5 +443,24 @@ class Config extends AbstractExtensibleModel
         }
 
         return false;
+    }
+
+    /**
+     * Get option ids
+     */
+    public function getOptionTypeIds(ProductCustomOptionInterface $option): array
+    {
+        $optionTypeIds = [];
+        foreach ($option->getValues() as $optionValue) {
+            if (is_array($optionValue)) {
+                if (!empty($value['option_type_id'])) {
+                    $optionTypeIds[] = $value['option_type_id'];
+                }
+            } else {
+                $optionTypeIds[] = $optionValue->getOptionTypeId();
+            }
+        }
+
+        return $optionTypeIds;
     }
 }

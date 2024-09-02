@@ -111,14 +111,23 @@ class MetaPackageList
             DIRECTORY_SEPARATOR . self::VENDOR . DIRECTORY_SEPARATOR;
 
         $directoryRead = $this->readFactory->create($path);
+
+        if (!$directoryRead->isDirectory($path)) {
+            return $result;
+        }
+
         try {
-            $folders = $directoryRead->read();
-            foreach ($folders as $folder) {
-                $composerJsonData = $directoryRead->readFile($folder . '/' . 'composer.json');
-                $data             = json_decode($composerJsonData, true);
-                if (isset($data['type']) && isset($data['name'])) {
-                    if ($data['type'] == 'metapackage') {
-                        $result[$data['name']] = $data;
+            $directories = $directoryRead->read();
+            foreach ($directories as $directory) {
+                if ($directoryRead->isDirectory($path . $directory) &&
+                    $directoryRead->isExist($path . $directory . '/' . 'composer.json')
+                ) {
+                    $composerJsonData = $directoryRead->readFile($directory . '/' . 'composer.json');
+                    $data             = json_decode($composerJsonData, true);
+                    if (isset($data['type']) && isset($data['name']) && $data['type'] == 'metapackage') {
+                        if (!isset($result[$data['name']])) {
+                            $result[$data['name']] = $data;
+                        }
                     }
                 }
             }

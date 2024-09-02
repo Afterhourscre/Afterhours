@@ -9,36 +9,18 @@ namespace MageWorx\OptionBase\Ui\DataProvider\Product\Form\Modifier;
 use Magento\Catalog\Ui\DataProvider\Product\Form\Modifier\AbstractModifier;
 use Magento\Catalog\Ui\DataProvider\Product\Form\Modifier\CustomOptions;
 use Magento\Ui\Component\Form\Element\DataType\Number;
-use Magento\Ui\Component\Form\Element\Hidden;
 use Magento\Ui\Component\Form\Element\Input;
-use Magento\Ui\Component\Form\Element\DataType\Text;
 use Magento\Ui\Component\Form\Field;
 use Magento\Framework\App\Request\Http;
-use MageWorx\OptionBase\Model\OptionTitle;
-use MageWorx\OptionBase\Model\OptionTypeTitle;
 
 class Base extends AbstractModifier implements ModifierInterface
 {
     const FIELD_SORT_ORDER_NAME = 'sort_order';
 
-    /**
-     * @var Http
-     */
-    protected $request;
+    protected Http $request;
+    protected array $meta = [];
+    protected string $form = 'product_form';
 
-    /**
-     * @var array
-     */
-    protected $meta = [];
-
-    /**
-     * @var string
-     */
-    protected $form = 'product_form';
-
-    /**
-     * @param Http $request
-     */
     public function __construct(
         Http $request
     ) {

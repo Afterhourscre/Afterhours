@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/queue.xsd">
+    <broker topic="mirasvit.review.notify_new" exchange="magento-db" type="db">
+        <queue name="mirasvit.review.notify_new"
+               consumer="mirasvit.review.notify_new"
+               consumerInstance="Magento\Framework\MessageQueue\Consumer"
+               handler="Mirasvit\Review\Service\Email\NotificationService::notifyPendingReview"
+        />
+    </broker>
+</config>

@@ -15,10 +15,7 @@ class Converter
     const CONVERTING_MODE_MAGENTO    = 'magento';
     const CONVERTING_MODE_MAGEWORX   = 'mageworx';
 
-    /**
-     * @var array
-     */
-    protected $mapTable = [
+    protected array $mapTable = [
         'product' => [
             'option' => 'catalog_product_option',
             'value' => 'catalog_product_option_type_value',
@@ -29,54 +26,30 @@ class Converter
         ],
     ];
 
-    /**
-     * @var array
-     */
-    protected $mapType = [
+    protected array $mapType = [
         'option' => 'option_id',
         'value' => 'option_type_id'
     ];
 
-    /**
-     * @var array
-     */
-    protected $templateFieldMap = [
+    protected array $templateFieldMap = [
         'option' => 'option_id',
         'value' => 'option_value_id'
     ];
 
-    /**
-     * @var array
-     */
-    protected $data = [];
+    protected array $data = [];
 
-    /**
-     * @var integer
-     */
-    protected $productId;
+    protected int $productId;
 
-    /**
-     * @var string
-     */
-    protected $convertTo = self::CONVERTING_MODE_MAGENTO;
+    protected string $convertTo = self::CONVERTING_MODE_MAGENTO;
 
-    /**
-     * @var string
-     */
-    protected $convertWhere = self::CONVERTING_ENTITY_PRODUCT;
+    protected string $convertWhere = self::CONVERTING_ENTITY_PRODUCT;
 
-    /**
-     * @var ResourceConnection
-     */
-    protected $resource;
+    protected ResourceConnection $resource;
 
-    /**
-     * @param ResourceConnection $resource
-     */
     public function __construct(
         ResourceConnection $resource
     ) {
-    
+
         $this->resource = $resource;
     }
 
@@ -132,7 +105,8 @@ class Converter
 
     /**
      * Convert magento/mageworx IDs to mageworx/magento IDs, used to apply template on product
-     * @return string
+     *
+     * @return array|void
      */
     public function convert()
     {
@@ -157,7 +131,8 @@ class Converter
 
     /**
      * Check if there some data to convert
-     * @return string
+     *
+     * @return bool
      */
     protected function canConvert()
     {
@@ -243,7 +218,7 @@ class Converter
                 if ($key == 0) {
                     if (isset($array1[$id])) {
                         $this->data[$rowKey][$key] = $array1[$id];
-                    } 
+                    }
                 } elseif ($key == 1) {
                     if (isset($array2[$id])) {
                         $this->data[$rowKey][$key] = $array2[$id];

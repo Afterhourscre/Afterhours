@@ -6,9 +6,8 @@
 define([
     'underscore',
     'Magento_Ui/js/form/element/select',
-    'uiRegistry',
-    'MageWorx_OptionBase/versionResolver'
-], function (_, Select, uiRegistry, versionResolver) {
+    'uiRegistry'
+], function (_, Select, uiRegistry) {
     'use strict';
 
     return Select.extend({
@@ -53,9 +52,7 @@ define([
                 });
 
                 if (typeof addBefore != 'undefined') {
-                    if (versionResolver.isSince22x() != -1) {
-                        uiWeight.addBefore(addBefore);
-                    }
+                    uiWeight.addBefore(addBefore);
                 }
             }
         }

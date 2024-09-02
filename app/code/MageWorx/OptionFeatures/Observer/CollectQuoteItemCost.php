@@ -10,6 +10,7 @@ use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\ResourceModel\Product\Option\Collection as OptionCollection;
 use Magento\Catalog\Model\ResourceModel\Product\Option\Value\Collection as OptionValueCollection;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use MageWorx\OptionFeatures\Helper\Data as Helper;
@@ -17,33 +18,11 @@ use MageWorx\OptionBase\Helper\Data as BaseHelper;
 
 class CollectQuoteItemCost implements ObserverInterface
 {
+    protected OptionValueCollection $optionValueCollection;
+    protected OptionCollection $optionCollection;
+    protected Helper $helper;
+    protected BaseHelper $baseHelper;
 
-    /**
-     * @var OptionValueCollection
-     */
-    protected $optionValueCollection;
-
-    /**
-     * @var OptionCollection
-     */
-    protected $optionCollection;
-
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
-
-    /**
-     * @param OptionValueCollection $optionValueCollection
-     * @param OptionCollection $optionCollection
-     * @param Helper $helper
-     * @param BaseHelper $baseHelper
-     */
     public function __construct(
         OptionValueCollection $optionValueCollection,
         OptionCollection $optionCollection,
@@ -51,9 +30,9 @@ class CollectQuoteItemCost implements ObserverInterface
         BaseHelper $baseHelper
     ) {
         $this->optionValueCollection = $optionValueCollection;
-        $this->optionCollection = $optionCollection;
-        $this->helper = $helper;
-        $this->baseHelper = $baseHelper;
+        $this->optionCollection      = $optionCollection;
+        $this->helper                = $helper;
+        $this->baseHelper            = $baseHelper;
     }
 
     /**
@@ -71,7 +50,18 @@ class CollectQuoteItemCost implements ObserverInterface
             return $this;
         }
 
-        if ($quoteItem->getParentItem()) {
+        $getParentItem = $quoteItem->getParentItem();
+
+        if ($getParentItem === null && $quoteItem->getProductType() == Configurable::TYPE_CODE) {
+            /** @var Product $product */
+            $product = $quoteItem->getProduct()->getCustomOption('simple_product')->getProduct();
+            if (!$product) {
+                return $this;
+            }
+
+            $originalCost   = $product->getData('cost');
+            $originalWeight = $product->getData('weight');
+        } elseif ($getParentItem) {
             $originalQuoteItem = $quoteItem;
 
             $quoteItem = $quoteItem->getParentItem();
@@ -80,14 +70,14 @@ class CollectQuoteItemCost implements ObserverInterface
             }
 
             /** @var Product $product */
-            $product = $quoteItem->getProduct();
+            $product         = $quoteItem->getProduct();
             $originalProduct = $originalQuoteItem->getProduct();
-            $originalCost = $originalProduct->getData('cost');
-            $originalWeight = $originalProduct->getData('weight');
+            $originalCost    = $originalProduct->getData('cost');
+            $originalWeight  = $originalProduct->getData('weight');
         } else {
             /** @var Product $product */
-            $product = $quoteItem->getProduct();
-            $originalCost = $product->getData('cost');
+            $product        = $quoteItem->getProduct();
+            $originalCost   = $product->getData('cost');
             $originalWeight = $product->getData('weight');
         }
         /** @var \Magento\Framework\DataObject $buyRequest */
@@ -101,15 +91,15 @@ class CollectQuoteItemCost implements ObserverInterface
             return $this;
         }
         /** @var int|float > 0.0001 $qty */
-        $qty = $this->getOriginalQtyFromBuyRequest($buyRequest);
-        $cost = 0;
+        $qty    = $this->getOriginalQtyFromBuyRequest($buyRequest);
+        $cost   = 0;
         $weight = 0;
 
         $optionsItems = $this->getProductOptions($product);
-        $values = $this->getValuesCollection(array_keys($options));
+        $values       = $this->getValuesCollection(array_keys($options));
 
         foreach ($options as $optionId => $optionValue) {
-            $optionCost = 0;
+            $optionCost   = 0;
             $optionWeight = 0;
 
             if ($this->helper->isQtyInputEnabled() && $buyRequest->getOptionsQty($optionId)) {
@@ -119,7 +109,7 @@ class CollectQuoteItemCost implements ObserverInterface
             }
 
             $option = isset($optionsItems[$optionId]) ? $optionsItems[$optionId] : null;
-            if (!$option) {
+            if (!$option || !$this->baseHelper->isSelectableOption($optionsItems[$optionId]->getType())) {
                 continue;
             }
 
@@ -133,7 +123,7 @@ class CollectQuoteItemCost implements ObserverInterface
                     $optionQty = isset($optionQty[$valueId]) ? $optionQty[$valueId] : 0;
                 }
                 $optionCost += $value->getData(Helper::KEY_COST) * $optionQty;
-                if ($value->getData(Helper::KEY_WEIGHT_TYPE) != 'percent'){
+                if ($value->getData(Helper::KEY_WEIGHT_TYPE) != 'percent') {
                     $optionWeight += $value->getData(Helper::KEY_WEIGHT) * $optionQty;
                 } else {
                     $optionWeight += ($originalWeight * $value->getData(Helper::KEY_WEIGHT) / 100) * $optionQty;
@@ -141,11 +131,11 @@ class CollectQuoteItemCost implements ObserverInterface
             }
 
             if ($option->getData(Helper::KEY_ONE_TIME) && $this->helper->isOneTimeEnabled()) {
-                $optionCost = $optionCost / $qty;
+                $optionCost   = $optionCost / $qty;
                 $optionWeight = $optionWeight / $qty;
             }
 
-            $cost += $optionCost;
+            $cost   += $optionCost;
             $weight += $optionWeight;
         }
 
@@ -169,8 +159,8 @@ class CollectQuoteItemCost implements ObserverInterface
         }
 
         if ($this->isWeightEnabled($product)) {
-            $resultWeight = $originalWeight + $weight;
-            $resultWeight = (float)$resultWeight;
+            $resultWeight    = $originalWeight + $weight;
+            $resultWeight    = (float)$resultWeight;
             $resultRowWeight = $resultWeight * $qty;
             $quoteItem->setWeight($resultWeight);
             $quoteItem->setRowWeight($resultRowWeight);
@@ -189,7 +179,7 @@ class CollectQuoteItemCost implements ObserverInterface
     {
         $this->optionValueCollection->addOptionToFilter($optionIds);
         $values = $this->optionValueCollection->getItems();
-        $this->optionValueCollection->clear()->getSelect()->reset(\Zend_Db_Select::WHERE);
+        $this->optionValueCollection->clear()->getSelect()->reset(\Magento\Framework\DB\Select::WHERE);
 
         return $values;
     }
@@ -234,10 +224,6 @@ class CollectQuoteItemCost implements ObserverInterface
     protected function validateItem(\Magento\Quote\Model\Quote\Item $quoteItem)
     {
         if (!$this->helper->isWeightEnabled() && !$this->helper->isCostEnabled()) {
-            return false;
-        }
-
-        if ($quoteItem->getChildren()) {
             return false;
         }
 

@@ -49,45 +49,14 @@ class Dependency extends AbstractModifier implements ModifierInterface
 
     const TEMPLATES_FORM_NAME = 'mageworx_optiontemplates_group_form';
 
-    /**
-     * @var UrlInterface
-     */
-    protected $urlBuilder;
-
-    /**
-     * @var \Magento\Catalog\Model\Locator\LocatorInterface
-     */
-    protected $locator;
-
-    /**
-     * @var ArrayManager
-     */
-    protected $arrayManager;
-
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var Helper
-     */
-    protected $helperBase;
-
-    /**
-     * @var HttpRequest
-     */
-    protected $request;
-
-    /**
-     * @var array
-     */
-    protected $meta = [];
-
-    /**
-     * @var string
-     */
-    protected $form = self::FORM_NAME;
+    protected UrlInterface $urlBuilder;
+    protected LocatorInterface $locator;
+    protected ArrayManager $arrayManager;
+    protected Helper $helper;
+    protected HelperBase $helperBase;
+    protected HttpRequest $request;
+    protected array $meta = [];
+    protected string $form = self::FORM_NAME;
 
     public function __construct(
         LocatorInterface $locator,
@@ -126,6 +95,7 @@ class Dependency extends AbstractModifier implements ModifierInterface
 
         // convert mageworx_option_id to record_id in the dependencies
         $productOptions = $this->helperBase->convertDependentIdToRecordId($productOptions);
+        $productOptions = $this->helperBase->clearId($productOptions);
         $data[$productId]['product']['options'] = $productOptions;
 
         return $data;
@@ -271,7 +241,7 @@ class Dependency extends AbstractModifier implements ModifierInterface
                         'visible' => true,
                         'options' => [['value' => 0, 'label' => 'OR'],['value' => 1, 'label' => 'AND']],
                         'validation' => [
-                            'required-entry' => true,
+                            'required-entry' => false,
                         ],
                         'tooltip' => [
                             'description' => __('The "Dependency Type" setting defines the conditions to display the current option value on the front-end.') .
@@ -341,6 +311,32 @@ class Dependency extends AbstractModifier implements ModifierInterface
 
     protected function getDependencyButtonConfig($sortOrder, $additionalForGroup = false)
     {
+        $params = [
+            'provider' => '${ $.provider }',
+            'dataScope' => '${ $.dataScope }',
+            'buttonName' => '${ $.name }',
+            'isEnabledTitleId' => $this->helper->isTitleIdEnabled(),
+            'isProductPage' => $this->form == static::FORM_NAME ? true : false
+        ];
+
+        if ($this->helperBase->checkModuleVersion('104.0.0')) {
+            $params['__disableTmpl'] = [
+                'provider'   => false,
+                'dataScope'  => false,
+                'buttonName' => false
+            ];
+        }
+
+        $mageworxAttributes = [
+            static::FIELD_DEPENDENCY => '${ $.dataScope }' . '.' . static::FIELD_DEPENDENCY
+        ];
+
+        if ($this->helperBase->checkModuleVersion('104.0.0')) {
+            $mageworxAttributes['__disableTmpl'] = [
+                static::FIELD_DEPENDENCY => false
+            ];
+        }
+
         $field[static::DEPENDENCY_BUTTON_NAME] = [
             'arguments' => [
                 'data' => [
@@ -348,9 +344,7 @@ class Dependency extends AbstractModifier implements ModifierInterface
                         'labelVisible' => true,
                         'label' => ' ',
                         'buttonClasses' => 'mageworx-icon dependency',
-                        'mageworxAttributes' => [
-                            '${ $.dataScope }' . '.' . static::FIELD_DEPENDENCY
-                        ],
+                        'mageworxAttributes' => $mageworxAttributes,
                         'formElement' => Container::NAME,
                         'componentType' => Container::NAME,
                         'component' => 'MageWorx_OptionBase/component/button',
@@ -375,13 +369,7 @@ class Dependency extends AbstractModifier implements ModifierInterface
                                     . static::DEPENDENCY_MODAL_INDEX,
                                 'actionName' => 'reloadModal',
                                 'params' => [
-                                    [
-                                        'provider' => '${ $.provider }',
-                                        'dataScope' => '${ $.dataScope }',
-                                        'buttonName' => '${ $.name }',
-                                        'isEnabledTitleId' => $this->helper->isTitleIdEnabled(),
-                                        'isProductPage' => $this->form == static::FORM_NAME ? true : false,
-                                    ],
+                                    $params
                                 ],
                             ],
                         ],

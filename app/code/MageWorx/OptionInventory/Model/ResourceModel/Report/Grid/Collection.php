@@ -22,17 +22,14 @@ use MageWorx\OptionBase\Helper\Data as OptionBaseHelper;
  */
 class Collection extends ReportCollection implements SearchResultInterface
 {
-    /**
-     * @var OptionBaseHelper
-     */
-    protected $helper;
+    protected OptionBaseHelper $helper;
 
     /**
      * Aggregations
      *
      * @var \Magento\Framework\Search\AggregationInterface
      */
-    protected $aggregations;
+    protected \Magento\Framework\Search\AggregationInterface $aggregations;
 
     /**
      * Collection constructor.

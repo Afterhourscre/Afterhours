@@ -509,7 +509,7 @@ class ImportOptionsHandler
         foreach ($validationKeys as $validationKey) {
             if (!isset($this->keyIndexMap[$validationKey])) {
                 throw new LocalizedException(
-                    __("Invalid data for import, key '%2'", $validationKey)
+                    __("Invalid data for import, key '%1'", $validationKey)
                 );
             }
         }
@@ -612,7 +612,7 @@ class ImportOptionsHandler
                     continue;
                 }
                 if (in_array($valueLevelKey, $this->valueLevelStoreViewKeys)) {
-                    if ($currentStoreCode === '0' || ($maxValueIndex == $currentIndex && $currentStoreCode !== '0')) {
+                    if ($currentStoreCode === '0' || ($maxValueIndex < $currentIndex && $currentStoreCode !== '0')) {
                         $value[$valueLevelKey][$currentStoreCode] = $fileDataRow[$this->keyIndexMap[$valueLevelKey]];
                     } else {
                         $valueData[$currentIndex][$valueLevelKey][$currentStoreCode] =
@@ -731,9 +731,9 @@ class ImportOptionsHandler
      *
      * @return string
      */
-    public function getBeforeImportSystemStatus()
+    public function getBeforeImportSystemStatus(): string
     {
-        return $this->beforeImportSystemStatus;
+        return (string)$this->beforeImportSystemStatus;
     }
 
     /**
@@ -811,7 +811,7 @@ class ImportOptionsHandler
                     }
                 }
 
-                $this->prepareImages($optionData, $product, $option);
+                $this->prepareImages($option);
 
                 $optionAttributes = $this->optionAttributes->getData();
                 foreach ($optionAttributes as $optionAttribute) {
@@ -1047,13 +1047,14 @@ class ImportOptionsHandler
             return;
         }
 
+
         foreach ($data['options'] as $optionData) {
             if (isset($optionData['_custom_option_template_id'])) {
                 $this->templateIds[$optionData['_custom_option_template_id']] = $optionData['_custom_option_template_id'];
             }
             $this->validateOptionDefaults($optionData);
             $this->validateOptionAttributes($optionData);
-            $this->validateValues($optionData);
+            $this->validateValues($optionData, $data['sku']);
         }
     }
 
@@ -1099,17 +1100,18 @@ class ImportOptionsHandler
     }
 
     /**
-     * Validate option values integrity
-     *
-     * @param array $data
+     * @param $data
+     * @param $validationProductSku
      * @throws LocalizedException
      */
-    protected function validateValues($data)
+    protected function validateValues($data, $validationProductSku)
     {
         if ((!isset($data['values']) || !is_array($data['values']))) {
             if ($this->isSelectableOption($data['_custom_option_type'])) {
                 throw new LocalizedException(
-                    __("Selectable option doesn't have values")
+                    __('Selectable option "%1" doesn\'t have values in product SKU= "'. $validationProductSku .'"',
+                        $data['_custom_option_title']
+                    )
                 );
             }
             return;
@@ -1170,7 +1172,7 @@ class ImportOptionsHandler
     {
         if (!empty($map['mageworx_optiontemplates_import_from_customer_groups'])) {
             $this->customerEquivalentMap          = $map['mageworx_optiontemplates_import_from_customer_groups'];
-            $this->customerEquivalentMap['32000'] = '32000';
+            $this->customerEquivalentMap[BaseHelper::ALL_CUSTOMER_GROUP_ID] = BaseHelper::ALL_CUSTOMER_GROUP_ID;
         }
         if (!empty($map['mageworx_optiontemplates_import_from_stores'])) {
             $this->storeEquivalentMap = $map['mageworx_optiontemplates_import_from_stores'];
@@ -1356,23 +1358,22 @@ class ImportOptionsHandler
     /**
      * Prepare images according to M2 requirements
      * Copy image files to M2 media APO directory
-     *
-     * @param array $optionData
-     * @param array $product
+     *  
      * @param array $option
      * @throws FileSystemException
      * @return void
      */
-    protected function prepareImages($optionData, $product, $option)
+    protected function prepareImages(&$option)
     {
         if (!isset($option['values']) || !is_array($option['values'])) {
             return;
         }
 
-        foreach ($option['values'] as $value) {
+        foreach ($option['values'] as &$value) {
             if (!isset($value['_custom_option_row_image_data'])) {
                 continue;
             }
+            $value['_custom_option_row_image_data'] = str_replace('\\', '/', $value['_custom_option_row_image_data']);
             $images = explode('|', $value['_custom_option_row_image_data']);
             foreach ($images as $image) {
                 list($imageFile, $sortOrder, $source) = explode(':', $image);

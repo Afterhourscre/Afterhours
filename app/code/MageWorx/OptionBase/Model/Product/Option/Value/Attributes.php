@@ -1,23 +1,35 @@
 <?php
 /**
- * Copyright © 2017 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
 namespace MageWorx\OptionBase\Model\Product\Option\Value;
+
+use MageWorx\OptionBase\Api\Data\AttributeDataInterface;
 
 /**
  * Class Attributes
+ *
  * @package MageWorx\OptionBase\Model\Option\Value
  */
-class Attributes
+class Attributes implements AttributeDataInterface
 {
+    private array $data;
+
     /**
-     * @var array
+     * Excluded value attributes from the main collection which will be display by separate request for performance reasons
+     *
+     * @var array|string[] $attributesToDisplayOnFrontend
      */
-    private $data = [];
+    protected array $attributesToDisplayOnFrontend = [
+        'description',
+        'images_data'
+    ];
 
     /**
      * Attributes constructor.
+     *
      * @param array $data
      */
     public function __construct(
@@ -27,23 +39,32 @@ class Attributes
     }
 
     /**
-     * @return array
+     * Prepare attribute data to array
+     *
      */
-    public function toArray()
+    public function toArray(): array
     {
         return $this->data;
     }
 
     /**
-     * @param null $key
-     * @return mixed|null
+     * Get attribute data
+     *
      */
-    public function getData($key = null)
+    public function getData(?string $key = null)
     {
-        if (!$key) {
+        if ($key === null) {
             return $this->data;
         }
 
-        return isset($this->data[$key]) ? $this->data[$key] : null;
+        return $this->data[$key] ?? null;
+    }
+
+    /**
+     * Get excluded attributes
+     */
+    public function getAttributesToDisplayOnFrontend(): array
+    {
+        return $this->attributesToDisplayOnFrontend;
     }
 }

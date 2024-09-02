@@ -1,0 +1,43 @@
+<?php
+declare(strict_types=1);
+
+/** @var \Mirasvit\Review\Block\Product\Review\ProsCons $block */
+?>
+<?php if (count($block->fieldToArray('pros')) || count($block->fieldToArray('cons'))): ?>
+    <div class="review-additional">
+        <div class="review-content pros">
+            <span class="label"><?= $block->escapeHtml(__('Pros')) ?>:</span>
+
+            <?php if (count($block->fieldToArray('pros'))): ?>
+                <div class="content">
+                    <ul>
+                        <?php foreach ($block->fieldToArray('pros') as $item): ?>
+                            <li>
+                                <?= $block->escapeHtml($item) ?>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php else: ?>
+                -
+            <?php endif ?>
+        </div>
+        <div class="review-content cons">
+            <span class="label"><?= $block->escapeHtml(__('Cons')) ?>:</span>
+
+            <?php if (count($block->fieldToArray('cons'))): ?>
+                <div class="content">
+                    <ul>
+                        <?php foreach ($block->fieldToArray('cons') as $item): ?>
+                            <li>
+                                <?= $block->escapeHtml($item) ?>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php else: ?>
+                -
+            <?php endif ?>
+        </div>
+    </div>
+<?php endif; ?>

@@ -12,10 +12,7 @@ namespace MageWorx\OptionInventory\Model\ResourceModel;
 class StockManagement extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
 {
 
-    /**
-     * @var \Magento\CatalogInventory\Api\StockRegistryInterface
-     */
-    protected $stockRegistry;
+    protected \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry;
 
     /**
      * Resource initialization

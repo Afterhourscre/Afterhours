@@ -110,12 +110,7 @@
             </div>
         </div>
         <!-- /ko -->
-        <ul class="admin__action-multiselect-menu-inner _root"
-            data-bind="
-                event: {
-                    mousemove: function(data, event){onMousemove($data, $index(), event)}
-                }
-            ">
+        <ul class="admin__action-multiselect-menu-inner _root">
             <!-- ko foreach: { data: options, as: 'option'}  -->
             <li class="admin__action-multiselect-menu-inner-item _root"
                 data-bind="css: { _parent: $data.optgroup }"

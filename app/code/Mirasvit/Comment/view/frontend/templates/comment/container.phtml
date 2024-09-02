@@ -1,0 +1,58 @@
+<?php
+declare(strict_types=1);
+
+use Mirasvit\Comment\Block\Comment\Container;
+
+/** @var Container $block */
+
+$tree = $block->getTree();
+
+?>
+
+<div class="mst-comments__wrapper">
+    <div class="block-title hidden">
+        <strong><?= __('Comments') ?></strong>
+    </div>
+    <div class="mst-comments__toolbar <?= $block->getIsOpened() ? 'hidden' : '' ?>">
+        <div class="toolbar__item">
+            <span class="mst-comments__form-toggler reply link" onclick="toggleReplyForm(event)">
+                <?= __('Write a comment') ?>
+            </span>
+        </div>
+        <?php if ($block->getCommentsCount() > 0): ?>
+        <div class="toolbar__item">
+            <span class="mst-comments__comments-toggler link" onclick="toggleComments(event)">
+                <?= __('Comments (%1)', $block->getCommentsCount()) ?>
+            </span>
+        </div>
+        <?php endif ?>
+    </div>
+    <div class="mst-comments__form-container <?= !$block->getIsOpened() ? 'hidden' : '' ?>">
+        <?= $block->getCommentFormHtml(); ?>
+    </div>
+    <?php if (count($tree)): ?>
+        <div class="mst-comments__container <?= !$block->getIsOpened() ? 'hidden' : '' ?>">
+            <?= $block->getCommentsHtml($tree); ?>
+        </div>
+    <?php endif; ?>
+
+    <script>
+        function toggleReplyForm(e) {
+            toggleContainer(e, '.mst-comments__form-container');
+        }
+
+        function toggleComments(e) {
+            toggleContainer(e, '.mst-comments__container');
+        }
+
+        function toggleContainer(e, selector) {
+            e.target.classList.toggle('active');
+
+            const wrapper = e.target.closest('.mst-comments__wrapper');
+
+            if (wrapper.querySelector(selector)) {
+                wrapper.querySelector(selector).classList.toggle('hidden');
+            }
+        }
+    </script>
+</div>

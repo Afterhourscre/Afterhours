@@ -18,7 +18,7 @@
                 </resource>
                 <resource id="Magento_Backend::system">
                     <resource id="Magento_Backend::convert">
-                        <resource id="MageWorx_OptionImportExport::import_export" title="Import/Export MageWorx Option Templates" sortOrder="45" />
+                        <resource id="MageWorx_OptionImportExport::import_export" title="MageWorx Options Import" translate="title" sortOrder="45" />
                     </resource>
                 </resource>
             </resource>

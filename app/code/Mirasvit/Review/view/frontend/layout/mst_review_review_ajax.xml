@@ -1,0 +1,6 @@
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <block name="mst.review_card" as="mst.review_card" class="Mirasvit\Review\Block\Widget\Review\Card" template="Mirasvit_Review::widget/review/card.phtml">
+        </block>
+    </body>
+</page>

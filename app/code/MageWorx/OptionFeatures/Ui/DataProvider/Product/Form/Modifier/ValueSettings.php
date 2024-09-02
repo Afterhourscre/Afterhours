@@ -3,6 +3,7 @@
  * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+declare(strict_types=1);
 
 namespace MageWorx\OptionFeatures\Ui\DataProvider\Product\Form\Modifier;
 
@@ -14,6 +15,7 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\Ui\Component\Container;
 use Magento\Ui\Component\Form\Element\Input;
 use Magento\Ui\Component\Form\Element\Select;
+use Magento\Ui\Component\Form\Element\Checkbox;
 use Magento\Ui\Component\Form\Element\DataType\Number;
 use Magento\Ui\Component\Form\Element\DataType\Text;
 use Magento\Ui\Component\Form\Field;
@@ -21,6 +23,7 @@ use Magento\Ui\Component\Form\Fieldset;
 use MageWorx\OptionBase\Ui\DataProvider\Product\Form\Modifier\ModifierInterface;
 use MageWorx\OptionFeatures\Helper\Data as Helper;
 use Magento\Ui\Component\Modal;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Framework\UrlInterface;
 use Magento\Framework\App\Request\Http;
 use MageWorx\OptionFeatures\Model\Config\Source\Product\Options\Weight as ProductOptionsWeight;
@@ -35,55 +38,16 @@ class ValueSettings extends AbstractModifier implements ModifierInterface
     const MODAL_CONTENT  = 'content';
     const MODAL_FIELDSET = 'fieldset';
 
-    /**
-     * @var UrlInterface
-     */
-    protected $urlBuilder;
-
-    /**
-     * @var \Magento\Framework\Stdlib\ArrayManager
-     */
-    protected $arrayManager;
-
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
-    protected $storeManager;
-
-    /**
-     * @var \Magento\Catalog\Model\Locator\LocatorInterface
-     */
-    protected $locator;
-
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
-
-    /**
-     * @var Http
-     */
-    protected $request;
-
-    /**
-     * @var array
-     */
-    protected $meta = [];
-
-    /**
-     * @var ProductOptionsWeight
-     */
-    protected $productOptionsWeight;
-
-    /**
-     * @var string
-     */
-    protected $form = 'product_form';
+    protected UrlInterface $urlBuilder;
+    protected ArrayManager $arrayManager;
+    protected StoreManagerInterface $storeManager;
+    protected LocatorInterface $locator;
+    protected Helper $helper;
+    protected BaseHelper $baseHelper;
+    protected Http $request;
+    protected array $meta = [];
+    protected ProductOptionsWeight $productOptionsWeight;
+    protected string $form = 'product_form';
 
     /**
      * @param ArrayManager $arrayManager
@@ -120,7 +84,7 @@ class ValueSettings extends AbstractModifier implements ModifierInterface
      *
      * @return int
      */
-    public function getSortOrder()
+    public function getSortOrder(): int
     {
         return 56;
     }
@@ -128,7 +92,7 @@ class ValueSettings extends AbstractModifier implements ModifierInterface
     /**
      * {@inheritdoc}
      */
-    public function modifyData(array $data)
+    public function modifyData(array $data): array
     {
         return $data;
     }
@@ -136,7 +100,7 @@ class ValueSettings extends AbstractModifier implements ModifierInterface
     /**
      * {@inheritdoc}
      */
-    public function modifyMeta(array $meta)
+    public function modifyMeta(array $meta): array
     {
         $this->meta = $meta;
 
@@ -144,10 +108,8 @@ class ValueSettings extends AbstractModifier implements ModifierInterface
             $this->form = 'mageworx_optiontemplates_group_form';
         }
 
-        if ($this->helper->isCostEnabled() || $this->helper->isWeightEnabled()) {
-            $this->addValueSettingsModal();
-            $this->addValueSettingsButton();
-        }
+        $this->addValueSettingsModal();
+        $this->addValueSettingsButton();
 
         return $this->meta;
     }
@@ -160,72 +122,82 @@ class ValueSettings extends AbstractModifier implements ModifierInterface
         $groupCustomOptionsName = CustomOptions::GROUP_CUSTOM_OPTIONS_NAME;
         $optionContainerName    = CustomOptions::CONTAINER_OPTION;
 
-        if ($this->helper->isOptionValueDescriptionEnabled()) {
+        $this->meta[$groupCustomOptionsName]['children']['options']['children']['record']['children']
+        [$optionContainerName]['children']['values']['children']['record']['children'] = array_replace_recursive(
             $this->meta[$groupCustomOptionsName]['children']['options']['children']['record']['children']
-            [$optionContainerName]['children']['values']['children']['record']['children'] = array_replace_recursive(
-                $this->meta[$groupCustomOptionsName]['children']['options']['children']['record']['children']
-                ['container_option']['children']['values']['children']['record']['children'],
-                $this->getValueSettingsButtonConfig(207)
-            );
-        }
+            ['container_option']['children']['values']['children']['record']['children'],
+            $this->getValueSettingsButtonConfig(207)
+        );
     }
 
     /**
      * Get value settings button config
      *
      * @param int $sortOrder
-     * @param bool $additionalForGroup
      * @return array
      */
-    protected function getValueSettingsButtonConfig($sortOrder)
+    protected function getValueSettingsButtonConfig(int $sortOrder): array
     {
-        $field[static::VALUE_SETTINGS_BUTTON_NAME] = [
-            'arguments' => [
-                'data' => [
-                    'config' => [
-                        'labelVisible'       => true,
-                        'label'              => ' ',
-                        'formElement'        => Container::NAME,
-                        'componentType'      => Container::NAME,
-                        'component'          => 'MageWorx_OptionBase/component/button',
-                        'elementTmpl'        => 'MageWorx_OptionBase/button',
-                        'buttonClasses'      => 'mageworx-icon settings',
-                        'tooltipTpl'         => 'MageWorx_OptionBase/tooltip',
-                        'tooltip'            => [
-                            'description' => __('Value Settings')
-                        ],
-                        'mageworxAttributes' => $this->getEnabledAttributes(),
-                        'displayAsLink'      => false,
-                        'fit'                => true,
-                        'sortOrder'          => $sortOrder,
-                        'actions'            => [
-                            [
-                                'targetName' => 'ns=' . $this->form . ', index='
-                                    . static::VALUE_SETTINGS_MODAL_INDEX,
-                                'actionName' => 'openModal',
+        $params = [
+            'provider'                   => '${ $.provider }',
+            'dataScope'                  => '${ $.dataScope }',
+            'formName'                   => $this->form,
+            'buttonName'                 => '${ $.name }',
+            'isCostEnabled'              => $this->helper->isCostEnabled(),
+            'isWeightEnabled'            => $this->helper->isWeightEnabled(),
+            'isLoadLinkedProductEnabled' => $this->helper->isLoadLinkedProductEnabled(),
+            'isNotConfigurableProduct'   => $this->locator->getProduct()->getTypeId() !== Configurable::TYPE_CODE,
+            'pathLoadLinkedProduct'      => Helper::KEY_LOAD_LINKED_PRODUCT
+        ];
+
+        if ($this->baseHelper->checkModuleVersion('104.0.0')) {
+            $params['__disableTmpl'] = [
+                'provider'   => false,
+                'dataScope'  => false,
+                'buttonName' => false
+            ];
+        }
+
+        return [
+            static::VALUE_SETTINGS_BUTTON_NAME => [
+                'arguments' => [
+                    'data' => [
+                        'config' => [
+                            'labelVisible'       => true,
+                            'label'              => ' ',
+                            'formElement'        => Container::NAME,
+                            'componentType'      => Container::NAME,
+                            'component'          => 'MageWorx_OptionBase/component/button',
+                            'elementTmpl'        => 'MageWorx_OptionBase/button',
+                            'buttonClasses'      => 'mageworx-icon settings',
+                            'tooltipTpl'         => 'MageWorx_OptionBase/tooltip',
+                            'tooltip'            => [
+                                'description' => __('Value Settings')
                             ],
-                            [
-                                'targetName' => 'ns=' . $this->form . ', index='
-                                    . static::VALUE_SETTINGS_MODAL_INDEX,
-                                'actionName' => 'reloadModal',
-                                'params'     => [
-                                    [
-                                        'provider'        => '${ $.provider }',
-                                        'dataScope'       => '${ $.dataScope }',
-                                        'formName'        => $this->form,
-                                        'buttonName'      => '${ $.name }',
-                                        'isCostEnabled'   => $this->helper->isCostEnabled(),
-                                        'isWeightEnabled' => $this->helper->isWeightEnabled()
+                            'mageworxAttributes' => $this->getEnabledAttributes(),
+                            'displayAsLink'      => false,
+                            'fit'                => true,
+                            'sortOrder'          => $sortOrder,
+                            'actions'            => [
+                                [
+                                    'targetName' => 'ns=' . $this->form . ', index='
+                                        . static::VALUE_SETTINGS_MODAL_INDEX,
+                                    'actionName' => 'openModal',
+                                ],
+                                [
+                                    'targetName' => 'ns=' . $this->form . ', index='
+                                        . static::VALUE_SETTINGS_MODAL_INDEX,
+                                    'actionName' => 'reloadModal',
+                                    'params'     => [
+                                        $params
                                     ],
                                 ],
                             ],
                         ],
                     ],
                 ],
-            ],
+            ]
         ];
-
-        return $field;
     }
 
     /**
@@ -244,7 +216,7 @@ class ValueSettings extends AbstractModifier implements ModifierInterface
     /**
      * Get value settings modal config
      */
-    protected function getValueSettingsModalConfig()
+    protected function getValueSettingsModalConfig(): array
     {
         return [
             'arguments' => [
@@ -317,7 +289,7 @@ class ValueSettings extends AbstractModifier implements ModifierInterface
      *
      * @return array
      */
-    protected function getValueSettingsFieldsConfig()
+    protected function getValueSettingsFieldsConfig(): array
     {
         $fields = [];
 
@@ -325,20 +297,58 @@ class ValueSettings extends AbstractModifier implements ModifierInterface
             $fields[Helper::KEY_COST] = $this->getCostConfig(10);
         }
         if ($this->helper->isWeightEnabled()) {
-            $fields[Helper::KEY_WEIGHT]      = $this->getWeightFieldConfigForSelectType(20);
+            $fields[Helper::KEY_WEIGHT]      = $this->getWeightConfig(20);
             $fields[Helper::KEY_WEIGHT_TYPE] = $this->getWeightTypeConfig(30);
+        }
+        if ($this->locator->getProduct()->getTypeId() !== Configurable::TYPE_CODE) {
+            $fields[Helper::KEY_QTY_MULTIPLIER] = $this->getQtyMultiplierConfig(40);
+        }
+        if ($this->helper->isLoadLinkedProductEnabled()) {
+            $fields[Helper::KEY_LOAD_LINKED_PRODUCT] = $this->getIsLoadLinkedProductConfig(50);
         }
 
         return $fields;
     }
 
+    protected function getIsLoadLinkedProductConfig(int $sortOrder): array
+    {
+        return [
+            'arguments' => [
+                'data' => [
+                    'config' => [
+                        'label'             => __('Load Linked Product'),
+                        'componentType'     => Field::NAME,
+                        'formElement'       => Checkbox::NAME,
+                        'dataScope'         => Helper::KEY_LOAD_LINKED_PRODUCT,
+                        'dataType'          => Number::NAME,
+                        'additionalClasses' => 'admin__field-small',
+                        'prefer'            => 'toggle',
+                        'valueMap'          => [
+                            'true'  => Helper::IS_LOAD_LINKED_PRODUCT_TRUE,
+                            'false' => Helper::IS_LOAD_LINKED_PRODUCT_FALSE,
+                        ],
+                        'fit'               => true,
+                        'sortOrder'         => $sortOrder,
+                        'tooltip'           => [
+                            'description' => __(
+                                'If enabled, the linked product will be loaded upon
+                            the value selection on the front-end. The value should be linked to existing product to enable
+                            this feature.'
+                            )
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
     /**
      * Cost field config
      *
-     * @param $sortOrder
+     * @param int $sortOrder
      * @return array
      */
-    protected function getCostConfig($sortOrder)
+    protected function getCostConfig(int $sortOrder): array
     {
         return [
             'arguments' => [
@@ -363,11 +373,51 @@ class ValueSettings extends AbstractModifier implements ModifierInterface
     }
 
     /**
+     * Qty Multiplier field config
+     *
+     * @param int $sortOrder
+     * @return array
+     */
+    protected function getQtyMultiplierConfig(int $sortOrder): array
+    {
+        return [
+            'arguments' => [
+                'data' => [
+                    'config' => [
+                        'label'             => __('Qty Multiplier'),
+                        'componentType'     => Field::NAME,
+                        'formElement'       => Input::NAME,
+                        'dataScope'         => Helper::KEY_QTY_MULTIPLIER,
+                        'dataType'          => Number::NAME,
+                        'additionalClasses' => 'admin__field-small',
+                        'validation'        => [
+                            'validate-number'          => true,
+                            'validate-zero-or-greater' => true,
+                        ],
+                        'tooltip'           => [
+                            'description' => __(
+                                    'This setting defines the number that will be deducted from the stock of the main product once the order is placed with the particular option value.'
+                                ) .
+                                ' ' .
+                                __(
+                                    'The Qty multiplier will be multiplied by the product Qty, specified manually in the Qty field on the front-end.'
+                                ) .
+                                ' ' .
+                                __('Leave "0" to disable this feature.')
+                        ],
+                        'sortOrder'         => $sortOrder,
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
      * Get currency symbol
      *
      * @return string
      */
-    protected function getBaseCurrencySymbol()
+    protected function getBaseCurrencySymbol(): ?string
     {
         return $this->storeManager->getStore()->getBaseCurrency()->getCurrencySymbol();
     }
@@ -391,10 +441,10 @@ class ValueSettings extends AbstractModifier implements ModifierInterface
     /**
      * Weight field config
      *
-     * @param $sortOrder
+     * @param int $sortOrder
      * @return array
      */
-    protected function getWeightConfig($sortOrder)
+    protected function getWeightConfig(int $sortOrder): array
     {
         return [
             'arguments' => [
@@ -402,6 +452,8 @@ class ValueSettings extends AbstractModifier implements ModifierInterface
                     'config' => [
                         'label'             => __('Weight'),
                         'componentType'     => Field::NAME,
+                        'component'         => 'Magento_Catalog/js/components/custom-options-component',
+                        'template'          => 'Magento_Catalog/form/field',
                         'formElement'       => Input::NAME,
                         'dataScope'         => Helper::KEY_WEIGHT,
                         'dataType'          => Number::NAME,
@@ -425,29 +477,12 @@ class ValueSettings extends AbstractModifier implements ModifierInterface
     }
 
     /**
-     * Get config for "Price" field for select type.
+     * Weight field config
      *
      * @param int $sortOrder
      * @return array
      */
-    private function getWeightFieldConfigForSelectType(int $sortOrder)
-    {
-        $weightFieldConfig = $this->getWeightConfig($sortOrder);
-        if (!$this->baseHelper->checkModuleVersion('101.0.10', '102.0.0')) {
-            $weightFieldConfig['arguments']['data']['config']['template'] = 'Magento_Catalog/form/field';
-            $weightFieldConfig['arguments']['data']['config']['component'] =
-                'Magento_Catalog/js/components/custom-options-component';
-        }
-        return $weightFieldConfig;
-    }
-
-    /**
-     * Weight field config
-     *
-     * @param $sortOrder
-     * @return array
-     */
-    protected function getWeightTypeConfig($sortOrder)
+    protected function getWeightTypeConfig(int $sortOrder): array
     {
         return
             [
@@ -469,7 +504,6 @@ class ValueSettings extends AbstractModifier implements ModifierInterface
                     ],
                 ],
             ];
-
     }
 
     /**
@@ -477,12 +511,30 @@ class ValueSettings extends AbstractModifier implements ModifierInterface
      *
      * @return array
      */
-    public function getEnabledAttributes()
+    public function getEnabledAttributes(): array
     {
         $attributes = [];
 
-        $attributes[] = '${ $.dataScope }' . '.' . Helper::KEY_COST;
-        $attributes[] = '${ $.dataScope }' . '.' . Helper::KEY_WEIGHT;
+        $attributes[Helper::KEY_COST]                = '${ $.dataScope }' . '.' . Helper::KEY_COST;
+        $attributes[Helper::KEY_WEIGHT]              = '${ $.dataScope }' . '.' . Helper::KEY_WEIGHT;
+        $attributes[Helper::KEY_LOAD_LINKED_PRODUCT] = '${ $.dataScope }' . '.' . Helper::KEY_LOAD_LINKED_PRODUCT;
+        if ($this->locator->getProduct()->getTypeId() !== Configurable::TYPE_CODE) {
+            $attributes[Helper::KEY_QTY_MULTIPLIER] = '${ $.dataScope }' . '.' . Helper::KEY_QTY_MULTIPLIER;
+        }
+
+        if ($this->baseHelper->checkModuleVersion('104.0.0')) {
+            $attributes['__disableTmpl'] = [
+                Helper::KEY_COST                => false,
+                Helper::KEY_WEIGHT              => false,
+                Helper::KEY_LOAD_LINKED_PRODUCT => false
+            ];
+        }
+
+        if ($this->locator->getProduct()->getTypeId() !== Configurable::TYPE_CODE) {
+            if ($this->baseHelper->checkModuleVersion('104.0.0')) {
+                $attributes['__disableTmpl'][Helper::KEY_QTY_MULTIPLIER] = false;
+            }
+        }
 
         return $attributes;
     }
@@ -492,7 +544,7 @@ class ValueSettings extends AbstractModifier implements ModifierInterface
      *
      * @return bool
      */
-    public function isProductScopeOnly()
+    public function isProductScopeOnly(): bool
     {
         return false;
     }

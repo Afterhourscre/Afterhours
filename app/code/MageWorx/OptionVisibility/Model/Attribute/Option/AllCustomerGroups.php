@@ -6,58 +6,51 @@
 
 namespace MageWorx\OptionVisibility\Model\Attribute\Option;
 
+use Magento\Framework\DataObjectFactory;
 use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\Serialize\Serializer\Json as Serializer;
 use MageWorx\OptionVisibility\Helper\Data as Helper;
 use MageWorx\OptionBase\Helper\System as SystemHelper;
+use MageWorx\OptionBase\Helper\Data as BaseHelper;
 use MageWorx\OptionVisibility\Model\OptionCustomerGroup as CustomerGroupModel;
 use MageWorx\OptionBase\Model\Product\Option\AbstractAttribute;
 
 class AllCustomerGroups extends AbstractAttribute
 {
-
     const KEY_ALL_CUSTOMER_GROUP = 'is_all_groups';
 
+    protected Helper $helper;
+    protected SystemHelper $systemHelper;
     /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var SystemHelper
-     */
-    protected $systemHelper;
-
-    /**
-     * @var ResourceConnection
-     */
-    protected $resource;
-
-    /**
-     * @var mixed
+     * @var \MageWorx\OptionBase\Model\Entity\Group|\MageWorx\OptionBase\Model\Entity\Product
      */
     protected $entity;
-
-    /**
-     * @var CustomerGroupModel
-     */
-    protected $customerGroupModel;
+    protected CustomerGroupModel $customerGroupModel;
+    protected Serializer $serializer;
 
     /**
      * @param ResourceConnection $resource
      * @param Helper $helper
+     * @param BaseHelper $baseHelper
      * @param SystemHelper $systemHelper
      * @param CustomerGroupModel $customerGroupModel
+     * @param DataObjectFactory $dataObjectFactory
+     * @param Serializer $serializer
      */
     public function __construct(
         ResourceConnection $resource,
         Helper $helper,
         CustomerGroupModel $customerGroupModel,
-        SystemHelper $systemHelper
+        BaseHelper $baseHelper,
+        SystemHelper $systemHelper,
+        DataObjectFactory $dataObjectFactory,
+        Serializer $serializer
     ) {
         $this->helper             = $helper;
         $this->systemHelper       = $systemHelper;
         $this->customerGroupModel = $customerGroupModel;
-        parent::__construct($resource);
+        $this->serializer         = $serializer;
+        parent::__construct($resource, $baseHelper, $dataObjectFactory);
     }
 
     /**
@@ -131,34 +124,28 @@ class AllCustomerGroups extends AbstractAttribute
      * @param \Magento\Catalog\Model\Product\Option|\Magento\Catalog\Model\Product\Option\Value|array $data
      * @return string
      */
-   public function prepareDataBeforeSave($data)
-{
-    if (is_object($data)) {
-        $jsonCustomerGroup = $data->getData('customer_group');
-    } elseif (is_array($data) && isset($data[$this->getName()])) {
-        $jsonCustomerGroup = $data[$this->getName()];
-    } else {
-        return '';
-    }
+    public function prepareDataBeforeSave($data): string
+    {
+        if (is_object($data)) {
+            $jsonCustomerGroup = $data->getData('customer_group');
+        } elseif (is_array($data) && isset($data[$this->getName()])) {
+            $jsonCustomerGroup = $data[$this->getName()];
+        } else {
+            return '';
+        }
 
-    // Ensure $jsonCustomerGroup is a string before passing it to json_decode
-    if ($jsonCustomerGroup === null) {
-        return '1';
-    }
+        $decodedJsonData = $jsonCustomerGroup ? $this->serializer->unserialize($jsonCustomerGroup) : null;
 
-    $decodedJsonData = json_decode($jsonCustomerGroup, true);
-
-    if (empty($decodedJsonData) || !is_array($decodedJsonData)) {
-        return '1';
-    }
-
-    foreach ($decodedJsonData as $key => $value) {
-        if (isset($value['customer_group_id']) && $value['customer_group_id'] == 32000) {
+        if (empty($decodedJsonData) || !is_array($decodedJsonData)) {
             return '1';
         }
+
+        foreach ($decodedJsonData as $key => $value) {
+            if ($this->baseHelper->isAllCustomerGroupId((string)$value['customer_group_id'])) {
+                return '1';
+            }
+        }
+
+        return '0';
     }
-
-    return '0';
-}
-
 }

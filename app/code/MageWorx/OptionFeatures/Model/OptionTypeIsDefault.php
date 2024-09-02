@@ -15,7 +15,6 @@ class OptionTypeIsDefault extends AbstractExtensibleModel
     const OPTIONTEMPLATES_TABLE_NAME = 'mageworx_optiontemplates_group_option_type_is_default';
 
     const COLUMN_NAME_OPTION_TYPE_IS_DEFAULT_ID = 'option_type_is_default_id';
-    const COLUMN_NAME_MAGEWORX_OPTION_TYPE_ID   = 'mageworx_option_type_id';
     const COLUMN_NAME_OPTION_TYPE_ID            = 'option_type_id';
     const COLUMN_NAME_STORE_ID                  = 'store_id';
     const COLUMN_NAME_IS_DEFAULT                = 'is_default';

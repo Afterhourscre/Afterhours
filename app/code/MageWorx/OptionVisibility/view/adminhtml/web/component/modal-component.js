@@ -78,7 +78,7 @@ define([
                 customerGroupValue,
                 jsonCustomerGroup = registry.get(this.entityProvider).get(this.entityDataScope).customer_group;
 
-            if (jsonCustomerGroup !== '') {
+            if (typeof jsonCustomerGroup !== 'undefined' && jsonCustomerGroup !== '') {
                 customerGroupData = $.parseJSON(jsonCustomerGroup);
             }
 
@@ -112,7 +112,7 @@ define([
                 ids = [],
                 storeViewValue,
                 jsonStoreView = registry.get(this.entityProvider).get(this.entityDataScope).store_view;
-            if (jsonStoreView !== '') {
+            if (typeof jsonStoreView !== 'undefined' && jsonStoreView !== '') {
                 storeViewData = $.parseJSON(jsonStoreView);
             }
 

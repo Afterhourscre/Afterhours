@@ -119,4 +119,30 @@ interface ImportInterface
      * @return void
      */
     public function importOptionsMageOne($optionData);
+
+    /**
+     * Collect data for Magento2 product export
+     *
+     * @param array $row
+     * @param array $data
+     * @return void
+     */
+    public function collectExportDataMageTwo(&$row, $data);
+
+    /**
+     * Prepare data for attributes, which do NOT have own database tables, for Magento2 product import
+     *
+     * @param array $data
+     * @param string $type
+     * @return mixed
+     */
+    public function prepareImportDataMageTwo($data, $type);
+
+    /**
+     * Collect data for attributes, which have own database tables, for Magento2 product import
+     *
+     * @param array $data
+     * @return array|null
+     */
+    public function collectImportDataMageTwo($data);
 }

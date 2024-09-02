@@ -1,0 +1,39 @@
+<?php
+declare(strict_types=1);
+
+use Mirasvit\Comment\Block\Adminhtml\Comment\Container;
+
+/** @var Container $block */
+
+
+$tree = $block->getTree();
+
+?>
+
+<?php if ($block->isAllowedToSeeComments()): ?>
+<div class="fieldset-wrapper mst-comment__container">
+    <div class="admin__fieldset-wrapper-content admin__collapsible-content _show">
+        <?= $block->getCommmentFormHtml() ?>
+    </div>
+    <div class="admin__fieldset-wrapper-content admin__collapsible-content _show">
+        <div class="admin__fieldset">
+        <div class="field required admin__field">
+            <div class="admin__field-label"></div>
+            <div class="admin__field-control">
+                <?php if (count($tree)): ?>
+                    <?= $block->getCommentsHtml($tree); ?>
+                <?php else: ?>
+                    <?= __("Can't find any comments") ?>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+<?php else: ?>
+<div class="messages">
+    <div class="message message-info info">
+        <?= __('You are not allowed to see comments') ?>
+    </div>
+</div>
+<?php endif; ?>

@@ -1,0 +1,27 @@
+{
+    "mst_comment_comment": {
+        "column": {
+            "comment_id": true,
+            "parent_id": true,
+            "path": true,
+            "level": true,
+            "children_count": true,
+            "rel_entity_id": true,
+            "rel_entity_type": true,
+            "nickname": true,
+            "status": true,
+            "content": true,
+            "customer_id": true,
+            "is_admin": true,
+            "store_id": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "MST_COMMENT_COMMENT_PARENT_ID_COMMENT_ID": true,
+            "MST_COMMENT_COMMENT_STORE_ID_STORE_STORE_ID": true,
+            "MST_COMMENT_COMMENT_CUSTOMER_ID_CUSTOMER_ENTITY_ENTITY_ID": true
+        }
+    }
+}

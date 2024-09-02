@@ -192,6 +192,7 @@ class EmailSender
      * @param $data
      * @return array
      */
+   
     protected function prepareEmailVars($form, $data)
     {
         $content = '';
@@ -201,22 +202,49 @@ class EmailSender
             /** @var \Mageside\MultipleCustomForms\Model\CustomForm\Field $field */
             $value = $field->getSubmittedValue($data);
             $value = !empty($value) ? $field->getFieldOutput($value) : '&nbsp;';
-            $content .= "<b>" .
-                $this->_escaper->escapeHtml($field->getTitle()) .
-                "</b>:" .
-                "\t" .
-                $this->_escaper->escapeHtml($value) .
-                "<br>";
+        // Get the field title
+        $fieldTitle = $field->getTitle();
+
+        // Check if the title is "Add Your Attachments" and replace it
+        if ($fieldTitle == "Add Your Attachments") {
+            $fieldTitle = "Add Your Attachments (Download Images)";
         }
 
+       // Check if the value contains file paths
+        if (strpos($value, 'tmp/catalog/product') !== false) {
+            // Split multiple file paths (assuming they're separated by commas)
+            $filePaths = explode(',', $value);
+            $links = [];
+
+            foreach ($filePaths as $filePath) {
+                // Replace incorrect path with correct one
+                $correctPath = str_replace('tmp/catalog/product', 'customform/tmp/', $filePath);
+                 $baseUrl = $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA);
+                $fileUrl = $baseUrl . $correctPath;
+                $links[] = '<a href="' . $this->_escaper->escapeUrl($fileUrl) . '" target="_blank">' . $this->_escaper->escapeHtml(basename($correctPath)) . '</a>';
+            }
+
+            // Join all links with a separator (e.g., a line break)
+            $value = implode('<br>', $links);
+        }
+
+
+            $content .= "<b>" .
+                $this->_escaper->escapeHtml($fieldTitle) .
+                "</b>:" .
+                "\t" .
+                $value .
+                "<br>";
+        }
         $vars = [
             'form_name' => $form->getName(),
             'content'   => $content,
             'subject'   => $form->getSubjectEmail()
         ];
-
         return $vars;
     }
+
+
 
     /**
      * @param $form

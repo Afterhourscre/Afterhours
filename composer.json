@@ -8,7 +8,7 @@
         "AFL-3.0"
     ],
     "require": {
-        "magento/product-community-edition": "2.4.7",
+        "magento/product-community-edition": "2.4.7-p2",
         "composer/composer": "@alpha",
         "worldpay/worldpay-lib-php": "^2.1",
         "pelago/emogrifier": "^7.0",

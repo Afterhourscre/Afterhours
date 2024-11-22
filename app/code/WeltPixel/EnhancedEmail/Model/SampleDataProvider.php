@@ -22,6 +22,14 @@ use Magento\Sales\Api\Data\ShipmentInterface;
  */
 class SampleDataProvider
 {
+     /**
+     * @var _filterBuilder
+     */
+    protected $_filterBuilder;
+    /**
+     * @var _searchCriteriaBuilder
+     */
+    protected $_searchCriteriaBuilder;
     /**
      * @var \Magento\Sales\Api\OrderRepositoryInterface
      */
@@ -68,7 +76,7 @@ class SampleDataProvider
      * @var CustomerViewHelper
      */
     protected $customerViewHelper;
-
+   
 
     /**
      * SampleDataProvider constructor.

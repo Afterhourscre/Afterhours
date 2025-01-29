@@ -134,4 +134,9 @@ class Renderer extends Template
             ? $this->httpContext->getValue(CustomerContext::CONTEXT_GROUP)
             : $customerGroupId;
     }
+
+    public function getPlacement()
+    {
+            return $this->getData('placement');
+     }
 }

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -24,6 +24,9 @@ use Mirasvit\Seo\Model\Config;
 
 class AddPaginationLinkPlugin
 {
+    /**
+     * @var Config
+     */
     private $config;
 
     /**
@@ -31,10 +34,23 @@ class AddPaginationLinkPlugin
      */
     private $response;
 
+    /**
+     * @var StateServiceInterface
+     */
     private $stateService;
 
+    /**
+     * @var LayoutInterface
+     */
     private $layout;
 
+    /**
+     * AddPaginationLinkPlugin constructor.
+     * @param Config $config
+     * @param StateServiceInterface $stateService
+     * @param ResponseInterface $response
+     * @param LayoutInterface $layout
+     */
     public function __construct(
         Config $config,
         StateServiceInterface $stateService,
@@ -47,6 +63,11 @@ class AddPaginationLinkPlugin
         $this->layout       = $layout;
     }
 
+    /**
+     * @param mixed $subject
+     * @param mixed $result
+     * @return mixed
+     */
     public function afterRenderResult($subject, $result)
     {
         if (!$this->config->isPagingPrevNextEnabled()) {
@@ -113,7 +134,7 @@ class AddPaginationLinkPlugin
     {
         $body = $this->response->getBody();
 
-        $link = '<link rel="' . $type . '" href="' . html_entity_decode($url) . '" />';
+        $link = '<link rel="' . $type . '" href="' . htmlspecialchars($url) . '" />';
 
         $pattern     = '/<\/head>/ims';
         $replacement = PHP_EOL . $link . '</head>';

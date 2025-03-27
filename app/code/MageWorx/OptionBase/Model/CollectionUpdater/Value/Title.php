@@ -70,14 +70,12 @@ class Title extends AbstractUpdater
         $entityType = $conditions['entity_type'];
         $tableName  = $this->getTableName($entityType);
 
-        $this->resource->getConnection()->query('SET SESSION group_concat_max_len = 100000;');
-
         $selectExpr = "SELECT " . OptionTypeTitle::FIELD_OPTION_TYPE_ID . " as "
             . OptionTypeTitle::FIELD_OPTION_TYPE_ID_ALIAS . ","
             . " CONCAT('[',"
             . " GROUP_CONCAT(CONCAT("
             . "'{\"store_id\"',':\"',store_id,'\",',"
-            . "'\"title\"',':\"',title,'\"}'"
+            . "'\"title\"',':\"',REPLACE(title,'\"','&quot;'),'\"}'"
             . ")),"
             . "']')"
             . " AS " . OptionTypeTitle::KEY_MAGEWORX_OPTION_TYPE_TITLE . " FROM " . $tableName;

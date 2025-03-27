@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -28,8 +28,16 @@ class CmsBlockOutput
      */
     protected $config;
 
+    /**
+     * @var TextProcessorService
+     */
     protected $textProcessorService;
 
+    /**
+     * CmsBlockOutput constructor.
+     * @param Config $config
+     * @param TextProcessorService $textProcessorService
+     */
     public function __construct(
         Config $config,
         TextProcessorService $textProcessorService
@@ -40,10 +48,9 @@ class CmsBlockOutput
 
     /**
      * @param \Magento\Cms\Model\Page $subject
-     * @param \Magento\Cms\Model\Page $result
+     * @param string $result
      *
-     * @return \Magento\Cms\Model\Page $result
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @return string
      */
     public function afterToHtml($subject, $result)
     {

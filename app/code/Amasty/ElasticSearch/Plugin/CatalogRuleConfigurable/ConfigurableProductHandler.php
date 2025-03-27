@@ -29,12 +29,12 @@ class ConfigurableProductHandler
      * @param array $productIds
      * @return array
      */
-    public function afterGetMatchingProductIds(\Magento\CatalogRule\Model\Rule $rule, array $productIds)
-    {
-        if (!$rule->getAmastyRelevanceRule()) {
-            $productIds = $this->parentHandler->afterGetMatchingProductIds($rule, $productIds);
-        }
+    // public function afterGetMatchingProductIds(\Magento\CatalogRule\Model\Rule $rule, array $productIds)
+    // {
+    //     if (!$rule->getAmastyRelevanceRule()) {
+    //         $productIds = $this->parentHandler->afterGetMatchingProductIds($rule, $productIds);
+    //     }
 
-        return $productIds;
-    }
+    //     return $productIds;
+    // }
 }

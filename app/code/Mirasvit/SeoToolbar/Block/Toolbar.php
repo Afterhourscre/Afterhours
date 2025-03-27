@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -35,6 +35,9 @@ class Toolbar extends Template
      */
     protected $_template = 'Mirasvit_SeoToolbar::toolbar.phtml';
 
+    /**
+     * @var Config
+     */
     private $config;
 
     /**
@@ -42,6 +45,12 @@ class Toolbar extends Template
      */
     private $dataProviderPool;
 
+    /**
+     * Toolbar constructor.
+     * @param Context $context
+     * @param Config $config
+     * @param array $dataProviderPool
+     */
     public function __construct(
         Context $context,
         Config $config,

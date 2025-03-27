@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -21,14 +21,26 @@ use Mirasvit\SeoContent\Service\ContentService;
 
 class ApplyMetaTitlePlugin
 {
+    /**
+     * @var ContentService
+     */
     private $contentService;
 
+    /**
+     * ApplyMetaTitlePlugin constructor.
+     * @param ContentService $contentService
+     */
     public function __construct(
         ContentService $contentService
     ) {
         $this->contentService = $contentService;
     }
 
+    /**
+     * @param mixed $subject
+     * @param mixed $result
+     * @return string
+     */
     public function afterGet($subject, $result)
     {
         if (!$this->contentService->isProcessablePage()) {

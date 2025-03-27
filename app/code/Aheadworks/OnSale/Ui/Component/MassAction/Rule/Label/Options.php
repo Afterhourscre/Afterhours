@@ -7,7 +7,7 @@ See LICENSE.txt for license details.
 namespace Aheadworks\OnSale\Ui\Component\MassAction\Rule\Label;
 
 use Magento\Framework\UrlInterface;
-use Zend\Stdlib\JsonSerializable;
+use Laminas\Stdlib\JsonSerializable;
 use Aheadworks\OnSale\Api\LabelRepositoryInterface;
 use Magento\Framework\Convert\DataObject;
 use Aheadworks\OnSale\Api\Data\LabelInterface;
@@ -100,7 +100,7 @@ class Options implements JsonSerializable
      * @return array
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         if ($this->options === null) {
             $labels = $this->labelRepository->getList($this->searchCriteriaBuilder->create())->getItems();

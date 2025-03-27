@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -119,7 +119,7 @@ class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\Ab
     }
 
     /**
-     * @param string $store
+     * @param \Magento\Store\Model\Store $store
      * @return $this
      */
     public function addStoreFilter($store)
@@ -150,7 +150,8 @@ class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\Ab
                 ['store_id' => new \Zend_Db_Expr(
                     "(SELECT GROUP_CONCAT(store_id) FROM `{$this->getTable('mst_seo_redirect_store')}`
                     AS `seo_redirect_store_table`
-                    WHERE main_table.redirect_id = seo_redirect_store_table.redirect_id)")]
+                    WHERE main_table.redirect_id = seo_redirect_store_table.redirect_id)"
+                )]
             );
 
         return $this;

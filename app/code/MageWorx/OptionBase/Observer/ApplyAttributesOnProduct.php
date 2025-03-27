@@ -3,12 +3,14 @@
  * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
 namespace MageWorx\OptionBase\Observer;
 
 use Magento\Catalog\Model\Product;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Catalog\Model\ResourceModel\Product\Option\Value\Collection as OptionValueCollection;
+use MageWorx\OptionBase\Model\ProductAttributes as ProductAttributesEntity;
 use \MageWorx\OptionBase\Model\Product\Attributes as ProductAttributes;
 use \MageWorx\OptionBase\Model\Product\Option\Attributes as OptionAttributes;
 use \MageWorx\OptionBase\Model\Product\Option\Value\Attributes as OptionValueAttributes;
@@ -19,97 +21,38 @@ use Magento\Framework\App\ResourceConnection;
 use Psr\Log\LoggerInterface as Logger;
 use Magento\Framework\Message\ManagerInterface as MessageManager;
 use MageWorx\OptionBase\Model\ResourceModel\DataSaver;
+use MageWorx\OptionTemplates\Model\ResourceModel\Group as GroupResourceModel;
 
 class ApplyAttributesOnProduct implements ObserverInterface
 {
-    /**
-     * @var OptionValueCollection
-     */
-    protected $optionValueCollection;
-
-    /**
-     * @var ProductAttributes
-     */
-    protected $productAttributes;
-
-    /**
-     * @var OptionAttributes
-     */
-    protected $optionAttributes;
-
-    /**
-     * @var OptionValueAttributes
-     */
-    protected $optionValueAttributes;
-
-    /**
-     * @var ProductEntity
-     */
-    protected $productEntity;
-
-    /**
-     * @var \Magento\Catalog\Model\Product
-     */
-    protected $productModel;
-
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var AttributeSaver
-     */
-    protected $attributeSaver;
-
-    /**
-     * @var ResourceConnection
-     */
-    protected $resource;
-
-    /**
-     * @var MessageManager
-     */
-    protected $messageManager;
-
-    /**
-     * @var Logger
-     */
-    protected $logger;
-
-    /**
-     * @var DataSaver
-     */
-    protected $dataSaver;
+    protected OptionValueCollection $optionValueCollection;
+    protected ProductAttributes $productAttributes;
+    protected OptionAttributes $optionAttributes;
+    protected OptionValueAttributes $optionValueAttributes;
+    protected ProductEntity $productEntity;
+    protected Product $productModel;
+    protected GroupResourceModel $groupResourceModel;
+    protected Helper $helper;
+    protected AttributeSaver $attributeSaver;
+    protected ResourceConnection $resource;
+    protected MessageManager $messageManager;
+    protected Logger $logger;
+    protected DataSaver $dataSaver;
 
     /**
      * Product options
      *
      * @var array
      */
-    protected $options = [];
+    protected array $options = [];
 
     /**
      * Product ID
      *
-     * @var integer|null
+     * @var int|null
      */
     protected $productId = null;
 
-    /**
-     * @param OptionValueCollection $optionValueCollection
-     * @param ProductAttributes $productAttributes
-     * @param OptionAttributes $optionAttributes
-     * @param OptionValueAttributes $optionValueAttributes
-     * @param Product $productModel
-     * @param ProductEntity $productEntity
-     * @param Helper $helper
-     * @param ResourceConnection $resource
-     * @param Logger $logger
-     * @param MessageManager $messageManager
-     * @param AttributeSaver $attributeSaver
-     * @param DataSaver $dataSaver
-     */
     public function __construct(
         OptionValueCollection $optionValueCollection,
         ProductAttributes $productAttributes,
@@ -117,6 +60,7 @@ class ApplyAttributesOnProduct implements ObserverInterface
         OptionValueAttributes $optionValueAttributes,
         Product $productModel,
         ProductEntity $productEntity,
+        GroupResourceModel $groupResourceModel,
         Helper $helper,
         ResourceConnection $resource,
         Logger $logger,
@@ -125,21 +69,22 @@ class ApplyAttributesOnProduct implements ObserverInterface
         DataSaver $dataSaver
     ) {
         $this->optionValueCollection = $optionValueCollection;
-        $this->productAttributes = $productAttributes;
-        $this->optionAttributes = $optionAttributes;
+        $this->productAttributes     = $productAttributes;
+        $this->optionAttributes      = $optionAttributes;
         $this->optionValueAttributes = $optionValueAttributes;
-        $this->productModel = $productModel;
-        $this->productEntity = $productEntity;
-        $this->helper = $helper;
-        $this->resource = $resource;
-        $this->logger = $logger;
-        $this->messageManager = $messageManager;
-        $this->attributeSaver = $attributeSaver;
-        $this->dataSaver = $dataSaver;
+        $this->productModel          = $productModel;
+        $this->groupResourceModel    = $groupResourceModel;
+        $this->productEntity         = $productEntity;
+        $this->helper                = $helper;
+        $this->resource              = $resource;
+        $this->logger                = $logger;
+        $this->messageManager        = $messageManager;
+        $this->attributeSaver        = $attributeSaver;
+        $this->dataSaver             = $dataSaver;
     }
 
     /**
-     * Save option value description
+     * Save product, option and value APO attributes on product
      *
      * @param Observer $observer
      * @return void
@@ -154,19 +99,19 @@ class ApplyAttributesOnProduct implements ObserverInterface
 
         $this->initProductId($observer);
         $this->initOptions($observer);
+        $product->setData('merged_options', $this->options);
 
         $this->productEntity->setDataObject($product);
         $this->productEntity->setIsAfterTemplate($isAfterTemplate);
-
-        $attributes = $this->productAttributes->getData();
-        foreach ($attributes as $attribute) {
-            $attribute->applyData($this->productEntity);
-        }
 
         $optionValueAttributes = $this->optionValueAttributes->getData();
         $this->collectAttributeData($optionValueAttributes);
         $optionAttributes = $this->optionAttributes->getData();
         $this->collectAttributeData($optionAttributes);
+
+        $this->productEntity->getDataObject()
+                            ->setData('mageworx_option_attributes', $this->attributeSaver->getAttributeData());
+        $this->collectProductAttributeData();
 
         if ($isAfterTemplate) {
             return;
@@ -193,6 +138,87 @@ class ApplyAttributesOnProduct implements ObserverInterface
             $this->resource->getConnection()->rollBack();
         }
         $this->attributeSaver->clearAttributeData();
+    }
+
+    /**
+     * Apply product attributes
+     *
+     * @return void
+     */
+    protected function collectProductAttributeData()
+    {
+        $productAttributes = $this->productAttributes->getData();
+        if (!$productAttributes || !is_array($productAttributes)) {
+            return;
+        }
+
+        $data = [];
+        foreach ($productAttributes as $productAttribute) {
+            if ($this->productEntity->getIsAfterTemplate()) {
+                $this->processPriorityValue($productAttribute);
+            }
+
+            $attributeData = $productAttribute->collectData($this->productEntity);
+            if (!$attributeData) {
+                continue;
+            }
+
+            $productAttributes = $this->productEntity->getDataObject()->getData('mageworx_product_attributes');
+            if (!$productAttributes) {
+                $productAttributes = [];
+            }
+            $productAttributes = array_merge($productAttributes, [$productAttribute->getName() => $attributeData]);
+            $this->productEntity->getDataObject()->setData('mageworx_product_attributes', $productAttributes);
+
+            if (!empty($attributeData['delete'])) {
+                foreach ($attributeData['delete'] as $attributeDatum) {
+                    $data['delete'][] = $attributeDatum;
+                }
+            }
+
+            if (empty($attributeData['save'])) {
+                continue;
+            }
+            foreach ($attributeData['save'] as $attributeDatum) {
+                if (!isset($data['save'][$this->productId])) {
+                    $data['save'][$this->productId] = $attributeDatum;
+                } else {
+                    $data['save'][$this->productId] = array_merge(
+                        $data['save'][$this->productId],
+                        $attributeDatum
+                    );
+                }
+            }
+            $data['save'][$this->productId]['product_id'] = $this->productId;
+        }
+
+        $tableName = $this->resource->getTableName(ProductAttributesEntity::TABLE_NAME);
+        $this->attributeSaver->addAttributeData($tableName, $data);
+    }
+
+    /**
+     * Process setting priority value if necessary
+     *
+     * @param array $productAttribute
+     * @return void
+     */
+    protected function processPriorityValue($productAttribute)
+    {
+        $priorityValue = $productAttribute->getPriorityValue($productAttribute->getName());
+        if (!isset($priorityValue)) {
+            return;
+        }
+        $groupIds = $this->groupResourceModel->getGroupIds($this->productId);
+        if ($this->groupResourceModel->hasPriorityValue(
+            $productAttribute->getName(),
+            $priorityValue,
+            $groupIds
+        )) {
+            $this->productEntity->getDataObject()->setData(
+                $productAttribute->getName(),
+                $priorityValue
+            );
+        }
     }
 
     /**
@@ -234,7 +260,7 @@ class ApplyAttributesOnProduct implements ObserverInterface
      */
     protected function initProductId($observer)
     {
-        $this->productId = $observer->getEvent()->getProduct()->getId();
+        $this->productId = $observer->getEvent()->getProduct()->getData($this->helper->getLinkField());
     }
 
     /**
@@ -259,9 +285,32 @@ class ApplyAttributesOnProduct implements ObserverInterface
             $savedOptions = $this->productModel->load($observer->getProduct()->getId())->getOptions();
 
             $currentOptions = $this->helper->beatifyOptions($currentOptions);
-            $savedOptions = $this->helper->beatifyOptions($savedOptions);
+            $savedOptions   = $this->helper->beatifyOptions($savedOptions);
 
             $this->options = $this->mergeArrays($currentOptions, $savedOptions);
+
+            /* temporary fix^ see APO issues 1076 */
+            if (empty($this->options)) {
+                $origOptions = $observer->getProduct()->getOrigData('options');
+                $origOptions = $this->helper->beatifyOptions($origOptions);
+
+                $data     = [];
+                $optionId = 'option_id';
+                foreach ($origOptions as $origOption) {
+                    $data['delete'][] = [$optionId => $origOption[$optionId]];
+
+                }
+
+                if (empty($data)) {
+                    return;
+                }
+
+                $this->attributeSaver->deleteOptionAttributesProcess(
+                    $this->resource->getTableName('mageworx_option_dependency'),
+                    'product',
+                    $data
+                );
+            }
         }
     }
 
@@ -278,14 +327,12 @@ class ApplyAttributesOnProduct implements ObserverInterface
             if (!empty($currentOption['is_delete'])) {
                 continue;
             }
-            $currentOptionId = $currentOption['option_id'];
-            $currentOptionRecordId = isset($currentOption['record_id'])
-                ? $currentOption['record_id']
-                : $currentOption['option_id'];
-            $isNewFromGroupOption = false;
+            $currentOptionId       = $currentOption['option_id'];
+            $currentOptionRecordId = $currentOption['record_id'] ?? $currentOption['option_id'];
+            $isNewFromGroupOption  = false;
 
             $currentOptionAttributes = [];
-            $optionAttributes = $this->optionAttributes->getData();
+            $optionAttributes        = $this->optionAttributes->getData();
             foreach ($optionAttributes as $optionAttribute) {
                 $currentOptionAttributes[] = $optionAttribute->getName();
             }
@@ -313,18 +360,16 @@ class ApplyAttributesOnProduct implements ObserverInterface
                 && in_array($currentOption['group_option_id'], $this->attributeSaver->getNewGroupOptionIds())
             ) {
                 $saved[$savedOptionKey]['need_to_process_dependency'] = true;
-                $isNewFromGroupOption = true;
+                $isNewFromGroupOption                                 = true;
             }
 
-            $currentValues = isset($currentOption['values']) ? $currentOption['values'] : [];
+            $currentValues = $currentOption['values'] ?? [];
             foreach ($currentValues as $currentValue) {
                 $currentValueSortOrder = $currentValue['sort_order'];
-                $currentValueRecordId = isset($currentValue['record_id'])
-                    ? $currentValue['record_id']
-                    : $currentValue['option_type_id'];
+                $currentValueRecordId  = $currentValue['record_id'] ?? $currentValue['option_type_id'];
 
                 $currentValueAttributes = [];
-                $valueAttributes = $this->optionValueAttributes->getData();
+                $valueAttributes        = $this->optionValueAttributes->getData();
                 foreach ($valueAttributes as $valueAttribute) {
                     $currentValueAttributes[] = $valueAttribute->getName();
                 }

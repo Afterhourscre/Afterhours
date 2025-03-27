@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoContent\Service\Content\Modifier;
 
@@ -36,7 +37,7 @@ class PrefixSuffixModifier implements ModifierInterface
         $this->scopeConfig = $scopeConfig;
     }
 
-    public function modify(ContentInterface $content)
+    public function modify(ContentInterface $content, ?string $forceApplyTo = null): ContentInterface
     {
         $metaTitle = $content->getMetaTitle();
 
@@ -65,7 +66,7 @@ class PrefixSuffixModifier implements ModifierInterface
         return $content;
     }
 
-    private function getPrefix()
+    private function getPrefix(): ?string
     {
         return $this->scopeConfig->getValue(
             'design/head/title_prefix',
@@ -73,7 +74,7 @@ class PrefixSuffixModifier implements ModifierInterface
         );
     }
 
-    private function getSuffix()
+    private function getSuffix(): ?string
     {
         return $this->scopeConfig->getValue(
             'design/head/title_suffix',

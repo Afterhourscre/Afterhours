@@ -11,14 +11,8 @@ use Magento\Framework\Event\ManagerInterface;
 
 class ProductSaveAfter implements ObserverInterface
 {
-    /**
-     * @var ManagerInterface
-     */
-    protected $eventManager;
+    protected ManagerInterface $eventManager;
 
-    /**
-     * @param ManagerInterface $eventManager
-     */
     public function __construct(
         ManagerInterface $eventManager
     ) {
@@ -29,7 +23,6 @@ class ProductSaveAfter implements ObserverInterface
      * Call mageworx_attributes_save_trigger event to save attributes on product save
      *
      * @param Observer $observer
-     * @return $this
      */
     public function execute(Observer $observer)
     {

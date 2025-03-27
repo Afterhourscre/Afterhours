@@ -86,6 +86,7 @@ class GroupActions extends \Magento\Ui\Component\Listing\Columns\Column
                     'confirm' => [
                         'title' => __('Delete'),
                         'message' => __('Are you sure you want to delete the Option Template "${ $.$data.title }" ?'),
+                        '__disableTmpl' => ['message' => false]
                     ],
                 ],
             ];

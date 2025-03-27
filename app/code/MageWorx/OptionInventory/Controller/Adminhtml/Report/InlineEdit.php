@@ -9,20 +9,14 @@ namespace MageWorx\OptionInventory\Controller\Adminhtml\Report;
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\Controller\Result\JsonFactory;
+use Magento\Framework\ObjectManagerInterface;
 use Magento\Framework\Registry;
 use \Magento\Catalog\Model\Product\Option\Value as OptionValueModel;
 
 class InlineEdit extends Action
 {
-    /**
-     * @var JsonFactory
-     */
-    protected $jsonFactory;
-
-    /**
-     * @var ObjectManagerInterface
-     */
-    protected $objectManager;
+    protected JsonFactory $jsonFactory;
+    protected ObjectManagerInterface $objectManager;
 
     /**
      * InlineEdit constructor.
@@ -97,7 +91,7 @@ class InlineEdit extends Action
      * @param string $errorText
      * @return string
      */
-    protected function getErrorWithOptionValueId(OptionValueModel $optionValue, $errorText)
+    protected function getErrorWithOptionValueId(OptionValueModel $optionValue, $errorText): string
     {
         return '[Option Value ID: ' . $optionValue->getId() . '] ' . $errorText;
     }

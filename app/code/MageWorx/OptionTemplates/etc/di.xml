@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--
 /**
- * Copyright © 2016 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
 -->
@@ -50,15 +50,6 @@
                 <item name="updated_at" xsi:type="string">updated_at</item>
                 <item name="is_active" xsi:type="string">is_active</item>
                 <item name="products" xsi:type="string">products</item>
-            </argument>
-        </arguments>
-    </type>
-
-    <!-- Installation -->
-    <type name="MageWorx\OptionBase\Model\Installer">
-        <arguments>
-            <argument name="installSchema" xsi:type="array">
-                <item name="optiontemplates_install_schema_data" xsi:type="object">MageWorx\OptionTemplates\Model\InstallSchema</item>
             </argument>
         </arguments>
     </type>

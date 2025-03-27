@@ -26,11 +26,11 @@ if($productsType != 'recently_viewed') {
     ?>
 
     <div class="custom-slider">
-        <?php if (trim($sliderTitle)) : ?>
-            <div class="content-heading">
-                <h2 class="title"><?php echo $sliderTitle; ?></h2>
-            </div>
-        <?php endif; ?>
+        <?php if (!empty($sliderTitle) && trim($sliderTitle) !== '') : ?>
+        <div class="content-heading">
+            <h2 class="title"><?php echo $sliderTitle; ?></h2>
+        </div>
+       <?php endif; ?>
         <div class="owl-carousel-products-<?php echo $productsType;?> <?php echo count($products)== 1? 'owl-carousel-products-single-item': '';?>">
             <?php foreach($products as $product) : ?>
 

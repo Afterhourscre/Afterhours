@@ -7,6 +7,9 @@
                 <meta>
                     <is_category_meta_tags_used>1</is_category_meta_tags_used>
                     <is_product_meta_tags_used>1</is_product_meta_tags_used>
+                    <is_cms_meta_tags_used>1</is_cms_meta_tags_used>
+                    <is_blog_meta_tags_used>1</is_blog_meta_tags_used>
+                    <is_brand_meta_tags_used>1</is_brand_meta_tags_used>
                 </meta>
                 <pagination>
                     <meta_title_page_number>1</meta_title_page_number>

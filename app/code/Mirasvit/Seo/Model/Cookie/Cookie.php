@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -22,6 +22,15 @@ use Mirasvit\Seo\Model\Config as Config;
 
 class Cookie extends \Magento\Framework\DataObject
 {
+    /**
+     * @var CookieManagerInterface
+     */
+    private $cookieManager;
+    /**
+     * @var \Magento\Framework\Stdlib\Cookie\CookieMetadataFactory
+     */
+    private $cookieMetadataFactory;
+
     /**
      * @param CookieManagerInterface                                  $cookieManager
      * @param \Magento\Framework\Stdlib\Cookie\CookieMetadataFactory  $cookieMetadataFactory
@@ -81,5 +90,4 @@ class Cookie extends \Magento\Framework\DataObject
 
         return Config::COOKIE_ADD_BUTTON;
     }
-
 }

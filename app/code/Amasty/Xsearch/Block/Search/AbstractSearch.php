@@ -1,23 +1,31 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
+declare(strict_types=1);
 
 namespace Amasty\Xsearch\Block\Search;
 
-use Magento\CatalogSearch\Model\ResourceModel\EngineProvider;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\View\Element\Template;
 use Amasty\Xsearch\Controller\RegistryConstants;
-use \Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
+use Amasty\Xsearch\Helper\Data;
+use Amasty\Xsearch\Model\Config;
+use Amasty\Xsearch\Model\Search\SearchAdapterResolver;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Registry;
+use Magento\Framework\Stdlib\StringUtils;
+use Magento\Framework\UrlInterface;
+use Magento\Framework\View\Element\Template;
+use Magento\Framework\View\Element\Template\Context;
+use Magento\Search\Model\QueryFactory;
+use Magento\Framework\DataObject;
 
 abstract class AbstractSearch extends Template
 {
-    const DEFAULT_CACHE_TAG = 'amasty_xsearch_popup';
-    const DEFAULT_CACHE_LIFETIME = 86400;
+    public const DEFAULT_CACHE_TAG = 'amasty_xsearch_popup';
+    public const DEFAULT_CACHE_LIFETIME = 86400;
 
     /**
      * @var \Zend\ServiceManager\FactoryInterface
@@ -25,47 +33,48 @@ abstract class AbstractSearch extends Template
     private $searchCollection;
 
     /**
-     * \Magento\Search\Model\Query
+     * @var \Magento\Search\Model\Query
      */
     private $query;
 
     /**
-     * @var \Magento\Framework\Registry
+     * @var Registry
      */
     private $coreRegistry;
 
     /**
-     * @var \Amasty\Xsearch\Helper\Data
+     * @var Data
      */
     protected $xSearchHelper;
 
     /**
-     * @var \Magento\Search\Model\QueryFactory
+     * @var QueryFactory
      */
     protected $queryFactory;
 
     /**
-     * @var \Magento\Framework\Stdlib\StringUtils
+     * @var StringUtils
      */
     protected $stringUtils;
 
     /**
-     * @var \Amasty\Xsearch\Helper\Data
+     * @var Config
      */
-    private $helper;
+    protected $configProvider;
 
     /**
-     * @var \Amasty\Xsearch\Model\ResourceModel\Dummy\CollectionFactory
+     * @var SearchAdapterResolver
      */
-    private $dummyCollectionFactory;
+    private $searchAdapterResolver;
 
     public function __construct(
-        Template\Context $context,
-        \Amasty\Xsearch\Helper\Data $xSearchHelper,
-        \Magento\Framework\Stdlib\StringUtils $string,
-        \Magento\Search\Model\QueryFactory $queryFactory,
-        \Magento\Framework\Registry $coreRegistry,
-        \Amasty\Xsearch\Model\ResourceModel\Dummy\CollectionFactory $dummyCollectionFactory,
+        Context $context,
+        Data $xSearchHelper,
+        StringUtils $string,
+        QueryFactory $queryFactory,
+        Registry $coreRegistry,
+        Config $configProvider,
+        SearchAdapterResolver $searchAdapterResolver,
         array $data = []
     ) {
         parent::__construct($context, $data);
@@ -73,8 +82,9 @@ abstract class AbstractSearch extends Template
         $this->stringUtils = $string;
         $this->queryFactory = $queryFactory;
         $this->coreRegistry = $coreRegistry;
+        $this->configProvider = $configProvider;
+        $this->searchAdapterResolver = $searchAdapterResolver;
         $this->setData('cache_lifetime', self::DEFAULT_CACHE_LIFETIME);
-        $this->dummyCollectionFactory = $dummyCollectionFactory;
     }
 
     /**
@@ -84,7 +94,10 @@ abstract class AbstractSearch extends Template
     {
         $cacheKey = parent::getCacheKeyInfo();
 
-        return array_merge([$this->getQuery()->getQueryText(), $this->getBlockType()], $cacheKey);
+        return array_merge(
+            [$this->getQuery()->getQueryText(), self::DEFAULT_CACHE_TAG . '_' . $this->getBlockType()],
+            $cacheKey
+        );
     }
 
     /**
@@ -100,7 +113,7 @@ abstract class AbstractSearch extends Template
      */
     protected function _construct()
     {
-        $this->_template = 'search/common.phtml';
+        $this->_template = 'Amasty_Xsearch::search/items.phtml';
 
         parent::_construct();
     }
@@ -128,7 +141,7 @@ abstract class AbstractSearch extends Template
     /**
      * @return \Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection | array
      */
-    protected function getSearchCollection()
+    public function getSearchCollection()
     {
         if ($this->searchCollection === null) {
             try {
@@ -136,37 +149,9 @@ abstract class AbstractSearch extends Template
             } catch (LocalizedException $exception) {
                 $this->searchCollection = [];
             }
-            if ($this->getData('index_mode')) {
-                if (is_array($this->searchCollection)) {
-                    $this->searchCollection = array_slice(
-                        $this->searchCollection,
-                        $this->getLimit() * ($this->getPageNum() - 1),
-                        $this->getLimit()
-                    );
-                } else {
-                    if ($this->getPageNum() > $this->searchCollection->getLastPageNumber()) {
-                        $this->searchCollection = $this->dummyCollectionFactory->create();
-                    } else {
-                        $this->searchCollection->setPageSize($this->getLimit())
-                            ->setCurPage($this->getPageNum());
-                    }
-                }
-            }
         }
 
         return $this->searchCollection;
-    }
-
-    /**
-     * @return int
-     */
-    public function getPageNum()
-    {
-        if ($this->getData('page_num') === null) {
-            $this->setData('page_num', 1);
-        }
-
-        return $this->getData('page_num');
     }
 
     /**
@@ -174,16 +159,40 @@ abstract class AbstractSearch extends Template
      */
     public function getResults()
     {
-        $result = [];
-        foreach ($this->getSearchCollection() as $index => $item) {
-            $data['name'] = $this->getName($item);
-            $data['description'] = $this->getDescription($item);
-            $data['url'] = $this->getRelativeLink($this->getSearchUrl($item));
-            $data['title'] = $this->getItemTitle($item);
-            $result[$index] = $data;
+        $query = $this->getQuery();
+        $result = $query ? $this->searchAdapterResolver->getResults($this->getBlockType(), $query) : null;
+
+        if ($result && $result->getItems()) {
+            $this->setNumResults($result->getResultsCount());
+            $searchResult = $result->getItems();
+        } else {
+            $searchResult = $this->getCollectionData();
         }
 
-        return $result;
+        return $searchResult;
+    }
+
+    private function getCollectionData(): array
+    {
+        foreach ($this->getSearchCollection() as $index => $item) {
+            $result[$index] = $this->getItemData($item);
+        }
+
+        return $result ?? [];
+    }
+
+    /**
+     * @param DataObject $item
+     * @return array
+     */
+    public function getItemData(DataObject $item): array
+    {
+        $data['name'] = $this->getName($item);
+        $data['description'] = $this->getDescription($item);
+        $data['url'] = $this->getRelativeLink($this->getSearchUrl($item));
+        $data['title'] = $this->getItemTitle($item);
+
+        return $data;
     }
 
     /**
@@ -250,14 +259,24 @@ abstract class AbstractSearch extends Template
     protected function generateName($name)
     {
         $text = $this->stripTags($name, null, true);
+        $text = $this->formatAccordingToConstraint($text);
 
+        return $this->highlight($text);
+    }
+
+    /**
+     * @param string $text
+     * @return string
+     */
+    public function formatAccordingToConstraint(string $text): string
+    {
         $nameLength = $this->getNameLength();
 
         if ($nameLength && $this->stringUtils->strlen($text) > $nameLength) {
             $text = $this->stringUtils->substr($text, 0, $nameLength) . '...';
         }
 
-        return $this->highlight($text);
+        return $text;
     }
 
     /**
@@ -357,14 +376,17 @@ abstract class AbstractSearch extends Template
      */
     protected function getRelativeLink($url)
     {
-        $baseUrl = $this->getBaseUrl();
-        $baseUrlPosition = strpos($url, $baseUrl);
-
-        if ($baseUrlPosition !== false) {
-            return substr($url, strlen($baseUrl) - 1);
-        }
-
-        return preg_replace('#^[^/:]+://[^/]+#', '', $url);
+        $store = $this->_storeManager->getStore();
+        return str_replace(
+            [
+                $store->getBaseUrl(),
+                $store->getBaseUrl('link', false),
+                $store->getBaseUrl(UrlInterface::URL_TYPE_WEB),
+                $store->getBaseUrl(UrlInterface::URL_TYPE_WEB, false)
+            ],
+            '',
+            $url
+        );
     }
 
     /**
@@ -375,7 +397,7 @@ abstract class AbstractSearch extends Template
     {
         $url = $this->getRelativeLink($url);
 
-        return rtrim($this->getBaseUrl(), '/') . $url;
+        return $this->_storeManager->getStore()->getBaseUrl() . ltrim($url, '/');
     }
 
     /**

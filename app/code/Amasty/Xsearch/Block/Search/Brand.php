@@ -1,17 +1,16 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Block\Search;
 
 class Brand extends AbstractSearch
 {
-    const BRAND_BLOCK_PAGE = 'brand';
-    const SPLIT_SYMBOLS = '/( |&|:|-|\*|=)/';
+    public const BRAND_BLOCK_PAGE = 'brand';
+    public const SPLIT_SYMBOLS = '/( |&|:|-|\*|=)/';
 
     /**
      * @var \Magento\Framework\DataObjectFactory
@@ -62,7 +61,7 @@ class Brand extends AbstractSearch
     {
         $result = [];
         foreach ($this->getBrands() as $brand) {
-            $result[] = trim(trim($brand['label']) . ' ' . trim($brand['description']));
+            $result[] = trim(trim((string) $brand['label']) . ' ' . trim((string) $brand['description']));
         }
 
         return $result;
@@ -91,7 +90,7 @@ class Brand extends AbstractSearch
     {
         $result = false;
         $query = $this->getQuery()->getQueryText();
-        if (strlen($query) > 2) {
+        if (strlen((string) $query) > 2) {
             $haystack = (string)$item['label'] . (string)$item['description'];
             $result = strpos(strtolower($haystack), strtolower($query)) !== false;
         }
@@ -105,7 +104,11 @@ class Brand extends AbstractSearch
      */
     private function explodeString($string)
     {
-        return preg_split(self::SPLIT_SYMBOLS, strtolower($string), -1, PREG_SPLIT_NO_EMPTY);
+        if ($string) {
+            return preg_split(self::SPLIT_SYMBOLS, strtolower($string), -1, PREG_SPLIT_NO_EMPTY);
+        }
+
+        return [];
     }
 
     /**

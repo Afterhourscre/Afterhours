@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
+ * @autor Amasty Team
  * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
  * @package Amasty_Base
  */
-
 
 namespace Amasty\Base\Debug\System;
 
@@ -15,7 +14,7 @@ class AmastyFormatter extends \Monolog\Formatter\LineFormatter
      *
      * @return string
      */
-    public function format(array $record)
+    public function format(array $record): string
     {
         $output = $this->format;
         $output = str_replace('%datetime%', date('H:i d/m/Y'), $output);

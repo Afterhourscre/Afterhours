@@ -41,6 +41,15 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param int $storeId
      * @return mixed
      */
+    public function getMaxNumberOfPopularSuggestionsDisplayed($storeId = null) {
+        return $this->scopeConfig->getValue('weltpixel_searchautocomplete/popularSuggestions/maxItems', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId);
+    }
+
+
+    /**
+     * @param int $storeId
+     * @return mixed
+     */
     public function isEnableCategorySearch($storeId = null) {
         return $this->scopeConfig->getValue('weltpixel_searchautocomplete/categorySearch/enableCategorySearch', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId);
     }
@@ -108,7 +117,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @return boolean
      */
     public function getMinNumberOfCharacters($storeId = null) {
-        return $this->scopeConfig->getValue('weltpixel_searchautocomplete/productSearch/minimalChar', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId);
+        return $this->scopeConfig->getValue('weltpixel_searchautocomplete/productSearch/minimalChar', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId) ?? '';
     }
 
     /**
@@ -124,7 +133,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @return boolean
      */
     public function getWidthOfResultsContainer($storeId = null) {
-        return $this->scopeConfig->getValue('weltpixel_searchautocomplete/frontendSettings/widthResult', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId);
+        return $this->scopeConfig->getValue('weltpixel_searchautocomplete/frontendSettings/widthResult', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId) ?? '';
     }
 
     /**
@@ -132,7 +141,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @return int
      */
     public function getMaxNumberItemsDisplayed($storeId = null) {
-        $config = $this->scopeConfig->getValue('weltpixel_searchautocomplete/productSearch/maxItems', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId);
+        $config = $this->scopeConfig->getValue('weltpixel_searchautocomplete/productSearch/maxItems', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId) ?? '';
         return empty(trim($config)) ?  3 : (int) $config;
     }
 
@@ -141,7 +150,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @return boolean
      */
     public function getMaxWordsProductDescription($storeId = null) {
-        return $this->scopeConfig->getValue('weltpixel_searchautocomplete/productSearch/maxWordsProdDescr', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId);
+        return $this->scopeConfig->getValue('weltpixel_searchautocomplete/productSearch/maxWordsProdDescr', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId) ?? '';
     }
 
     /**
@@ -173,7 +182,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @return boolean
      */
     public function getWidthOfTheImage($storeId = null) {
-        return $this->scopeConfig->getValue('weltpixel_searchautocomplete/productSearch/widthImg', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId);
+        return $this->scopeConfig->getValue('weltpixel_searchautocomplete/productSearch/widthImg', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId) ?? '';
     }
 
     /**
@@ -230,7 +239,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @return string
      */
     public function getSearchResultHeaderText($storeId = null){
-        return trim($this->scopeConfig->getValue('weltpixel_searchautocomplete/productSearch/resultHeader', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId));
+        $result = $this->scopeConfig->getValue('weltpixel_searchautocomplete/productSearch/resultHeader', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId) ?? '';
+        return trim($result);
     }
 
     /**
@@ -238,7 +248,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @return string
      */
     public function getSearchResultFooterText($storeId = null){
-        return trim($this->scopeConfig->getValue('weltpixel_searchautocomplete/productSearch/resultFooter', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId));
+        $result = $this->scopeConfig->getValue('weltpixel_searchautocomplete/productSearch/resultFooter', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId) ?? '';
+        return trim($result);
     }
 
     /**
@@ -247,6 +258,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @return string
      */
     public function limitText($text, $limit) {
+        $text = $text ?? '';
         if (str_word_count($text, 0) > $limit ) {
             $words = str_word_count($text, 2);
             $pos = array_keys($words);

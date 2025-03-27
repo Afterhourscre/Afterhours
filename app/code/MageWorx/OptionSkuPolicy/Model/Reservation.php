@@ -10,10 +10,7 @@ use Magento\InventorySalesApi\Api\Data\ProductSalableResultInterface;
 
 class Reservation
 {
-    /**
-     * @var array
-     */
-    protected $reservations;
+    protected array $reservations;
 
     /**
      * @param string $sku

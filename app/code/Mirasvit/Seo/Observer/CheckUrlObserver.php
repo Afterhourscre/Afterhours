@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -18,106 +18,89 @@
 namespace Mirasvit\Seo\Observer;
 
 use Magento\Framework\Event\ObserverInterface;
+use Mirasvit\Seo\Model\RedirectFactory;
+use Mirasvit\Seo\Helper\Redirect;
+use Mirasvit\Seo\Helper\Data;
+use Magento\Framework\App\Request\Http as HttpRequest;
+use Magento\Framework\App\Response\Http as HttpResponse;
+use Magento\Framework\UrlInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Mirasvit\Seo\Model\Config;
+use Magento\Customer\Model\Session;
+use Magento\Framework\App\ResponseInterface;
+
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-
 class CheckUrlObserver implements ObserverInterface
 {
-    CONST HOME_PAGE_REDIRECT = 'm__home_page_index_redirect';
-    CONST REDIRECT_CHAIN = '[redirect_chain]';
+    const HOME_PAGE_REDIRECT = 'm__home_page_index_redirect';
+    const REDIRECT_CHAIN     = '[redirect_chain]';
 
-    /**
-     * @var \Mirasvit\Seo\Model\RedirectFactory
-     */
     protected $redirectFactory;
 
-    /**
-     * @var \Mirasvit\Seo\Helper\Redirect
-     */
     protected $redirectHelper;
 
-    /**
-     * @var \Mirasvit\Seo\Helper\Data
-     */
     protected $dataHelper;
 
-    /**
-     * @var \Magento\Framework\App\Request\Http
-     */
     protected $request;
 
-    /**
-     * @var \Magento\Framework\UrlInterface
-     */
+    protected $response;
+
     protected $urlManager;
 
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
     protected $storeManager;
 
-    /**
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface
-     */
     protected $scopeConfig;
 
     /**
+     * @var bool
      * true - decode URLs when redirect from Redirect Manager
      * false - work with URLs "as is"
      */
-    protected $_redirectUrlFromDecode = false;
+    protected $_redirectUrlFromDecode = true;
 
-    /**
-     * CheckUrlObserver constructor.
-     * @param \Mirasvit\Seo\Model\RedirectFactory $redirectFactory
-     * @param \Mirasvit\Seo\Helper\Redirect $redirectHelper
-     * @param \Mirasvit\Seo\Helper\Data $dataHelper
-     * @param \Magento\Framework\App\Request\Http $request
-     * @param \Magento\Framework\UrlInterface $urlManager
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-     * @param \Mirasvit\Seo\Model\Config $config
-     * @param \Magento\Customer\Model\Session $
-     */
+    private $customerSession;
+
+    private $config;
+
     public function __construct(
-        \Mirasvit\Seo\Model\RedirectFactory $redirectFactory,
-        \Mirasvit\Seo\Helper\Redirect $redirectHelper,
-        \Mirasvit\Seo\Helper\Data $dataHelper,
-        \Magento\Framework\App\Request\Http $request,
-        \Magento\Framework\UrlInterface $urlManager,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Mirasvit\Seo\Model\Config $config,
-        \Magento\Customer\Model\Session $customerSession
+        RedirectFactory $redirectFactory,
+        Redirect $redirectHelper,
+        Data $dataHelper,
+        HttpRequest $request,
+        HttpResponse $response,
+        UrlInterface $urlManager,
+        StoreManagerInterface $storeManager,
+        ScopeConfigInterface $scopeConfig,
+        Config $config,
+        Session $customerSession
     ) {
         $this->redirectFactory = $redirectFactory;
-        $this->redirectHelper = $redirectHelper;
-        $this->dataHelper = $dataHelper;
-        $this->request = $request;
-        $this->urlManager = $urlManager;
-        $this->storeManager = $storeManager;
-        $this->scopeConfig = $scopeConfig;
-        $this->config = $config;
+        $this->redirectHelper  = $redirectHelper;
+        $this->dataHelper      = $dataHelper;
+        $this->request         = $request;
+        $this->response        = $response;
+        $this->urlManager      = $urlManager;
+        $this->storeManager    = $storeManager;
+        $this->scopeConfig     = $scopeConfig;
+        $this->config          = $config;
         $this->customerSession = $customerSession;
     }
 
-    /**
-     * @param \Magento\Framework\Event\Observer $observer
-     * @return void
-     */
-    public function execute(\Magento\Framework\Event\Observer $observer)
+    public function execute(\Magento\Framework\Event\Observer $observer): void
     {
+        $url = $this->request->getRequestUri();
+        $url = urldecode($url);
+
         if (!isset($_SERVER['REQUEST_URI'])) {
             return;
         }
 
-        /** @var \Magento\Framework\App\Action\Action $controller */
-        $controller = $observer->getControllerAction();
-        $url = $controller->getRequest()->getRequestString();
-        $response = $controller->getResponse();
         $fullUrl = $_SERVER['REQUEST_URI'];
+        $fullUrl = urldecode($fullUrl);
 
         if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
             return;
@@ -127,6 +110,10 @@ class CheckUrlObserver implements ObserverInterface
             return;
         }
 
+        if (strpos($this->request->getRequestUri(), 'stores/store/redirect') !== false) {
+            // prevent redirect to homepage from product page when store changed
+            return;
+        }
         if (strpos($this->request->getRequestUri(), 'page_cache') !== false) {
             //prevent for varnish urls such /page_cache/block/esi/blocks/%5B%22catalog.topnav%22%5D/handles/WyJkZW
             return;
@@ -137,6 +124,10 @@ class CheckUrlObserver implements ObserverInterface
         if (strpos($this->request->getRequestUri(), 'checkout') !== false) {
             return;
         }
+        // prevent Invalid header value detected with Magesolution Pagebuilder
+        if (strpos($this->request->getRequestUri(), 'fbuilder') !== false) {
+            return;
+        }
         // redirect uppercase to lowercase
         $p = strpos($fullUrl, "?");
         if ($p === false) {
@@ -144,197 +135,78 @@ class CheckUrlObserver implements ObserverInterface
         } else {
             //dont lowercase get params
             $mainUrl = substr($fullUrl, 0, $p);
-            $query = substr($fullUrl, $p);
-            $newUrl = strtolower($mainUrl).$query;
-        }
-        if ($this->config->isRedirectToLowercaseEnabled($this->storeManager->getStore()->getStoreId())
-            && $fullUrl != $newUrl) {
-            $this->redirectHelper->redirect($response, $newUrl);
-            return;
+            $query   = substr($fullUrl, $p);
+            $newUrl  = strtolower($mainUrl) . $query;
         }
 
-        $this->redirectFromRedirectManagerUrlList($response);
+        if ($this->config->isRedirectToLowercaseEnabled((int)$this->storeManager->getStore()->getStoreId())
+            && $fullUrl != $newUrl) {
+
+            $allowedTypes = $this->config->getAllowedLowercasePageTypes((int)$this->storeManager->getStore()->getStoreId());
+
+            $allowed = count($allowedTypes) === 0;
+            foreach ($allowedTypes as $type) {
+                if (!trim($type)) {
+                    continue;
+                }
+
+                if (preg_match($type, $this->request->getFullActionName())) {
+                    $allowed = true;
+                }
+            }
+
+            if ($allowed) {
+                $this->redirectHelper->redirect($this->response, $newUrl);
+
+                return;
+            }
+        }
+
+        $this->redirectFromRedirectManagerUrlList($this->response);
         $this->redirectHelper->unsetFlag();
+
+        // Prepare base URL. Remove store codes or custom store routes
+        $baseUrl   = rtrim($this->urlManager->getBaseUrl(), '/');
+        $parts     = explode('/', trim($url, '/'));
+        $baseParts = explode('/', $baseUrl);
+        $baseUrl   = implode('/', array_diff($baseParts, $parts));
 
         $urlToRedirect = $this->redirectHelper->getUrlWithCorrectEndSlash($url);
 
         if ($urlToRedirect != '/' && $url != $urlToRedirect) {
-            $this->redirectHelper->redirect($response, rtrim($this->urlManager->getBaseUrl(), '/') . $urlToRedirect);
+            $this->redirectHelper->redirect($this->response, $baseUrl . $urlToRedirect);
         }
 
         if (substr($fullUrl, -4, 4) == '?p=1') {
-            $this->redirectHelper->redirect($response, substr($fullUrl, 0, -4));
+            $this->redirectHelper->redirect($this->response, substr($fullUrl, 0, -4));
         }
 
         //prevent redirect loop if $fullUrl always contains index.php
         if (in_array(trim($fullUrl, '/'), ['index.php'])
             && !$this->customerSession->getData(self::HOME_PAGE_REDIRECT)) {
             $this->customerSession->setData(self::HOME_PAGE_REDIRECT, 1);
-            $this->redirectHelper->redirect($response, '/');
+            $this->redirectHelper->redirect($this->response, '/');
         } elseif (!in_array(trim($fullUrl, '/'), ['index.php'])) {
             $this->customerSession->unsetData(self::HOME_PAGE_REDIRECT);
         }
 
         if (in_array(trim($fullUrl, '/'), ['home', 'index.php/home'])) {
-            $this->redirectHelper->redirect($response, '/');
+            $this->redirectHelper->redirect($this->response, '/');
         }
-    }
-
-    /**
-     * @param string $urlFrom
-     * @return string
-     */
-    protected function prepareRedirectUrl($urlFrom)
-    {
-        if (stripos($urlFrom, 'http://') === false
-            && stripos($urlFrom, 'https://') === false
-        ) {
-            return $this->urlManager->getBaseUrl() . ltrim($urlFrom, '/');
-        }
-
-        return $urlFrom;
-    }
-
-    /**
-     * Do redirect using records of our Redirect Manager.
-     *
-     * @param \Magento\Framework\App\ResponseInterface $response
-     *
-     * @return bool
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     */
-    protected function redirectFromRedirectManagerUrlList($response)
-    {
-        \Magento\Framework\Profiler::start(__METHOD__);
-
-        $currentUrl = $this->urlManager->getCurrentUrl();
-        if ($this->_redirectUrlFromDecode) {
-            $currentUrl = rawurldecode($currentUrl);
-        }
-        $currentAction = $this->dataHelper->getFullActionCode();
-        $baseUrl = $this->getSeoBaseUrl();
-
-        $redirectCollection = $this->redirectFactory->create()
-            ->getCollection()
-            ->addActiveFilter()
-            ->addStoreFilter($this->storeManager->getStore());
-
-        $url = str_replace($baseUrl, '', $currentUrl);
-        $trimmedUrl = str_replace(rtrim($baseUrl, '/'), '', $currentUrl);
-        $where = 'url_from = ' . "'" . addslashes($currentUrl) . "'"
-                . ' OR ' . 'url_from = ' . "'" . addslashes($url) . "'"
-                . ' OR ' . 'url_from = ' . "'" . addslashes($trimmedUrl) . "'"
-                . ' OR ' . "'" . addslashes($url) . "'" . " LIKE CONCAT(REPLACE(url_from, '*', '%'))"
-                . ' OR ' . "'" . addslashes($trimmedUrl) . "'" . " LIKE CONCAT(REPLACE(url_from, '*', '%'))"
-                . ' OR ' . "'" . addslashes($currentUrl) . "'" . " LIKE CONCAT(REPLACE(url_from, '*', '%'))"
-                . ' OR ' . "'" . addslashes($url) . "'"
-                    . " LIKE CONCAT(REPLACE(url_from, '" . self::REDIRECT_CHAIN . "', '%'))"
-                . ' OR ' . "'" . addslashes($trimmedUrl) . "'"
-                    . " LIKE CONCAT(REPLACE(url_from, '" . self::REDIRECT_CHAIN . "', '%'))"
-                . ' OR ' . "'" . addslashes($currentUrl) . "'"
-                    . " LIKE CONCAT(REPLACE(url_from, '" . self::REDIRECT_CHAIN . "', '%'))";
-
-        $redirectCollection->getSelect()
-                           ->where(new \Zend_Db_Expr($where), null, \Magento\Framework\DB\Select::TYPE_CONDITION)
-                           ->order('LENGTH(url_from) DESC');
-
-        foreach ($redirectCollection as $redirect) {
-            $urlFrom = $this->prepareRedirectUrl($redirect->getUrlFrom());
-            $urlTo = $this->prepareRedirectUrl($redirect->getUrlTo());
-            $action = $redirect->getIsRedirectOnlyErrorPage();
-
-            if ($action && $currentAction != 'cms_noroute_index') {
-                continue;
-            }
-
-            // To prevent redirect loop is rule is set up incorrectly
-            if ($this->redirectHelper->checkRedirectPattern($redirect->getUrlFrom(), $redirect->getUrlTo(), $action)) {
-                continue;
-            }
-
-            if (strpos($urlTo, '[redirect_chain]') !== false) {
-                $urlTo = $this->getRedirectChainUrlTo($urlFrom, $urlTo, $currentUrl);
-                $urlFrom = $currentUrl;
-            }
-
-            if (!$urlTo) {
-                continue;
-            }
-
-            if ($this->redirectHelper->checkForLoop($urlTo)) {
-                continue;
-            }
-
-            if ($currentUrl == $urlFrom
-                || (stripos($redirect->getUrlFrom(), '*') !== false
-                    && $this->redirectHelper->checkRedirectPattern($redirect->getUrlFrom(), $currentUrl)) ) {
-                        $this->redirectHelper->setFlag($currentUrl);
-                        $this->redirectHelper->redirect($response, $urlTo, $redirect->getRedirectType());
-                        break;
-            }
-        }
-
-        \Magento\Framework\Profiler::stop(__METHOD__);
-
-        return false;
-    }
-
-    /**
-     * @param string $urlFrom
-     * @param string $urlTo
-     * @param string $currentUrl
-     * @return bool|string
-     */
-    private function getRedirectChainUrlTo($urlFrom, $urlTo, $currentUrl)
-    {
-        $urlToPostfix = $this->getUrlToPostfix($urlFrom, $urlTo, $currentUrl);
-        if ($urlToPostfix !== false) {
-            return str_replace(self::REDIRECT_CHAIN, $urlToPostfix, $urlTo);
-        }
-
-        return false;
-    }
-
-    /**
-     * @param string $urlFrom
-     * @param string $urlTo
-     * @param string $currentUrl
-     * @return bool|string
-     */
-    private function getUrlToPostfix($urlFrom, $urlTo, $currentUrl)
-    {
-        $urlToPostfix = false;
-        $urlToExploded = explode(self::REDIRECT_CHAIN, $urlTo);
-        if (strpos($urlFrom, self::REDIRECT_CHAIN) !== false
-            && isset($urlToExploded[1]) && !$urlToExploded[1]) {
-            $urlFromPrepared = str_replace(self::REDIRECT_CHAIN, '', $urlFrom);
-            $urlToPostfix = str_replace($urlFromPrepared, '', $currentUrl);
-        }
-
-        if ((isset($urlToPostfix) && $urlToPostfix
-            && strpos($currentUrl, $urlToPostfix) !== false)
-            || (isset($urlToPostfix) && $urlToPostfix !== false)) {
-                return $urlToPostfix;
-        }
-
-        return false;
     }
 
     /**
      * Get base url (some stores can drop with error if we use default magento getBaseUrl here)
      *
-     * @return string
-     *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
-    public function getSeoBaseUrl()
+    public function getSeoBaseUrl(): string
     {
         $httpHostWithPort = $this->request->getHttpHost(false);
         $httpHostWithPort = explode(':', $httpHostWithPort);
-        $httpHost = isset($httpHostWithPort[0]) ? $httpHostWithPort[0] : '';
-        $port = '';
+        $httpHost         = isset($httpHostWithPort[0]) ? $httpHostWithPort[0] : '';
+        $port             = '';
         if (isset($httpHostWithPort[1])) {
             $defaultPorts = [
                 \Magento\Framework\App\Request\Http::DEFAULT_HTTP_PORT,
@@ -377,5 +249,133 @@ class CheckUrlObserver implements ObserverInterface
         }
 
         return $baseUrl;
+    }
+
+    protected function prepareRedirectUrl(string $urlFrom): string
+    {
+        if (stripos($urlFrom, 'http://') === false
+            && stripos($urlFrom, 'https://') === false
+        ) {
+            return $this->getSeoBaseUrl() . ltrim($urlFrom, '/');
+        }
+
+        return $urlFrom;
+    }
+
+    /**
+     * Do redirect using records of our Redirect Manager.
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     */
+    protected function redirectFromRedirectManagerUrlList(ResponseInterface $response): bool
+    {
+        \Magento\Framework\Profiler::start(__METHOD__);
+
+        $currentUrl = $this->urlManager->getCurrentUrl();
+        if ($this->_redirectUrlFromDecode) {
+            $currentUrl = rawurldecode($currentUrl);
+        }
+        $currentAction = $this->dataHelper->getFullActionCode();
+        $baseUrl       = $this->getSeoBaseUrl();
+
+        /** @var \Mirasvit\Seo\Model\ResourceModel\Redirect\Collection $redirectCollection */
+        $redirectCollection = $this->redirectFactory->create()
+            ->getCollection();
+        $redirectCollection
+            ->addActiveFilter()
+            ->addStoreFilter($this->storeManager->getStore());
+
+        $url        = str_replace($baseUrl, '', $currentUrl);
+        $trimmedUrl = str_replace(rtrim($baseUrl, '/'), '', $currentUrl);
+        $where      = 'url_from = ' . "'" . addslashes($currentUrl) . "'"
+            . ' OR ' . 'url_from = ' . "'" . addslashes($url) . "'"
+            . ' OR ' . 'url_from = ' . "'" . addslashes($trimmedUrl) . "'"
+            . ' OR ' . "'" . addslashes($url) . "'" . " LIKE CONCAT(REPLACE(url_from, '*', '%'))"
+            . ' OR ' . "'" . addslashes($trimmedUrl) . "'" . " LIKE CONCAT(REPLACE(url_from, '*', '%'))"
+            . ' OR ' . "'" . addslashes($currentUrl) . "'" . " LIKE CONCAT(REPLACE(url_from, '*', '%'))"
+            . ' OR ' . "'" . addslashes($url) . "'"
+            . " LIKE CONCAT(REPLACE(url_from, '" . self::REDIRECT_CHAIN . "', '%'))"
+            . ' OR ' . "'" . addslashes($trimmedUrl) . "'"
+            . " LIKE CONCAT(REPLACE(url_from, '" . self::REDIRECT_CHAIN . "', '%'))"
+            . ' OR ' . "'" . addslashes($currentUrl) . "'"
+            . " LIKE CONCAT(REPLACE(url_from, '" . self::REDIRECT_CHAIN . "', '%'))";
+
+        $redirectCollection->getSelect()
+            ->where(new \Zend_Db_Expr($where), null, \Magento\Framework\DB\Select::TYPE_CONDITION)
+            ->order('LENGTH(url_from) DESC');
+
+        foreach ($redirectCollection as $redirect) {
+            $urlFrom = $this->prepareRedirectUrl($redirect->getUrlFrom());
+            $urlTo   = $this->prepareRedirectUrl($redirect->getUrlTo());
+            $action  = $redirect->getIsRedirectOnlyErrorPage();
+
+            if ($action && $currentAction != 'cms_noroute_index') {
+                continue;
+            }
+
+            if (strpos($urlTo, '[redirect_chain]') !== false) {
+                $urlTo   = $this->getRedirectChainUrlTo($urlFrom, $urlTo, $currentUrl);
+                $urlFrom = $currentUrl;
+            }
+
+            if (!$urlTo) {
+                continue;
+            }
+
+            // To prevent redirect loop is rule is set up incorrectly
+            if ($this->redirectHelper->checkRedirectPattern($redirect->getUrlFrom(), $redirect->getUrlTo(), $action) && $urlFrom == $urlTo) {
+                continue;
+            }
+
+            if ($this->redirectHelper->checkForLoop($urlTo)) {
+                continue;
+            }
+
+            if ($currentUrl == $urlFrom
+                || (stripos($redirect->getUrlFrom(), '*') !== false
+                    && $this->redirectHelper->checkRedirectPattern($redirect->getUrlFrom(), $currentUrl))) {
+                $this->redirectHelper->setFlag($currentUrl);
+                $this->redirectHelper->redirect($response, $urlTo, $redirect->getRedirectType());
+                break;
+            }
+        }
+
+        \Magento\Framework\Profiler::stop(__METHOD__);
+
+        return false;
+    }
+
+    private function getRedirectChainUrlTo(string $urlFrom, string $urlTo, string $currentUrl): ?string
+    {
+        $urlToPostfix = $this->getUrlToPostfix($urlFrom, $urlTo, $currentUrl);
+        if ($urlToPostfix !== false) {
+            return str_replace(self::REDIRECT_CHAIN, $urlToPostfix, $urlTo);
+        }
+
+        return null;
+    }
+
+    private function getUrlToPostfix(string $urlFrom, string $urlTo, string $currentUrl): ?string
+    {
+        $urlToPostfix  = false;
+        $urlToExploded = explode(self::REDIRECT_CHAIN, $urlTo);
+        if (strpos($urlFrom, self::REDIRECT_CHAIN) !== false
+            && isset($urlToExploded[1]) && !$urlToExploded[1]) {
+            preg_match('/([^\[]*)\[redirect_chain\](.*)/is', $urlFrom, $match);
+
+            $urlToPostfix = $currentUrl;
+
+            foreach ($match as $m) {
+                $urlToPostfix = str_replace($m, '', $urlToPostfix);
+            }
+        }
+
+        if ((isset($urlToPostfix) && $urlToPostfix
+                && strpos($currentUrl, $urlToPostfix) !== false)
+            || (isset($urlToPostfix) && $urlToPostfix !== false)) {
+            return $urlToPostfix;
+        }
+
+        return null;
     }
 }

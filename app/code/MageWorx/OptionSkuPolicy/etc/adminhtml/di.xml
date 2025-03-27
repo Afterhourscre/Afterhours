@@ -16,4 +16,12 @@
             </argument>
         </arguments>
     </virtualType>
+
+    <type name="Magento\Sales\Model\AdminOrder\Create">
+        <plugin name="mageworx-optionskupolicy-move-quote-item"
+                type="MageWorx\OptionSkuPolicy\Plugin\ValidateAdminMoveQuoteItem"
+                sortOrder="20"
+                disabled="false"
+        />
+    </type>
 </config>

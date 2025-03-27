@@ -12,30 +12,11 @@ use MageWorx\OptionFeatures\Helper\Data as Helper;
 
 class AdditionalHtml
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
+    protected Helper $helper;
+    protected BaseHelper $baseHelper;
+    protected Option $option;
+    protected \DOMDocument $dom;
 
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
-
-    /**
-     * @var Option
-     */
-    protected $option;
-
-    /**
-     * @var \DOMDocument
-     */
-    protected $dom;
-
-    /**
-     * @param Helper $helper
-     * @param BaseHelper $baseHelper
-     */
     public function __construct(
         Helper $helper,
         BaseHelper $baseHelper
@@ -60,6 +41,7 @@ class AdditionalHtml
 
         $this->setDivClass();
         $this->setSelectionLimit();
+        $this->hideIsHidden();
 
         return;
     }
@@ -79,7 +61,7 @@ class AdditionalHtml
     }
 
     /**
-     * @return bool
+     * @return void
      */
     protected function setSelectionLimit()
     {
@@ -89,6 +71,18 @@ class AdditionalHtml
             $this->addHtmlToMultiselect();
         }
         $this->addSelectionLimitMessage();
+    }
+
+    /**
+     * Hide checkbox if IsHidden = true
+     *
+     * @return void
+     */
+    protected function hideIsHidden()
+    {
+        if ($this->baseHelper->isCheckbox($this->option) && $this->option->getData(Helper::KEY_IS_HIDDEN)) {
+            $this->hideCheckbox();
+        }
     }
 
     /**
@@ -105,7 +99,21 @@ class AdditionalHtml
             $optionCssClass = $optionDiv->getAttribute('class') ?: '';
             $optionDiv->setAttribute('class', $optionCssClass . ' ' . 'mageworx-selection-limit');
         }
+    }
 
+    /**
+     * Hide checkbox
+     *
+     * @return void
+     */
+    protected function hideCheckbox()
+    {
+        $xpath = new \DOMXPath($this->dom);
+
+        $optionCssClass = $xpath->query('//div')->item(0)->getAttribute('class') ?: '';
+        $xpath->query('//div')
+              ->item(0)
+              ->setAttribute('class', $optionCssClass  . ' ' . 'mageworx-hidden');
     }
 
     /**
@@ -133,6 +141,10 @@ class AdditionalHtml
      */
     protected function addSelectionLimitMessage()
     {
+        if (!$this->isMultiSelection($this->option)) {
+            return;
+        }
+
         if (!$this->option->getSelectionLimitFrom() && !$this->option->getSelectionLimitTo()) {
             return;
         }
@@ -173,5 +185,21 @@ class AdditionalHtml
             return true;
         }
         return false;
+    }
+
+    /**
+     * Check if option is multiselection
+     *
+     * @param $option
+     * @return bool
+     */
+    protected function isMultiSelection($option)
+    {
+        $multiple = [
+            \Magento\Catalog\Model\Product\Option::OPTION_TYPE_MULTIPLE,
+            \Magento\Catalog\Model\Product\Option::OPTION_TYPE_CHECKBOX,
+        ];
+
+        return in_array($option->getType(), $multiple);
     }
 }

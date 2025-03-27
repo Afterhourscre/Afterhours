@@ -35,16 +35,16 @@ class Category extends Template
      * @param array $data
      */
     public function __construct(
-        Template\Context $context, array $data = [],
         \Magento\Framework\ObjectManagerInterface $objectManager,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Framework\View\Page\Config $pageConfig
+        \Magento\Framework\View\Page\Config $pageConfig,
+        Template\Context $context, array $data = []
     )
     {
-        parent::__construct($context, $data);
         $this->_objectManager = $objectManager;
         $this->pageConfig = $pageConfig;
         $this->_storeManager = $storeManager;
+        parent::__construct($context, $data);
     }
 
     /**

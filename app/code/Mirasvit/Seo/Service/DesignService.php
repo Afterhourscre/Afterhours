@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -23,7 +23,12 @@ use Magento\Framework\View\DesignInterface;
 class DesignService implements DesignServiceInterface
 {
     /**
-     * @param Version $version
+     * @var DesignInterface
+     */
+    private $design;
+
+    /**
+     * @param DesignInterface $design
      */
     public function __construct(
         DesignInterface $design
@@ -52,4 +57,3 @@ class DesignService implements DesignServiceInterface
         return false;
     }
 }
-

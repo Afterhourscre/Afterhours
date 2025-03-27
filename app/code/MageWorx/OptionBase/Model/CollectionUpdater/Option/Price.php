@@ -70,8 +70,6 @@ class Price extends AbstractUpdater
         $entityType = $conditions['entity_type'];
         $tableName  = $this->getTableName($entityType);
 
-        $this->resource->getConnection()->query('SET SESSION group_concat_max_len = 100000;');
-
         $selectExpr = "SELECT " . OptionPrice::FIELD_OPTION_ID . " as "
             . OptionPrice::FIELD_OPTION_ID_ALIAS . ","
             . " CONCAT('[',"
@@ -89,5 +87,14 @@ class Price extends AbstractUpdater
         $selectExpr .= " GROUP BY option_id";
 
         return new \Zend_Db_Expr('(' . $selectExpr . ')');
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function determineJoinNecessity(): bool
+    {
+        // The mageworx_option_price column is not used in the code, so the join is not necessary
+        return false;
     }
 }

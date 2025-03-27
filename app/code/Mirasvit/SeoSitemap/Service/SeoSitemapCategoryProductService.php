@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -51,7 +51,7 @@ class SeoSitemapCategoryProductService
     protected $seoSitemapData;
 
     /**
-     * @var Store
+     * @var \Magento\Store\Api\Data\StoreInterface
      */
     private $store;
 
@@ -59,7 +59,21 @@ class SeoSitemapCategoryProductService
      * @var array
      */
     private $categoriesTree;
+    /**
+     * @var array
+     */
+    private $excludeLinks;
 
+    /**
+     * SeoSitemapCategoryProductService constructor.
+     * @param LinkSitemapConfig $linkSitemapConfig
+     * @param ProductCollectionFactory $productCollectionFactory
+     * @param CategoryCollectionFactory $categoryCollectionFactory
+     * @param Config $config
+     * @param Data $seoSitemapData
+     * @param \Magento\Framework\View\Element\Template\Context $context
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
     public function __construct(
         LinkSitemapConfig $linkSitemapConfig,
         ProductCollectionFactory $productCollectionFactory,
@@ -76,6 +90,9 @@ class SeoSitemapCategoryProductService
         $this->store                     = $context->getStoreManager()->getStore();
     }
 
+    /**
+     * @return array
+     */
     private function getExcludeLinks()
     {
         if (empty($this->excludeLinks)) {
@@ -85,11 +102,18 @@ class SeoSitemapCategoryProductService
         return $this->excludeLinks;
     }
 
+    /**
+     * @return array
+     */
     public function getCategoryProductsTree()
     {
         return $this->getCategoriesTree();
     }
 
+    /**
+     * @return \Magento\Catalog\Model\ResourceModel\Category\Collection
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
     private function getStoreCategories()
     {
         $categories = $this->categoryCollectionFactory->create()
@@ -103,6 +127,10 @@ class SeoSitemapCategoryProductService
         return $categories;
     }
 
+    /**
+     * @param int $level
+     * @return array
+     */
     private function getCategoriesTree($level = 0)
     {
         if ($this->categoriesTree) {
@@ -116,7 +144,7 @@ class SeoSitemapCategoryProductService
         }
 
         foreach ($activeCategories as $category) {
-            if ($this->seoSitemapData->checkArrayPattern($category->getUrl(), $this->getExcludeLinks($this->store))) {
+            if ($this->seoSitemapData->checkArrayPattern($category->getUrl(), $this->getExcludeLinks())) {
                 $this->categoriesTree[$category->getId() . '-hidden'] = $category;
             } else {
                 $category->setLevel($level);
@@ -130,6 +158,10 @@ class SeoSitemapCategoryProductService
         return $this->categoriesTree;
     }
 
+    /**
+     * @param mixed $category
+     * @param mixed $level
+     */
     private function _getCategoriesTree($category, $level)
     {
         $children = $category->load($category->getId())->getChildrenCategories();
@@ -139,7 +171,7 @@ class SeoSitemapCategoryProductService
                 continue;
             }
 
-            if ($this->seoSitemapData->checkArrayPattern($child->getUrl(), $this->getExcludeLinks($this->store))) {
+            if ($this->seoSitemapData->checkArrayPattern($child->getUrl(), $this->getExcludeLinks())) {
                 $this->categoriesTree[$child->getId() . '-hidden'] = $child;
             } else {
                 $child->setLevel($level);
@@ -165,7 +197,6 @@ class SeoSitemapCategoryProductService
                     foreach ($products as $product) {
                         if ($product->getVisibility() != 1 &&
                             !$this->seoSitemapData->checkArrayPattern($product->getProductUrl(), $this->getExcludeLinks())) {
-
                             $objProduct = new \Magento\Framework\DataObject();
                             $objProduct->setLevel($category->getLevel() + 1);
                             $objProduct->setUrl($product->getProductUrl());
@@ -187,6 +218,10 @@ class SeoSitemapCategoryProductService
         $this->categoriesTree = $result;
     }
 
+    /**
+     * @param mixed $category
+     * @return \Magento\Catalog\Model\ResourceModel\Product\Collection
+     */
     public function getProductCollection($category)
     {
         $collection = $this->productCollectionFactory->create()

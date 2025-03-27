@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Model\Indexer\Category;
 
@@ -75,9 +74,13 @@ class IndexerHandler implements IndexerInterface
         $this->data = $data;
 
         $this->prepareFields();
-
     }
 
+    /**
+     * @param \Magento\Framework\Search\Request\Dimension[] $dimensions
+     * @param \Traversable $documents
+     * @return IndexerInterface|void
+     */
     public function saveIndex($dimensions, \Traversable $documents)
     {
         foreach ($this->batch->getItems($documents, $this->batchSize) as $batchDocuments) {
@@ -85,11 +88,19 @@ class IndexerHandler implements IndexerInterface
         }
     }
 
+    /**
+     * @param \Magento\Framework\Search\Request\Dimension[] $dimensions
+     * @param \Traversable $documents
+     * @return IndexerInterface|void
+     */
     public function deleteIndex($dimensions, \Traversable $documents)
     {
-        foreach ($this->batch->getItems($documents, $this->batchSize) as $batchDocuments) {
-            $this->resource->getConnection()
-                ->delete($this->getTableName($dimensions), ['entity_id in (?)' => $batchDocuments]);
+        if ($this->resource->getConnection()->isTableExists($this->getTableName($dimensions))) {
+            foreach ($this->batch->getItems($documents, $this->batchSize) as $batchDocuments) {
+                $this->resource->getConnection()
+                    ->delete($this->getTableName($dimensions), ['entity_id in (?)' => $batchDocuments]);
+
+            }
         }
     }
 
@@ -106,6 +117,11 @@ class IndexerHandler implements IndexerInterface
         );
     }
 
+    /**
+     * @param \Magento\Framework\Search\Request\Dimension[] $dimensions
+     * @return IndexerInterface|void
+     * @throws \Zend_Db_Exception
+     */
     public function cleanIndex($dimensions)
     {
         $this->indexStructure->delete($this->getIndexName(), $dimensions);
@@ -127,6 +143,9 @@ class IndexerHandler implements IndexerInterface
         $insertDocuments = [];
         foreach ($documents as $entityId => $document) {
             foreach ($document as $attributeId => $fieldValue) {
+                if (is_array($fieldValue)) {
+                    $fieldValue = implode(' ', $fieldValue);
+                }
                 $insertDocuments[$entityId . '_' . $attributeId] = [
                     'entity_id' => $entityId,
                     'attribute_id' => $attributeId,
@@ -146,6 +165,7 @@ class IndexerHandler implements IndexerInterface
     protected function prepareFields()
     {
         foreach ($this->data['fieldsets'] as $fieldset) {
+            // phpcs:ignore
             $this->fields = array_merge($this->fields, $fieldset['fields']);
         }
     }

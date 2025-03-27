@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoAutolink\Plugin;
 
@@ -24,25 +25,15 @@ use Mirasvit\SeoAutolink\Api\Config\AutolinkInterface;
 use Mirasvit\SeoAutolink\Service\AddLinks\AddLinksFactory;
 use Mirasvit\SeoAutolink\Service\TextProcessorService;
 
-
 class AddLinkInsideTemplates
 {
-    /**
-     * @var AutolinkInterface
-     */
-    protected $autolinkConfig;
+    private $autolinkConfig;
 
-    /**
-     * @var AddLinksFactory
-     */
-    protected $addLinks;
+    private $addLinks;
 
-    /**
-     * @var StoreManagerInterface
-     */
-    protected $storeManager;
+    private $storeManager;
 
-    protected $textProcessorService;
+    private $textProcessorService;
 
     public function __construct(
         AutolinkInterface $autolinkConfig,
@@ -58,20 +49,14 @@ class AddLinkInsideTemplates
 
     /**
      * Add autolinks in templates depending of the SEOAutolink configuration
-     *
-     * @param TemplateEngineFactory   $subject
-     * @param TemplateEngineInterface $invocationResult
-     *
-     * @return TemplateEngineInterface
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function afterCreate(
         TemplateEngineFactory $subject,
         TemplateEngineInterface $invocationResult
-    ) {
-        \Magento\Framework\Profiler::start(__METHOD__);
+    ): TemplateEngineInterface {
         $store     = $this->storeManager->getStore();
-        $templates = $this->autolinkConfig->getTemplates($store);
+        $templates = $this->autolinkConfig->getTemplates((int)$store->getId());
 
         if ($templates) {
             $res = $this->addLinks->create([
@@ -79,11 +64,9 @@ class AddLinkInsideTemplates
                 'templates'     => $templates,
                 'replaceHelper' => $this->textProcessorService,
             ]);
-            \Magento\Framework\Profiler::stop(__METHOD__);
 
             return $res;
         }
-        \Magento\Framework\Profiler::stop(__METHOD__);
 
         return $invocationResult;
     }

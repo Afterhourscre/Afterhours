@@ -24,6 +24,7 @@
 			</categorySearch>
 			<popularSuggestions>
 				<enablePopularSuggestions>1</enablePopularSuggestions>
+                <maxItems>0</maxItems>
 			</popularSuggestions>
 			<frontendSettings>
 				<widthResult>350</widthResult>

@@ -65,7 +65,7 @@ class Label extends Template
             $this->jsLayout = $processor->process($this->jsLayout, $this->getLabelBlock(), $this->getScope());
         }
 
-        return \Zend_Json::encode($this->jsLayout);
+        return json_encode($this->jsLayout);
     }
 
     /**

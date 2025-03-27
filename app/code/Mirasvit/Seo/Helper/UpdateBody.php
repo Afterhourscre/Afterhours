@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -96,7 +96,9 @@ class UpdateBody extends \Magento\Framework\App\Helper\AbstractHelper
         $patterns                = ['/<h1(.*?)>(.*?)<\/h1>/ims', '/<h1>(.*?)<\/h1>/ims'];
 
         foreach ($patterns as $pattern) {
-            preg_match_all($pattern, $body, $firstLevelTitle[]);
+            $ar = [];
+            preg_match_all($pattern, $body, $ar);
+            $firstLevelTitle[] = $ar;
         }
 
         foreach ($firstLevelTitle as $title) {

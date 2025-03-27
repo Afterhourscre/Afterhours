@@ -13,10 +13,15 @@
                 <sitemap_meta_keywords/>
                 <sitemap_meta_description/>
                 <sitemap_h1>Site Map</sitemap_h1>
+                <ignore_cms_pages>1,2,6</ignore_cms_pages>
+                <is_capital_letters_enabled>1</is_capital_letters_enabled>
                 <is_show_products>1</is_show_products>
+                <is_show_categories>1</is_show_categories>
                 <is_show_non_salable_products>1</is_show_non_salable_products>
                 <is_show_cms_pages>1</is_show_cms_pages>
                 <is_show_stores>1</is_show_stores>
+                <column_count>4</column_count>
+                <links_limit>10000</links_limit>
             </frontend>
             <google>
                 <is_add_product_images>1</is_add_product_images>

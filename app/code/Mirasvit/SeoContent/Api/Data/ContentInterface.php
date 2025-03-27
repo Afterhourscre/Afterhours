@@ -9,172 +9,84 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoContent\Api\Data;
 
 interface ContentInterface
 {
-    const DESCRIPTION_POSITION_DISABLED = 0;
-    const DESCRIPTION_POSITION_BOTTOM_PAGE = 1;
+    const DESCRIPTION_POSITION_DISABLED                = 0;
+    const DESCRIPTION_POSITION_BOTTOM_PAGE             = 1;
     const DESCRIPTION_POSITION_UNDER_SHORT_DESCRIPTION = 2;
-    const DESCRIPTION_POSITION_UNDER_FULL_DESCRIPTION = 3;
-    const DESCRIPTION_POSITION_UNDER_PRODUCT_LIST = 4;
-    const DESCRIPTION_POSITION_CUSTOM_TEMPLATE = 5;
+    const DESCRIPTION_POSITION_UNDER_FULL_DESCRIPTION  = 3;
+    const DESCRIPTION_POSITION_UNDER_PRODUCT_LIST      = 4;
+    const DESCRIPTION_POSITION_CUSTOM_TEMPLATE         = 5;
 
-
-    const TITLE = 'title';
-    const META_TITLE = 'meta_title';
-    const META_KEYWORDS = 'meta_keywords';
-    const META_DESCRIPTION = 'meta_description';
-
-    const DESCRIPTION = 'description';
+    const TITLE                = 'title';
+    const META_TITLE           = 'meta_title';
+    const META_KEYWORDS        = 'meta_keywords';
+    const META_DESCRIPTION     = 'meta_description';
+    const META_ROBOTS          = 'meta_robots';
+    const DESCRIPTION          = 'description';
     const DESCRIPTION_POSITION = 'description_position';
     const DESCRIPTION_TEMPLATE = 'description_template';
-    const SHORT_DESCRIPTION = 'short_description';
-    const FULL_DESCRIPTION = 'full_description';
-
+    const SHORT_DESCRIPTION    = 'short_description';
+    const FULL_DESCRIPTION     = 'full_description';
     const CATEGORY_DESCRIPTION = 'category_description';
-    const CATEGORY_IMAGE = 'category_image';
+    const CATEGORY_IMAGE       = 'category_image';
+    const APPLIED_TEMPLATE_ID  = 'applied_template_id';
+    const APPLIED_REWRITE_ID   = 'applied_rewrite_id';
 
-    const APPLIED_TEMPLATE_ID = 'applied_template_id';
-    const APPLIED_REWRITE_ID = 'applied_rewrite_id';
+    public function setTitle(string $value): self;
 
-    /**
-     * @param string $key
-     * @return $this
-     */
-    public function getData($key);
+    public function getTitle(): string;
 
-    /**
-     * @param string $key
-     * @param string $value
-     * @return $this
-     */
-    public function setData($key, $value);
+    public function setMetaTitle(string $value): self;
 
-    /**
-     * @param string $value
-     * @return $this
-     */
-    public function setTitle($value);
+    public function getMetaTitle(): string;
 
-    /**
-     * @return string
-     */
-    public function getTitle();
+    public function setMetaKeywords(string $value): self;
 
-    /**
-     * @param string $value
-     * @return $this
-     */
-    public function setMetaTitle($value);
+    public function getMetaKeywords(): string;
 
-    /**
-     * @return string
-     */
-    public function getMetaTitle();
+    public function setMetaDescription(string $value): self;
 
-    /**
-     * @param string $value
-     * @return $this
-     */
-    public function setMetaKeywords($value);
+    public function getMetaDescription(): string;
 
-    /**
-     * @return string
-     */
-    public function getMetaKeywords();
+    public function setDescription(string $value): self;
 
-    /**
-     * @param string $value
-     * @return $this
-     */
-    public function setMetaDescription($value);
+    public function getDescription(): string;
 
-    /**
-     * @return string
-     */
-    public function getMetaDescription();
+    public function setDescriptionPosition(int $value): self;
 
-    /**
-     * @param string $value
-     * @return $this
-     */
-    public function setDescription($value);
+    public function getDescriptionPosition(): int;
 
-    /**
-     * @return string
-     */
-    public function getDescription();
+    public function setDescriptionTemplate(string $value): self;
 
-    /**
-     * @param int $value
-     * @return $this
-     */
-    public function setDescriptionPosition($value);
+    public function getDescriptionTemplate(): string;
 
-    /**
-     * @return int
-     */
-    public function getDescriptionPosition();
+    public function setShortDescription(string $value): self;
 
-    /**
-     * @param string $value
-     * @return $this
-     */
-    public function setDescriptionTemplate($value);
+    public function getShortDescription(): string;
 
-    /**
-     * @return string
-     */
-    public function getDescriptionTemplate();
+    public function setFullDescription(string $value): self;
 
-    /**
-     * @param string $value
-     * @return $this
-     */
-    public function setShortDescription($value);
+    public function getFullDescription(): string;
 
-    /**
-     * @return string
-     */
-    public function getShortDescription();
+    public function setCategoryDescription(string $value): self;
 
-    /**
-     * @param string $value
-     * @return $this
-     */
-    public function setFullDescription($value);
+    public function getCategoryDescription(): string;
 
-    /**
-     * @return string
-     */
-    public function getFullDescription();
+    public function setCategoryImage(string $value): self;
 
-    /**
-     * @param string $value
-     * @return $this
-     */
-    public function setCategoryDescription($value);
+    public function getCategoryImage(): string;
 
-    /**
-     * @return string
-     */
-    public function getCategoryDescription();
+    public function setMetaRobots(string $value): self;
 
-    /**
-     * @param string $value
-     * @return $this
-     */
-    public function setCategoryImage($value);
-
-    /**
-     * @return string
-     */
-    public function getCategoryImage();
+    public function getMetaRobots(): string;
 }

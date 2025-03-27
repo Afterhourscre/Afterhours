@@ -28,4 +28,13 @@
             </argument>
         </arguments>
     </virtualType>
+
+    <!--MSI Plugins-->
+    <type name="Magento\InventorySourceDeductionApi\Model\SourceDeductionService">
+        <plugin name="mageworx-optionfeatures-qty-multiplier-back-to-stock"
+                type="MageWorx\OptionFeatures\Plugin\MultiSourceInventory\BeforeSourceDeductionService"
+                sortOrder="10"
+                disabled="false"
+        />
+    </type>
 </config>

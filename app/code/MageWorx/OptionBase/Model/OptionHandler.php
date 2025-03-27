@@ -3,10 +3,14 @@
  * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+declare(strict_types=1);
 
 namespace MageWorx\OptionBase\Model;
 
 use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Model\Product;
+use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
+use MageWorx\OptionBase\Api\ValidatorInterface;
 use MageWorx\OptionBase\Helper\Data as BaseHelper;
 use Magento\Catalog\Api\Data\ProductCustomOptionInterfaceFactory as OptionFactory;
 use MageWorx\OptionBase\Model\ResourceModel\DataSaver;
@@ -19,98 +23,31 @@ use MageWorx\OptionBase\Model\ResourceModel\CollectionUpdaterRegistry;
 use Magento\Framework\Exception\LocalizedException;
 use MageWorx\OptionBase\Model\ResourceModel\Option as MageworxOptionResource;
 use MageWorx\OptionImportExport\Model\Config\Source\MigrationMode;
+use MageWorx\OptionBase\Model\ValidationResolver as ValidationResolver;
 
 class OptionHandler
 {
-    /**
-     * @var OptionFactory
-     */
-    protected $optionFactory;
-
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
-
-    /**
-     * @var OptionDataCollector
-     */
-    protected $optionDataCollector;
-
-    /**
-     * @var MageworxOptionResource
-     */
-    protected $mageworxOptionResource;
-
-    /**
-     * @var DataSaver
-     */
-    protected $dataSaver;
-
-    /**
-     * @var ManagerInterface
-     */
-    protected $eventManager;
-
-    /**
-     * @var ResourceConnection
-     */
-    protected $resource;
-
-    /**
-     * @var array
-     */
-    protected $optionData;
-
-    /**
-     * @var GroupModel
-     */
-    protected $groupModel;
-
-    /**
-     * @var array
-     */
-    protected $optionsToDelete;
-
-    /**
-     * @var ProductCollectionFactory
-     */
-    protected $productCollectionFactory;
-
-    /**
-     * @var CollectionUpdaterRegistry
-     */
-    protected $collectionUpdaterRegistry;
-
-    /**
-     * @var array
-     */
-    protected $productsWithOptions = [];
-
-    /**
-     * @var array
-     */
-    protected $productsWithRequiredOptions = [];
-
-    /**
-     * @var array
-     */
-    protected $linkField = [];
-
-    /**
-     * @var array
-     */
-    protected $currentIncrementIds = [];
-
-    /**
-     * @var array
-     */
-    protected $preparedOptions = [];
-
-    /**
-     * @var int
-     */
-    protected $sortOrderCounter;
+    protected OptionFactory $optionFactory;
+    protected BaseHelper $baseHelper;
+    protected OptionDataCollector $optionDataCollector;
+    protected MageworxOptionResource $mageworxOptionResource;
+    protected DataSaver $dataSaver;
+    protected ManagerInterface $eventManager;
+    protected ResourceConnection $resource;
+    protected array $optionData;
+    protected GroupModel $groupModel;
+    protected array $optionsToDelete;
+    protected ProductCollectionFactory $productCollectionFactory;
+    protected CollectionUpdaterRegistry $collectionUpdaterRegistry;
+    protected array $productsWithRequiredOptions = [];
+    protected array $linkField = [];
+    protected array $currentIncrementIds = [];
+    protected array $preparedOptions = [];
+    protected int $sortOrderCounter;
+    protected ValidationResolver $validationResolver;
+    protected array $productsHasNoOptions = [];
+    protected array $productsHasNoRequiredOptions = [];
+    protected array $productsWithMageWorxIsRequire = [];
 
     /**
      * @param OptionFactory $optionFactory
@@ -123,6 +60,7 @@ class OptionHandler
      * @param CollectionUpdaterRegistry $collectionUpdaterRegistry
      * @param GroupModel $groupModel
      * @param MageworxOptionResource $mageworxOptionResource
+     * @param ValidationResolver $validationResolver
      */
     public function __construct(
         OptionFactory $optionFactory,
@@ -134,7 +72,8 @@ class OptionHandler
         GroupModel $groupModel,
         ProductCollectionFactory $productCollectionFactory,
         MageworxOptionResource $mageworxOptionResource,
-        CollectionUpdaterRegistry $collectionUpdaterRegistry
+        CollectionUpdaterRegistry $collectionUpdaterRegistry,
+        ValidationResolver $validationResolver
     ) {
         $this->optionFactory             = $optionFactory;
         $this->baseHelper                = $baseHelper;
@@ -146,6 +85,7 @@ class OptionHandler
         $this->mageworxOptionResource    = $mageworxOptionResource;
         $this->productCollectionFactory  = $productCollectionFactory;
         $this->collectionUpdaterRegistry = $collectionUpdaterRegistry;
+        $this->validationResolver        = $validationResolver;
     }
 
     /**
@@ -155,6 +95,7 @@ class OptionHandler
      * @param array $productAttributesData
      * @param array $productSkuToGroupIdRelations
      * @param string $migrationMode
+     * @throws LocalizedException
      */
     public function addProductOptions($data, $productAttributesData, $productSkuToGroupIdRelations, $migrationMode)
     {
@@ -164,15 +105,15 @@ class OptionHandler
             $this->mageworxOptionResource->removeCustomizableOptions(false, array_keys($data));
         }
 
-        $this->linkField = $this->baseHelper->getLinkField(ProductInterface::class);
-        $allProductSkus  = array_keys($data);
+        // TODO need recheck
+        $this->linkField = $this->baseHelper->getLinkField();
+        $allProductSkus  = array_map('strval', array_keys($data));
 
         $totalSkus = count($allProductSkus);
         $limit     = 50;
 
         for ($offset = 0; $offset < $totalSkus; $offset += $limit) {
-            $skus = array_slice($allProductSkus, $offset, $limit);
-            /** @var \Magento\Catalog\Model\ResourceModel\Product\Collection $collection */
+            $skus       = array_slice($allProductSkus, $offset, $limit);
             $collection = $this->getProductsCollection($skus);
 
             if (empty($collection->getItems())) {
@@ -181,15 +122,19 @@ class OptionHandler
 
             $this->processIncrementIds();
             $this->processProducts($collection, $data, $productAttributesData, $productSkuToGroupIdRelations);
-            $this->mageworxOptionResource->setHasOptionsStatus($this->productsWithOptions);
-            $this->mageworxOptionResource->setRequiredOptionsStatus($this->productsWithRequiredOptions);
+            $this->prepareProductStatusToUpdate(
+                $this->productsHasNoRequiredOptions,
+                $this->productsWithRequiredOptions,
+                $this->productsWithMageWorxIsRequire,
+                $this->productsHasNoOptions
+            );
         }
     }
 
     /**
      * Process product changes and collect default magento data from options
      *
-     * @param \Magento\Catalog\Model\ResourceModel\Product\Collection $collection
+     * @param ProductCollection $collection
      * @param array $importData
      * @param array $productAttributesData
      * @param array $productSkuToGroupIdRelations
@@ -199,12 +144,14 @@ class OptionHandler
         $this->optionData              = [];
         $this->optionsToDelete         = [];
         $products                      = [];
+        $productIds                    = [];
         $preparedProductAttributesData = [];
         $productIdsToDelete            = [];
 
         foreach ($collection as $product) {
             $this->addOptions($product, $importData[$product->getSku()]);
-            $products[] = $product;
+            $products[]   = $product;
+            $productIds[] = $product->getId();
             $this->prepareProductAttributes(
                 $preparedProductAttributesData,
                 $productIdsToDelete,
@@ -214,6 +161,12 @@ class OptionHandler
         }
         $this->saveOptions($products, $productSkuToGroupIdRelations);
         $this->saveProductAttributes($preparedProductAttributesData, $productIdsToDelete);
+
+        //process adding initial states and dependency rules for imported product options
+        $this->eventManager->dispatch(
+            'mageworx_optionbase_product_mageone_import_after',
+            ['product_ids' => $productIds]
+        );
     }
 
     /**
@@ -280,7 +233,7 @@ class OptionHandler
         }
 
         $connection = $this->resource->getConnection();
-        $tableName  = $this->resource->getTableName('mageworx_optionfeatures_product_attributes');
+        $tableName  = $this->resource->getTableName(ProductAttributes::TABLE_NAME);
 
         $connection->delete(
             $tableName,
@@ -361,7 +314,7 @@ class OptionHandler
             if (empty($option['group_option_id'])) {
                 $option['group_option_id'] = null;
             }
-            $this->currentIncrementIds['option'] += 1;
+            ++$this->currentIncrementIds['option'];
 
             $this->addIncrementIdsToValues($option);
 
@@ -389,9 +342,9 @@ class OptionHandler
                     $value['group_option_value_id'] = null;
                 }
 
-                $value['id']                        = $this->currentIncrementIds['value'];
-                $value['option_type_id']            = $value['id'];
-                $this->currentIncrementIds['value'] += 1;
+                $value['id']             = $this->currentIncrementIds['value'];
+                $value['option_type_id'] = $value['id'];
+                ++$this->currentIncrementIds['value'];
 
                 $value['need_to_process_dependency'] = true;
                 $option['values'][$valueKey]         = $value;
@@ -402,8 +355,8 @@ class OptionHandler
     /**
      * Try to collect current increment IDs for option and values and throw error if something wrong
      *
-     * @throws LocalizedException
      * @return void
+     * @throws LocalizedException
      */
     protected function processIncrementIds()
     {
@@ -441,11 +394,10 @@ class OptionHandler
      * Get product collection using selected product SKUs
      *
      * @param array $skus
-     * @return \Magento\Catalog\Model\ResourceModel\Product\Collection $collection
+     * @return ProductCollection $collection
      */
     protected function getProductsCollection($skus)
     {
-        /** @var \Magento\Catalog\Model\ResourceModel\Product\Collection $collection */
         $collection = $this->productCollectionFactory->create();
         $this->collectionUpdaterRegistry->setCurrentEntityType('product');
         $this->collectionUpdaterRegistry->setCurrentEntityIds([]);
@@ -456,6 +408,7 @@ class OptionHandler
                    ->setStoreId(0)
                    ->addFieldToFilter('sku', ['in' => $skus])
                    ->addOptionsToResult();
+
         return $collection;
     }
 
@@ -479,7 +432,11 @@ class OptionHandler
             $this->dataSaver->insertMultipleData($tableName, $dataItem);
         }
 
-        $this->productsWithOptions = [];
+        $this->productsHasNoRequiredOptions  = [];
+        $this->productsWithRequiredOptions   = [];
+        $this->productsWithMageWorxIsRequire = [];
+        $this->productsHasNoOptions          = [];
+
         foreach ($products as $productItem) {
             $this->updateProductData($productItem);
             if (!isset($productSkuToGroupIdRelations[$productItem->getSku()])
@@ -489,27 +446,58 @@ class OptionHandler
             }
             foreach (array_values($productSkuToGroupIdRelations[$productItem->getSku()]) as $groupId) {
                 $this->groupModel->addRelation($groupId, $productItem->getId());
-            };
+            }
         }
     }
 
     /**
      * Transfer product based custom options attributes to the corresponding product
      *
-     * @param \Magento\Catalog\Model\Product $product
      */
-    protected function updateProductData($product)
+    public function updateProductData(Product $product): void
     {
-        $options = $product->getOptions();
+
+        $options                     = $product->getOptions();
+        $hasOptions                  = false;
+        $optionRequireStatus         = false;
+        $mageWorxOptionRequireStatus = false;
         if ($options && is_array($options)) {
+            $productId = $product->getId() ?? $product->getData($this->linkField);
             foreach ($options as $option) {
-                if ($option->getIsRequire()) {
-                    $this->productsWithRequiredOptions[] = $product->getData($this->linkField);
-                    $product->setRequiredOptions(1);
+                if (!$option->getData('is_delete')) {
+                    $hasOptions = true;
+
+                    if ($option->getIsRequire()) {
+                        $optionRequireStatus = true;
+                    }
+                    if ($optionRequireStatus) {
+                        $mageWorxOptionRequireStatus = true;
+                        /* @var ValidatorInterface $validatorItem */
+                        foreach ($this->validationResolver->getValidators() as $key => $validatorItem) {
+                            if (!$validatorItem->canValidateCartCheckout($product, $option)) {
+                                $mageWorxOptionRequireStatus = false;
+                                break;
+                            }
+                        }
+                        if ($mageWorxOptionRequireStatus) {
+                            break;
+                        }
+                    }
                 }
             }
-            $this->productsWithOptions[] = $product->getData($this->linkField);
-            $product->setHasOptions(1);
+
+            if (!$hasOptions) {
+                $this->productsHasNoOptions[] = $productId;
+            } elseif (!$optionRequireStatus) {
+                $this->productsHasNoRequiredOptions[] = $productId;
+            } elseif (!$mageWorxOptionRequireStatus) {
+                $this->productsWithRequiredOptions[] = $productId;
+            } else {
+                $this->productsWithMageWorxIsRequire[] = $productId;
+            }
+            $product->setHasOptions($hasOptions);
+            $product->setRequiredOptions($optionRequireStatus);
+            $product->setMageworxIsRequired($mageWorxOptionRequireStatus);
         }
 
         $product->setIsAfterTemplateSave(true);
@@ -518,6 +506,62 @@ class OptionHandler
             'mageworx_attributes_save_trigger',
             ['product' => $product, 'is_after_template' => false]
         );
+    }
+
+    /**
+     * Prepare has_options, required_options, mageworx_is_require flags for update
+     *
+     * @param $productsHasNoRequiredOptionsIds
+     * @param $productWithRequireOptionIds
+     * @param $productWithMageWorxIsRequireIds
+     * @param $productHasNoOptionIds
+     */
+    public function prepareProductStatusToUpdate(
+        $productsHasNoRequiredOptionsIds,
+        $productWithRequireOptionIds,
+        $productWithMageWorxIsRequireIds,
+        $productHasNoOptionIds
+    ) {
+
+        $hasOption                  = 'has_options';
+        $hasRequiredOptions         = 'required_options';
+        $hasMageWorxRequiredOptions = 'mageworx_is_require';
+
+        if ($productHasNoOptionIds) {
+            $data = [
+                $hasOption                  => false,
+                $hasRequiredOptions         => false,
+                $hasMageWorxRequiredOptions => false
+            ];
+            $this->mageworxOptionResource->updateProductStatusAttributes($data, $productHasNoOptionIds);
+        }
+
+        if ($productsHasNoRequiredOptionsIds) {
+            $data = [
+                $hasOption                  => true,
+                $hasRequiredOptions         => false,
+                $hasMageWorxRequiredOptions => false
+            ];
+            $this->mageworxOptionResource->updateProductStatusAttributes($data, $productsHasNoRequiredOptionsIds);
+        }
+
+        if ($productWithRequireOptionIds) {
+            $data = [
+                $hasOption                  => true,
+                $hasRequiredOptions         => true,
+                $hasMageWorxRequiredOptions => false
+            ];
+            $this->mageworxOptionResource->updateProductStatusAttributes($data, $productWithRequireOptionIds);
+        }
+
+        if ($productWithMageWorxIsRequireIds) {
+            $data = [
+                $hasOption                  => true,
+                $hasRequiredOptions         => true,
+                $hasMageWorxRequiredOptions => true
+            ];
+            $this->mageworxOptionResource->updateProductStatusAttributes($data, $productWithMageWorxIsRequireIds);
+        }
     }
 
     /**

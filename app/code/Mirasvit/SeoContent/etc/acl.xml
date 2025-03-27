@@ -5,9 +5,9 @@
         <resources>
             <resource id="Magento_Backend::admin">
                 <resource id="Magento_Backend::marketing">
-                    <resource id="Mirasvit_SeoContent::seo_content" title="Mirasvit SEO: Templates and Rewrites" sortOrder="71">
-                        <resource id="Mirasvit_SeoContent::seo_content_template" title="Template Manager" sortOrder="100"/>
-                        <resource id="Mirasvit_SeoContent::seo_content_rewrite" title="Rewrite Manager" sortOrder="200"/>
+                    <resource id="Mirasvit_Seo::seo">
+                        <resource id="Mirasvit_SeoContent::seo_content_template" title="Templates" sortOrder="100"/>
+                        <resource id="Mirasvit_SeoContent::seo_content_rewrite" title="SEO Rewrites" sortOrder="200"/>
                     </resource>
                 </resource>
             </resource>

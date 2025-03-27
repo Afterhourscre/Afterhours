@@ -9,93 +9,105 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoMarkup\Block\Rs;
 
-use Magento\Catalog\Model\Layer\Resolver as LayerResolver;
+use Magento\Catalog\Model\Product\Attribute\Source\Status;
+use Magento\Catalog\Model\Product\Visibility;
+use Magento\Catalog\Model\ResourceModel\Collection\AbstractCollection;
+use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
 use Magento\Framework\Module\Manager as ModuleManager;
+use Magento\Framework\ObjectManagerInterface;
 use Magento\Framework\Registry;
-use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
+use Mirasvit\Core\Service\SerializeService;
 use Mirasvit\Seo\Api\Service\TemplateEngineServiceInterface;
+use Mirasvit\SeoMarkup\Model\Config;
 use Mirasvit\SeoMarkup\Model\Config\CategoryConfig;
+use Mirasvit\SeoMarkup\Service\ProductRichSnippetsService;
 
-class Brand extends Template
+/**
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ */
+class Brand extends Category
 {
-    CONST BRAND_DEFAULT_NAME = 'BrandDefaultName';
-    CONST BRAND_DATA         = 'm__BrandData';
+    const BRAND_DEFAULT_NAME = 'BrandDefaultName';
+    const BRAND_DATA         = 'm__BrandData';
 
-    /**
-     * @var \Magento\Store\Model\Store
-     */
     private $store;
-
-    /**
-     * @var \Magento\Catalog\Model\Category
-     */
-    private $category;
 
     private $categoryConfig;
 
-    private $templateEngineService;
-
-    private $layerResolver;
-
-    private $registry;
+    private $productCollectionFactory;
 
     private $moduleManager;
 
-    public function __construct(
-        CategoryConfig $categoryConfig,
-        TemplateEngineServiceInterface $templateEngineService,
-        LayerResolver $layerResolver,
-        Registry $registry,
-        ModuleManager $moduleManager,
-        Context $context
-    ) {
-        $this->categoryConfig        = $categoryConfig;
-        $this->templateEngineService = $templateEngineService;
-        $this->layerResolver         = $layerResolver;
-        $this->store                 = $context->getStoreManager()->getStore();
-        $this->registry              = $registry;
-        $this->moduleManager         = $moduleManager;
+    private $objectManager;
 
-        parent::__construct($context);
+    public function __construct(
+        ModuleManager                  $moduleManager,
+        ObjectManagerInterface         $objectManager,
+        CategoryConfig                 $categoryConfig,
+        ProductCollectionFactory       $productCollectionFactory,
+        TemplateEngineServiceInterface $templateEngineService,
+        Registry                       $registry,
+        Context                        $context,
+        ProductRichSnippetsService     $productSnippetService
+    ) {
+        $this->categoryConfig           = $categoryConfig;
+        $this->productCollectionFactory = $productCollectionFactory;
+        $this->store                    = $context->getStoreManager()->getStore();
+        $this->moduleManager            = $moduleManager;
+        $this->objectManager            = $objectManager;
+
+        parent::__construct(
+            $categoryConfig,
+            $productCollectionFactory,
+            $templateEngineService,
+            $registry,
+            $context,
+            $productSnippetService
+        );
     }
 
-    protected function _toHtml()
+    protected function _toHtml(): string
     {
         $data = $this->getJsonData();
 
         if (!$data) {
-            return false;
+            return '';
         }
 
-        return '<script type="application/ld+json">' . \Zend_Json::encode($data) . '</script>';
+        return '<script type="application/ld+json">' . SerializeService::encode($data) . '</script>';
     }
 
-
-    /**
-     * @return bool|array
-     */
-    public function getJsonData()
+    public function getJsonData(): ?array
     {
-        $this->category = $this->registry->registry('current_category');
-        $brandTitle     = $this->registry->registry(self::BRAND_DATA)[self::BRAND_DEFAULT_NAME];
-
-        if (!$this->category || !$this->moduleManager->isEnabled('Mirasvit_Brand') || empty($brandTitle)) {
+        if (!$this->moduleManager->isEnabled('Mirasvit_Brand')) {
             return null;
         }
 
-        /** @var \Magento\Catalog\Model\ResourceModel\Product\Collection $collection */
-        $collection = $this->layerResolver->get()->getProductCollection();
-        if (strripos($collection->getSelect()->__toString(), 'limit') === false) {
-            $pageSize = $this->categoryConfig->getDefaultPageSize($this->store);
+        $brandTitle = $this->getBrandTitle();
+
+        if (empty($brandTitle)) {
+            return null;
+        }
+
+        $collection = $this->getCollection();
+        $itemList   = [];
+
+        if ($collection) {
+            $itemList = $this->getItemList($collection);
+        }
+
+        if ($collection && strripos($collection->getSelect()->__toString(), 'limit') === false) {
+            $pageSize = $this->categoryConfig->getDefaultPageSize((int)$this->store->getId());
             $pageNum  = 1;
 
             if ($toolbar = $this->getLayout()->getBlock('product_list_toolbar')) {
@@ -109,79 +121,60 @@ class Brand extends Template
             $collection->setPageSize($pageSize)->setCurPage($pageNum);
         }
 
-        if (!$collection || !$collection->getSize()) {
-            return null;
-        }
-
         return [
-            '@context'   => 'http://schema.org',
+            '@context'   => Config::HTTP_SCHEMA_ORG,
             '@type'      => 'WebPage',
             'url'        => $this->_urlBuilder->escape($this->_urlBuilder->getCurrentUrl()),
             'mainEntity' => [
-                '@context'        => 'http://schema.org',
+                '@context'        => Config::HTTP_SCHEMA_ORG,
                 '@type'           => 'OfferCatalog',
                 'name'            => $brandTitle,
                 'url'             => $this->_urlBuilder->escape($this->_urlBuilder->getCurrentUrl()),
-                'numberOfItems'   => $collection->getSize(),
-                'itemListElement' => $this->getItemList($collection),
+                'numberOfItems'   => $collection ? $collection->count() : '',
+                'itemListElement' => $itemList,
             ],
         ];
     }
 
-    private function getItemList($collection)
+    protected function getCollection(): ?AbstractCollection
     {
-        $data = [];
+        $productOffersType = $this->categoryConfig->getProductOffersType((int)$this->store->getId());
 
-        /** @var \Magento\Catalog\Model\Product $product */
-        foreach ($collection as $product) {
-            $item = [
-                '@type' => 'Product',
-                'name'  => $product->getName(),
-                'url'   => $product->getUrlModel()->getUrl($product, ['_ignore_category' => true]),
-            ];
+        if ($productOffersType === CategoryConfig::PRODUCT_OFFERS_TYPE_CURRENT_CATEGORY) {
+            $collection = $this->productCollectionFactory->create();
+            $collection->addAttributeToSelect('*');
+            $collection->addAttributeToFilter(
+                $this->getBrandAttributeCode(),
+                $this->getBrandAttributeValue()
+            );
+            $collection->addAttributeToFilter('visibility', Visibility::VISIBILITY_BOTH);
+            $collection->addAttributeToFilter('status', Status::STATUS_ENABLED);
+            $collection->addFinalPrice();
+            $collection->load();
 
-            if ($this->categoryConfig->getProductOffersType($this->store)) {
-                $offer = $this->getProductOffer($product);
-
-                if ($offer) {
-                    $item['offers'] = $offer;
-                }
-            }
-
-            $data[] = $item;
+            return $collection;
+        } else {
+            return parent::getCollection();
         }
-
-        return $data;
     }
 
-    /**
-     * @param \Magento\Catalog\Model\Product $product
-     *
-     * @return array|false
-     */
-    private function getProductOffer($product)
+    private function getBrandTitle(): string
     {
-        $price = $product->getFinalPrice();
+        return (string)$this->getBrandRegistry()->getBrandPage()->getBrandTitle();
+    }
 
-        if (!$price) {
-            return false;
-        }
+    private function getBrandAttributeCode(): string
+    {
+        return (string)$this->getBrandRegistry()->getBrand()->getAttributeCode();
+    }
 
-        $productAvailability = method_exists($product, 'isAvailable')
-            ? $product->isAvailable()
-            : $product - isInStock();
+    private function getBrandAttributeValue(): string
+    {
+        return (string)$this->getBrandRegistry()->getBrand()->getValue();
+    }
 
-        if ($productAvailability) {
-            $condition = "http://schema.org/InStock";
-        } else {
-            $condition = "http://schema.org/OutOfStock";
-        }
-
-        return [
-            '@type'         => 'http://schema.org/Offer',
-            'price'         => number_format($price, 2),
-            'priceCurrency' => $this->store->getCurrentCurrencyCode(),
-            'availability'  => $condition,
-        ];
+    private function getBrandRegistry()
+    {
+        return $this->objectManager->get('Mirasvit\Brand\Registry');
     }
 }

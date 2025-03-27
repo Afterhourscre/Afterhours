@@ -1,16 +1,12 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Model\ResourceModel\Query;
 
-/**
- * Class Collection
- */
 class Collection extends \Magento\Search\Model\ResourceModel\Query\Collection
 {
     /**

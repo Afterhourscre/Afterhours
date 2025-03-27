@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -26,6 +26,11 @@ use Magento\Framework\App\ResourceConnection;
 
 class DataProvider extends \Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider
 {
+    /**
+     * @var ResourceConnection
+     */
+    private $connection;
+
     /**
      * @param  ResourceConnection $resource
      * @param string $name
@@ -88,7 +93,6 @@ class DataProvider extends \Magento\Framework\View\Element\UiComponent\DataProvi
                 $item->setData('store_id', $storeIds[$item->getId()]);
             }
             $arrItems['items'][] = $item->getData();
-
         }
 
         return $arrItems;
@@ -130,7 +134,7 @@ class DataProvider extends \Magento\Framework\View\Element\UiComponent\DataProvi
 
     /**
      * @param string $fieldStoreValue
-     * @return Mirasvit\Seo\Model\ResourceModel\Redirect\Grid\Collection
+     * @return SearchResultInterface
      */
     protected function getPreparedCollection($fieldStoreValue)
     {
@@ -142,7 +146,6 @@ class DataProvider extends \Magento\Framework\View\Element\UiComponent\DataProvi
                 ->where(
                     new \Zend_Db_Expr('redirect_id IN (' . implode(',', $linkIds) . ')')
                 );
-
         }
 
         return $collection;
@@ -170,5 +173,4 @@ class DataProvider extends \Magento\Framework\View\Element\UiComponent\DataProvi
 
         return $linkIds;
     }
-
 }

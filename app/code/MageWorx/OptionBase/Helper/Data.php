@@ -1,88 +1,65 @@
 <?php
 /**
- * Copyright © 2017 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
 
 namespace MageWorx\OptionBase\Helper;
 
+use Exception;
+use Magento\Catalog\Api\Data\ProductAttributeInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
+use Magento\Framework\App\Helper\Context;
+use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\App\ResponseInterface;
+use Magento\Framework\Component\ComponentRegistrar;
+use Magento\Framework\Component\ComponentRegistrarInterface;
+use Magento\Framework\DB\Select;
+use Magento\Framework\EntityManager\MetadataPool;
+use Magento\Framework\Exception\FileSystemException;
+use Magento\Framework\Filesystem\Directory\ReadFactory;
+use Magento\Framework\Message\ManagerInterface;
+use Magento\Framework\ObjectManagerInterface;
+use Magento\InventorySalesAdminUi\Model\GetSalableQuantityDataBySku;
+use Magento\InventorySalesApi\Api\Data\SalesChannelInterface;
+use Magento\InventorySalesApi\Api\GetProductSalableQtyInterface;
+use Magento\InventorySalesApi\Api\StockResolverInterface;
 use Magento\Quote\Model\Quote\Item as QuoteItem;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Catalog\Model\Product\Option;
+use Magento\Framework\Serialize\Serializer\Json as JsonHelper;
+use Magento\Framework\Module\ModuleList;
+use Magento\Store\Model\StoreManagerInterface;
+use MageWorx\OptionBase\Model\ActionMode;
 
 class Data extends AbstractHelper
 {
-    const CATALOG_PRICE_SCOPE = 'mageworx_apo/optionfeatures/add_plus_sign';
+    const CATALOG_PRICE_SCOPE   = 'mageworx_apo/optionfeatures/add_plus_sign';
+    const ALL_CUSTOMER_GROUP_ID = '32000';
 
-    /**
-     * @var \Magento\Framework\App\ProductMetadataInterface
-     */
-    protected $productMetadata;
-
-    /**
-     * @var \Magento\Framework\EntityManager\MetadataPool
-     */
-    protected $metadataPool;
-
-    /**
-     * @var \Magento\Framework\ObjectManagerInterface
-     */
-    protected $objectManager;
-
-    /**
-     * @var \Magento\Framework\Component\ComponentRegistrarInterface
-     */
-    protected $componentRegistrar;
-
-    /**
-     * @var \Magento\Framework\Filesystem\Directory\ReadFactory
-     */
-    protected $readFactory;
-
-    /**
-     * @var string|int
-     */
-    protected $moduleVersion;
-
-    /**
-     * @var \Magento\Framework\Message\ManagerInterface
-     */
-    protected $messageManager;
-
-    /**
-     * @var \Magento\Framework\App\ResponseInterface
-     */
-    protected $response;
-
-    /**
-     * @var \Magento\Framework\Json\Helper\Data
-     */
-    protected $jsonHelper;
-
-    /**
-     * @var ResourceConnection
-     */
-    protected $resource;
+    protected ActionMode $actionMode;
+    protected ProductMetadataInterface $productMetadata;
+    protected MetadataPool $metadataPool;
+    protected ObjectManagerInterface $objectManager;
+    protected ComponentRegistrarInterface $componentRegistrar;
+    protected ReadFactory $readFactory;
+    protected array $moduleVersion = [];
+    protected ManagerInterface $messageManager;
+    protected ResponseInterface $response;
+    protected JsonHelper $jsonHelper;
+    protected ResourceConnection $resource;
+    protected ModuleList $moduleList;
 
     /**
      * List of MageWorx Option attributes can be linked by SKU.
      *
      * @var array
      */
-    protected $linkedAttributes = [];
-
-    /**
-     * @var array
-     */
-    protected $optionIdCache = [];
-
-    /**
-     * @var array
-     */
-    protected $optionTypeIdCache = [];
+    protected array $linkedAttributes = [];
+    protected array $optionIdCache = [];
+    protected array $optionTypeIdCache = [];
 
     /**
      * Path to config disable option value
@@ -106,49 +83,71 @@ class Data extends AbstractHelper
     protected $isEnabledVisibilityPerStoreView = null;
 
     /**
+     * Option Inventory Out Of Stock Options config path
+     *
+     * @deprecated
+     * @var string
+     */
+    protected string $configPathInventoryOutOfStockOptions;
+
+    protected StoreManagerInterface $storeManager;
+
+    /**
      * Data constructor.
      *
-     * @param \Magento\Framework\App\ProductMetadataInterface $productMetadata
-     * @param \Magento\Framework\ObjectManagerInterface $objectManager
-     * @param \Magento\Framework\App\Helper\Context $context
-     * @param \Magento\Framework\Component\ComponentRegistrarInterface $componentRegistrar
-     * @param \Magento\Framework\Filesystem\Directory\ReadFactory $readFactory
-     * @param \Magento\Framework\Message\ManagerInterface $messageManager
-     * @param \Magento\Framework\App\ResponseInterface $response
-     * @param \Magento\Framework\Json\Helper\Data $jsonHelper
+     * @param ProductMetadataInterface $productMetadata
+     * @param ObjectManagerInterface $objectManager
+     * @param Context $context
+     * @param ComponentRegistrarInterface $componentRegistrar
+     * @param ReadFactory $readFactory
+     * @param ManagerInterface $messageManager
+     * @param ResponseInterface $response
+     * @param ModuleList $moduleList
+     * @param JsonHelper $jsonHelper
+     * @param ActionMode $actionMode
      * @param ResourceConnection $resource
+     * @param StoreManagerInterface $storeManager
      * @param array $linkedAttributes
      * @param null $isDisabledConfigPath
      * @param null $isEnabledVisibilityPerCustomerGroup
      * @param null $isEnabledVisibilityPerStoreView
+     * @param string $configPathInventoryOutOfStockOptions
      */
     public function __construct(
-        \Magento\Framework\App\ProductMetadataInterface $productMetadata,
-        \Magento\Framework\ObjectManagerInterface $objectManager,
-        \Magento\Framework\App\Helper\Context $context,
-        \Magento\Framework\Component\ComponentRegistrarInterface $componentRegistrar,
-        \Magento\Framework\Filesystem\Directory\ReadFactory $readFactory,
-        \Magento\Framework\Message\ManagerInterface $messageManager,
-        \Magento\Framework\App\ResponseInterface $response,
-        \Magento\Framework\Json\Helper\Data $jsonHelper,
+        ProductMetadataInterface $productMetadata,
+        ObjectManagerInterface $objectManager,
+        Context $context,
+        ComponentRegistrarInterface $componentRegistrar,
+        ReadFactory $readFactory,
+        ManagerInterface $messageManager,
+        ResponseInterface $response,
+        ModuleList $moduleList,
+        JsonHelper $jsonHelper,
+        ActionMode $actionMode,
         ResourceConnection $resource,
+        StoreManagerInterface $storeManager,
         $linkedAttributes = [],
         $isDisabledConfigPath = null,
         $isEnabledVisibilityPerCustomerGroup = null,
-        $isEnabledVisibilityPerStoreView = null
+        $isEnabledVisibilityPerStoreView = null,
+        $configPathInventoryOutOfStockOptions = ''
     ) {
-        $this->productMetadata                     = $productMetadata;
-        $this->objectManager                       = $objectManager;
-        $this->componentRegistrar                  = $componentRegistrar;
-        $this->readFactory                         = $readFactory;
-        $this->messageManager                      = $messageManager;
-        $this->response                            = $response;
-        $this->jsonHelper                          = $jsonHelper;
-        $this->resource                            = $resource;
-        $this->linkedAttributes                    = $linkedAttributes;
-        $this->isDisabledConfigPath                = $isDisabledConfigPath;
-        $this->isEnabledVisibilityPerCustomerGroup = $isEnabledVisibilityPerCustomerGroup;
-        $this->isEnabledVisibilityPerStoreView     = $isEnabledVisibilityPerStoreView;
+        $this->productMetadata                      = $productMetadata;
+        $this->objectManager                        = $objectManager;
+        $this->componentRegistrar                   = $componentRegistrar;
+        $this->readFactory                          = $readFactory;
+        $this->messageManager                       = $messageManager;
+        $this->response                             = $response;
+        $this->storeManager                         = $storeManager;
+        $this->jsonHelper                           = $jsonHelper;
+        $this->resource                             = $resource;
+        $this->moduleList                           = $moduleList;
+        $this->actionMode                           = $actionMode;
+        $this->linkedAttributes                     = $linkedAttributes;
+        $this->isDisabledConfigPath                 = $isDisabledConfigPath;
+        $this->isEnabledVisibilityPerCustomerGroup  = $isEnabledVisibilityPerCustomerGroup;
+        $this->isEnabledVisibilityPerStoreView      = $isEnabledVisibilityPerStoreView;
+        $this->configPathInventoryOutOfStockOptions = $configPathInventoryOutOfStockOptions;
         parent::__construct($context);
     }
 
@@ -214,12 +213,12 @@ class Data extends AbstractHelper
      * @param QuoteItem $item
      * @param array $cart
      * @return float|int|mixed
-     * @throws \Exception
+     * @throws Exception
      */
     public function getOptionValueQty($valueId, $valueData, QuoteItem $item, $cart = [])
     {
         if (empty($valueData['option_id'])) {
-            throw new \Exception('Unable to locate the option id');
+            throw new Exception('Unable to locate the option id');
         }
 
         /** <!-- Change qty based on the customers input (qty input) --> */
@@ -257,13 +256,13 @@ class Data extends AbstractHelper
     {
         $this->metadataPool = $this->objectManager->get('\Magento\Framework\EntityManager\MetadataPool');
 
-        return $this->metadataPool->getMetadata($class)->getLinkField();
+        return (string)$this->metadataPool->getMetadata($class)->getLinkField();
     }
 
     /**
      * Check Magento edition.
      *
-     * @return boolean
+     * @return bool
      */
     public function isEnterprise()
     {
@@ -272,19 +271,34 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Check if module is enabled
+     *
+     * @param $moduleName
+     * @return bool
+     */
+    public function isModuleEnabled($moduleName): bool
+    {
+        return $this->moduleList->getOne($moduleName) != null;
+    }
+
+    /**
      * @param $moduleName
      * @return int
-     * @throws \Magento\Framework\Exception\FileSystemException
+     * @throws FileSystemException
      */
     public function getModuleVersion($moduleName)
     {
         $path             = $this->componentRegistrar->getPath(
-            \Magento\Framework\Component\ComponentRegistrar::MODULE,
+            ComponentRegistrar::MODULE,
             $moduleName
         );
         $directoryRead    = $this->readFactory->create($path);
         $composerJsonData = $directoryRead->readFile('composer.json');
-        $data             = json_decode($composerJsonData);
+        $data             = $this->jsonHelper->unserialize($composerJsonData);
+
+        if ($data && is_array($data)) {
+            return !empty($data['version']) ? $data['version'] : 0;
+        }
 
         return !empty($data->version) ? $data->version : 0;
     }
@@ -298,7 +312,7 @@ class Data extends AbstractHelper
      * @param string $toOperator
      * @param string $moduleName
      * @return bool|mixed
-     * @throws \Magento\Framework\Exception\FileSystemException
+     * @throws FileSystemException
      */
     public function checkModuleVersion(
         $fromVersion,
@@ -354,12 +368,8 @@ class Data extends AbstractHelper
         foreach ($options as $oIndex => $option) {
             unset($options[$oIndex]['product_id']);
 
-            if (isset($options[$oIndex]['option_id'])) {
-                if (!isset($options[$oIndex]['record_id'])) {
-                    $options[$oIndex]['record_id'] = $options[$oIndex]['option_id'];
-                }
-                unset($options[$oIndex]['option_id']);
-            }
+            $options[$oIndex]['record_id'] = $oIndex;
+            unset($options[$oIndex]['option_id']);
 
             $values = isset($option['values']) ? $option['values'] : [];
             if (!$values) {
@@ -367,13 +377,7 @@ class Data extends AbstractHelper
             }
 
             foreach ($values as $vIndex => $value) {
-                if (!isset($options[$oIndex]['values'][$vIndex]['option_type_id'])) {
-                    continue;
-                }
-                if (!isset($options[$oIndex]['values'][$vIndex]['record_id'])) {
-                    $options[$oIndex]['values'][$vIndex]['record_id'] =
-                        $options[$oIndex]['values'][$vIndex]['option_type_id'];
-                }
+                $options[$oIndex]['values'][$vIndex]['record_id'] = $vIndex;
                 unset($options[$oIndex]['values'][$vIndex]['option_type_id']);
                 unset($options[$oIndex]['values'][$vIndex]['option_id']);
             }
@@ -396,20 +400,20 @@ class Data extends AbstractHelper
 
             if (!$values) {
                 $dependencies = !empty($option['dependency'])
-                    ? json_decode($option['dependency'])
+                    ? $this->jsonHelper->unserialize($option['dependency'])
                     : null;
                 if ($dependencies) {
                     foreach ($dependencies as $dIndex => $dependency) {
                         $dependencies[$dIndex] = $this->replaceOptionIdWithRecordId($dependency, $options);
                     }
-                    $options[$oIndex]['dependency'] = json_encode($dependencies);
+                    $options[$oIndex]['dependency'] = $this->jsonHelper->serialize($dependencies);
                 }
                 continue;
             }
 
             foreach ($values as $vIndex => $value) {
                 $dependencies = !empty($value['dependency'])
-                    ? json_decode($value['dependency'])
+                    ? $this->jsonHelper->unserialize($value['dependency'])
                     : null;
 
                 if (!$dependencies) {
@@ -420,7 +424,7 @@ class Data extends AbstractHelper
                     $dependencies[$dIndex] = $this->replaceOptionIdWithRecordId($dependency, $options);
                 }
 
-                $values[$vIndex]['dependency'] = json_encode($dependencies);
+                $values[$vIndex]['dependency'] = $this->jsonHelper->serialize($dependencies);
             }
 
             $options[$oIndex]['values'] = $values;
@@ -442,31 +446,29 @@ class Data extends AbstractHelper
         $dependencyValueId  = $dependency[1];
 
         foreach ($options as $oIndex => $option) {
-            $optionId = isset($option['option_id']) ? $option['option_id'] : '';
+            $optionId = $option['option_id'] ?? '';
             if (!$optionId) {
-                $optionId = isset($option['record_id']) ? $option['record_id'] : '';
+                $optionId = $option['record_id'] ?? '';
             }
 
             if ($optionId != $dependencyOptionId) {
                 continue;
             }
 
-            $dependency[0] = (isset($option['record_id']) && $option['record_id'] !== null) ?
-                $option['record_id'] :
-                $option['option_id'];
+            $dependency[0] = $oIndex;
 
-            $values = isset($option['values']) ? $option['values'] : [];
+            $values = $option['values'] ?? [];
             foreach ($values as $vIndex => $value) {
-                $valueId = isset($value['option_type_id']) ? $value['option_type_id'] : '';
+                $valueId = $value['option_type_id'] ?? '';
                 if (!$valueId) {
-                    $valueId = isset($value['record_id']) ? $value['record_id'] : '';
+                    $valueId = $value['record_id'] ?? '';
                 }
 
                 if ($valueId != $dependencyValueId) {
                     continue;
                 }
 
-                $dependency[1] = $valueId;
+                $dependency[1] = $vIndex;
             }
         }
 
@@ -481,8 +483,8 @@ class Data extends AbstractHelper
      */
     public function prepareLinkedAttributes($attributes)
     {
-        $attributeName  = \Magento\Catalog\Api\Data\ProductAttributeInterface::CODE_NAME;
-        $attributePrice = \Magento\Catalog\Api\Data\ProductAttributeInterface::CODE_PRICE;
+        $attributeName  = ProductAttributeInterface::CODE_NAME;
+        $attributePrice = ProductAttributeInterface::CODE_PRICE;
 
         $this->linkedAttributes += [
             $attributeName  => $attributeName,
@@ -490,6 +492,26 @@ class Data extends AbstractHelper
         ];
 
         return array_intersect($this->linkedAttributes, $attributes);
+    }
+
+    /**
+     * Get comparison part for WHERE condition
+     * Checks amount of array elements and fill 'IN' or '=' condition with them
+     *
+     * @param array $data
+     * @return string
+     */
+    public function getComparisonConditionPart(array $data)
+    {
+        if (!$data) {
+            return ' = 0';
+        } elseif (count($data) === 1) {
+            $value = !empty($data[0]) ? $data[0] : '0';
+
+            return ' = ' . $value;
+        } else {
+            return ' IN (' . implode(',', $data) . ')';
+        }
     }
 
     /**
@@ -504,7 +526,7 @@ class Data extends AbstractHelper
             return [];
         }
 
-        $whereCondition = "option_id IN (" . implode(',', $conditions['option_id']) . ")";
+        $whereCondition = 'option_id IN (' . implode(',', $conditions['option_id']) . ')';
 
         if (!empty($this->optionTypeIdCache[sha1($whereCondition)])) {
             return $this->optionTypeIdCache[sha1($whereCondition)];
@@ -513,14 +535,26 @@ class Data extends AbstractHelper
         $connection = $this->resource->getConnection();
         $sql        = $connection->select()
                                  ->from($this->getOptionValueTableName($conditions['entity_type']))
-                                 ->reset(\Zend_Db_Select::COLUMNS)
+                                 ->reset(Select::COLUMNS)
                                  ->columns('option_type_id')
                                  ->distinct()
                                  ->where($whereCondition);
 
-        $optionTypeIds = $connection->fetchCol($sql, 'option_type_id');
+        $optionTypeIds                                  = $connection->fetchCol($sql);
         $this->optionTypeIdCache[sha1($whereCondition)] = $optionTypeIds;
+
         return $optionTypeIds;
+    }
+
+    /**
+     * Reset option/option type IDs cache
+     *
+     * @return void
+     */
+    public function resetOptionIdsCache()
+    {
+        $this->optionTypeIdCache = [];
+        $this->optionIdCache     = [];
     }
 
     /**
@@ -534,6 +568,7 @@ class Data extends AbstractHelper
         if (empty($conditions['option_id']) || !is_array($conditions['option_id'])) {
             return [];
         }
+
         return $conditions['option_id'];
     }
 
@@ -546,10 +581,10 @@ class Data extends AbstractHelper
     public function getOptionValueTableName($entityType)
     {
         if ($entityType == 'group') {
-            return $this->resource->getTableName('mageworx_optiontemplates_group_option_type_value');
+            return (string)$this->resource->getTableName('mageworx_optiontemplates_group_option_type_value');
         }
 
-        return $this->resource->getTableName('catalog_product_option_type_value');
+        return (string)$this->resource->getTableName('catalog_product_option_type_value');
     }
 
     /**
@@ -561,10 +596,10 @@ class Data extends AbstractHelper
     public function getOptionTableName($entityType)
     {
         if ($entityType == 'group') {
-            return $this->resource->getTableName('mageworx_optiontemplates_group_option');
+            return (string)$this->resource->getTableName('mageworx_optiontemplates_group_option');
         }
 
-        return $this->resource->getTableName('catalog_product_option');
+        return (string)$this->resource->getTableName('catalog_product_option');
     }
 
     /**
@@ -589,33 +624,47 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Decode value according to module-catalog version
+     * Encode buy request value
      *
      * @param string $value
      * @return array
      */
     public function decodeBuyRequestValue($value)
     {
-        if ($this->checkModuleVersion('102.0.0')) {
-            return json_decode($value, true);
-        } else {
-            return unserialize($value);
-        }
+        return $this->jsonDecode($value);
     }
 
     /**
-     * Encode value according to module-catalog version
+     * Encode buy request value
      *
      * @param array $value
      * @return string
      */
     public function encodeBuyRequestValue($value)
     {
-        if ($this->checkModuleVersion('102.0.0')) {
-            return json_encode($value);
-        } else {
-            return serialize($value);
-        }
+        return (string)$this->jsonEncode($value);
+    }
+
+    /**
+     * Decode JSON securely
+     *
+     * @param string $value
+     * @return array
+     */
+    public function jsonDecode($value)
+    {
+        return $this->jsonHelper->unserialize($value);
+    }
+
+    /**
+     * Encode JSON securely
+     *
+     * @param array $value
+     * @return string
+     */
+    public function jsonEncode($value)
+    {
+        return (string)$this->jsonHelper->serialize($value);
     }
 
     /**
@@ -628,7 +677,7 @@ class Data extends AbstractHelper
         if (is_null($this->isDisabledConfigPath)) {
             return false;
         }
-        
+
         return $this->scopeConfig->isSetFlag(
             $this->isDisabledConfigPath,
             ScopeInterface::SCOPE_STORE,
@@ -689,7 +738,7 @@ class Data extends AbstractHelper
      * Is selectable option type
      *
      * @param string $optionType
-     * @return boolean
+     * @return bool
      */
     public function isSelectableOption($optionType)
     {
@@ -748,5 +797,201 @@ class Data extends AbstractHelper
     public function isWebsiteCatalogPriceScope()
     {
         return (bool)$this->scopeConfig->getValue('catalog/price/scope');
+    }
+
+    /**
+     * Check if inventory out of stock options are set to "Hide"
+     *
+     * @return bool
+     */
+    public function isHiddenOutOfStockOptions($storeId = null)
+    {
+        return false;
+    }
+
+    /**
+     * Check if inventory out of stock options are set to "Disable"
+     *
+     * @return bool
+     */
+    public function isDisabledOutOfStockOptions($storeId = null)
+    {
+        return false;
+    }
+
+    /**
+     * Check if it is running OptionImportExport module's import action
+     *
+     * @used to ignore APO config's disabling and import all features to avoid data loss
+     *
+     * @return bool
+     */
+    public function isAPOImportAction()
+    {
+        return $this->actionMode->getActionMode() === ActionMode::ACTION_IMPORT;
+    }
+
+    /**
+     * Check if this is magento order create's configure quote items action
+     *
+     * @return bool
+     */
+    public function isConfigureQuoteItemsAction()
+    {
+        return $this->_request->getFullActionName() === 'sales_order_create_configureQuoteItems';
+    }
+
+    /**
+     * Check if this is magento checkout cart's configure quote items action
+     *
+     * @return bool
+     */
+    public function isCheckoutCartConfigureAction()
+    {
+        return $this->_request->getFullActionName() === 'checkout_cart_configure';
+    }
+
+    /**
+     * Check if this is product url with ShareableLink feature
+     *
+     * @return bool
+     */
+    public function isShareableLink()
+    {
+        return $this->_request->getFullActionName() === 'catalog_product_view'
+            && $this->_request->getParam('config');
+    }
+
+    /**
+     * Get full action name
+     *
+     * @return string
+     */
+    public function getFullActionName()
+    {
+        return (string)$this->_request->getFullActionName();
+    }
+
+    /**
+     * Convert character encoding
+     *
+     * @param $string
+     * @return false|string|string[]|void|null
+     */
+    public function getConvertEncoding($string)
+    {
+        return htmlspecialchars_decode(htmlentities($string));
+    }
+
+    /**
+     * Check if foreign key already exist
+     *
+     * @param array $item
+     * @param string $tableName
+     * @return bool
+     */
+    public function isForeignKeyExist($item, $tableName, $referenceColumnName)
+    {
+        $connection         = $this->resource->getConnection();
+        $referenceTableName = $this->resource->getTableName($item['reference_table_name']);
+        $skipFlag           = false;
+
+        if (!$connection->isTableExists($tableName) ||
+            !$connection->isTableExists($referenceTableName) ||
+            !$connection->tableColumnExists($tableName, $item['column_name']) ||
+            !$connection->tableColumnExists($referenceTableName, $referenceColumnName)
+        ) {
+            return true;
+        }
+
+        $fkList = $connection->getForeignKeys($tableName);
+        foreach ($fkList as $fk) {
+            if ($fk['TABLE_NAME'] == $tableName &&
+                $fk['COLUMN_NAME'] == $item['column_name'] &&
+                $fk['REF_TABLE_NAME'] == $referenceTableName &&
+                $fk['REF_COLUMN_NAME'] == $referenceColumnName
+            ) {
+                $skipFlag = true;
+                break;
+            }
+        }
+
+        return $skipFlag;
+    }
+
+    public function updateValueQtyToSalableQty(string $sku): float
+    {
+        $getProductSalableQty = $this->objectManager->get(
+            GetProductSalableQtyInterface::class
+        );
+        $stockResolver        = $this->objectManager->get(
+            StockResolverInterface::class
+        );
+
+        $websiteCode = $this->storeManager->getWebsite()->getCode();
+        $stockId     = $stockResolver->execute(
+            SalesChannelInterface::TYPE_WEBSITE,
+            $websiteCode
+        )->getStockId();
+        $qty         = $getProductSalableQty->execute($sku, $stockId);
+
+        return (float)$qty;
+    }
+
+    public function getSourceInfo(string $sku): array
+    {
+        $getSalableQuantityDataBySku = $this->objectManager->get(
+            GetSalableQuantityDataBySku::class
+        );
+
+        $stockInfo = $getSalableQuantityDataBySku->execute($sku);
+
+        if (!$stockInfo) {
+            return [];
+        }
+
+        return $stockInfo;
+
+    }
+
+    public function isAllCustomerGroupId(string $customerGroupId): bool
+    {
+        return $customerGroupId == self::ALL_CUSTOMER_GROUP_ID;
+    }
+
+    /**
+     * Set IsDefault attribute if product SKU equal value SKU for loadLinkedProduct logic
+     *
+     * @param string $productSku
+     * @param array $optionValue
+     * @return bool
+     */
+    public function setIsDefaultAttrForLLPLogic(string $productSku, array $optionValue): bool
+    {
+        $optionValueIsDefault = array_key_exists('is_default', $optionValue) && $optionValue['is_default'];
+
+        if (empty($optionValue['load_linked_product']) || !isset($optionValue['sku'])) {
+            return $optionValueIsDefault;
+        }
+
+        if (!$optionValue['load_linked_product'] || !$optionValue['sku'] || !$productSku) {
+            return $optionValueIsDefault;
+        }
+
+        if ($optionValue['sku'] == $productSku) {
+            return true;
+        }
+
+        return $optionValueIsDefault;
+    }
+
+    /**
+     * Check if module Magento_InventorySales is enabled
+     *
+     * @return bool
+     */
+    public function isMSIModuleEnabled(): bool
+    {
+        return $this->isModuleEnabled('Magento_InventorySales');
     }
 }

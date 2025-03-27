@@ -1,0 +1,37 @@
+/* multistore switcher */
+.multistore-switcher .dropdown-options img {
+    width: 40px;
+    height: 20px;
+}
+.multistore-switcher.active ul {
+    margin-top: 6px;
+}
+.multistore-switcher button.action {
+   padding: 0;
+    background: unset !important;
+    border: unset !important;
+}
+.multistore-switcher button img {
+     height: 25px;
+    width: 96px;
+}
+.page-header .page-header .multistore-switcher {
+    top: 8px !important;
+}
+
+/* minicart changes */
+.header .quickcart-wrapper .block-quickcart .block-content-quickcart .quickcart-top button.close:before {
+    content: '\e616';
+    position: relative;
+    top: 15px;
+}
+.header .quickcart-wrapper .block-quickcart .block-content-quickcart .quickcart-top button.close span {
+    display: none;
+}
+
+
+/*load more items*/
+.products .product-items .ias-load-more {
+    position: relative;
+    top: 5em;
+}

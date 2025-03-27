@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -19,7 +19,7 @@ namespace Mirasvit\Seo\Service;
 
 use Mirasvit\Seo\Api\Service\CompatibilityServiceInterface;
 use Mirasvit\Seo\Helper\Version;
-use Mirasvit\Seo\Helper\Serializer;
+use Mirasvit\Core\Service\SerializeService;
 
 /**
  * M2.2. compatibility
@@ -27,14 +27,17 @@ use Mirasvit\Seo\Helper\Serializer;
 class CompatibilityService implements CompatibilityServiceInterface
 {
     /**
+     * @var Version
+     */
+    private $version;
+
+    /**
      * @param Version $version
      */
     public function __construct(
-        Version $version,
-        Serializer $serializer
+        Version $version
     ) {
         $this->version = $version;
-        $this->serializer = $serializer;
     }
 
     /**
@@ -46,11 +49,14 @@ class CompatibilityService implements CompatibilityServiceInterface
     {
         if ($this->version->getVersion() >= '2.2.0'
             && !json_decode($value)) {
-            $value = $this->serializer->unserialize($value);
-            $value = $this->serializer->serialize($value);
+            $srcValue = $value;
+            $value = SerializeService::decode($value);
+            if (!$value) {
+                $value = [0 => $srcValue];
+            }
+            $value = SerializeService::encode($value);
         }
 
         return $value;
     }
 }
-

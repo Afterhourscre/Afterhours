@@ -9,11 +9,11 @@ namespace Aheadworks\RewardPoints\Model\Filters\Transaction;
 use Aheadworks\RewardPoints\Model\Source\Transaction\Expire;
 use Aheadworks\RewardPoints\Model\DateTime;
 use Magento\Framework\Exception\LocalizedException;
-
+use Laminas\Filter\FilterInterface;
 /**
  * Class Aheadworks\RewardPoints\Model\Filters\Transaction\ExpirationDate
  */
-class ExpirationDate implements \Zend_Filter_Interface
+class ExpirationDate implements FilterInterface
 {
     /**#@+
      * Constants for field key for expiration date

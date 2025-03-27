@@ -4,18 +4,22 @@ namespace WeltPixel\GoogleCards\Block;
 class TwitterCards extends GoogleCards
 {
 
-    /**
+   /**
      * @param \Magento\Catalog\Model\Product $product
      * @return string
      */
     public function getDescription($product)
     {
-        if ($this->_helper->getTwitterCardDescriptionType()) {
-            return nl2br($product->getData('description'));
+        $description = $this->_helper->getTwitterCardDescriptionType() ? $product->getData('description') : $product->getData('short_description');
+
+        // Check if $description is not null and is a string before passing it to nl2br
+        if (!is_null($description) && is_string($description)) {
+            return nl2br($description);
         } else {
-            return nl2br($product->getData('short_description'));
+            return '';
         }
     }
+
 
     /**
      * @return string

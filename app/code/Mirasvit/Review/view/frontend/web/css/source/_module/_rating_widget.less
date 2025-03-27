@@ -1,0 +1,94 @@
+
+.rating-widget {
+    --star-large:  30px;
+    margin-bottom: 2rem;
+
+    .rating-content {
+        display:         flex;
+        flex-wrap:       wrap;
+        justify-content: center;
+
+        div.rating-summary {
+            display:         flex;
+            justify-content: space-between;
+            align-items:     center;
+            margin-bottom:   20px;
+        }
+
+        .rating-overall {
+            border-right:    1px solid #cccccc;
+            flex-wrap:       wrap;
+            justify-content: center;
+
+            @media screen and (max-width: 560px) {
+                border-right: none;
+            }
+
+            .rating-result {
+                width:  auto;
+                margin: 0 auto;
+
+                &::before {
+                    font-size:   var(--star-large);
+                    line-height: var(--star-large);
+                    height:      var(--star-large);
+                }
+
+                > span::before {
+                    font-size:   var(--star-large);
+                    line-height: var(--star-large);
+                    height:      var(--star-large);
+                }
+            }
+
+            .review-count {
+                font-weight: 300;
+                line-height: 1.1;
+                font-size:   2.2rem;
+                padding:     0 20px;
+                margin:      0 auto;
+            }
+        }
+
+        .rating-counts {
+            padding-left: 20px;
+            flex-grow:    1;
+
+            td {
+                padding: 5px;
+            }
+
+            .rating-summary {
+                margin-bottom: 5px;
+
+                .bar {
+                    width:      100%;
+                    height:     10px;
+                    background: #f0f0f0;
+                    margin:     0 10px;
+                    display:    block;
+
+                    .progress {
+                        height:     10px;
+                        background: #cccccc;
+                    }
+                }
+
+                .review-count {
+                    width:      80px;
+                    text-align: center;
+                }
+            }
+        }
+    }
+}
+
+.sidebar {
+    .rating-widget {
+        .rating-content {
+            .rating-overall {
+                border-right: none;
+            }
+        }
+    }
+}

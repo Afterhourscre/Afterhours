@@ -31,17 +31,11 @@ class ProductAttributes
      */
     public function getProductAttributesFromGroup($group)
     {
-        $keys = [];
-        $productAttributes = $this->productAttributes->getData();
-        foreach ($productAttributes as $productAttribute) {
-            foreach ($productAttribute->getKeys() as $productAttributeKey) {
-                $keys[] = $productAttributeKey;
-            }
-        }
-
         $attributes = [];
-        foreach ($keys as $key) {
-            $attributes[$key] = $group->getData($key);
+        $productAttributes = $this->productAttributes->getData();
+            /** @var \MageWorx\OptionBase\Api\ProductAttributeInterface $productAttribute */
+        foreach ($productAttributes as $productAttribute) {
+            $attributes[$productAttribute->getName()] = $group->getData($productAttribute->getName());
         }
         return $attributes;
     }

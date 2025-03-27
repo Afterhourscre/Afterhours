@@ -10,29 +10,11 @@ use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 
 class ConditionValidator
 {
-    /**
-     * @var TimezoneInterface
-     */
-    protected $timezone;
+    protected TimezoneInterface $timezone;
+    protected array $priceItem;
+    protected float $valuePrice;
+    protected int $timestamp;
 
-    /**
-     * @var array
-     */
-    protected $priceItem;
-
-    /**
-     * @var float
-     */
-    protected $valuePrice;
-
-    /**
-     * @var int
-     */
-    protected $timestamp;
-
-    /**
-     * @param TimezoneInterface $timezone
-     */
     public function __construct(
         TimezoneInterface $timezone
     ) {

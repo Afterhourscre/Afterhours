@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -27,8 +27,16 @@ class ProviderRepository
      */
     private $providerPool;
 
+    /**
+     * @var ModuleManager
+     */
     private $moduleManager;
 
+    /**
+     * ProviderRepository constructor.
+     * @param ModuleManager $moduleManager
+     * @param array $pool
+     */
     public function __construct(
         ModuleManager $moduleManager,
         array $pool = []
@@ -53,7 +61,8 @@ class ProviderRepository
     }
 
     /**
-     * {@inheritdoc}
+     * @param int $storeId
+     * @return \Generator
      */
     public function initSitemapItems($storeId)
     {
@@ -66,6 +75,10 @@ class ProviderRepository
         }
     }
 
+    /**
+     * @param ProviderInterface $provider
+     * @return bool
+     */
     private function isApplicable(ProviderInterface $provider)
     {
         $module = $provider->getModuleName();

@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Plugin\Framework\View\Page;
 
@@ -12,7 +11,7 @@ use \Magento\Framework\View\Page\Config as NativeConfig;
 
 class Config
 {
-    const NO_INDEX_FOLLOW = 'NOINDEX,FOLLOW';
+    public const NO_INDEX_FOLLOW = 'NOINDEX,FOLLOW';
 
     /**
      * @var \Amasty\Xsearch\Helper\Data

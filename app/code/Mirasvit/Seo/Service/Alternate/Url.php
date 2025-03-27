@@ -9,31 +9,24 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\Alternate;
 
+use Magento\Store\Api\Data\StoreInterface;
 use Mirasvit\Seo\Api\Config\AlternateConfigInterface as AlternateConfig;
 
 class Url implements \Mirasvit\Seo\Api\Service\Alternate\UrlInterface
 {
-    /**
-     * @var \Magento\Framework\View\Element\Template\Context
-     */
     protected $context;
 
-    /**
-     * @var \Mirasvit\Seo\Api\Config\AlternateConfigInterface
-     */
     protected $alternateConfig;
 
-    /**
-     * @var \Mirasvit\Seo\Helper\Data
-     */
     protected $seoData;
 
     /**
@@ -51,35 +44,29 @@ class Url implements \Mirasvit\Seo\Api\Service\Alternate\UrlInterface
      */
     protected $storesBaseUrlsCountValues = [];
 
-    /**
-     * @param \Magento\Framework\View\Element\Template\Context $context
-     * @param \Mirasvit\Seo\Api\Config\AlternateConfigInterface $alternateConfig
-     * @param \Mirasvit\Seo\Helper\Data $seoData
-     */
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
         \Mirasvit\Seo\Api\Config\AlternateConfigInterface $alternateConfig,
         \Mirasvit\Seo\Helper\Data $seoData
     ) {
-        $this->context = $context;
+        $this->context         = $context;
         $this->alternateConfig = $alternateConfig;
-        $this->seoData = $seoData;
-        $this->storeManager = $this->context->getStoreManager();
+        $this->seoData         = $seoData;
+        $this->storeManager    = $this->context->getStoreManager();
     }
 
     /**
-     * {@inheritdoc}
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    public function getStoresCurrentUrl()
+    public function getStoresCurrentUrl(): array
     {
         $alternateManualConfig = false;
         $currentStoreGroup = $this->storeManager->getStore()->getGroupId();
         $currentStore = $this->storeManager->getStore();
-        $alternateAddMethod = $this->alternateConfig->getAlternateHreflang($currentStore);
+        $alternateAddMethod = $this->alternateConfig->getAlternateHreflang((int)$currentStore->getId());
         if ($alternateAddMethod == AlternateConfig::ALTERNATE_CONFIGURABLE) {
-            $alternateManualConfig = $this->alternateConfig->getAlternateManualConfig($currentStore);
+            $alternateManualConfig = $this->alternateConfig->getAlternateManualConfig((int)$currentStore->getId());
         }
         $storesNumberInGroup = 0;
         $storeUrls = [];
@@ -89,7 +76,7 @@ class Url implements \Mirasvit\Seo\Api\Service\Alternate\UrlInterface
             if ($store->getIsActive()
                 && ((!$alternateManualConfig
                     && $store->getGroupId() == $currentStoreGroup
-                    && $this->alternateConfig->getAlternateHreflang($store))
+                    && $this->alternateConfig->getAlternateHreflang((int)$store->getId()))
                 || ($alternateManualConfig
                     && in_array($store->getId(), $alternateManualConfig)))
             ) {
@@ -131,21 +118,15 @@ class Url implements \Mirasvit\Seo\Api\Service\Alternate\UrlInterface
             return $storeUrls;
         }
 
-        return false;
+        return [];
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getStores()
+    public function getStores(): array
     {
         return $this->stores;
     }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getUrlAddition($store)
+    
+    public function getUrlAddition(StoreInterface $store): string
     {
         $urlAddition = (isset($this->storesBaseUrlsCountValues[$store->getBaseUrl()])
             && $this->storesBaseUrlsCountValues[$store->getBaseUrl()] > 1) ?
@@ -157,23 +138,17 @@ class Url implements \Mirasvit\Seo\Api\Service\Alternate\UrlInterface
     /**
      * Prepare store current url.
      *
-     * @param string $storesBaseUrls
-     * @param string $storeBaseUrl
-     * @param string $currentUrl
-     * @param string $storeCode
-     * @param bool $isSimilarLinks
-     * @param int $alternateAddMethod
-     * @return string
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    protected function _storeUrlPrepare($storesBaseUrls,
-        $storeBaseUrl,
-        $currentUrl,
-        $storeCode,
-        $isSimilarLinks,
-        $alternateAddMethod
-    ) {
+    protected function _storeUrlPrepare(
+        array $storesBaseUrls,
+        string $storeBaseUrl,
+        string $currentUrl,
+        string $storeCode,
+        bool $isSimilarLinks,
+        int $alternateAddMethod
+    ): string {
         if (strpos($currentUrl, $storeBaseUrl) === false && !$alternateAddMethod) {
             $currentUrl = str_replace($storesBaseUrls, $storeBaseUrl, $currentUrl); // fix bug with incorrect base urls
         }
@@ -206,5 +181,4 @@ class Url implements \Mirasvit\Seo\Api\Service\Alternate\UrlInterface
 
         return $currentUrl;
     }
-
 }

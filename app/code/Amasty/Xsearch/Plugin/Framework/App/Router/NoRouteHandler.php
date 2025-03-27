@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Plugin\Framework\App\Router;
 
@@ -12,9 +11,6 @@ use Magento\Framework\App\RequestInterface;
 use Magento\Framework\App\Router\NoRouteHandler as NativeNoRouteHandler;
 use Magento\Search\Model\QueryFactory;
 
-/**
- * Class NoRouteHandler
- */
 class NoRouteHandler
 {
     /**
@@ -72,16 +68,8 @@ class NoRouteHandler
      */
     private function isRedirectEnabled(RequestInterface $request)
     {
-        $path = $request->getOriginalPathInfo();
-        $exp = explode('.', $path);
-        $endOfPath = end($exp);
-
-        if ($this->config->hasRedirect() && !$request->isAjax()
-            && (stristr($path, '.') === false || $endOfPath === 'html' || $endOfPath === 'htm')
-        ) {
-            return true;
-        }
-
-        return false;
+        return $this->config->hasRedirect()
+            && !$request->isAjax()
+            && !preg_match('@^.*\.[a-z0-9]+(?<!.html)(?<!.htm)$@', $request->getOriginalPathInfo());
     }
 }

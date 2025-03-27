@@ -9,19 +9,19 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoMarkup\Model\Config;
 
-
-use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface;
+use Mirasvit\SeoMarkup\Model\Config;
 
-class ProductConfig
+class ProductConfig extends Config
 {
     const DESCRIPTION_TYPE_DESCRIPTION       = 1;
     const DESCRIPTION_TYPE_META              = 2;
@@ -34,247 +34,297 @@ class ProductConfig
     const ITEM_CONDITION_MANUAL  = 1;
     const ITEM_CONDITION_NEW_ALL = 2;
 
-    private $scopeConfig;
-
-    public function __construct(
-        ScopeConfigInterface $scopeConfig
-    ) {
-        $this->scopeConfig = $scopeConfig;
-    }
-
-    /**
-    * @return bool 
-    */
-    public function isRsEnabled($store)
+    public function isRsEnabled(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue(
+        return $this->scopeConfig->isSetFlag(
             'seo/seo_markup/product/is_rs_enabled',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         );
     }
 
-    /**
-     * @return bool
-     */
-    public function isRemoveNativeRs()
+    public function isRemoveNativeRs(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/is_remove_native_rs');
+        return $this->scopeConfig->isSetFlag(
+            'seo/seo_markup/product/is_remove_native_rs',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return int
-     */
-    public function getDescriptionType()
+    public function isPriceEnabled(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/description_type');
+        return $this->scopeConfig->isSetFlag(
+            'seo/seo_markup/product/is_price_enabled',
+            ScopeInterface::SCOPE_STORES,
+            $storeId
+        );
     }
 
-    /**
-     * @return bool
-     */
-    public function isImageEnabled()
+    public function getDescriptionType(?int $storeId = null): int
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/is_image_enabled');
+        return (int)$this->scopeConfig->getValue(
+            'seo/seo_markup/product/description_type',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return bool
-     */
-    public function isAvailabilityEnabled()
+    public function isImageEnabled(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/is_availability_enabled');
+        return $this->scopeConfig->isSetFlag(
+            'seo/seo_markup/product/is_image_enabled',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return bool
-     */
-    public function isAcceptedPaymentMethodEnabled()
+    public function isAvailabilityEnabled(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/is_accepted_payment_method_enabled');
+        return $this->scopeConfig->isSetFlag(
+            'seo/seo_markup/product/is_availability_enabled',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return bool
-     */
-    public function isAvailableDeliveryMethodEnabled()
+    public function isAcceptedPaymentMethodEnabled(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/is_available_delivery_method_enabled');
+        return $this->scopeConfig->isSetFlag(
+            'seo/seo_markup/product/is_accepted_payment_method_enabled',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return bool
-     */
-    public function isCategoryEnabled()
+    public function isAvailableDeliveryMethodEnabled(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/is_category_enabled');
+        return $this->scopeConfig->isSetFlag(
+            'seo/seo_markup/product/is_available_delivery_method_enabled',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return bool
-     */
-    public function isMpnEnabled()
+    public function isCategoryEnabled(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/is_mpn_enabled');
+        return $this->scopeConfig->isSetFlag(
+            'seo/seo_markup/product/is_category_enabled',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return string
-     */
-    public function getBrandAttribute()
+    public function isMpnEnabled(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/brand_attribute');
+        return $this->scopeConfig->isSetFlag(
+            'seo/seo_markup/product/is_mpn_enabled',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return string
-     */
-    public function getModelAttribute()
+    public function getBrandAttribute(?int $storeId = null): ?string
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/model_attribute');
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/brand_attribute',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return string
-     */
-    public function getColorAttribute()
+    public function getModelAttribute(?int $storeId = null): ?string
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/color_attribute');
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/model_attribute',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return string
-     */
-    public function getWeightUnitType()
+    public function getManufacturerPartNumber(?int $storeId = null): ?string
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/weight_unit_type');
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/mpn_attribute',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return bool
-     */
-    public function isDimensionsEnabled()
+    public function getColorAttribute(?int $storeId = null): ?string
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/is_dimensions_enabled');
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/color_attribute',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return string
-     */
-    public function getDimensionUnit()
+    public function getSizeAttribute(?int $storeId = null): ?string
     {
-        return trim($this->scopeConfig->getValue('seo/seo_markup/product/dimension_unit'));
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/size_attribute',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return string
-     */
-    public function getDimensionHeightAttribute()
+    public function getWeightUnitType(?int $storeId = null): ?string
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/dimension_height_attribute');
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/weight_unit_type',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return string
-     */
-    public function getDimensionWidthAttribute()
+    public function isDimensionsEnabled(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/dimension_width_attribute');
+        return $this->scopeConfig->isSetFlag(
+            'seo/seo_markup/product/is_dimensions_enabled',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return string
-     */
-    public function getDimensionDepthAttribute()
+    public function getDimensionUnit(?int $storeId = null): string
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/dimension_depth_attribute');
+        return trim((string)$this->scopeConfig->getValue(
+            'seo/seo_markup/product/dimension_unit',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        ));
     }
 
-    /**
-     * @return string
-     */
-    public function getItemConditionType()
+    public function getDimensionHeightAttribute(?int $storeId = null): ?string
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/item_condition_type');
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/dimension_height_attribute',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return string
-     */
-    public function getItemConditionAttribute()
+    public function getDimensionWidthAttribute(?int $storeId = null): ?string
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/item_condition_attribute');
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/dimension_width_attribute',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return string
-     */
-    public function getItemConditionAttributeValueNew()
+
+    public function getDimensionDepthAttribute(?int $storeId = null): ?string
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/item_condition_attribute_value_new');
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/dimension_depth_attribute',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return string
-     */
-    public function getItemConditionAttributeValueUsed()
+    public function getItemConditionType(?int $storeId = null): ?string
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/item_condition_attribute_value_used');
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/item_condition_type',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return string
-     */
-    public function getItemConditionAttributeValueRefurbished()
+    public function getItemConditionAttribute(?int $storeId = null): ?string
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/item_condition_attribute_value_refurbished');
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/item_condition_attribute',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return string
-     */
-    public function getItemConditionAttributeValueDamaged()
+    public function getItemConditionAttributeValueNew(?int $storeId = null): ?string
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/item_condition_attribute_value_damaged');
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/item_condition_attribute_value_new',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return bool
-     */
-    public function isIndividualReviewsEnabled()
+    public function getItemConditionAttributeValueUsed(?int $storeId = null): ?string
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/is_individual_reviews_enabled');
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/item_condition_attribute_value_used',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return string
-     */
-    public function getGtin8Attribute()
+    public function getItemConditionAttributeValueRefurbished(?int $storeId = null): ?string
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/gtin8_attribute');
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/item_condition_attribute_value_refurbished',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return string
-     */
-    public function getGtin12Attribute()
+    public function getItemConditionAttributeValueDamaged(?int $storeId = null): ?string
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/gtin12_attribute');
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/item_condition_attribute_value_damaged',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
-    /**
-     * @return string
-     */
-    public function getGtin13Attribute()
+    public function isIndividualReviewsEnabled(): bool
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/gtin13_attribute');
+        return $this->scopeConfig->isSetFlag('seo/seo_markup/product/is_individual_reviews_enabled');
     }
 
-    /**
-     * @return string
-     */
-    public function getGtin14Attribute()
+    public function isProductVariantsEnabled(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue('seo/seo_markup/product/gtin14_attribute');
+        return $this->scopeConfig->isSetFlag(
+            'seo/seo_markup/product/is_variants_enabled',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    public function getGtin8Attribute(?int $storeId = null): ?string
+    {
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/gtin8_attribute',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    public function getGtin12Attribute(?int $storeId = null): ?string
+    {
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/gtin12_attribute',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    public function getGtin13Attribute(?int $storeId = null): ?string
+    {
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/gtin13_attribute',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    public function getGtin14Attribute(?int $storeId = null): ?string
+    {
+        return $this->scopeConfig->getValue(
+            'seo/seo_markup/product/gtin14_attribute',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 }

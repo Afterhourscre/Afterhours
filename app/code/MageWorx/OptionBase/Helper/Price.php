@@ -13,25 +13,10 @@ use MageWorx\OptionBase\Helper\Data as BaseHelper;
 
 class Price extends AbstractHelper
 {
-    /**
-     * @var StoreManager
-     */
-    protected $storeManager;
-
-    /**
-     * @var TaxHelper
-     */
-    protected $taxConfig;
-
-    /**
-     * @var CatalogHelper
-     */
-    protected $catalogHelper;
-
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
+    protected StoreManager $storeManager;
+    protected TaxHelper $taxConfig;
+    protected CatalogHelper $catalogHelper;
+    protected Data $baseHelper;
 
     /**
      * @param \Magento\Framework\App\Helper\Context $context
@@ -62,7 +47,40 @@ class Price extends AbstractHelper
      */
     public function getPriceDisplayMode($store = null)
     {
-        return $this->taxConfig->getPriceDisplayType($this->storeManager->getStore($store));
+        return (int)$this->taxConfig->getPriceDisplayType($this->storeManager->getStore($store));
+    }
+
+    /**
+     * Check if price display mode = exclude tax
+     *
+     * @param null|string|bool|int|\Magento\Store\Model\Store $store
+     * @return bool
+     */
+    public function isPriceDisplayModeExcludeTax($store = null)
+    {
+        return $this->getPriceDisplayMode($store) === 1;
+    }
+
+    /**
+     * Check if price display mode = include tax
+     *
+     * @param null|string|bool|int|\Magento\Store\Model\Store $store
+     * @return bool
+     */
+    public function isPriceDisplayModeIncludeTax($store = null)
+    {
+        return $this->getPriceDisplayMode($store) === 2;
+    }
+
+    /**
+     * Check if price display mode = include and exclude tax
+     *
+     * @param null|string|bool|int|\Magento\Store\Model\Store $store
+     * @return bool
+     */
+    public function isPriceDisplayModeBothTax($store = null)
+    {
+        return $this->getPriceDisplayMode($store) === 3;
     }
 
     /**
@@ -86,7 +104,6 @@ class Price extends AbstractHelper
      */
     public function getTaxPrice($product, $price, $includeTax = null)
     {
-        //trigger calculation in any way if $includeTax flag is set
         if ($this->baseHelper->checkModuleVersion('100.1.6', '100.2.0', null, null, 'Magento_Tax') ||
             $this->baseHelper->checkModuleVersion('100.2.6', null, null, null, 'Magento_Tax')){
             if ($includeTax !== null) {
@@ -94,6 +111,7 @@ class Price extends AbstractHelper
                 $this->taxConfig->setNeedUseShippingExcludeTax(true);
             }
         }
+
         $price = $this->catalogHelper->getTaxPrice(
             $product,
             $price,

@@ -7,14 +7,16 @@
 namespace MageWorx\OptionAdvancedPricing\Model;
 
 use Magento\Catalog\Model\Product\Option\Value as OptionValue;
+use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Model\Context;
-use Magento\Framework\Registry;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
-use Magento\Framework\Data\Collection\AbstractDb;
-use MageWorx\OptionBase\Helper\CustomerVisibility as CustomerVisibilityHelper;
+use Magento\Framework\Pricing\PriceCurrencyInterface;
+use Magento\Framework\Registry;
+use Magento\Framework\Serialize\Serializer\Json as Serializer;
+use MageWorx\OptionAdvancedPricing\Api\SpecialPriceStorageInterface;
 use MageWorx\OptionAdvancedPricing\Helper\Data as Helper;
-use MageWorx\OptionAdvancedPricing\Model\ConditionValidator;
+use MageWorx\OptionBase\Helper\CustomerVisibility as CustomerVisibilityHelper;
 
 class SpecialPrice extends AbstractModel
 {
@@ -22,7 +24,6 @@ class SpecialPrice extends AbstractModel
     const OPTIONTEMPLATES_TABLE_NAME = 'mageworx_optiontemplates_group_option_type_special_price';
 
     const COLUMN_OPTION_TYPE_SPECIAL_PRICE_ID = 'option_type_special_price_id';
-    const COLUMN_MAGEWORX_OPTION_TYPE_ID      = 'mageworx_option_type_id';
     const COLUMN_OPTION_TYPE_ID               = 'option_type_id';
     const COLUMN_CUSTOMER_GROUP_ID            = 'customer_group_id';
     const COLUMN_PRICE                        = 'price';
@@ -32,27 +33,16 @@ class SpecialPrice extends AbstractModel
     const COLUMN_DATE_TO                      = 'date_to';
 
     const FIELD_OPTION_TYPE_ID_ALIAS = 'mageworx_special_price_option_type_id';
+    const FIELD_COMMENT_ALIAS        = 'mageworx_special_price_comment';
     const KEY_SPECIAL_PRICE          = 'special_price';
 
-    /**
-     * @var CustomerVisibilityHelper
-     */
-    protected $customerVisibilityHelper;
-
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var ConditionValidator
-     */
-    protected $conditionValidator;
-
-    /**
-     * @var array
-     */
-    protected $activeSpecialPriceItem;
+    protected CustomerVisibilityHelper     $customerVisibilityHelper;
+    protected Helper                       $helper;
+    protected ConditionValidator           $conditionValidator;
+    protected array                        $activeSpecialPriceItem;
+    protected PriceCurrencyInterface       $priceCurrency;
+    protected Serializer                   $serializer;
+    protected SpecialPriceStorageInterface $specialPriceStorage;
 
     /**
      * SpecialPrice constructor.
@@ -62,23 +52,31 @@ class SpecialPrice extends AbstractModel
      * @param ConditionValidator $conditionValidator
      * @param Context $context
      * @param Registry $registry
+     * @param PriceCurrencyInterface $priceCurrency
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      * @param array $data
+     * @param Serializer $serializer
      */
     public function __construct(
-        CustomerVisibilityHelper $customerVisibilityHelper,
-        Helper $helper,
-        ConditionValidator $conditionValidator,
-        Context $context,
-        Registry $registry,
-        AbstractResource $resource = null,
-        AbstractDb $resourceCollection = null,
-        array $data = []
+        CustomerVisibilityHelper     $customerVisibilityHelper,
+        Helper                       $helper,
+        ConditionValidator           $conditionValidator,
+        Context                      $context,
+        Registry                     $registry,
+        PriceCurrencyInterface       $priceCurrency,
+        Serializer                   $serializer,
+        SpecialPriceStorageInterface $specialPriceStorage,
+        AbstractResource             $resource = null,
+        AbstractDb                   $resourceCollection = null,
+        array                        $data = []
     ) {
         $this->customerVisibilityHelper = $customerVisibilityHelper;
         $this->helper                   = $helper;
         $this->conditionValidator       = $conditionValidator;
+        $this->priceCurrency            = $priceCurrency;
+        $this->serializer               = $serializer;
+        $this->specialPriceStorage      = $specialPriceStorage;
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
     }
 
@@ -98,21 +96,32 @@ class SpecialPrice extends AbstractModel
      * Get actual special price according to date and customer group
      *
      * @param OptionValue $optionValue
+     * @param bool $isNeedConvert
      * @return float|null
      * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function getActualSpecialPrice(OptionValue $optionValue)
+    public function getActualSpecialPrice(OptionValue $optionValue, $isNeedConvert = false)
     {
         $actualPrice = null;
         if (!$this->helper->isSpecialPriceEnabled()) {
             return $actualPrice;
         }
+
+        // Trying to get special price data directly from the value object
         $specialPricesJson = $optionValue->getData(static::KEY_SPECIAL_PRICE);
+
+        // If no data in value object retrieve it from the storage
+        if (empty($specialPricesJson) && $optionValue->getProduct()) {
+            $specialPricesJson = $this->specialPriceStorage->getSpecialPriceData($optionValue->getProduct(), $optionValue);
+            $optionValue->setData(static::KEY_SPECIAL_PRICE, $specialPricesJson);
+        }
+
         if (!$specialPricesJson) {
             return $actualPrice;
         }
-        $specialPrices = json_decode($specialPricesJson, true);
+
+        $specialPrices = $this->serializer->unserialize($specialPricesJson);
         if (!$specialPrices) {
             return $actualPrice;
         }
@@ -142,7 +151,10 @@ class SpecialPrice extends AbstractModel
 
             if ($specialPriceItem['customer_group_id'] == $currentCustomerGroupId) {
                 $this->activeSpecialPriceItem = $specialPriceItem;
-                return $specialPriceItem['price'];
+
+                return $isNeedConvert
+                    ? $this->priceCurrency->convert($specialPriceItem['price'])
+                    : $specialPriceItem['price'];
             }
 
             if ($specialPriceItem['customer_group_id'] == $allCustomersGroupId) {
@@ -152,7 +164,10 @@ class SpecialPrice extends AbstractModel
 
         if (!empty($priceItemForAllCustomerGroup)) {
             $this->activeSpecialPriceItem = $priceItemForAllCustomerGroup;
-            return $priceItemForAllCustomerGroup['price'];
+
+            return $isNeedConvert
+                ? $this->priceCurrency->convert($priceItemForAllCustomerGroup['price'])
+                : $priceItemForAllCustomerGroup['price'];
         }
 
         return null;

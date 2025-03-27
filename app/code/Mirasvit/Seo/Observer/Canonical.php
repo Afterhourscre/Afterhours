@@ -9,97 +9,70 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Observer;
 
+use Magento\Catalog\Api\Data\CategoryInterface;
+use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\View\Asset\GroupedCollection;
+use Magento\Store\Model\ScopeInterface;
 use Mirasvit\Seo\Api\Service\StateServiceInterface;
 use Mirasvit\Seo\Model\Config as Config;
+use Mirasvit\Seo\Service\CanonicalLayeredService;
 
 /**
  * @SuppressWarnings(PHPMD)
  */
 class Canonical implements ObserverInterface
 {
-    /**
-     * @var \Mirasvit\Seo\Model\Config
-     */
     protected $config;
 
-    /**
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface
-     */
     protected $scopeConfig;
 
-    /**
-     * @var \Magento\Bundle\Model\Product\TypeFactory
-     */
     protected $productTypeFactory;
 
-    /**
-     * @var \Magento\Catalog\Model\Resource\Category\CollectionFactory
-     */
     protected $categoryCollectionFactory;
 
-    /**
-     * @var \Magento\Catalog\Model\Resource\Product\CollectionFactory
-     */
     protected $productCollectionFactory;
 
-    /**
-     * @var \Magento\Framework\App\Helper\Context
-     */
     protected $context;
 
-    /**
-     * @var \Magento\Framework\Registry
-     */
     protected $registry;
 
-    /**
-     * @var \Mirasvit\Seo\Helper\Data
-     */
     protected $seoData;
 
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
     protected $storeManager;
 
-    /**
-     * @var \Magento\Framework\App\RequestInterface
-     */
     protected $request;
 
-    /**
-     * @var \Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable
-     */
     protected $productTypeConfigurable;
 
-    /**
-     * @var \Magento\Bundle\Model\Product\Type
-     */
     protected $productTypeBundle;
 
-    /**
-     * @var \Magento\GroupedProduct\Model\Product\Type\Grouped
-     */
     protected $productTypeGrouped;
 
-    /**
-     * @var \Magento\UrlRewrite\Model\ResourceModel\UrlRewriteCollection
-     */
     protected $urlRewrite;
 
-    /**
-     * @var \Mirasvit\Seo\Helper\UrlPrepare
-     */
     protected $urlPrepare;
+
+    private $productRepository;
+
+    private $stateService;
+
+    private $canonicalRewriteService;
+
+    private $canonicalLayeredService;
+
+    private $pageAssets;
 
     public function __construct(
         \Mirasvit\Seo\Model\Config $config,
@@ -116,7 +89,10 @@ class Canonical implements ObserverInterface
         \Mirasvit\Seo\Helper\UrlPrepare $urlPrepare,
         \Mirasvit\Seo\Api\Service\CanonicalRewrite\CanonicalRewriteServiceInterface $canonicalRewriteService,
         \Magento\Catalog\Api\ProductRepositoryInterface $productRepository,
-        StateServiceInterface $stateService
+        StateServiceInterface $stateService,
+        ScopeConfigInterface $scopeConfig,
+        CanonicalLayeredService $canonicalLayeredService,
+        GroupedCollection $pageAssets
     ) {
         $this->config                    = $config;
         $this->productTypeFactory        = $productTypeFactory;
@@ -130,22 +106,42 @@ class Canonical implements ObserverInterface
         $this->seoData                   = $seoData;
         $this->storeManager              = $context->getStoreManager();
         $this->request                   = $context->getRequest();
-        $this->fullAction                = $this->request->getFullActionName();
         $this->urlRewrite                = $urlRewrite;
         $this->urlPrepare                = $urlPrepare;
         $this->canonicalRewriteService   = $canonicalRewriteService;
         $this->productRepository         = $productRepository;
         $this->stateService              = $stateService;
+        $this->scopeConfig               = $scopeConfig;
+        $this->canonicalLayeredService   = $canonicalLayeredService;
+        $this->pageAssets                = $pageAssets;
     }
 
     /**
-     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function setupCanonicalUrl()
+    public function execute(\Magento\Framework\Event\Observer $observer): void
+    {
+        if ($this->request->getModuleName() == 'search_landing') {
+            return;
+        }
+
+        if (
+            strpos($this->request->getFullActionName(), 'result_index') !== false
+            && $this->scopeConfig->getValue('amasty_xsearch/general/enable_seo_url', ScopeInterface::SCOPE_STORE)
+            && ($key = $this->scopeConfig->getValue('amasty_xsearch/general/seo_key', ScopeInterface::SCOPE_STORE))
+            && strpos($this->request->getUriString(), $key) !== false
+        ) {
+            return;
+        }
+
+        $this->setupCanonicalUrl();
+    }
+
+    public function setupCanonicalUrl(): void
     {
         if ($this->seoData->isIgnoredActions()
             && !$this->seoData->cancelIgnoredActions()) {
-            return false;
+            return;
         }
 
         if ($canonicalUrl = $this->getCanonicalUrl()) {
@@ -154,27 +150,16 @@ class Canonical implements ObserverInterface
     }
 
     /**
-     * @return string|bool
-     */
-    public function getCanonicalRewrite()
-    {
-        if ($canonicalRewriteRule = $this->canonicalRewriteService->getCanonicalRewriteRule()) {
-            return $canonicalRewriteRule->getData('canonical');
-        }
-
-        return false;
-    }
-
-    /**
-     * @return $this|mixed|string
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity) 
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public function getCanonicalUrl()
+    public function getCanonicalUrl(): ?string
     {
         if (!$this->config->isAddCanonicalUrl() || $this->isIgnoredCanonical()) {
-            return false;
+            $this->removeCanonical();
+
+            return null;
         }
 
         if ($canonicalRewrite = $this->getCanonicalRewrite()) {
@@ -191,11 +176,11 @@ class Canonical implements ObserverInterface
         $productCanonicalStoreId = false;
         $useCrossDomain          = true;
 
-        if (in_array($this->fullAction, $productActions)) {
+        if (in_array($this->seoData->getFullActionCode(), $productActions)) {
             $product = $this->registry->registry('current_product');
 
             if (!$product) {
-                return;
+                return null;
             }
 
             $currentProductId    = $product->getId();
@@ -203,7 +188,7 @@ class Canonical implements ObserverInterface
             $productId           = ($associatedProductId) ? $associatedProductId : $product->getId();
 
             $productCanonicalStoreId       = $product->getSeoCanonicalStoreId(); //canonical store id for current product
-            $canonicalUrlForCurrentProduct = trim($product->getSeoCanonicalUrl());
+            $canonicalUrlForCurrentProduct = trim((string)$product->getSeoCanonicalUrl());
 
             $collection = $this->productCollectionFactory->create()
                 ->addFieldToFilter('entity_id', $productId)
@@ -212,11 +197,20 @@ class Canonical implements ObserverInterface
 
             $collection->setFlag('has_stock_status_filter');
 
-            $product      = $collection->getFirstItem();
+            $product = $collection->getFirstItem();
+
+
+            // in some cases when both these settings disabled
+            // the product can still returns URL with category path in it
+            // so wee need to force product to return the direct URL
+            // without category path in it
+            $product->setCategoryId(null);
+            $product->setRequestPath(null);
+
             $canonicalUrl = $product->getProductUrl();
 
             if ($this->config->isAddLongestCanonicalProductUrl()
-                && $this->config->isProductLongUrlEnabled($this->storeManager->getStore()->getId())
+                && $this->config->isProductLongUrlEnabled((int)$this->storeManager->getStore()->getId())
             ) {
                 $canonicalUrl = $this->getLongestProductUrl($product, $canonicalUrl);
             }
@@ -236,37 +230,61 @@ class Canonical implements ObserverInterface
                     $canonicalUrl                  = $this->context->getUrlBuilder()->getBaseUrl() . $canonicalUrlForCurrentProduct;
                 }
             }
-            $productLoaded = $this->productRepository->getById($currentProductId,
+            $productLoaded = $this->productRepository->getById(
+                $currentProductId,
                 false,
                 $this->storeManager->getStore()->getId()
             );
 
             //use custom canonical from products
             if ($productLoaded->getMSeoCanonical()) {
-                $canonicalUrl = trim($productLoaded->getMSeoCanonical());
+                $canonicalUrl = trim((string)$productLoaded->getMSeoCanonical());
                 if (strpos($canonicalUrl, '://') === false) {
                     $canonicalUrl = $this->storeManager->getStore()->getBaseUrl() . ltrim($canonicalUrl, '/');
                 }
             }
-        } elseif ($this->fullAction == 'catalog_category_view') {
-            $category = $this->registry->registry('current_category');
-            if (!$category) {
-                return;
+
+            if ($this->config->isUseProductCanonicalTag((int)$this->storeManager->getStore()->getId())) {
+                $defaultCanonicalUrl = $product->getUrlModel()->getUrl($product, ['_ignore_category' => true]);
+
+                if ($this->pageAssets->has($defaultCanonicalUrl)) {
+                    $this->pageAssets->remove($defaultCanonicalUrl);
+                }
             }
-            $canonicalUrl = $category->getUrl();
+        } elseif ($this->seoData->getFullActionCode() == 'catalog_category_view') {
+            /** @var CategoryInterface $category */
+            $category = $this->registry->registry('current_category');
+
+            if (!$category) {
+                return null;
+            }
+
+            // in some cases $category->getUrl() can return url_key from default store (admin)
+            // so we force category to use cortrect request path from rewrites
+            if ($requestPath = $this->getCategoryRewrite($category)) {
+                $category->setRequestPath($requestPath);
+            }
+
+            $canonicalUrl = $this->canonicalLayeredService->getCanonicalUrl($category);
+
+            if ($this->config->isUseCategoryCanonicalTag((int)$this->storeManager->getStore()->getId())) {
+                $defaultCanonicalUrl = $category->getUrl();
+
+                if ($this->pageAssets->has($defaultCanonicalUrl)) {
+                    $this->pageAssets->remove($defaultCanonicalUrl);
+                }
+            }
+        } elseif ($this->stateService->isBrandPage()) {
+            $canonicalUrl = $this->getBrandCanonical();
         } else {
-            $canonicalUrl              = $this->seoData->getBaseUri();
-            $preparedCanonicalUrlParam = ($this->config->isAddStoreCodeToUrlsEnabled()
-                && $this->stateService->isHomePage()) ? '' : ltrim($canonicalUrl, '/');
-            $canonicalUrl              = $this->context->getUrlBuilder()->getUrl('', ['_direct' => $preparedCanonicalUrlParam]);
-            $canonicalUrl              = strtok($canonicalUrl, '?');
+            $canonicalUrl = $this->getRequestUri();
         }
 
-        if ($this->config->getCanonicalStoreWithoutStoreCode($this->storeManager->getStore()->getId())) {
+        if ($this->config->getCanonicalStoreWithoutStoreCode((int)$this->storeManager->getStore()->getId())) {
             $storeCode    = $this->storeManager->getStore()->getCode();
             $canonicalUrl = str_replace('/' . $storeCode . '/', '/', $canonicalUrl);
             //setup crossdomian URL if this option is enabled
-        } elseif ((($crossDomainStore = $this->config->getCrossDomainStore($this->storeManager->getStore()->getId()))
+        } elseif ((($crossDomainStore = $this->config->getCrossDomainStore((int)$this->storeManager->getStore()->getId()))
                 || $productCanonicalStoreId)
             && $useCrossDomain) {
             if ($productCanonicalStoreId) {
@@ -299,59 +317,95 @@ class Canonical implements ObserverInterface
     }
 
     /**
-     * Get Canonical with prepared Trailing slash (depending on Trailing slash config)
-     *
-     * @param string $canonicalUrl
-     *
-     * @return string
+     * Check if canonical is ignored.
      */
-    protected function getPreparedTrailingCanonical($canonicalUrl)
+    public function isIgnoredCanonical(): bool
     {
-        if ($this->config->getTrailingSlash() == Config::TRAILING_SLASH
-            && substr($canonicalUrl, -1) != '/'
-            && strpos($canonicalUrl, '?') === false) {
-            $canonicalUrl = $canonicalUrl . '/';
-        } elseif ($this->config->getTrailingSlash() == Config::NO_TRAILING_SLASH
-            && substr($canonicalUrl, -1) == '/') {
-            if ($this->checkHomePageCanonical($canonicalUrl)) {
-                return $canonicalUrl;
-            } else {
-                $canonicalUrl = substr($canonicalUrl, 0, -1);
+        $isIgnored = false;
+
+        if (!$this->seoData->getFullActionCode() || $this->seoData->getFullActionCode() == '__') {
+            return true;
+        }
+
+        foreach ($this->config->getCanonicalUrlIgnorePages() as $page) {
+            if ($this->seoData->checkPattern($this->seoData->getFullActionCode(), $page)
+                || $this->seoData->checkPattern($this->seoData->getBaseUri(), $page)) {
+                $isIgnored = true;
             }
         }
 
-        return $canonicalUrl;
+        return $isIgnored;
     }
 
-    /**
-     * @param string $canonicalUrl
-     *
-     * @return bool
-     */
-
-    protected function checkHomePageCanonical($canonicalUrl)
+    public function getCanonicalRewrite(): ?string
     {
-        if ($this->stateService->isHomePage()
-            && $this->config->isAddStoreCodeToUrlsEnabled()
-            && $this->storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB)
-            . $this->storeManager->getStore()->getCode()
-            . '/' == $this->context->getUrlBuilder()->getCurrentUrl()
-            && $this->context->getUrlBuilder()->getCurrentUrl() == $canonicalUrl) {
-            return true;
-        } else {
-            return false;
+        if ($canonicalRewriteRule = $this->canonicalRewriteService->getCanonicalRewriteRule()) {
+            return $canonicalRewriteRule->getData('canonical');
         }
+
+        return null;
     }
 
     /**
-     * Get longest product url
-     *
-     * @param object $product
-     * @param string $canonicalUrl
-     *
-     * @return string
+     * Get associated product Id
      */
-    protected function getLongestProductUrl($product, $canonicalUrl)
+    protected function getAssociatedProductId(ProductInterface $product): ?int
+    {
+        if ($product->getTypeId() != \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE) {
+            return null;
+        }
+
+        $associatedProductId = null;
+
+        if ($this->config->getAssociatedCanonicalConfigurableProduct()
+            && ($parentConfigurableProductIds = $this
+                ->productTypeConfigurable
+                ->getParentIdsByChild($product->getId())
+            )
+            && isset($parentConfigurableProductIds[0])
+            && $this->isProductEnabled((int)$parentConfigurableProductIds[0])) {
+            $associatedProductId = (int)$parentConfigurableProductIds[0];
+        }
+
+        if (!$associatedProductId && $this->config->getAssociatedCanonicalGroupedProduct()
+            && ($parentGroupedProductIds = $this
+                ->productTypeGrouped
+                ->getParentIdsByChild($product->getId())
+            )
+            && isset($parentGroupedProductIds[0])
+            && $this->isProductEnabled((int)$parentGroupedProductIds[0])) {
+            $associatedProductId = (int)$parentGroupedProductIds[0];
+        }
+
+        if (!$associatedProductId && $this->config->getAssociatedCanonicalBundleProduct()
+            && ($parentBundleProductIds = $this
+                ->productTypeBundle
+                ->getParentIdsByChild($product->getId())
+            )
+            && isset($parentBundleProductIds[0])
+            && $this->isProductEnabled((int)$parentBundleProductIds[0])) {
+            $associatedProductId = (int)$parentBundleProductIds[0];
+        }
+
+        return $associatedProductId;
+    }
+
+    protected function isProductEnabled(int $id): bool
+    {
+        $product = $this->productRepository->getById(
+            $id,
+            false,
+            $this->storeManager->getStore()->getId()
+        );
+
+        if ($product->getStatus() == \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED) {
+            return true;
+        }
+
+        return false;
+    }
+
+    protected function getLongestProductUrl(ProductInterface $product, string $canonicalUrl): string
     {
         $rewriteData = $this->urlRewrite->addFieldToFilter('entity_type', 'product')
             ->addFieldToFilter('redirect_type', 0)
@@ -375,99 +429,62 @@ class Canonical implements ObserverInterface
         return $canonicalUrl;
     }
 
-    /**
-     * Get associated product Id
-     *
-     * @param \Magento\Catalog\Model\Product $product
-     *
-     * @return bool|int
-     */
-    protected function getAssociatedProductId($product)
+    protected function getCategoryRewrite(CategoryInterface $category): ?string
     {
-        if ($product->getTypeId() != \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE) {
-            return false;
-        }
+        $categoryRewrite = $this->urlRewrite->addFieldToFilter('entity_type', 'category')
+            ->addFieldToFilter('redirect_type', 0)
+            ->addFieldToFilter('store_id', $this->storeManager->getStore()->getId())
+            ->addFieldToFilter('entity_id', $category->getId())
+            ->getFirstItem();
 
-        $associatedProductId = false;
-
-        if ($this->config->getAssociatedCanonicalConfigurableProduct()
-            && ($parentConfigurableProductIds = $this
-                ->productTypeConfigurable
-                ->getParentIdsByChild($product->getId())
-            )
-            && isset($parentConfigurableProductIds[0])
-            && $this->isProductEnabled($parentConfigurableProductIds[0])) {
-            $associatedProductId = $parentConfigurableProductIds[0];
-        }
-
-        if (!$associatedProductId && $this->config->getAssociatedCanonicalGroupedProduct()
-            && ($parentGroupedProductIds = $this
-                ->productTypeGrouped
-                ->getParentIdsByChild($product->getId())
-            )
-            && isset($parentGroupedProductIds[0])
-            && $this->isProductEnabled($parentGroupedProductIds[0])) {
-            $associatedProductId = $parentGroupedProductIds[0];
-        }
-
-        if (!$associatedProductId && $this->config->getAssociatedCanonicalBundleProduct()
-            && ($parentBundleProductIds = $this
-                ->productTypeBundle
-                ->getParentIdsByChild($product->getId())
-            )
-            && isset($parentBundleProductIds[0])
-            && $this->isProductEnabled($parentBundleProductIds[0])) {
-            $associatedProductId = $parentBundleProductIds[0];
-        }
-
-        return $associatedProductId;
+        return $categoryRewrite && $categoryRewrite->getId() ? $categoryRewrite->getRequestPath() : null;
     }
 
     /**
-     * return bool
+     * Get Canonical with prepared Trailing slash (depending on Trailing slash config)
      */
-    protected function isProductEnabled($id)
+    protected function getPreparedTrailingCanonical(string $canonicalUrl): string
     {
-        $product = $this->productRepository->getById($id,
-            false,
-            $this->storeManager->getStore()->getId()
-        );
+        $extension = strrchr($canonicalUrl, '.') ? substr(strrchr($canonicalUrl, '.'), 1) : '';
 
-        if ($product->getStatus() == \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED) {
-            return true;
-        }
-
-        return false;
-    }
-
-
-    /**
-     * Check if canonical is ignored.
-     * @return bool
-     */
-    public function isIgnoredCanonical()
-    {
-        foreach ($this->config->getCanonicalUrlIgnorePages() as $page) {
-            if ($this->seoData->checkPattern($this->fullAction, $page)
-                || $this->seoData->checkPattern($this->seoData->getBaseUri(), $page)) {
-                return true;
+        if ($this->config->getTrailingSlash() == Config::TRAILING_SLASH
+            && substr($canonicalUrl, -1) != '/'
+            && strpos($canonicalUrl, '?') === false
+            && !in_array($extension, ['html', 'htm'])) {
+            $canonicalUrl = $canonicalUrl . '/';
+        } elseif ($this->config->getTrailingSlash() == Config::NO_TRAILING_SLASH
+            && substr($canonicalUrl, -1) == '/') {
+            if ($this->checkHomePageCanonical($canonicalUrl)) {
+                return $canonicalUrl;
+            } else {
+                $canonicalUrl = substr($canonicalUrl, 0, -1);
             }
         }
 
-        return false;
+        return $canonicalUrl;
     }
 
-    /**
-     * Create canonical.
-     *
-     * @param str $canonicalUrl
-     *
-     * @return void
-     */
-    public function addLinkCanonical($canonicalUrl)
+    protected function checkHomePageCanonical(string $canonicalUrl): bool
+    {
+        if ($this->stateService->isHomePage()
+            && $this->config->isAddStoreCodeToUrlsEnabled()
+            && $this->storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB)
+            . $this->storeManager->getStore()->getCode()
+            . '/' == $this->context->getUrlBuilder()->getCurrentUrl()
+            && $this->context->getUrlBuilder()->getCurrentUrl() == $canonicalUrl) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public function addLinkCanonical(string $canonicalUrl): void
     {
         $pageConfig = $this->context->getPageConfig();
         $type       = 'canonical';
+
+        $this->removeCanonical();
+
         $pageConfig->addRemotePageAsset(
             htmlentities($canonicalUrl),
             $type,
@@ -475,14 +492,68 @@ class Canonical implements ObserverInterface
         );
     }
 
-    /**
-     * @param \Magento\Framework\Event\Observer $observer
-     *
-     * @return void
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     */
-    public function execute(\Magento\Framework\Event\Observer $observer)
+    protected function removeCanonical()
     {
-        $this->setupCanonicalUrl();
+        if (
+            $this->pageAssets->getGroupByContentType('canonical')
+            && !empty($this->pageAssets->getGroupByContentType('canonical')->getAll())
+        ) {
+            foreach ($this->pageAssets->getGroupByContentType('canonical')->getAll() as $key => $value) {
+                $this->pageAssets->remove($key);
+            }
+        }
+    }
+
+    protected function getBrandCanonical(): string
+    {
+        if (
+            class_exists('\Mirasvit\Brand\Registry')
+            && class_exists('\Mirasvit\Brand\Service\BrandUrlService')
+            && class_exists('\Mirasvit\Brand\Model\Config\GeneralConfig')
+        ) {
+            $brandRegistry   = ObjectManager::getInstance()->get('\Mirasvit\Brand\Registry');
+            $brandUrlService = ObjectManager::getInstance()->get('\Mirasvit\Brand\Service\BrandUrlService');
+            $generalConfig   = ObjectManager::getInstance()->get('\Mirasvit\Brand\Model\Config\GeneralConfig');
+
+            if ($this->seoData->getFullActionCode() == 'brand_brand_index') {
+                return $brandUrlService->getBaseBrandUrl();
+            } elseif ($this->seoData->getFullActionCode() == 'brand_brand_view' && $brandRegistry->getBrandPage()) {
+                $canonical = $brandRegistry->getBrandPage()->getCanonical();
+
+                if ($canonical) {
+                    if (strpos('http:', $canonical) !== false
+                        && strpos('https:', $canonical) !== false) {
+                        return $canonical;
+                    } else {
+                        return $this->storeManager->getStore()->getBaseUrl() . ltrim($canonical, '/');
+                    }
+                }
+
+                $suffix       = $generalConfig->getUrlSuffix() ?: '';
+                $brandBaseUrl = $brandUrlService->getBaseBrandUrl();
+
+                if ($suffix && strrpos($brandBaseUrl, $suffix) !== false) {
+                    $brandBaseUrl = substr($brandBaseUrl, 0, strrpos($brandBaseUrl, $suffix));
+                }
+
+                $urlKey = $brandRegistry->getBrandPage()->getUrlKey() ?: $brandRegistry->getBrand()->getUrlKey();
+
+                return $brandBaseUrl . '/' . $urlKey . $suffix;
+            }
+        }
+
+        return $this->getRequestUri();
+    }
+
+    protected function getRequestUri(): string
+    {
+        $canonicalUrl              = $this->seoData->getBaseUri();
+        $preparedCanonicalUrlParam = ($this->config->isAddStoreCodeToUrlsEnabled() && $this->stateService->isHomePage()) || !$canonicalUrl
+            ? ''
+            : ltrim($canonicalUrl, '/');
+        $canonicalUrl              = $this->context->getUrlBuilder()->getUrl('', ['_direct' => $preparedCanonicalUrlParam]);
+        $canonicalUrl              = strtok($canonicalUrl, '?');
+
+        return $canonicalUrl;
     }
 }

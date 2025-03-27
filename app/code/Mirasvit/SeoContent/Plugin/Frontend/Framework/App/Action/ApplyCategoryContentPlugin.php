@@ -9,14 +9,15 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
 
 namespace Mirasvit\SeoContent\Plugin\Frontend\Framework\App\Action;
 
+use Magento\Framework\App\Request\Http as HttpRequest;
 use Mirasvit\Seo\Api\Service\StateServiceInterface;
 use Mirasvit\SeoContent\Service\ContentService;
 use Mirasvit\SeoContent\Service\StateService;
@@ -26,13 +27,17 @@ class ApplyCategoryContentPlugin
     private $contentService;
 
     private $stateService;
+    
+    private $request;
 
     public function __construct(
+        HttpRequest $request,
         ContentService $contentService,
         StateServiceInterface $stateService
     ) {
         $this->contentService = $contentService;
         $this->stateService   = $stateService;
+        $this->request        = $request;
     }
 
     /**
@@ -42,7 +47,7 @@ class ApplyCategoryContentPlugin
      */
     public function afterDispatch($subject, $response)
     {
-        if ($subject->getRequest()->isAjax() || $subject instanceof \Magento\Framework\App\Action\Forward) {
+        if ($this->request->isAjax() || $subject instanceof \Magento\Framework\App\Action\Forward) {
             return $response;
         }
 

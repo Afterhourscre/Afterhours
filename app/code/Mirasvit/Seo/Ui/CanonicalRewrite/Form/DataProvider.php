@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -23,6 +23,20 @@ use Mirasvit\Seo\Api\Data\CanonicalRewriteStoreInterface;
 
 class DataProvider extends AbstractDataProvider
 {
+    /**
+     * @var CanonicalRewriteRepositoryInterface
+     */
+    private $canonicalRewriteRepository;
+
+    /**
+     * DataProvider constructor.
+     * @param CanonicalRewriteRepositoryInterface $canonicalRewriteRepository
+     * @param string $name
+     * @param string $primaryFieldName
+     * @param string $requestFieldName
+     * @param array $meta
+     * @param array $data
+     */
     public function __construct(
         CanonicalRewriteRepositoryInterface $canonicalRewriteRepository,
         $name,
@@ -53,7 +67,7 @@ class DataProvider extends AbstractDataProvider
         $result = [];
         foreach ($this->collection->getItems() as $item) {
             if (isset($storeIds[$item->getId()])) {  //prepare store_id for multistore
-                $item->setData( CanonicalRewriteStoreInterface::STORE_ID, $storeIds[$item->getId()]);
+                $item->setData(CanonicalRewriteStoreInterface::STORE_ID, $storeIds[$item->getId()]);
             }
             $result[$item->getId()] = $item->getData();
         }

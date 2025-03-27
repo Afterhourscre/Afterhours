@@ -18,32 +18,17 @@ use \Magento\CatalogInventory\Api\StockRegistryInterface;
  */
 class OptionValuesQty
 {
-    /**
-     * @var Validator
-     */
-    protected $validator;
+    protected Validator $validator;
 
     /**
 
     /**
      * @var StockProvider
      */
-    protected $stockProvider;
-
-    /**
-     * @var OptionValueCollection
-     */
-    protected $valueCollection;
-
-    /**
-     * @var \Magento\Catalog\Api\ProductRepositoryInterface
-     */
-    protected $productRepositoryInterface;
-
-    /**
-     * @var \Magento\CatalogInventory\Api\StockRegistryInterface
-     */
-    protected $stockRegistry;
+    protected StockProvider $stockProvider;
+    protected OptionValueCollection $valueCollection;
+    protected ProductRepositoryInterface $productRepositoryInterface;
+    protected StockRegistryInterface $stockRegistry;
 
     /**
      * OptionValuesQty constructor.
@@ -69,7 +54,7 @@ class OptionValuesQty
     }
 
     /**
-     * Retrive array of [valueId => qty] to substruct this
+     * Retrieve array of [valueId => qty] to subtract this
      *
      * @param \Magento\Framework\DataObject $requestedValues
      * @param array $originQuoteValues
@@ -139,9 +124,7 @@ class OptionValuesQty
 
         if (isset($itemsToCorrect[$productsKey][$product->getId()])) {
             $qty = $itemsToCorrect[$productsKey][$product->getId()]['qty'];
-            $itemsToCorrect[$productsKey][$product->getId()] = [
-                'qty' => $qty - $requestedValue->getQty()
-            ];
+            $itemsToCorrect[$productsKey][$product->getId()]['qty'] = $qty - $requestedValue->getQty();
         } else {
             $itemsToCorrect[$productsKey][$product->getId()] = [
                 'product' => $product,

@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">mst_review_listing.mst_review_listing_data_source</item>
+        </item>
+    </argument>
+    <settings>
+        <spinner>review_columns</spinner>
+        <buttons>
+            <button name="add">
+                <url path="*/*/new"/>
+                <class>primary</class>
+                <label translate="true">New Review</label>
+            </button>
+        </buttons>
+        <deps>
+            <dep>mst_review_listing.mst_review_listing_data_source</dep>
+        </deps>
+    </settings>
+    <dataSource name="mst_review_listing_data_source" component="Magento_Ui/js/grid/provider">
+        <settings>
+            <storageConfig>
+                <param name="cacheRequests" xsi:type="boolean">false</param>
+            </storageConfig>
+            <updateUrl path="mui/index/render"/>
+        </settings>
+        <aclResource>Mirasvit_Review::review_all</aclResource>
+        <dataProvider class="Mirasvit\Review\Ui\Review\Listing\DataProvider" name="mst_review_listing_data_source">
+            <settings>
+                <requestFieldName>review_id</requestFieldName>
+                <primaryFieldName>review_id</primaryFieldName>
+            </settings>
+        </dataProvider>
+    </dataSource>
+    <listingToolbar name="listing_top" sortOrder="0">
+        <filters name="listing_filters">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="params" xsi:type="array">
+                        <item name="filters_modifier" xsi:type="array"/>
+                    </item>
+                </item>
+            </argument>
+            <settings>
+                <statefull>
+                    <property name="applied" xsi:type="boolean">false</property>
+                </statefull>
+            </settings>
+        </filters>
+        <columnsControls name="columns_controls"/>
+        <bookmark name="bookmarks"/>
+        <!--        <filterSearch name="fulltext"/>-->
+        <paging name="listing_paging"/>
+    </listingToolbar>
+    <columns name="review_columns" class="Magento\Ui\Component\Listing\Columns" sortOrder="10">
+        <settings>
+            <childDefaults>
+                <param name="fieldAction" xsi:type="array">
+                    <item name="provider" xsi:type="string">reviewsGrid</item>
+                    <item name="target" xsi:type="string">selectReview</item>
+                    <item name="params" xsi:type="array">
+                        <item name="0" xsi:type="string">${ $.$data.rowIndex }</item>
+                    </item>
+                </param>
+            </childDefaults>
+        </settings>
+        <column name="review_id" sortOrder="5">
+            <settings>
+                <filter>textRange</filter>
+                <label translate="true">ID</label>
+                <sorting>asc</sorting>
+            </settings>
+        </column>
+        <column name="created_at" class="Magento\Ui\Component\Listing\Columns\Date" component="Magento_Ui/js/grid/columns/date" sortOrder="10">
+            <settings>
+                <filter>dateRange</filter>
+                <dataType>date</dataType>
+                <label translate="true">Created</label>
+            </settings>
+        </column>
+        <column name="status_id" component="Magento_Ui/js/grid/columns/select" sortOrder="20">
+            <settings>
+                <filter>select</filter>
+                <options class="Mirasvit\Review\Model\Config\Source\StatusSource"/>
+                <dataType>select</dataType>
+                <label translate="true">Status</label>
+            </settings>
+        </column>
+        <column name="title" sortOrder="30">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="truncate" xsi:type="number">50</item>
+                    <item name="nl2br" xsi:type="boolean">true</item>
+                    <item name="escape" xsi:type="boolean">true</item>
+                </item>
+            </argument>
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Title</label>
+            </settings>
+        </column>
+        <column name="nickname" sortOrder="40">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="truncate" xsi:type="number">50</item>
+                    <item name="nl2br" xsi:type="boolean">true</item>
+                    <item name="escape" xsi:type="boolean">true</item>
+                </item>
+            </argument>
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Nickname</label>
+            </settings>
+        </column>
+        <column name="detail" sortOrder="50">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="truncate" xsi:type="number">50</item>
+                    <item name="nl2br" xsi:type="boolean">true</item>
+                    <item name="escape" xsi:type="boolean">true</item>
+                </item>
+            </argument>
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Review</label>
+            </settings>
+        </column>
+        <column name="visibility" class="Magento\Review\Ui\Component\Listing\Columns\Visibility" sortOrder="60">
+            <settings>
+                <label translate="true">Visibility</label>
+                <bodyTmpl>ui/grid/cells/html</bodyTmpl>
+                <sortable>false</sortable>
+            </settings>
+        </column>
+        <column name="type" class="Magento\Review\Ui\Component\Listing\Columns\Type" sortOrder="70">
+            <settings>
+                <label translate="true">Type</label>
+            </settings>
+        </column>
+        <column name="is_verified_buyer" component="Magento_Ui/js/grid/columns/select" sortOrder="72">
+            <settings>
+                <dataType>select</dataType>
+                <filter>select</filter>
+                <label translate="true">Verified Buyer</label>
+                <options>
+                    <option name="0" xsi:type="array">
+                        <item name="value" xsi:type="string">0</item>
+                        <item name="label" translate="true" xsi:type="string">No</item>
+                    </option>
+                    <option name="1" xsi:type="array">
+                        <item name="value" xsi:type="string">1</item>
+                        <item name="label" translate="true" xsi:type="string">Yes</item>
+                    </option>
+                </options>
+            </settings>
+        </column>
+        <column name="ip" sortOrder="74">
+            <settings>
+                <filter>text</filter>
+                <visible>false</visible>
+                <label translate="true">IP</label>
+            </settings>
+        </column>
+        <column name="country" sortOrder="76">
+            <settings>
+                <filter>text</filter>
+                <visible>false</visible>
+                <label translate="true">Country</label>
+            </settings>
+        </column>
+        <column name="location" sortOrder="78">
+            <settings>
+                <filter>text</filter>
+                <visible>false</visible>
+                <label translate="true">Location</label>
+            </settings>
+        </column>
+        <column name="product_name" sortOrder="80">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Product</label>
+            </settings>
+        </column>
+        <column name="sku" sortOrder="90">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">SKU</label>
+            </settings>
+        </column>
+        <actionsColumn name="actions" class="Mirasvit\Review\Ui\Review\Listing\Column\ActionColumn" sortOrder="100">
+            <settings>
+                <indexField>review_id</indexField>
+            </settings>
+        </actionsColumn>
+    </columns>
+</listing>

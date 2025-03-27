@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -26,7 +26,16 @@ class GenericButton
      * @var Context
      */
     protected $context;
+    /**
+     * @var CollectionFactory
+     */
+    private $collectionFactory;
 
+    /**
+     * GenericButton constructor.
+     * @param CollectionFactory $collectionFactory
+     * @param Context $context
+     */
     public function __construct(
         CollectionFactory $collectionFactory,
         Context $context
@@ -43,16 +52,18 @@ class GenericButton
         return $this->context->getRequest()->getParam('id');
     }
 
-    /**
-     * @return ProgramInterface|false
-     */
-    public function getModel()
-    {
-        return $this->collectionFactory->get($this->getId());
-    }
+//    /**
+//     * @return mixed
+//     */
+//    public function getModel()
+//    {
+//        return $this->collectionFactory->get($this->getId());
+//    }
 
     /**
-     * {@inheritdoc}
+     * @param string $route
+     * @param array $params
+     * @return string
      */
     public function getUrl($route = '', $params = [])
     {

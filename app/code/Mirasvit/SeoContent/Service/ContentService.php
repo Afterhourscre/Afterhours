@@ -9,17 +9,20 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoContent\Service;
 
+use Magento\Catalog\Api\Data\ProductInterface;
 use Mirasvit\Seo\Api\Service\StateServiceInterface;
 use Mirasvit\Seo\Api\Service\TemplateEngineServiceInterface;
 use Mirasvit\SeoContent\Api\Data\ContentInterface;
+use Mirasvit\SeoContent\Api\Data\RewriteInterface;
 use Mirasvit\SeoContent\Api\Data\TemplateInterface;
 use Mirasvit\SeoContent\Service\Content\Modifier\ModifierInterface;
 
@@ -50,21 +53,21 @@ class ContentService
         TemplateEngineServiceInterface $templateEngineService,
         array $modifierPool
     ) {
-        $this->templateService = $templateService;
-        $this->rewriteService  = $rewriteService;
-        $this->stateService    = $stateService;
-
+        $this->templateService       = $templateService;
+        $this->rewriteService        = $rewriteService;
+        $this->stateService          = $stateService;
         $this->content               = $content;
         $this->templateEngineService = $templateEngineService;
-
-        $this->modifierPool = $modifierPool;
+        $this->modifierPool          = $modifierPool;
     }
 
-    public function isProcessablePage()
+    public function isProcessablePage(): bool
     {
         if ($this->stateService->isCategoryPage()
             || $this->stateService->isProductPage()
             || $this->stateService->isCmsPage()
+            || $this->stateService->isBlogPage()
+            || $this->stateService->isBrandPage()
             || $this->rewriteService->getRewrite(null)
         ) {
             return true;
@@ -73,12 +76,12 @@ class ContentService
         return false;
     }
 
-    public function isHomePage()
+    public function isHomePage(): bool
     {
         return $this->stateService->isHomePage();
     }
 
-    public function putDefaultMeta(array $meta)
+    public function putDefaultMeta(array $meta): void
     {
         foreach ($meta as $property => $value) {
             $this->content->setData($property, $this->escapeJS($value));
@@ -87,7 +90,7 @@ class ContentService
         $this->isProcessed = false;
     }
 
-    public function getCurrentContent($ruleType = false, $product = false)
+    public function getCurrentContent(?int $ruleType = null, ?ProductInterface $product = null): ContentInterface
     {
         if ($this->isProcessed) {
             return $this->content;
@@ -100,7 +103,7 @@ class ContentService
         return $this->content->setData($this->escapeJS($this->content->getData()));
     }
 
-    public function processCurrentContent($ruleType = false, $product = false)
+    public function processCurrentContent(?int $ruleType = null, ?ProductInterface $product = null): ContentInterface
     {
         if (!$ruleType) {
             $ruleType = $this->getRuleType();
@@ -109,17 +112,43 @@ class ContentService
         $template = $this->templateService->getTemplate(
             $ruleType,
             $this->stateService->getCategory(),
-            ($product)? $product : $this->stateService->getProduct(),
-            $this->stateService->getFilters()
+            ($product) ? $product : $this->stateService->getProduct(),
+            $this->stateService->getFilters() ?: null,
+            $this->stateService->getCmsPage(),
+            $this->stateService->getBlogPage(),
+            $this->stateService->getBrandPage()
         );
 
         $rewrite = $this->rewriteService->getRewrite(null);
 
-        if ($template) {
-            if ($ruleType == TemplateInterface::RULE_TYPE_PAGE && $this->isHomePage() && !$template->isApplyForHomepage()) {
-                return $this->content;
-            }
+        if (
+            $template
+            && $ruleType == TemplateInterface::RULE_TYPE_PAGE
+            && $this->isHomePage()
+            && !$template->isApplyForHomepage()
+        ) {
+            return $this->content;
+        }
 
+        if (
+            $template
+            && $ruleType == TemplateInterface::RULE_TYPE_BRAND
+            && $this->stateService->isAllBrandsPage()
+            && !$template->isApplyForAllBrandsPage()
+        ) {
+            return $this->content;
+        }
+
+        return $this->processContent($template, $rewrite, $product);
+    }
+
+    public function processContent(
+        ?TemplateInterface $template = null,
+        ?RewriteInterface $rewrite = null,
+        ?ProductInterface $product = null,
+        ?string $forceApplyTo = null
+    ): ContentInterface {
+        if ($template) {
             $this->content->setData(ContentInterface::DESCRIPTION_POSITION, $template->getDescriptionPosition());
             $this->content->setData(ContentInterface::DESCRIPTION_TEMPLATE, $template->getDescriptionTemplate());
             $this->content->setData(ContentInterface::APPLIED_TEMPLATE_ID, $template->getId());
@@ -129,6 +158,10 @@ class ContentService
             $this->content->setData(ContentInterface::APPLIED_REWRITE_ID, $rewrite->getId());
             $this->content->setData(ContentInterface::DESCRIPTION_POSITION, $rewrite->getDescriptionPosition());
             $this->content->setData(ContentInterface::DESCRIPTION_TEMPLATE, $rewrite->getDescriptionTemplate());
+
+            if ($rewrite->getMetaRobots() && $rewrite->getMetaRobots() != '-') {
+                $this->content->setData(ContentInterface::META_ROBOTS, $rewrite->getMetaRobots());
+            }
         }
 
         $properties = [
@@ -170,23 +203,40 @@ class ContentService
 
         foreach ($properties as $property) {
             $this->content->setData($property, $this->templateEngineService->render(
-                $this->content->getData($property),
+                (string)$this->content->getData($property),
                 ($product) ? ['product' => $product] : []
             ));
         }
 
         foreach ($this->modifierPool as $modifier) {
-            $this->content = $modifier->modify($this->content);
+            $this->content = $modifier->modify($this->content, $forceApplyTo);
         }
 
         return $this->content;
     }
 
-
     /**
-     * @return int
+     * @param array $data
+     *
+     * @return array|string|string[]|null
      */
-    private function getRuleType()
+    public function escapeJS($data)
+    {
+        if (is_array($data)) {
+            foreach ($data as $key => $value) {
+                if (is_array($value)) {
+                    continue;
+                }
+                $data[$key] = preg_replace('#<script(.*?)>(.*?)</script>#is', '', (string)$value);
+            }
+
+            return $data;
+        } else {
+            return preg_replace('#<script(.*?)>(.*?)</script>#is', '', (string)$data);
+        }
+    }
+
+    private function getRuleType(): int
     {
         if ($this->stateService->isProductPage()) {
             return TemplateInterface::RULE_TYPE_PRODUCT;
@@ -196,23 +246,12 @@ class ContentService
             return TemplateInterface::RULE_TYPE_CATEGORY;
         } elseif ($this->stateService->isCmsPage()) {
             return TemplateInterface::RULE_TYPE_PAGE;
+        } elseif ($this->stateService->isBlogPage()) {
+            return TemplateInterface::RULE_TYPE_BLOG;
+        } elseif ($this->stateService->isBrandPage()) {
+            return TemplateInterface::RULE_TYPE_BRAND;
         }
 
         return 0;
-    }
-
-    public function escapeJS($data)
-    {
-        if (is_array($data)) {
-            foreach ($data as $key => $value) {
-                if (is_array($value)) {
-                    continue;
-                }
-                $data[$key] = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $value);
-            }
-            return $data;
-        } else {
-            return preg_replace('#<script(.*?)>(.*?)</script>#is', '', $data);
-        }
     }
 }

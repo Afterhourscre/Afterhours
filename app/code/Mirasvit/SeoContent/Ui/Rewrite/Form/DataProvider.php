@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -22,6 +22,15 @@ use Mirasvit\SeoContent\Api\Repository\RewriteRepositoryInterface;
 
 class DataProvider extends AbstractDataProvider
 {
+    /**
+     * DataProvider constructor.
+     * @param RewriteRepositoryInterface $rewriteRepository
+     * @param string $name
+     * @param string $primaryFieldName
+     * @param string $requestFieldName
+     * @param array $meta
+     * @param array $data
+     */
     public function __construct(
         RewriteRepositoryInterface $rewriteRepository,
         $name,

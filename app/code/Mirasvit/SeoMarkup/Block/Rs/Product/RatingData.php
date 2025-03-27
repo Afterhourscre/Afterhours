@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -30,12 +30,27 @@ class RatingData
     /** @var \Magento\Store\Model\Store */
     private $store;
 
+    /**
+     * @var ProductConfig
+     */
     private $productConfig;
 
+    /**
+     * @var ReviewCollectionFactory
+     */
     private $reviewCollectionFactory;
 
+    /**
+     * @var Rating
+     */
     private $rating;
 
+    /**
+     * RatingData constructor.
+     * @param ProductConfig $productConfig
+     * @param ReviewCollectionFactory $reviewCollectionFactory
+     * @param Rating $rating
+     */
     public function __construct(
         ProductConfig $productConfig,
         ReviewCollectionFactory $reviewCollectionFactory,
@@ -74,6 +89,7 @@ class RatingData
         $collection = $this->reviewCollectionFactory->create()
             ->addStatusFilter(Review::STATUS_APPROVED)
             ->addEntityFilter('product', $this->product->getId())
+            ->addStoreFilter($this->store->getId())
             ->setDateOrder();
 
         $data = [];

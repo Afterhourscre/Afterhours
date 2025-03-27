@@ -13,7 +13,9 @@
                     <resource id="Magento_Backend::stores_settings">
                         <resource id="Magento_Config::config">
                             <resource id="MageWorx_Info::config_notification" title="MageWorx Notification" sortOrder="90"/>
-                            <resource id="MageWorx_Info::config_extensions" title="MageWorx Extensions" sortOrder="95"/>
+                            <resource id="MageWorx_Info::config_extensions" title="MageWorx Extensions" sortOrder="95">
+                                <resource id="MageWorx_Info::config_systeminfo_tab" title="System Information" sortOrder="10"/>
+                            </resource>
                         </resource>
                     </resource>
                 </resource>

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -23,42 +23,57 @@ use Magento\Framework\Registry;
 use Magento\Framework\Data\FormFactory;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Mirasvit\Core\Service\CompatibilityService;
-use Mirasvit\Seo\Helper\Serializer;
+use Mirasvit\Core\Service\SerializeService;
 
 class Rule extends AbstractModel
 {
     const FORM_NAME = 'seo_content_template_form';
 
-    private $conditionCombineFactory;
     /**
-     * @var Serializer
+     * @var Rule\Condition\CombineFactory
      */
-    protected $serializer;
+    private $conditionCombineFactory;
 
+    /**
+     * Rule constructor.
+     * @param Rule\Condition\CombineFactory $conditionCombineFactory
+     * @param Context $context
+     * @param Registry $registry
+     * @param FormFactory $formFactory
+     * @param TimezoneInterface $localeDate
+     */
     public function __construct(
         Rule\Condition\CombineFactory $conditionCombineFactory,
         Context $context,
         Registry $registry,
         FormFactory $formFactory,
-        TimezoneInterface $localeDate,
-        Serializer $serializer
+        TimezoneInterface $localeDate
     ) {
         $this->conditionCombineFactory  = $conditionCombineFactory;
-        $this->serializer               = $serializer;
 
         parent::__construct($context, $registry, $formFactory, $localeDate);
     }
 
+    /**
+     * @return \Magento\Rule\Model\Action\Collection|void
+     */
     public function getActionsInstance()
     {
     }
 
+    /**
+     * @return \Magento\Rule\Model\Condition\Combine|Rule\Condition\Combine
+     */
     public function getConditionsInstance()
     {
         return $this->conditionCombineFactory->create();
     }
 
-    public function getConditions() {
+    /**
+     * @return \Magento\Rule\Model\Condition\Combine
+     */
+    public function getConditions()
+    {
         if (empty($this->_conditions)) {
             $this->_resetConditions();
         }
@@ -66,11 +81,9 @@ class Rule extends AbstractModel
         if ($this->hasConditionsSerialized()) {
             $conditions = $this->getConditionsSerialized();
             if (!empty($conditions)) {
-                if (CompatibilityService::is21()) {
-                    $conditions = $this->serializer->unserialize($conditions);
-                } else {
-                    $conditions = \Zend_Json::decode($conditions);
-                }
+
+                $conditions = SerializeService::decode($conditions);
+
                 if (is_array($conditions) && !empty($conditions)) {
                     $this->_conditions->loadArray($conditions);
                 }
@@ -80,5 +93,4 @@ class Rule extends AbstractModel
 
         return $this->_conditions;
     }
-
 }

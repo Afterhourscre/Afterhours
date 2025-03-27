@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <mst_comment>
+            <general>
+                <is_enabled>1</is_enabled>
+                <allow_guest>0</allow_guest>
+                <autoapprove>0</autoapprove>
+                <date_format>2_0</date_format>
+            </general>
+        </mst_comment>
+    </default>
+</config>

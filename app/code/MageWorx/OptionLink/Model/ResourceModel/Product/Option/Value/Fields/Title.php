@@ -19,7 +19,7 @@ class Title implements FieldInterface
      *
      * @param Collection $collection
      */
-    public function addField(Collection $collection)
+    public function addField(Collection $collection): void
     {
         $productTable = CollectionUpdater::KEY_TABLE_OPTIONLINK_PRODUCT;
 

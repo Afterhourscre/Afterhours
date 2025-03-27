@@ -106,7 +106,7 @@ class Index extends \Magento\Framework\App\Action\Action
             $blockSearch = $this->_view->getLayout()->createBlock('WeltPixel\SearchAutoComplete\Block\SearchAutoComplete');
             $layout = $this->layoutFactory->create();
             $productCollection = $blockSearch->getItemsCollection();
-            $itemsCount = count($productCollection) - 1;
+            $itemsCount = count($productCollection);
             if($itemsCount > 0) {
                 $query->saveNumResults($itemsCount);
             }

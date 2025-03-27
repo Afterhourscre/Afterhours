@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -30,18 +30,19 @@ class Export extends \Mirasvit\Seo\Controller\Adminhtml\RedirectImportExport
     {
         $headers = new \Magento\Framework\DataObject(
             [
-                'url_from' => 'url_from',
-                'url_to' => 'url_to',
-                'redirect_type' => 'redirect_type',
+                'redirect_id'                 => 'redirect_id',
+                'url_from'                    => 'url_from',
+                'url_to'                      => 'url_to',
+                'redirect_type'               => 'redirect_type',
                 'is_redirect_only_error_page' => 'is_redirect_only_error_page',
-                'comments' => 'comments',
-                'is_active' => 'is_active',
-                'store_id' => 'store_id',
+                'comments'                    => 'comments',
+                'is_active'                   => 'is_active',
+                'store_id'                    => 'store_id',
             ]
         );
 
-        $template = '"{{url_from}}","{{url_to}}","{{redirect_type}}","{{is_redirect_only_error_page}}","{{comments}}"' .
-            ',"{{is_active}}","{{store_id}}"';
+        $template = '"{{redirect_id}}","{{url_from}}","{{url_to}}","{{redirect_type}}",'
+            . '"{{is_redirect_only_error_page}}","{{comments}}","{{is_active}}","{{store_id}}"';
         $content = $headers->toString($template);
 
         $content .= "\n";
@@ -55,7 +56,7 @@ class Export extends \Mirasvit\Seo\Controller\Adminhtml\RedirectImportExport
                 ['store_table' => $storeTable ],
                 'main_table.redirect_id = store_table.redirect_id'
             )
-            ->reset(\Zend_Db_Select::COLUMNS)
+            ->reset(\Magento\Framework\DB\Select::COLUMNS)
             ->columns(['main_table.*', 'GROUP_CONCAT(store_table.store_id SEPARATOR "/") as store_id'])
             ->group('main_table.redirect_id');
 

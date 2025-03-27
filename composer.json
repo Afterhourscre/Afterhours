@@ -8,20 +8,30 @@
         "AFL-3.0"
     ],
     "require": {
-        "magento/product-community-edition": "2.2.10",
+        "magento/product-community-edition": "2.4.7-p2",
         "composer/composer": "@alpha",
         "worldpay/worldpay-lib-php": "^2.1",
-        "pelago/emogrifier": "2.0.0",
-        "elasticsearch/elasticsearch": "~5.1"
+        "pelago/emogrifier": "^7.0",
+        "elasticsearch/elasticsearch": "~7.17.0",
+        "laminas/laminas-serializer": "^2.8",
+        "magefan/module-login-as-customer": "2.3.4",
+        "cweagans/composer-patches": "^1.7",
+        "mageplaza/module-barclaycard": "^4.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "~6.2.0",
-        "squizlabs/php_codesniffer": "3.1.1",
-        "phpmd/phpmd": "@stable",
-        "pdepend/pdepend": "2.5.0",
-        "friendsofphp/php-cs-fixer": "~2.2.0",
-        "lusitanian/oauth": "~0.8.10",
-        "sebastian/phpcpd": "2.0.4"
+        "allure-framework/allure-phpunit": "^2",
+        "dealerdirect/phpcodesniffer-composer-installer": "^0.7 || ^1.0",
+        "dg/bypass-finals": "^1.4",
+        "friendsofphp/php-cs-fixer": "^3.22",
+        "lusitanian/oauth": "^0.8",
+        "magento/magento-coding-standard": "*",
+        "magento/magento2-functional-testing-framework": "^4.7",
+        "pdepend/pdepend": "^2.10",
+        "phpmd/phpmd": "^2.12",
+        "phpstan/phpstan": "^1.9",
+        "phpunit/phpunit": "^9.5",
+        "sebastian/phpcpd": "^6.0",
+        "symfony/finder": "^6.4"
     },
     "autoload": {
         "psr-4": {
@@ -53,13 +63,47 @@
         }
     },
     "minimum-stability": "stable",
-    "repositories": [
-        {
+    "repositories": {
+        "mageplaza": {
+            "type": "composer",
+            "url": "https://repo.mageplaza.com"
+        },
+        "0": {
             "type": "composer",
             "url": "https://repo.magento.com/"
         }
-    ],
+    },
     "extra": {
-        "magento-force": "override"
+        "magento-force": "override",
+        "patches": {
+            "magento/module-catalog": {
+                "APSB24-61": "patches/composer/magento/module_catalog/Model/Product/Option/Type/File/acsd-60551-composer.patch"
+            },
+            "magento/theme-adminhtml-backend": {
+                "APSB24-40": "patches/composer/magento/VULN-27015-2.4.7x_v2.composer.patch"
+            },
+            "magento/theme-frontend-blank": {
+                "APSB24-40": "patches/composer/magento/VULN-27015-2.4.7x_v2.composer.patch"
+            },
+            "magento/theme-frontend-luma": {
+                "APSB24-40": "patches/composer/magento/VULN-27015-2.4.7x_v2.composer.patch"
+            },
+            "magento/module-jwt-user-token": {
+                "CVE-2024-34102": "patches/composer/magento/module-jwt-user-token/Model/AC-12485_Hotfix.composer.patch"
+            },
+            "magento/framework/Webapi": {
+                "APSB24-40": "patches/composer/magento/VULN-27015-2.4.7x_v2.composer.patch"
+            }
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "magento/magento-composer-installer": true,
+            "magento/inventory-composer-installer": true,
+            "magento/composer-dependency-version-audit-plugin": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "cweagans/composer-patches": true,
+            "php-http/discovery": true
+        }
     }
 }

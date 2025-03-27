@@ -9,41 +9,45 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
 
 namespace Mirasvit\SeoAutolink\Service\AddLinks;
 
-class AddLinks implements \Mirasvit\SeoAutolink\Api\Service\AddLinks\AddLinksInterface,
-                          \Magento\Framework\View\TemplateEngineInterface
+use Magento\Framework\View\Element\BlockInterface;
+use Magento\Framework\View\TemplateEngineInterface;
+use Mirasvit\SeoAutolink\Service\TextProcessorService;
+
+class AddLinks implements \Mirasvit\SeoAutolink\Api\Service\AddLinks\AddLinksInterface, TemplateEngineInterface
 {
     /**
-     * @var \Magento\Framework\View\TemplateEngineInterface
+     * @var TemplateEngineInterface
      */
-    private $_subject;
+    private $subject;
 
     /**
      * @var array
      */
-    private $_templates;
+    private $templates;
 
     /**
-     * @var \Mirasvit\SeoAutolink\Helper\Replace
+     * @var TextProcessorService
      */
     private $replaceHelper;
 
 
     /**
-     * @param \Magento\Framework\View\TemplateEngineInterface $subject
-     * @param array                                           $templates
+     * @param TemplateEngineInterface $subject
+     * @param array                   $templates
+     * @param mixed                   $replaceHelper
      */
-    public function __construct(\Magento\Framework\View\TemplateEngineInterface $subject, $templates, $replaceHelper)
+    public function __construct(TemplateEngineInterface $subject, $templates, $replaceHelper)
     {
-        $this->_subject      = $subject;
-        $this->_templates    = $templates;
+        $this->subject       = $subject;
+        $this->templates     = $templates;
         $this->replaceHelper = $replaceHelper;
     }
 
@@ -51,13 +55,16 @@ class AddLinks implements \Mirasvit\SeoAutolink\Api\Service\AddLinks\AddLinksInt
      * Insert autolinks into the rendered block contents
      * {@inheritdoc}
      */
-    public function render(\Magento\Framework\View\Element\BlockInterface $block, $templateFile, array $dictionary = [])
+    public function render(BlockInterface $block, $templateFile, array $dictionary = [])
     {
-        $result         = $this->_subject->render($block, $templateFile, $dictionary);
-        $isTemplateUsed = array_filter($this->_templates,
+        $result = $this->subject->render($block, $templateFile, $dictionary);
+
+        $isTemplateUsed = array_filter(
+            $this->templates,
             function ($el) use ($templateFile) {
                 return strpos($templateFile, $el) !== false;
-            });
+            }
+        );
 
         if ($isTemplateUsed) {
             $result = $this->addLinks($result);
@@ -80,4 +87,3 @@ class AddLinks implements \Mirasvit\SeoAutolink\Api\Service\AddLinks\AddLinksInt
         return $result;
     }
 }
-

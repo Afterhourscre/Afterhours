@@ -7,29 +7,14 @@ define([
     'uiRegistry',
     'jquery',
     'underscore',
-    'Magento_Ui/js/modal/modal-component'
+    'MageWorx_OptionBase/component/abstract-modal-component',
 ], function (registry, $, _, ModalComponent) {
     'use strict';
 
     return ModalComponent.extend({
 
         defaults: {
-            formName: '',
-            buttonName: '',
-            isSchedule: false,
-            entityProvider: '',
-            entityDataScope: '',
             pathModal: 'value_settings_modal.content.fieldset'
-        },
-
-        /**
-         * Reload modal
-         *
-         * @param params
-         */
-        reloadModal: function (params) {
-            this.initVariables(params);
-            this.initFields();
         },
 
         /**
@@ -44,13 +29,18 @@ define([
             this.isSchedule = params.isSchedule;
             this.isWeightEnabled = params.isWeightEnabled;
             this.isCostEnabled = params.isCostEnabled;
+            this.isNotConfigurableProduct = params.isNotConfigurableProduct;
+            this.isLoadLinkedProductEnabled = params.isLoadLinkedProductEnabled;
+            this.pathLoadLinkedProduct = params.pathLoadLinkedProduct;
             if (this.entityProvider === 'catalogstaging_update_form.catalogstaging_update_form_data_source') {
                 this.isSchedule = true;
             }
             this.formName = params.formName;
-            this.isValidSku = registry.get(this.entityProvider).get(this.entityDataScope).sku_is_valid === '1';
-            this.linkedFields = !_.isUndefined(registry.get(this.entityProvider).get('data.product.option_link_fields'))
-                ? registry.get(this.entityProvider).get('data.product.option_link_fields')
+            this.registryEntityProvider = registry.get(this.entityProvider);
+            this.currentDataScopeParams = this.registryEntityProvider.get(this.entityDataScope);
+            this.isValidSku = this.currentDataScopeParams.sku_is_valid === '1';
+            this.linkedFields = !_.isUndefined(this.registryEntityProvider.get('data.product.option_link_fields'))
+                ? this.registryEntityProvider.get('data.product.option_link_fields')
                 : {};
         },
 
@@ -95,56 +85,65 @@ define([
                     this.weightTypeField.disabled(this.isValidSku);
                 }
             }
-        },
+            if (this.isNotConfigurableProduct) {
+                this.initField('qty_multiplier');
+            }
 
-        /**
-         * save and close modal
-         */
-        save: function () {
-            this.saveData();
-            this.toggleModal();
+            if (this.isLoadLinkedProductEnabled) {
+                this.isLoadLinkedProductCheckbox = registry.get(
+                    this.formName + '.' + this.formName + '.' + this.pathModal + '.' + this.pathLoadLinkedProduct
+                );
+                var isSwatch = 0,
+                    registryOptionDataScope = this.registryEntityProvider.get(this.entityDataScope.split('.values.')[0]);
+
+                if (registryOptionDataScope !== 'undefined') {
+                    isSwatch = parseFloat(registryOptionDataScope.is_swatch);
+                }
+
+                if (isSwatch === 0) {
+                    this.isLoadLinkedProductCheckbox.hide();
+                } else {
+                    var loadLinkedProductCheckboxStatus = this.registryEntityProvider.get(this.entityDataScope +
+                        '.' + this.pathLoadLinkedProduct);
+
+                    this.isLoadLinkedProductCheckbox.checked(loadLinkedProductCheckboxStatus === '1');
+                    this.isLoadLinkedProductCheckbox.show();
+                }
+            }
         },
 
         /**
          * Save data before close modal, update button status
          */
         saveData: function () {
-            var cost = 0;
             if (this.isCostEnabled) {
-                cost = this.costField.value();
-                registry
-                    .get(this.entityProvider)
-                    .set(this.entityDataScope + '.cost', cost);
+                this.processDataItem('cost', this.conditionGreaterThanZero);
             }
-
-            var weight = 0;
-            var weightType = 0;
             if (this.isWeightEnabled) {
-                weight = this.weightField.value();
-                registry
-                    .get(this.entityProvider)
-                    .set(this.entityDataScope + '.weight', weight);
-
-                weightType = this.weightTypeField.value();
-                registry
-                    .get(this.entityProvider)
-                    .set(this.entityDataScope + '.weight_type', weightType);
+                this.processDataItem('weight', this.conditionGreaterThanZero);
+                this.processDataItem('weight_type', this.conditionNonEmptyString);
             }
 
-            this.updateButtonStatus(cost, weight);
-        },
+            if (this.isNotConfigurableProduct) {
+                this.processDataItem('qty_multiplier', this.conditionGreaterThanZero);
+            }
 
-        /**
-         * Update button status
-         *
-         * @param cost
-         * @param weight
-         */
-        updateButtonStatus: function (cost, weight) {
-            if ((cost && cost > 0) || (weight && weight > 0)) {
-                $('*[data-name="' + this.buttonName + '"]').addClass('active');
-            } else {
-                $('*[data-name="' + this.buttonName + '"]').removeClass('active');
+            if (this.isLoadLinkedProductEnabled) {
+                this._super();
+                var self = this,
+                    isDefaultValue = this.entityDataScope + '.is_default';
+                self.isDefault = registry.get("ns = " + this.ns + ", dataScope = " + isDefaultValue);
+
+                if (this.isLoadLinkedProductCheckbox.checked()) {
+                    self.isDefault.disabled(true);
+                    self.isDefault.checked(false);
+                    if (this.currentDataScopeParams.sku === this.registryEntityProvider.data.product.sku) {
+                        self.isDefault.checked(true);
+                    }
+                } else {
+                    self.isDefault.disabled(false);
+                }
+                this.processDataItem('load_linked_product', this.conditionGreaterThanZero);
             }
         }
     });

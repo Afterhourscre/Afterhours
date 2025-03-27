@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -22,6 +22,9 @@ use Mirasvit\SeoContent\Model\Config;
 
 class PageNumberInMetaSource implements OptionSourceInterface
 {
+    /**
+     * @return array
+     */
     public function toOptionArray()
     {
         return [

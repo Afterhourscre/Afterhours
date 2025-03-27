@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -23,11 +23,15 @@ class MetaKeywordsCriteria extends AbstractCriteria
 {
     const LABEL = 'Meta Keywords';
 
+    /**
+     * @param string $content
+     * @return \Magento\Framework\DataObject
+     */
     public function handle($content)
     {
         $value = $this->getMetaTag($content, 'keywords');
 
-        $len = strlen($value);
+        $len = mb_strlen($value);
         $words = count(explode(',', $value));
 
         if ($len < 160) {

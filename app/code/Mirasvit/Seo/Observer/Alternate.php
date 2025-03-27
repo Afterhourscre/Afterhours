@@ -9,86 +9,98 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Observer;
 
 use Magento\Directory\Helper\Data as Data;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\View\Element\Template\Context;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Store\Model\ScopeInterface;
 use Mirasvit\Seo\Api\Config\AlternateConfigInterface as AlternateConfig;
 use Mirasvit\Seo\Api\Service\StateServiceInterface;
 use Mirasvit\Seo\Model\Config as Config;
+use Mirasvit\Seo\Service\Alternate\StrategyFactory;
+use Mirasvit\Seo\Api\Service\Alternate\UrlInterface;
 
 class Alternate implements ObserverInterface
 {
-    /**
-     * @var \Mirasvit\Seo\Model\Config
-     */
     protected $config;
 
-    /**
-     * @var \Magento\Framework\View\Element\Template\Context
-     */
     protected $context;
 
-    /**
-     * @var \Magento\Framework\App\Request\Http
-     */
     protected $request;
 
-    /**
-     * @var \Mirasvit\Seo\Api\Config\AlternateConfigInterface
-     */
     protected $alternateConfig;
 
-    private   $stateInterface;
-
-    /**
-     * @var \Mirasvit\Seo\Api\Service\Alternate\StrategyInterface
-     */
     protected $strategy;
 
-    /**
-     * @var \Mirasvit\Seo\Api\Service\Alternate\UrlInterface
-     */
     protected $url;
 
+    private $strategyFactory;
+
+    private $stateInterface;
+
+    private $scopeConfig;
+
     public function __construct(
-        \Mirasvit\Seo\Model\Config $config,
-        \Magento\Framework\View\Element\Template\Context $context,
-        \Mirasvit\Seo\Api\Config\AlternateConfigInterface $alternateConfig,
+        Config $config,
+        Context $context,
+        AlternateConfig $alternateConfig,
         StateServiceInterface $stateService,
-        \Mirasvit\Seo\Service\Alternate\StrategyFactory $strategyFactory,
-        \Mirasvit\Seo\Api\Service\Alternate\UrlInterface $url
+        StrategyFactory $strategyFactory,
+        UrlInterface $url,
+        ScopeConfigInterface $scopeConfig
     ) {
         $this->config          = $config;
         $this->context         = $context;
         $this->request         = $context->getRequest();
         $this->alternateConfig = $alternateConfig;
         $this->stateInterface  = $stateService;
-        $this->strategy        = $strategyFactory->create();
+        $this->strategyFactory = $strategyFactory;
         $this->url             = $url;
+        $this->scopeConfig     = $scopeConfig;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function execute(Observer $observer)
+    public function execute(Observer $observer): void
     {
-        $this->setupAlternateTag();
+        if ($this->request->getModuleName() == 'search_landing') {
+            return;
+        }
+
+        if (
+            strpos($this->request->getFullActionName(), 'result_index') !== false
+            && $this->scopeConfig->getValue('amasty_xsearch/general/enable_seo_url', ScopeInterface::SCOPE_STORE)
+            && ($key = $this->scopeConfig->getValue('amasty_xsearch/general/seo_key', ScopeInterface::SCOPE_STORE))
+            && strpos($this->request->getUriString(), $key) !== false
+        ) {
+            return;
+        }
+
+        /** @var \Magento\Framework\App\Request\Http $request */
+        $request = $observer->getData('request');
+
+        // $request is empty in 2.3, and set in 2.4
+        if (!$request || $request->getFullActionName() !== '__') {
+            $this->strategy = $this->strategyFactory->create();
+
+            $this->setupAlternateTag();
+        }
     }
 
-    /**
-     * @return bool
-     */
-    public function setupAlternateTag()
+    public function setupAlternateTag(): bool
     {
-        if (!$this->alternateConfig->getAlternateHreflang($this->context
+        if (!$this->alternateConfig->getAlternateHreflang((int)$this->context
                 ->getStoreManager()
                 ->getStore()
                 ->getStoreId()) || !$this->request) {
@@ -102,29 +114,14 @@ class Alternate implements ObserverInterface
         $storeUrls = $this->strategy->getStoreUrls();
 
         $this->addLinkAlternate($storeUrls);
-    }
 
-    protected function getPreparedTrailingAlternate($url)
-    {
-        if ($this->config->getTrailingSlash() == Config::TRAILING_SLASH
-            && substr($url, -1) != '/'
-            && strpos($url, '?') === false) {
-            $url = $url . '/';
-        } elseif ($this->config->getTrailingSlash() == Config::NO_TRAILING_SLASH
-            && substr($url, -1) == '/') {
-                $url = substr($url, 0, -1);
-            }
-        return $url;
+        return true;
     }
 
     /**
      * Create alternate.
-     *
-     * @param array $storeUrls
-     *
-     * @return bool
      */
-    public function addLinkAlternate($storeUrls)
+    public function addLinkAlternate(array $storeUrls): bool
     {
         if (!$storeUrls) {
             return false;
@@ -133,21 +130,28 @@ class Alternate implements ObserverInterface
         $type                     = 'alternate';
         $addLocaleCodeAutomatical = $this->alternateConfig->isHreflangLocaleCodeAddAutomatical();
         foreach ($storeUrls as $storeId => $url) {
-            $hreflang  = false;
-            $storeCode = $this->url->getStores()[$storeId]->getConfig(Data::XML_PATH_DEFAULT_LOCALE);
-            if ($this->alternateConfig->getAlternateHreflang($storeId) == AlternateConfig::ALTERNATE_CONFIGURABLE) {
-                $hreflang = $this->alternateConfig->getAlternateManualConfig($storeId, true);
+            $hreflang = false;
+            $stores   = $this->url->getStores();
+
+            if (!isset($stores[$storeId])) {
+                continue;
+            }
+
+            $storeCode = $stores[$storeId]->getConfig(Data::XML_PATH_DEFAULT_LOCALE);
+
+            if ($this->alternateConfig->getAlternateHreflang((int)$storeId) == AlternateConfig::ALTERNATE_CONFIGURABLE) {
+                $hreflang = $this->alternateConfig->getAlternateManualConfig((int)$storeId, true);
             }
 
             if (!$hreflang) {
-                $hreflang = ($hreflang = $this->alternateConfig->getHreflangLocaleCode($storeId)) ?
+                $hreflang = ($hreflang = $this->alternateConfig->getHreflangLocaleCode((int)$storeId)) ?
                     substr($storeCode, 0, 2) . '-' . strtoupper($hreflang) :
                     (($addLocaleCodeAutomatical) ? str_replace('_', '-', $storeCode) :
                         substr($storeCode, 0, 2));
             }
             $url = $this->getPreparedTrailingAlternate($url);
             $pageConfig->addRemotePageAsset(
-                html_entity_decode($url),
+                htmlspecialchars($url),
                 $type,
                 ['attributes' => ['rel' => $type, 'hreflang' => $hreflang]]
             );
@@ -158,20 +162,28 @@ class Alternate implements ObserverInterface
         return true;
     }
 
+    protected function getPreparedTrailingAlternate(string $url): ?string
+    {
+        if ($this->config->getTrailingSlash() == Config::TRAILING_SLASH
+            && substr($url, -1) != '/'
+            && strpos($url, '?') === false) {
+            $url = $url . '/';
+        } elseif ($this->config->getTrailingSlash() == Config::NO_TRAILING_SLASH
+            && substr($url, -1) == '/') {
+            $url = substr($url, 0, -1);
+        }
+
+        return $url;
+    }
+
     /**
      * Create x-default
-     *
-     * @param array                               $storeUrls
-     * @param string                              $type
-     * @param \Magento\Framework\View\Page\Config $pageConfig
-     *
-     * @return bool
      */
-    public function addXDefault($storeUrls, $type, $pageConfig)
+    public function addXDefault(array $storeUrls, string $type, \Magento\Framework\View\Page\Config $pageConfig): bool
     {
         $xDefaultUrl = false;
         $store       = $this->context->getStoreManager()->getStore();
-        if ($this->alternateConfig->getAlternateHreflang($store) == AlternateConfig::ALTERNATE_CONFIGURABLE) {
+        if ($this->alternateConfig->getAlternateHreflang((int)$store->getId()) == AlternateConfig::ALTERNATE_CONFIGURABLE) {
             $xDefaultUrl = $this->alternateConfig->getAlternateManualXDefault($storeUrls);
         } elseif ($this->alternateConfig->getXDefault() == AlternateConfig::X_DEFAULT_AUTOMATICALLY) {
             reset($storeUrls);
@@ -187,7 +199,7 @@ class Alternate implements ObserverInterface
         if ($xDefaultUrl) {
             $xDefaultUrl = $this->getPreparedTrailingAlternate($xDefaultUrl);
             $pageConfig->addRemotePageAsset(
-                html_entity_decode($xDefaultUrl),
+                htmlspecialchars($xDefaultUrl),
                 $type,
                 ['attributes' => ['rel' => $type, 'hreflang' => 'x-default']]
             );

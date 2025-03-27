@@ -6,6 +6,7 @@
 
 namespace MageWorx\OptionInventory\Model\Product\Option\Value;
 
+use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product\Option;
 use MageWorx\OptionInventory\Helper\Data as Helper;
 use MageWorx\OptionBase\Helper\Data as BaseHelper;
@@ -13,20 +14,10 @@ use MageWorx\OptionInventory\Helper\Stock as StockHelper;
 
 class AdditionalHtml
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var StockHelper
-     */
-    protected $stockHelper;
-
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
+    protected Helper $helper;
+    protected StockHelper $stockHelper;
+    protected BaseHelper $baseHelper;
+    protected ProductRepositoryInterface $productRepository;
 
     /**
      * @param Helper $helper
@@ -36,11 +27,13 @@ class AdditionalHtml
     public function __construct(
         Helper $helper,
         StockHelper $stockHelper,
-        BaseHelper $baseHelper
+        BaseHelper $baseHelper,
+        ProductRepositoryInterface $productRepository
     ) {
         $this->helper      = $helper;
         $this->baseHelper  = $baseHelper;
         $this->stockHelper = $stockHelper;
+        $this->productRepository = $productRepository;
     }
 
     /**
@@ -54,12 +47,15 @@ class AdditionalHtml
             return;
         }
 
-        $isDisabledOutOfStockOptions = $this->helper->isDisabledOutOfStockOptions();
+        $isDisabledOutOfStockOptions = $this->baseHelper->isDisabledOutOfStockOptions();
 
         $xpath = new \DOMXPath($dom);
         $count = 1;
         foreach ($option->getValues() as $value) {
             $count++;
+            if (empty($value['manage_stock'])) {
+                continue;
+            }
             if ($this->baseHelper->isCheckbox($option) || $this->baseHelper->isRadio($option)) {
                 $element       = $xpath
                     ->query('//div/div[descendant::label[@for="options_' . $option->getId() . '_' . $count . '"]]')
@@ -74,6 +70,11 @@ class AdditionalHtml
                 $element = $elementSelect = $elementTitle = $xpath
                     ->query('//option[@value="' . $value->getId() . '"]')
                     ->item(0);
+            }
+
+            if ($this->baseHelper->isModuleEnabled('Magento_InventorySalesAdminUi') && $this->validateSku($value)) {
+                $originSku = $this->productRepository->get($value->getSku())->getSku();
+                $value->setQty($this->baseHelper->updateValueQtyToSalableQty($originSku));
             }
 
             $isOutOfStockOption = $this->stockHelper->isOutOfStockOption($value);
@@ -104,6 +105,25 @@ class AdditionalHtml
      */
     protected function out($dom, $option)
     {
+        if (!$this->helper->isEnabledOptionInventory()) {
+            return true;
+        }
+
         return (!$dom || !$option);
+    }
+
+    /**
+     * * Check if sku is valid
+     *
+     * @param \Magento\Catalog\Api\Data\ProductCustomOptionValuesInterface $value
+     * @return bool
+     */
+    protected function validateSku(\Magento\Catalog\Api\Data\ProductCustomOptionValuesInterface $value): bool
+    {
+        if (isset($value['sku_is_valid']) && $value['sku_is_valid']) {
+            return true;
+        }
+
+        return false;
     }
 }

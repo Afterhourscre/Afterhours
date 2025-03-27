@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright © 2016 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
 
@@ -12,21 +12,13 @@ use \Magento\Framework\App\Request\Http as HttpRequest;
 
 class ProductScheduleOptionValue
 {
-    /**
-     * @var OptionBaseHelper
-     */
-    protected $helper;
-
-    /**
-     * @var HttpRequest
-     */
-    protected $request;
+    protected OptionBaseHelper $helper;
+    protected HttpRequest $request;
 
     public function __construct(
         OptionBaseHelper $helper,
         HttpRequest $request
     ) {
-    
         $this->helper = $helper;
         $this->request = $request;
     }

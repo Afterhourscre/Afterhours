@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -32,11 +32,10 @@ class XDefault implements ArrayInterface
      */
     protected $request;
 
-     /**
-      * @param \Magento\Framework\App\State $state
-      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-      * @param \Magento\Framework\App\Request\Http $request
-      */
+    /**
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \Magento\Framework\App\Request\Http $request
+     */
     public function __construct(
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\App\Request\Http $request
@@ -65,10 +64,8 @@ class XDefault implements ArrayInterface
                     'label' => $store->getName() . ' — ' . $store->getBaseUrl()
                 ];
             }
-
         }
 
         return $options;
     }
-
 }

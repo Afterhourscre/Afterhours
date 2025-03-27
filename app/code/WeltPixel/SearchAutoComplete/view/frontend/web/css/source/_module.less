@@ -27,24 +27,6 @@
             }
           }
         }
-        &.horizontally{
-            -webkit-box-shadow: none;
-            -moz-box-shadow: none;
-            box-shadow: none;
-          
-            .product-list{
-              margin-top:35px;
-            }
-            .category-list{
-              margin-top:10px;
-            }
-            .block-right{
-              text-align: center !important;
-              .price{
-                color:rgba(84,84,84,0.55);
-              }
-            }
-        }
       }
     }
   }
@@ -79,6 +61,8 @@
     display: block !important;
     width: auto !important;
     margin: 10px 10px 0 10px;
+    max-height: 17vh;
+    overflow-y: auto;
     .cat-container{
       text-transform: none;
     }
@@ -250,18 +234,6 @@
         font-size: 13px;
         text-transform: initial;
       }
-      &.horizontally{
-        .product-list{
-          .block-flex{
-            .block-right{
-              p{
-                max-width: 140px;
-                margin: 0 auto;
-              }
-            }
-          }
-        }
-      }
     }
 
   }
@@ -282,6 +254,32 @@
   }
 }
 .media-width(@extremum, @break) when (@extremum = 'max') and (@break = @screen__m){
+    .wrap .modal {
+        .modal-content .form.minisearch {
+            .searchautocomplete {
+                &.horizontally {
+                    max-height: 80vh;
+
+                    .product-list {
+                        display: inline-block;
+                        .block-flex {
+                            display: flex;
+                        }
+
+                        li {
+                            display: inline-block;
+                            padding-bottom: 10px;
+                            margin-bottom: 1rem;
+                            border-bottom: 1px solid #CCCCCC;
+                            .block-right {
+                            text-align: left;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
   .theme-pearl {
     .form.minisearch {
       .searchautocomplete {
@@ -320,8 +318,33 @@
   .searchautocomplete{
     right: 0px;
     &.horizontally{
+        -webkit-box-shadow: none;
+        -moz-box-shadow: none;
+        box-shadow: none;
+
+        .product-list{
+            margin-top:35px;
+        }
+        .category-list{
+            margin-top:10px;
+        }
         .block-right{
-          margin-top:10px;
+            text-align: center !important;
+            .price{
+                color:rgba(84,84,84,0.55);
+            }
+        }
+        .product-list{
+            display: inline-flex;
+            .block-flex{
+                .block-right{
+                    margin-top:10px;
+                    p{
+                        max-width: 140px;
+                        margin: 0 auto;
+                    }
+                }
+            }
         }
     }
   }

@@ -1,49 +1,50 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
+declare(strict_types=1);
 
 namespace Amasty\Xsearch\Block\Search;
 
+use Amasty\Xsearch\Controller\RegistryConstants;
+use Amasty\Xsearch\Model\Search\SearchAdapterResolver;
+use Magento\Catalog\Api\CategoryRepositoryInterface;
+use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Block\Product\ListProduct;
 use Magento\Catalog\Block\Product\ReviewRendererInterface;
 use Magento\Catalog\Model\Product as ProductModel;
-use Magento\Framework\DB\Select;
-use Magento\Catalog\Api\CategoryRepositoryInterface;
-use Magento\Framework\App\Response\RedirectInterface;
-use Amasty\Xsearch\Controller\RegistryConstants;
 use Magento\Framework\App\Action\Action;
-use Magento\Framework\Search\Adapter\Mysql\TemporaryStorage;
+use Magento\Framework\App\Http\Context as HttpContext;
+use Magento\Framework\App\Response\RedirectInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\UrlInterface;
 use Magento\Store\Model\StoreManagerInterface;
 
 class Product extends ListProduct
 {
-    const BLOCK_TYPE = 'product';
-    const MEDIA_URL_PLACEHOLDER = '$$XSEARCH_MEDIA_URL$$';
-    const XML_PATH_TEMPLATE_PRODUCT_LIMIT = 'product/limit';
-    const XML_PATH_TEMPLATE_TITLE = 'product/title';
-    const XML_PATH_TEMPLATE_NAME_LENGTH = 'product/name_length';
-    const XML_PATH_TEMPLATE_DESC_LENGTH = 'product/desc_length';
-    const XML_PATH_TEMPLATE_REVIEWS = 'product/reviews';
-    const XML_PATH_TEMPLATE_ADD_TO_CART = 'product/add_to_cart';
-    const XML_PATH_TEMPLATE_OUT_OF_STOCK_LAST = 'product/out_of_stock_last';
+    public const BLOCK_TYPE = 'product';
+    public const MEDIA_URL_PLACEHOLDER = '$$XSEARCH_MEDIA_URL$$';
+    public const XML_PATH_TEMPLATE_PRODUCT_LIMIT = 'product/limit';
+    public const XML_PATH_TEMPLATE_TITLE = 'product/title';
+    public const XML_PATH_TEMPLATE_NAME_LENGTH = 'product/name_length';
+    public const XML_PATH_TEMPLATE_DESC_LENGTH = 'product/desc_length';
+    public const XML_PATH_TEMPLATE_REVIEWS = 'product/reviews';
+    public const XML_PATH_TEMPLATE_ADD_TO_CART = 'product/add_to_cart';
 
-    const SMARTWAVE_PORTO_CODE = 'Smartwave/porto';
+    public const SMARTWAVE_PORTO_CODE = 'Smartwave/porto';
 
-    const IMAGE_ID = 'amasty_xsearch_page_list';
+    public const IMAGE_ID = 'amasty_xsearch_page_list';
 
-    const PORTO_IMAGE_ID = 'amasty_xsearch_page_list_porto';
+    public const PORTO_IMAGE_ID = 'amasty_xsearch_page_list_porto';
 
     /**
      * @var \Magento\Framework\Stdlib\StringUtils
      */
     private $string;
-    
+
     /**
      * @var \Magento\Framework\Data\Form\FormKey
      */
@@ -99,6 +100,21 @@ class Product extends ListProduct
      */
     private $design;
 
+    /**
+     * @var SearchAdapterResolver
+     */
+    private $searchAdapterResolver;
+
+    /**
+     * @var HttpContext
+     */
+    private $httpContext;
+
+    /**
+     * @var \Amasty\Xsearch\Model\Config
+     */
+    private $config;
+
     public function __construct(
         \Magento\Catalog\Block\Product\Context $context,
         \Magento\Framework\Data\Helper\PostHelper $postDataHelper,
@@ -114,6 +130,10 @@ class Product extends ListProduct
         \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $collectionFactory,
         \Magento\Wishlist\Helper\Data $wishlistHelper,
         \Magento\Framework\View\DesignInterface $design,
+        \Magento\Framework\Url $urlBuilder,
+        SearchAdapterResolver $searchAdapterResolver,
+        HttpContext $httpContext,
+        \Amasty\Xsearch\Model\Config $config,
         array $data = []
     ) {
         parent::__construct(
@@ -134,7 +154,11 @@ class Product extends ListProduct
         $this->collectionFactory = $collectionFactory;
         $this->wishlistHelper = $wishlistHelper;
         $this->design = $design;
+        $this->_urlBuilder = $urlBuilder;
+        $this->httpContext = $httpContext;
         $this->setData('cache_lifetime', AbstractSearch::DEFAULT_CACHE_LIFETIME);
+        $this->searchAdapterResolver = $searchAdapterResolver;
+        $this->config = $config;
     }
 
     /**
@@ -146,7 +170,8 @@ class Product extends ListProduct
         return array_merge(
             [
                 $this->getQuery()->getQueryText(),
-                'group' => $this->xSearchHelper->getCustomerGroupId()
+                'group' => $this->xSearchHelper->getCustomerGroupId(),
+                HttpContext::CONTEXT_CURRENCY => $this->httpContext->getValue(HttpContext::CONTEXT_CURRENCY)
             ],
             $cacheKey
         );
@@ -165,7 +190,7 @@ class Product extends ListProduct
      */
     protected function _construct()
     {
-        $this->_template = 'search/product.phtml';
+        $this->_template = 'Amasty_Xsearch::search/product_list.phtml';
         parent::_construct();
     }
 
@@ -293,41 +318,90 @@ class Product extends ListProduct
      * @param ProductModel $productModel
      * @return string
      */
-    public function getCompareProductsPostParams($productModel)
+    public function getCompareProductsPostParams(ProductModel $productModel): string
     {
         $currentComparePostParams = $this->_compareProduct->getPostDataParams($productModel);
-        $currentUenc = $this->urlHelper->getEncodedUrl();
-        $newUenc = $this->urlHelper->getEncodedUrl($this->redirector->getRefererUrl());
 
-        return str_replace($currentUenc, $newUenc, $currentComparePostParams);
+        return $this->preparePostParams($currentComparePostParams);
     }
 
     /**
-     * @return array
+     * @param ProductModel $product
+     * @return string
+     */
+    public function getAddToWishlistParams($product): string
+    {
+        $postParams = parent::getAddToWishlistParams($product);
+
+        return $this->preparePostParams($postParams);
+    }
+
+    private function preparePostParams(string $postParams): string
+    {
+        $currentUenc = $this->urlHelper->getEncodedUrl();
+        $newUenc = $this->urlHelper->getEncodedUrl($this->redirector->getRefererUrl());
+
+        return str_replace($currentUenc, $newUenc, $postParams);
+    }
+
+    /**
+     * @return array[]
      */
     public function getResults()
     {
-        $results = [];
+        $query = $this->getQuery();
+        $result = $query ? $this->searchAdapterResolver->getResults($this->getBlockType(), $query) : null;
+
+        if ($result !== null) {
+            $this->setNumResults($result->getResultsCount());
+            $searchResult = $result->getItems();
+        } else {
+            $searchResult = $this->getCollectionData();
+        }
+
+        return $searchResult;
+    }
+
+    private function getCollectionData(): array
+    {
         $imageId = $this->getImageId();
+        $this->setNumResults($this->getLoadedProductCollection()->getSize());
+
         foreach ($this->getLoadedProductCollection() as $product) {
             $data['img'] = $this->encodeMediaUrl(
                 $this->getImage($product, $imageId)->toHtml()
             );
+            $data['image_url'] = $this->getImage($product, $imageId)->getImageUrl();
             $data['url'] = $this->getRelativeLink($product->getProductUrl());
             $data['name'] = $this->getName($product);
             $data['description'] = $this->getDescription($product);
             $data['price'] = $this->getProductPrice($product);
+            $data['min_price'] = $product->getData('min_price');
+            $data['final_price'] = $product->getData('final_price');
             $data['is_salable'] = $product->isSaleable();
             $data['product_data'] = [
                 'entity_id' => (string)$product->getId(),
                 'request_path' => (string)$product->getRequestPath()
-                ];
-            $data['reviews'] = $this->getReviewsSummaryHtml($product, ReviewRendererInterface::SHORT_VIEW);
+            ];
+            if ($this->isNeedShowProductReviews()) {
+                $data['reviews'] = $this->getReviewsSummaryHtml(
+                    $product,
+                    ReviewRendererInterface::SHORT_VIEW
+                );
+                $data['rating_summary'] = $product->getData('rating_summary');
+            }
+            $data['cart_post_params'] = $this->getAddToCartPostParams($product);
+            $data['cart_label'] = $this->getCartLabel($product);
+            $data['entity_id'] = (string)$product->getId();
+
+            if ($this->config->isShowSku()) {
+                $data['sku'] = $this->highlight($product->getData(ProductInterface::SKU));
+            }
+
             $results[$product->getId()] = $data;
         }
 
-        $this->setNumResults($this->getLoadedProductCollection()->getSize());
-        return $results;
+        return $results ?? [];
     }
 
     /**
@@ -373,10 +447,7 @@ class Product extends ListProduct
         return $this->mediaUrl;
     }
 
-    /**
-     * @return string
-     */
-    public function getFormKey()
+    public function getFormKey(): string
     {
         return $this->formKey->getFormKey();
     }
@@ -437,6 +508,16 @@ class Product extends ListProduct
     }
 
     /**
+     * @return int|null
+     */
+    public function getHiddenProductsCount(): ?int
+    {
+        $count = (int)$this->getNumResults() - (int)$this->getLimit();
+
+        return $count > 0 ? $count : null;
+    }
+
+    /**
      * @param ProductModel $product
      * @return string
      */
@@ -490,12 +571,13 @@ class Product extends ListProduct
 
     /**
      * @param ProductModel $product
-     * @return string
+     * @return array
      */
     public function getAddToCartPostParams(ProductModel $product)
     {
         $result = parent::getAddToCartPostParams($product);
         $result['data']['return_url'] =  $this->redirector->getRefererUrl();
+
         return $result;
     }
 
@@ -533,35 +615,23 @@ class Product extends ListProduct
         return (bool)$this->xSearchHelper->getModuleConfig(self::XML_PATH_TEMPLATE_REVIEWS) == '1' ? 1 : 0;
     }
 
-    /**
-     * @return bool
-     */
-    public function getAddToCart()
+    public function isNeedShowProductReviews(): bool
     {
-        return (bool)$this->xSearchHelper->getModuleConfig(self::XML_PATH_TEMPLATE_ADD_TO_CART) == '1'? 1 : 0;
+        return $this->config->getShowProductReviews();
     }
 
     /**
-     * @param array $products
-     * @return array
+     * @see \Amasty\HidePrice\Plugin\Xsearch\Block\Search\Product\HideAddToCart::aroundGetAddToCart
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function sortProducts($products)
+    public function getAddToCart(array $product = []): bool
     {
-        $isShowLast = (bool)$this->xSearchHelper
-            ->getModuleConfig(self::XML_PATH_TEMPLATE_OUT_OF_STOCK_LAST);
-        if ($isShowLast) {
-            $outOfStockProducts = [];
-            foreach ($products as $key => $product) {
-                if (!$product['is_salable']) {
-                    $outOfStockProducts[] = $product;
-                    unset($products[$key]);
-                }
-            }
+        return $this->xSearchHelper->getModuleConfig(self::XML_PATH_TEMPLATE_ADD_TO_CART) == '1';
+    }
 
-            $products = array_merge($products, $outOfStockProducts);
-        }
-
-        return $products;
+    public function getCartLabel(ProductModel $product): string
+    {
+        return __('Add to Cart')->render();
     }
 
     /**
@@ -589,10 +659,20 @@ class Product extends ListProduct
     }
 
     /**
-     * @return bool
+     * @see \Amasty\HidePrice\Plugin\Xsearch\Block\Search\Product\HideWishlist::aroundIsWishlistAllowed
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function isWishlistAllowed()
+    public function isWishlistAllowed(array $productData = []): bool
     {
         return $this->wishlistHelper->isAllow();
+    }
+
+    /**
+     * @see \Amasty\HidePrice\Plugin\Xsearch\Block\Search\Product\HideCompare::aroundIsCompareAllowed
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
+    public function isCompareAllowed(array $productData = []): bool
+    {
+        return true;
     }
 }

@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Block\Adminhtml\Analytics\Activity;
 
@@ -45,7 +44,7 @@ class QueryList extends Template
     public function getLastSearches()
     {
         $data = array_slice(
-            $this->queryInfo->getAnalyticsData(Collection::GROUP_BY_DAY),
+            $this->queryInfo->getAnalyticsData(Collection::GROUP_BY_DAY_PATTERN),
             0,
             Collection::LIMIT_LAST_DATA
         );

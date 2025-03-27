@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -46,10 +46,14 @@ class Save extends Rewrite
                 $data[RewriteInterface::DESCRIPTION_POSITION] = RewriteInterface::DESCRIPTION_POSITION_DISABLED;
             }
 
+            if (!isset($data[RewriteInterface::META_ROBOTS])) {
+                $data[RewriteInterface::META_ROBOTS] = '';
+            }
+
             $data = $this->contentService->escapeJS($data);
 
             $model->setUrl($data[RewriteInterface::URL])
-                ->setIsActive($data[RewriteInterface::IS_ACTIVE])
+                ->setIsActive((bool)$data[RewriteInterface::IS_ACTIVE])
                 ->setSortOrder($data[RewriteInterface::SORT_ORDER])
                 ->setTitle($data[RewriteInterface::TITLE])
                 ->setMetaTitle($data[RewriteInterface::META_TITLE])
@@ -58,6 +62,7 @@ class Save extends Rewrite
                 ->setDescription($data[RewriteInterface::DESCRIPTION])
                 ->setDescriptionPosition($data[RewriteInterface::DESCRIPTION_POSITION])
                 ->setDescriptionTemplate($data[RewriteInterface::DESCRIPTION_TEMPLATE])
+                ->setMetaRobots($data[RewriteInterface::META_ROBOTS])
                 ->setStoreIds($data[RewriteInterface::STORE_IDS]);
 
             try {

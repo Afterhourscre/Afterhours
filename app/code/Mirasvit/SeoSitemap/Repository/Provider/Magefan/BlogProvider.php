@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -24,10 +24,21 @@ use Mirasvit\SeoSitemap\Api\Repository\ProviderInterface;
 
 class BlogProvider implements ProviderInterface
 {
+    /**
+     * @var DataHelper
+     */
     private $dataHelper;
 
+    /**
+     * @var ObjectManagerInterface
+     */
     private $objectManager;
 
+    /**
+     * BlogProvider constructor.
+     * @param ObjectManagerInterface $objectManager
+     * @param DataHelper $sitemapData
+     */
     public function __construct(
         ObjectManagerInterface $objectManager,
         DataHelper $sitemapData
@@ -36,21 +47,34 @@ class BlogProvider implements ProviderInterface
         $this->dataHelper    = $sitemapData;
     }
 
+    /**
+     * @return string
+     */
     public function getModuleName()
     {
         return 'Magefan_Blog';
     }
 
+    /**
+     * @return bool
+     */
     public function isApplicable()
     {
         return true;
     }
 
+    /**
+     * @return \Magento\Framework\Phrase|string
+     */
     public function getTitle()
     {
         return __('Blog');
     }
 
+    /**
+     * @param int $storeId
+     * @return array
+     */
     public function initSitemapItem($storeId)
     {
         $result = [];
@@ -64,24 +88,43 @@ class BlogProvider implements ProviderInterface
         return $result;
     }
 
+    /**
+     * @param int $storeId
+     * @return array
+     */
     public function getItems($storeId)
     {
-        /** @var \Magefan\Blog\Model\Sitemap $helper */
-        $helper     = $this->objectManager->get('Magefan\Blog\Model\Sitemap');
+        /** @var \Magefan\Blog\Model\Url $urlHelper */
+        $urlHelper     = $this->objectManager->get('Magefan\Blog\Model\Url');
         $postCollection = \Magento\Framework\App\ObjectManager::getInstance()
                             ->create(\Magefan\Blog\Model\Post::class)
                             ->getCollection($storeId)
                             ->addStoreFilter($storeId)
                             ->addActiveFilter();
-        
+
         $items = [];
 
         foreach ($postCollection as $key => $post) {
             $items[] = new DataObject([
                 'id'         => $post->getId(),
-                'url'        => 'blog/post/' . $post->getIdentifier(),
+                'url'        => $urlHelper->getUrlPath($post->getIdentifier(), 'post'),
                 'title'      => $post->getTitle(),
                 'updated_at' => $post->getUpdatedAt(),
+            ]);
+        }
+
+        $catCollection = \Magento\Framework\App\ObjectManager::getInstance()
+            ->create(\Magefan\Blog\Model\Category::class)
+            ->getCollection($storeId)
+            ->addStoreFilter($storeId)
+            ->addActiveFilter();
+
+        foreach ($catCollection as $key => $cat) {
+            $items[] = new DataObject([
+                'id'         => $cat->getId(),
+                'url'        => $cat->getUrl(),
+                'title'      => $cat->getTitle(),
+                'updated_at' => $cat->getUpdatedAt(),
             ]);
         }
 

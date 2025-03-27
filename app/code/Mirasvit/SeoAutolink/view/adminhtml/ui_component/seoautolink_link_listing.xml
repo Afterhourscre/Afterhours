@@ -16,7 +16,7 @@
             </item>
             <item name="import" xsi:type="array">
                 <item name="name" xsi:type="string">import</item>
-                <item name="label" xsi:type="string" translate="true">Import Links</item>
+                <item name="label" xsi:type="string" translate="true">Import/Export Links</item>
                 <item name="url" xsi:type="string">seoautolink/import/index</item>
             </item>
         </item>
@@ -151,7 +151,7 @@
                         <item name="url" xsi:type="url" path="seoautolink/link/massDelete"/>
                         <item name="confirm" xsi:type="array">
                             <item name="title" xsi:type="string" translate="true">Delete items</item>
-                            <item name="message" xsi:type="string" translate="true">Are you sure you wan't to delete selected items?</item>
+                            <item name="message" xsi:type="string" translate="true">Are you sure you want to delete the selected items?</item>
                         </item>
                     </item>
                 </argument>

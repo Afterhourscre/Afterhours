@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -175,14 +175,17 @@ class Parse extends \Magento\Framework\App\Helper\AbstractHelper
      */
     protected function parseWidget($str)
     {
-        if (preg_match_all(\Magento\Framework\Filter\Template::CONSTRUCTION_PATTERN,
+        if (preg_match_all(
+            \Magento\Framework\Filter\Template::CONSTRUCTION_PATTERN,
             $str,
             $constructions,
-            PREG_SET_ORDER)
+            PREG_SET_ORDER
+        )
         ) {
             $this->constructions = $constructions;
             foreach ($constructions as $key => $construction) {
-                $str = str_replace($construction[0],
+                $str = str_replace(
+                    $construction[0],
                     self::WIDGET_BLOCK_WRAPPER . $key . self::WIDGET_BLOCK_WRAPPER,
                     $str
                 );
@@ -200,7 +203,8 @@ class Parse extends \Magento\Framework\App\Helper\AbstractHelper
     {
         if ($this->constructions) {
             foreach ($this->constructions as $key => $construction) {
-                $str = str_replace(self::WIDGET_BLOCK_WRAPPER . $key . self::WIDGET_BLOCK_WRAPPER,
+                $str = str_replace(
+                    self::WIDGET_BLOCK_WRAPPER . $key . self::WIDGET_BLOCK_WRAPPER,
                     $construction[0],
                     $str
                 );
@@ -212,15 +216,15 @@ class Parse extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * @param string $object
+     * @param \Magento\Framework\DataObject $object
      * @param string $key
      * @param string $dataKey
      * @param string $value
-     * @param string $storeId
+     * @param \Magento\Store\Model\Store|int $storeId
      * @return float|string
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
+     *  @SuppressWarnings(PHPMD.NPathComplexity)
      */
     protected function checkForConvert($object, $key, $dataKey, $value, $storeId)
     {
@@ -263,16 +267,16 @@ class Parse extends \Magento\Framework\App\Helper\AbstractHelper
 
                 switch ($dataKey) {
                     case 'price':
-                        $value = $this->pricingHelper->currency($value, true, false);
+                        $value = $this->pricingHelper->currency((float)$value, true, false);
                         break;
                     case 'special_price':
-                        $value = $this->pricingHelper->currency($value, true, false);
+                        $value = $this->pricingHelper->currency((float)$value, true, false);
                         break;
                 }
             } else {
                 switch ($dataKey) {
                     case 'final_price':
-                        $value = $this->pricingHelper->currency($value, true, false);
+                        $value = $this->pricingHelper->currency((float)$value, true, false);
                         break;
                 }
             }

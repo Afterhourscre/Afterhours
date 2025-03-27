@@ -1,23 +1,23 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Block\Search;
 
 use Amasty\Xsearch\Model\Search\Category\UrlDataProvider;
+use Magento\Framework\DataObject;
 
 class Category extends AbstractSearch
 {
-    const CATEGORY_BLOCK_TYPE = 'category';
+    public const CATEGORY_BLOCK_TYPE = 'category';
 
     /**
      * @var array
      */
-    private $categoryData;
+    private $categoryData = [];
 
     /**
      * @return string
@@ -47,31 +47,35 @@ class Category extends AbstractSearch
     }
 
     /**
-     * @inheritdoc
-     */
-    public function getResults()
-    {
-        $result = parent::getResults();
-        foreach ($this->getSearchCollection() as $index => $item) {
-            $result[$index]['full_path'] = $this->renderFullCategoryPath($item);
-        }
-
-        return $result;
-    }
-
-    /**
      * @param \Magento\Framework\DataObject $item
      * @return string
      */
-    public function getName(\Magento\Framework\DataObject $item)
+    public function getName(\Magento\Framework\DataObject $item): string
     {
-        if ($this->xSearchHelper->getModuleConfig($this->getBlockType() . '/full_path')) {
+        if ($this->configProvider->isDisplayFullCategoryPath()) {
             $result = $this->generateName($this->getItemTitle($item));
         } else {
             $result = parent::getName($item);
         }
 
         return $result;
+    }
+
+    public function formatAccordingToConstraint(string $text): string
+    {
+        if (!$this->configProvider->isDisplayFullCategoryPath()) {
+            $text = parent::formatAccordingToConstraint($text);
+        }
+
+        return $text;
+    }
+
+    public function getItemData(DataObject $item): array
+    {
+        $data = parent::getItemData($item);
+        $data['full_path'] = $this->getItemTitle($item);
+
+        return $data;
     }
 
     /**
@@ -98,50 +102,45 @@ class Category extends AbstractSearch
      */
     private function getCategoryData()
     {
-        if ($this->categoryData === null) {
+        $storeId = $this->_storeManager->getStore()->getId();
+        if (!isset($this->categoryData[$storeId])) {
             /** @var UrlDataProvider  $categoryUrlDataProvider*/
             $categoryUrlDataProvider = $this->getData('categoryUrlDataProvider');
             $categoryData = $categoryUrlDataProvider->getSearchPopupCategoryData();
-            $this->categoryData = array_map(function ($category) {
+            $this->categoryData[$storeId] = array_map(function ($category) {
                 $category['url'] = $this->getRelativeLink($category['full_link']);
 
                 return $category;
             }, $categoryData);
         }
 
-        return $this->categoryData;
+        return $this->categoryData[$storeId];
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function getDescription(\Magento\Framework\DataObject $category)
+    public function getDescription(\Magento\Framework\DataObject $category): string
     {
-        $descStripped = $this->stripTags($category->getDescription(), null, true);
+        if (!$category->getDescription()) {
+            return '';
+        }
+
+        $description = $this->removeStyleContent($category->getDescription());
+        $descStripped = $this->stripTags($description, null, true);
 
         return $this->getHighlightText($descStripped);
     }
 
     /**
-     * @param $item
+     * @param string $content
      * @return string
+     * phpcs:disable Magento2.Functions.DiscouragedFunction
      */
-    private function renderFullCategoryPath($item)
+    private function removeStyleContent(string $content): string
     {
-        $path = array_reverse(explode(',', $item->getPathInStore()));
-        $categoryTitle = '';
-        $data = $this->getCategoryData();
-        foreach ($path as $id) {
-            if (!empty($data[$id])) {
-                $categoryTitle .= sprintf(
-                    '<a href="%1$s" class="am-item-link" title="%2$s">%2$s</a>',
-                    $data[$id]['url'],
-                    $data[$id]['name']
-                );
-            }
-        }
-
-        return $categoryTitle ?: $item->getName();
+        return preg_replace(
+            '|<style[^>]*?>(.*?)</style>|si',
+            '',
+            html_entity_decode($content)
+        );
     }
 
     /**

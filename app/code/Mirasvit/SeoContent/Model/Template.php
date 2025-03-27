@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoContent\Model;
 
@@ -28,9 +29,6 @@ class Template extends Content implements TemplateInterface
      */
     private $rule;
 
-    /**
-     * @var Template\RuleFactory
-     */
     private $ruleFactory;
 
     public function __construct(
@@ -43,90 +41,89 @@ class Template extends Content implements TemplateInterface
         parent::__construct($context, $registry);
     }
 
-    protected function _construct()
+    protected function _construct(): void
     {
         $this->_init(ResourceModel\Template::class);
     }
 
-    public function setRuleType($value)
+    public function setRuleType(int $value): TemplateInterface
     {
         return $this->setData(self::RULE_TYPE, $value);
     }
 
-    public function getRuleType()
+    public function getRuleType(): ?int
     {
-        return $this->getData(self::RULE_TYPE);
+        return $this->getData(self::RULE_TYPE)
+            ? (int)$this->getData(self::RULE_TYPE)
+            : null;
     }
 
-    public function setName($value)
+    public function setName(string $value): TemplateInterface
     {
         return $this->setData(self::NAME, $value);
     }
 
-    public function getName()
+    public function getName(): string
     {
-        return $this->getData(self::NAME);
+        return (string)$this->getData(self::NAME);
     }
 
-    public function setIsActive($value)
+    public function setIsActive(bool $value): TemplateInterface
     {
         return $this->setData(self::IS_ACTIVE, $value);
     }
 
-    public function isActive()
+    public function isActive(): bool
     {
-        return $this->getData(self::IS_ACTIVE);
+        return (bool)$this->getData(self::IS_ACTIVE);
     }
 
-    public function setSortOrder($value)
+    public function setSortOrder(int $value): TemplateInterface
     {
         return $this->setData(self::SORT_ORDER, $value);
     }
 
-    public function getSortOrder()
+    public function getSortOrder(): int
     {
-        return $this->getData(self::SORT_ORDER);
+        return (int)$this->getData(self::SORT_ORDER);
     }
 
-    public function setStopRuleProcessing($value)
+    public function setStopRuleProcessing(bool $value): TemplateInterface
     {
         return $this->setData(self::STOP_RULE_PROCESSING, $value);
     }
 
-    public function isStopRuleProcessing()
+    public function isStopRuleProcessing(): bool
     {
-        return $this->getData(self::STOP_RULE_PROCESSING);
+        return (bool)$this->getData(self::STOP_RULE_PROCESSING);
     }
 
-    public function setApplyForChildCategories($value)
+    public function setApplyForChildCategories(bool $value): TemplateInterface
     {
         return $this->setData(self::APPLY_FOR_CHILD_CATEGORIES, $value);
     }
 
-    public function isApplyForChildCategories()
+    public function isApplyForChildCategories(): bool
     {
-        return $this->getData(self::APPLY_FOR_CHILD_CATEGORIES);
+        return (bool)$this->getData(self::APPLY_FOR_CHILD_CATEGORIES);
     }
 
-    public function setConditionsSerialized($value)
+    public function setConditionsSerialized(string $value): TemplateInterface
     {
         return $this->setData(self::CONDITIONS_SERIALIZED, $value);
     }
 
-    public function setStoreIds(array $value)
+    public function setStoreIds(array $value): TemplateInterface
     {
         return $this->setData(self::STORE_IDS, implode(',', $value));
     }
 
-    public function getStoreIds()
+    public function getStoreIds(): array
     {
         return explode(',', $this->getData(self::STORE_IDS));
     }
 
-    /**
-     * @return Template\Rule
-     */
-    public function getRule()
+    public function getRule(): Template\Rule
     {
         if (!$this->rule) {
             $this->rule = $this->ruleFactory->create()
@@ -137,328 +134,23 @@ class Template extends Content implements TemplateInterface
         return $this->rule;
     }
 
-    public function setApplyForHomepage($value)
+    public function setApplyForHomepage(bool $value): TemplateInterface
     {
         return $this->setData(self::APPLY_FOR_HOMEPAGE, $value);
     }
 
-    public function isApplyForHomepage()
+    public function isApplyForHomepage(): bool
     {
-        return $this->getData(self::APPLY_FOR_HOMEPAGE);
+        return (bool)$this->getData(self::APPLY_FOR_HOMEPAGE);
     }
 
-    //    /**
-    //     * @var int
-    //     */
-    //    protected $productId;
-    //    /**
-    //     * @var int
-    //     */
-    //    protected $categoryId;
-    //
-    //    const CACHE_TAG = 'seo_template';
-    //
-    //    /**
-    //     * @var string
-    //     */
-    //    protected $_cacheTag = 'seo_template';//@codingStandardsIgnoreLine
-    //    /**
-    //     * @var string
-    //     */
-    //    protected $_eventPrefix = 'seo_template';//@codingStandardsIgnoreLine
-    //
-    //    /**
-    //     * Get identities.
-    //     *
-    //     * @return array
-    //     */
-    //    public function getIdentities()
-    //    {
-    //        return [self::CACHE_TAG . '_' . $this->getId()];
-    //    }
-    //
-    //    /**
-    //     * @var \Mirasvit\SeoContent\Model\Template\Rule\Condition\CombineFactory
-    //     */
-    //    protected $templateRuleConditionCombineFactory;
-    //
-    //    /**
-    //     * @var \Mirasvit\SeoContent\Model\Template\Action\CollectionFactory
-    //     */
-    //    protected $ruleActionCollectionFactory;
-    //
-    //    /**
-    //     * @var \Magento\Catalog\Model\ProductFactory
-    //     */
-    //    protected $productFactory;
-    //
-    //    /**
-    //     * @var \Magento\Catalog\Model\CategoryFactory
-    //     */
-    //    protected $categoryFactory;
-    //
-    //    /**
-    //     * @var \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory
-    //     */
-    //    protected $productCollectionFactory;
-    //
-    //    /**
-    //     * @var \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory
-    //     */
-    //    protected $categoryCollectionFactory;
-    //
-    //    /**
-    //     * @var \Mirasvit\SeoContent\Model\ResourceModel\Template\CollectionFactory
-    //     */
-    //    protected $templateCollectionFactory;
-    //
-    //    /**
-    //     * @var \Magento\Framework\Model\ResourceModel\Iterator
-    //     */
-    //    protected $resourceIterator;
-    //
-    //    /**
-    //     * @var \Magento\Framework\Model\Context
-    //     */
-    //    protected $context;
-    //
-    //    /**
-    //     * @var \Magento\Framework\Registry
-    //     */
-    //    protected $registry;
-    //
-    //    /**
-    //     * @var \Magento\Framework\Model\ResourceModel\AbstractResource
-    //     */
-    //    protected $resource;
-    //
-    //    /**
-    //     * @var \Magento\Framework\Data\Collection\AbstractDb
-    //     */
-    //    protected $resourceCollection;
-    //
-    //    /**
-    //     * @SuppressWarnings(PHPMD.ExcessiveParameterList)
-    //     */
-    //    public function __construct(
-    //        \Mirasvit\SeoContent\Model\Template\Rule\Condition\CombineFactory $templateRuleConditionCombineFactory,
-    //        \Mirasvit\SeoContent\Model\Template\Rule\Action\CollectionFactory $ruleActionCollectionFactory,
-    //        \Magento\Catalog\Model\ProductFactory $productFactory,
-    //        \Magento\Catalog\Model\CategoryFactory $categoryFactory,
-    //        \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory,
-    //        \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $categoryCollectionFactory,
-    //        \Mirasvit\SeoContent\Model\ResourceModel\Template\CollectionFactory $templateCollectionFactory,
-    //        \Magento\Framework\Model\ResourceModel\Iterator $resourceIterator,
-    //        \Magento\Framework\Model\Context $context,
-    //        \Magento\Framework\Registry $registry,
-    //        \Magento\Framework\Data\FormFactory $formFactory,
-    //        \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
-    //        \Mirasvit\SeoContent\Model\Image\ImageFileABC $imageFile,
-    //        \Magento\Catalog\Model\ImageUploader $imageUploader,
-    //        \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
-    //        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
-    //        array $data = []
-    //    ) {
-    //        $this->templateRuleConditionCombineFactory = $templateRuleConditionCombineFactory;
-    //        $this->ruleActionCollectionFactory = $ruleActionCollectionFactory;
-    //        $this->productFactory = $productFactory;
-    //        $this->categoryFactory = $categoryFactory;
-    //        $this->productCollectionFactory = $productCollectionFactory;
-    //        $this->categoryCollectionFactory = $categoryCollectionFactory;
-    //        $this->templateCollectionFactory = $templateCollectionFactory;
-    //        $this->resourceIterator = $resourceIterator;
-    //        $this->context = $context;
-    //        $this->registry = $registry;
-    //        $this->resource = $resource;
-    //        $this->resourceCollection = $resourceCollection;
-    //        $this->imageFile = $imageFile;
-    //        $this->imageUploader = $imageUploader;
-    //        parent::__construct($context, $registry, $formFactory, $localeDate, $resource, $resourceCollection, $data);
-    //    }
-    //
-    //    /**
-    //     * @return void
-    //     */
-    //    protected function _construct()
-    //    {
-    //        $this->_init('Mirasvit\SeoContent\Model\ResourceModel\Template');
-    //    }
-    //
-    //    /**
-    //     * @param bool|false $ruleId
-    //     * @return \Mirasvit\SeoContent\Model\Template
-    //     */
-    //    public function getRule($ruleId = false)
-    //    {
-    //        $ruleId = ($ruleId) ? $ruleId : $this->getId();
-    //
-    //        $rule = $this->templateCollectionFactory->create()
-    //            ->addFieldToFilter('template_id', $ruleId)
-    //            ->getFirstItem();
-    //        $rule = $rule->load($rule->getId());
-    //
-    //        return $rule;
-    //    }
-    //
-    //    /**
-    //     * @return \Mirasvit\SeoContent\Model\Template\Rule\Condition\Combine
-    //     */
-    //    public function getConditionsInstance()
-    //    {
-    //        return $this->templateRuleConditionCombineFactory->create();
-    //    }
-    //
-    //    /**
-    //     * @return Template\Rule\Action\Collection
-    //     */
-    //    public function getActionsInstance()
-    //    {
-    //        return $this->ruleActionCollectionFactory->create();
-    //    }
-    //
-    //    /**
-    //     * @param string|array $productId
-    //     * @return bool
-    //     */
-    //    public function isProductApplied($productId)
-    //    {
-    //        $isArray = is_array($productId) ? true : false;
-    //        if ($this->productId === null) {
-    //            $this->setCollectedAttributes([]);
-    //            $condition = ($isArray) ? ['in' => $productId] : $productId;
-    //            $productCollection = $this->productCollectionFactory->create()->addFieldToFilter('entity_id', $condition);
-    //            $this->getConditions()->collectValidatedAttributes($productCollection);
-    //
-    //            $this->resourceIterator->walk(
-    //                $productCollection->getSelect(),
-    //                [[$this, 'callbackValidateProduct']],
-    //                [
-    //                    'attributes' => $this->getCollectedAttributes(),
-    //                    'product'    => $this->productFactory->create(),
-    //                ]
-    //            );
-    //        }
-    //
-    //        if ($this->productId && $isArray) {
-    //            return $this->productId;
-    //        } elseif ($this->productId) {
-    //            return true;
-    //        }
-    //
-    //        return false;
-    //    }
-    //
-    //    /**
-    //     * @param string $args
-    //     *
-    //     * @return void
-    //     */
-    //    public function callbackValidateProduct($args)
-    //    {
-    //        $product = clone $args['product'];
-    //        $product->setData($args['row']);
-    //        if ($this->getConditions()->validate($product)) {
-    //            $this->productId[] = $product->getId();
-    //        }
-    //    }
-    //
-    //    /**
-    //     * @param string $categoryId
-    //     * @return bool
-    //     */
-    //    public function isCategoryApplied($categoryId)
-    //    {
-    //        if ($this->categoryId === null) {
-    //            $this->categoryId = [];
-    //            $this->setCollectedAttributes([]);
-    //            $categoryCollection = $this->categoryCollectionFactory->create()->addFieldToFilter(
-    //                'entity_id',
-    //                $categoryId
-    //            );
-    //            $this->getConditions()->collectValidatedAttributes($categoryCollection);
-    //
-    //            $this->resourceIterator->walk(
-    //                $categoryCollection->getSelect(),
-    //                [[$this, 'callbackValidateCategory']],
-    //                [
-    //                    'attributes' => $this->getCollectedAttributes(),
-    //                    'category'   => $this->categoryFactory->create(),
-    //                ]
-    //            );
-    //        }
-    //
-    //        if ($this->categoryId) {
-    //            return true;
-    //        }
-    //
-    //        return false;
-    //    }
-    //
-    //    /**
-    //     * @param string $args
-    //     *
-    //     * @return void
-    //     */
-    //    public function callbackValidateCategory($args)
-    //    {
-    //        $category = clone $args['category'];
-    //        $category->setData($args['row']);
-    //        if ($this->getConditions()->validate($category)) {
-    //            $this->categoryId[] = $category->getId();
-    //        }
-    //    }
-    //
-    //    /**
-    //     * Retrieve rule combine conditions model
-    //     *
-    //     * @return \Magento\Rule\Model\Condition\Combine
-    //     */
-    //    public function getConditions()
-    //    {
-    //        if (empty($this->_conditions)) {
-    //            $this->_resetConditions();
-    //        }
-    //
-    //        // Load rule conditions if it is applicable
-    //        if ($this->hasConditionsSerialized()) {
-    //            $conditions = $this->getConditionsSerialized();
-    //            if (!empty($conditions)) {
-    //                $decode = json_decode($conditions);
-    //                if ($decode) { //M2.2 compatibility
-    //                    $conditions = $this->serializer->unserialize($conditions);
-    //                } else {
-    //                    $conditions = unserialize($conditions);
-    //                }
-    //                if (is_array($conditions) && !empty($conditions)) {
-    //                    $this->_conditions->loadArray($conditions);
-    //                }
-    //            }
-    //            $this->unsConditionsSerialized();
-    //        }
-    //
-    //        return $this->_conditions;
-    //    }
-    //
-    //    /**
-    //     * {@inheritdoc}
-    //     */
-    //    public function afterSave()
-    //    {
-    //        $categoryImage = $this->getData('category_image');
-    //        $this->moveFileFromTmp($categoryImage);
-    //
-    //        return parent::afterSave();
-    //    }
-    //
-    //    /**
-    //     * @param string $image
-    //     * @return void
-    //     */
-    //    private function moveFileFromTmp($categoryImage)
-    //    {
-    //        if ($categoryImage
-    //            && !$this->imageFile->isExist($categoryImage)) {
-    //            $this->imageUploader->moveFileFromTmp($categoryImage);
-    //        }
-    //    }
+    public function setApplyForAllBrandsPage(bool $value): TemplateInterface
+    {
+        return $this->setData(self::APPLY_FOR_ALL_BRANDS_PAGE, $value);
+    }
+
+    public function isApplyForAllBrandsPage(): bool
+    {
+        return (bool)$this->getData(self::APPLY_FOR_ALL_BRANDS_PAGE);
+    }
 }

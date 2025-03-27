@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -23,34 +23,68 @@ use Mirasvit\SeoSitemap\Api\Repository\ProviderInterface;
 
 class BlogProvider implements ProviderInterface
 {
+    /**
+     * @var ObjectManagerInterface
+     */
     private $objectManager;
 
+    private $itemsProvider = '';
+
+    /**
+     * BlogProvider constructor.
+     * @param ObjectManagerInterface $objectManager
+     */
     public function __construct(
         ObjectManagerInterface $objectManager
     ) {
         $this->objectManager = $objectManager;
     }
 
+    /**
+     * @return string
+     */
     public function getModuleName()
     {
         return 'Aheadworks_Blog';
     }
 
+    /**
+     * @return bool
+     */
     public function isApplicable()
     {
-        return class_exists('Aheadworks\Blog\Model\Sitemap\ItemsProvider');
+        if (class_exists('Aheadworks\Blog\Model\Sitemap\ItemsProvider')) {
+            $this->itemsProvider = 'Aheadworks\Blog\Model\Sitemap\ItemsProvider';
+        } elseif (class_exists('Aheadworks\Blog\Model\Sitemap\ItemsProviderComposite')) {
+            $this->itemsProvider = 'Aheadworks\Blog\Model\Sitemap\ItemsProviderComposite';
+        }
+
+        return !!$this->itemsProvider;
     }
 
+    /**
+     * @return \Magento\Framework\Phrase|string
+     */
     public function getTitle()
     {
         return __('Blog');
     }
 
+    /**
+     * @param int $storeId
+     * @return array
+     */
     public function initSitemapItem($storeId)
     {
         $result = [];
 
-        $sitemapHelper = $this->objectManager->get('Aheadworks\Blog\Model\Sitemap\ItemsProvider');
+        if (strpos($this->itemsProvider, 'ItemsProviderComposite') !== false) {
+            $sitemapHelper = $this->objectManager->get($this->itemsProvider);
+
+            return $sitemapHelper->getItems($storeId);
+        }
+
+        $sitemapHelper = $this->objectManager->get($this->itemsProvider);
 
         $result[] = $sitemapHelper->getBlogItem($storeId);
         $result[] = $sitemapHelper->getCategoryItems($storeId);
@@ -59,45 +93,50 @@ class BlogProvider implements ProviderInterface
         return $result;
     }
 
+    /**
+     * @param int $storeId
+     * @return array
+     */
     public function getItems($storeId)
     {
-        $sitemapHelper             = $this->objectManager->create('Aheadworks\Blog\Helper\Sitemap');
-        $urlHelper                 = $this->objectManager->create('Aheadworks\Blog\Helper\Url');
+        $configProvider            = $this->objectManager->create('Aheadworks\Blog\Model\Config');
+        $urlBuilder                = $this->objectManager->create('Magento\Framework\UrlInterface');
+        $urlHelper                 = $this->objectManager->create('Aheadworks\Blog\Model\Url');
         $categoryCollectionFactory = $this->objectManager->create('Aheadworks\Blog\Model\ResourceModel\Category\CollectionFactory');
         $postCollectionFactory     = $this->objectManager->create('Aheadworks\Blog\Model\ResourceModel\Post\CollectionFactory');
 
         $items = [];
-        $home  = $sitemapHelper->getBlogItem($storeId)->getCollection();
+        $home  = $configProvider->getRouteToBlog($storeId);
 
-        if (isset($home[0]) && is_object($home[0])) {
+        if (!empty($home)) {
             $items['home'] = new DataObject([
-                'name' => 'Blog Home',
-                'url'  => $home[0]->getUrl(),
+                'title' => 'Blog Home',
+                'url'  => $urlBuilder->getUrl($home),
             ]);
         }
 
         $categoryCollection = $categoryCollectionFactory->create()
-            ->addEnabledFilter()
+            ->addFieldToFilter('status', ['eq' => '1'])
             ->addStoreFilter($storeId);
-        foreach ($categoryCollection as $category) {
+
+        foreach ($categoryCollection->getItems() as $category) {
             $items['cat' . $category->getId()] = new DataObject([
-                'name' => $category->getName(),
-                'url'  => $urlHelper->getCategoryRoute($category),
+                'title' => $category->getName(),
+                'url'  => $urlBuilder->getUrl($urlHelper->getCategoryRoute($category)),
             ]);
         }
 
         $postCollection = $postCollectionFactory->create()
-            ->addPublishedFilter()
+            ->addFieldToFilter('status', ['eq' => 'publication'])
             ->addStoreFilter($storeId);
 
-        foreach ($postCollection as $post) {
+        foreach ($postCollection->getItems() as $post) {
             $items['post' . $post->getId()] = new DataObject([
-                'name' => $post->getTitle(),
-                'url'  => $urlHelper->getPostRoute($post),
+                'title' => $post->getTitle(),
+                'url'  => $urlBuilder->getUrl($urlHelper->getPostRoute($post)),
             ]);
         }
 
         return $items;
-
     }
 }

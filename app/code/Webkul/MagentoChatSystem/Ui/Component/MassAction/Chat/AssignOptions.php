@@ -2,7 +2,7 @@
  
 namespace Webkul\MagentoChatSystem\Ui\Component\MassAction\Chat;
 
- /**
+/**
  * Webkul Software
  *
  * @category Webkul
@@ -12,9 +12,9 @@ namespace Webkul\MagentoChatSystem\Ui\Component\MassAction\Chat;
  * @license https://store.webkul.com/license.html
  */
 use Magento\Framework\UrlInterface;
-use Zend\Stdlib\JsonSerializable;
+use Laminas\Stdlib\JsonSerializable; // Updated to Laminas
 use Webkul\MagentoChatSystem\Model\ResourceModel\AgentData\CollectionFactory;
- 
+
 /**
  * Class AssignOptions
  */
@@ -24,45 +24,45 @@ class AssignOptions implements JsonSerializable
      * @var array
      */
     protected $options;
- 
+
     /**
      * @var CollectionFactory
      */
     protected $collectionFactory;
- 
+
     /**
      * Additional options params
      *
      * @var array
      */
     protected $data;
- 
+
     /**
      * @var UrlInterface
      */
     protected $urlBuilder;
- 
+
     /**
      * Base URL for subactions
      *
      * @var string
      */
     protected $urlPath;
- 
+
     /**
      * Param name for subactions
      *
      * @var string
      */
     protected $paramName;
- 
+
     /**
      * Additional params for subactions
      *
      * @var array
      */
     protected $additionalData = [];
- 
+
     /**
      * Constructor
      *
@@ -79,26 +79,26 @@ class AssignOptions implements JsonSerializable
         $this->data = $data;
         $this->urlBuilder = $urlBuilder;
     }
- 
+
     /**
      * Get action options
      *
      * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
-        $counter=0;
+        $counter = 0;
         if ($this->options === null) {
             // get the massaction data from the database table
             $agents = $this->collectionFactory->create();
-             
+
             if (!$agents->getSize()) {
                 return $this->options;
             }
-            //make a array of massaction
+            // make an array of massaction
             foreach ($agents as $agent) {
-                $options[$counter]['value']=$agent->getEntityId();
-                $options[$counter]['label']=$agent->getAgentName();
+                $options[$counter]['value'] = $agent->getEntityId();
+                $options[$counter]['label'] = $agent->getAgentName();
                 $counter++;
             }
             $this->prepareData();
@@ -107,34 +107,33 @@ class AssignOptions implements JsonSerializable
                     'type' => 'agent_' . $optionCode['value'],
                     'label' => $optionCode['label'],
                 ];
- 
+
                 if ($this->urlPath && $this->paramName) {
                     $this->options[$optionCode['value']]['url'] = $this->urlBuilder->getUrl(
                         $this->urlPath,
                         [$this->paramName => $optionCode['value']]
                     );
                 }
- 
+
                 $this->options[$optionCode['value']] = array_merge_recursive(
                     $this->options[$optionCode['value']],
                     $this->additionalData
                 );
             }
-             
+
             // return the massaction data
             $this->options = array_values($this->options);
         }
         return $this->options;
     }
- 
+
     /**
-     * Prepare addition data for subactions
+     * Prepare additional data for subactions
      *
      * @return void
      */
     protected function prepareData()
     {
-          
         foreach ($this->data as $key => $value) {
             switch ($key) {
                 case 'urlPath':

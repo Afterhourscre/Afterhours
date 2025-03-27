@@ -3,6 +3,7 @@
  * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
 namespace MageWorx\OptionFeatures\Model\Product\Option\Value;
 
 use Magento\Framework\App\RequestInterface as Request;
@@ -12,83 +13,56 @@ use Magento\Framework\App\State;
 use Zend\Stdlib\StringWrapper\MbString;
 use Magento\Catalog\Model\Product\Option;
 use Magento\Framework\Pricing\Helper\Data as PricingHelper;
+use MageWorx\OptionBase\Helper\Data as BaseHelper;
+use MageWorx\OptionBase\Helper\System as SystemHelper;
+use MageWorx\OptionBase\Model\HiddenDependents as HiddenDependentsStorage;
 
 class AdditionalHtml
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var Request
-     */
-    protected $request;
-
-    /**
-     * @var Cart
-     */
-    protected $cart;
-
-    /**
-     * @var State
-     */
-    protected $state;
-
-    /**
-     * @var MbString
-     */
-    protected $mbString;
-
-    /**
-     * @var \Magento\Backend\Model\Session\Quote
-     */
-    protected $backendQuoteSession;
-
-    /**
-     * @var PricingHelper
-     */
-    protected $pricingHelper;
-
-    /**
-     * @var Option
-     */
-    protected $option;
-
-    /**
-     * @var array
-     */
-    protected $optionsQty;
-
-    /**
-     * @var \DOMDocument
-     */
-    protected $dom;
+    protected Helper $helper;
+    protected Request $request;
+    protected Cart $cart;
+    protected State $state;
+    protected \Magento\Backend\Model\Session\Quote $backendQuoteSession;
+    protected PricingHelper $pricingHelper;
+    protected Option $option;
+    protected array $optionsQty;
+    protected \DOMDocument $dom;
+    protected BaseHelper $baseHelper;
+    protected SystemHelper $systemHelper;
+    protected HiddenDependentsStorage $hiddenDependentsStorage;
+    protected array $hiddenDependents = [];
 
     /**
      * @param Request $request
      * @param Helper $helper
      * @param State $state
      * @param Cart $cart
-     * @param MbString $mbString
      * @param PricingHelper $pricingHelper
+     * @param BaseHelper $baseHelper
+     * @param SystemHelper $systemHelper
+     * @param HiddenDependentsStorage $hiddenDependentsStorage
      */
     public function __construct(
         Request $request,
         Cart $cart,
         State $state,
         Helper $helper,
-        MbString $mbString,
         \Magento\Backend\Model\Session\Quote $backendQuoteSession,
-        PricingHelper $pricingHelper
+        PricingHelper $pricingHelper,
+        BaseHelper $baseHelper,
+        SystemHelper $systemHelper,
+        HiddenDependentsStorage $hiddenDependentsStorage
     ) {
-        $this->request = $request;
-        $this->cart = $cart;
-        $this->state = $state;
-        $this->helper = $helper;
-        $this->mbString = $mbString;
-        $this->backendQuoteSession = $backendQuoteSession;
-        $this->pricingHelper = $pricingHelper;
+        $this->request                 = $request;
+        $this->cart                    = $cart;
+        $this->state                   = $state;
+        $this->helper                  = $helper;
+        $this->backendQuoteSession     = $backendQuoteSession;
+        $this->pricingHelper           = $pricingHelper;
+        $this->baseHelper              = $baseHelper;
+        $this->systemHelper            = $systemHelper;
+        $this->hiddenDependentsStorage = $hiddenDependentsStorage;
     }
 
     /**
@@ -98,12 +72,18 @@ class AdditionalHtml
      */
     public function getAdditionalHtml($dom, $option)
     {
-        if (!$this->helper->isQtyInputEnabled() || !$dom || !$option) {
+        if (!$dom || !$option) {
+            return;
+        }
+        $this->dom    = $dom;
+        $this->option = $option;
+
+        $this->preselectIsDefaults();
+
+        if (!$this->helper->isQtyInputEnabled()) {
             return;
         }
 
-        $this->dom = $dom;
-        $this->option = $option;
         $this->optionsQty = $this->getQuoteItemOptionsQty();
 
         $body = $this->dom->documentElement->firstChild;
@@ -130,25 +110,101 @@ class AdditionalHtml
     }
 
     /**
-     * @param \DOMElement $node
-     * @return string
+     * Preselect isDefaults or previously selected values, which are stored in quote items
      */
-    protected function getInnerHtml(\DOMElement $node)
+    protected function preselectIsDefaults()
+    {
+        if (empty($this->option->getProduct())
+            || $this->systemHelper->isConfigureQuoteItemsAction()
+            || $this->systemHelper->isCheckoutCartConfigureAction()
+        ) {
+            return;
+        }
+
+        if ($this->systemHelper->isShareableLink()) {
+            $hiddenDependents = $this->hiddenDependentsStorage->getQuoteItemsHiddenDependents();
+        } else {
+            $hiddenDependentsJson = $this->option->getProduct()->getHiddenDependents();
+            try {
+                $hiddenDependents = $this->baseHelper->jsonDecode($hiddenDependentsJson);
+            } catch (\Exception $exception) {
+                return;
+            }
+        }
+
+        if (empty($hiddenDependents)
+            || !is_array($hiddenDependents)
+            || empty($hiddenDependents['preselected_values'])
+            || !is_array($hiddenDependents['preselected_values'])
+        ) {
+            return;
+        }
+
+        $this->hiddenDependents = $hiddenDependents;
+
+        $xpath = new \DOMXPath($this->dom);
+
+        $hasHiddenValue = (!empty($hiddenDependents)
+            && is_array($hiddenDependents)
+            && !empty($hiddenDependents['hidden_values'])
+            && is_array($hiddenDependents['hidden_values'])
+        );
+
+        $count = 1;
+        foreach ($this->option->getValues() as $value) {
+            $count++;
+
+            if (empty($hiddenDependents['preselected_values'][$value->getOptionId()])
+                || !in_array(
+                    $value->getOptionTypeId(),
+                    array_values($hiddenDependents['preselected_values'][$value->getOptionId()])
+                )
+            ) {
+                continue;
+            }
+
+            if ($hasHiddenValue
+                && (in_array($value->getOptionTypeId(), $hiddenDependents['hidden_values'])
+                    || in_array($this->option->getOptionId(), $hiddenDependents['hidden_options']))
+            ) {
+                continue;
+            }
+
+            if ($this->baseHelper->isCheckbox($this->option) || $this->baseHelper->isRadio($this->option)) {
+                $input =
+                    $xpath->query(
+                        '//div/div[descendant::label[@for="options_' . $this->option->getOptionId(
+                        ) . '_' . $count . '"]]//input'
+                    )->item(0);
+                if ($input) {
+                    $input->setAttribute('checked', 'checked');
+                }
+            } elseif ($this->baseHelper->isDropdown($this->option) || $this->baseHelper->isMultiselect($this->option)) {
+                $select =
+                    $xpath->query('//option[@value="' . $value->getOptionTypeId() . '"]')->item(0);
+                if ($select) {
+                    $select->setAttribute('selected', '');
+                }
+            }
+        }
+    }
+
+    protected function getInnerHtml(\DOMElement $node): string
     {
         $innerHTML = '';
-        $children = $node->childNodes;
+        $children  = $node->childNodes;
         foreach ($children as $child) {
             $innerHTML .= $child->ownerDocument->saveXML($child);
         }
 
-        return $innerHTML;
+        return (string)$innerHTML;
     }
 
     /**
      * @param int $optionValue
      * @return string
      */
-    protected function getOptionQty($optionValue)
+    protected function getOptionQty($optionValue): string
     {
         $qty = 0;
         if (isset($this->optionsQty[$this->option->getOptionId()])) {
@@ -160,7 +216,7 @@ class AdditionalHtml
                 }
             }
         }
-        return $qty;
+        return (string)$qty;
     }
 
     /**
@@ -202,12 +258,26 @@ class AdditionalHtml
             $count++;
             $optionValueQty = $this->getOptionQty($value->getOptionTypeId());
             $optionQtyLabel = $this->getDefaultQtyLabel($this->option->getProduct()->getStoreId());
-            $qtyInput = '<div class="label-qty" style="display: inline-block; padding: 5px; margin-left: 3em">' .
-                '<b>' . mb_convert_encoding($optionQtyLabel, 'HTML-ENTITIES', 'UTF-8') . '</b>' .
+            $qtyInput       = '<div class="label-qty" style="display: inline-block; padding: 5px; margin-left: 3em">' .
+                '<b>' . $this->baseHelper->getConvertEncoding($optionQtyLabel) . '</b>' .
                 '<input name="options_qty[' . $this->option->getId() . '][' . $value->getOptionTypeId() . ']"' .
                 ' id="options_' . $this->option->getId() . '_' . $value->getOptionTypeId() . '_qty"' .
-                ' class="qty mageworx-option-qty" type="number" value="' . $optionValueQty . '" min="0" disabled' .
-                ' style="width: 3em; text-align: center; vertical-align: middle;"' .
+                ' class="qty mageworx-option-qty" type="number" ';
+
+
+            if (empty($this->hiddenDependents['preselected_values'][$value->getOptionId()])
+                || !in_array(
+                    $value->getOptionTypeId(),
+                    array_values($this->hiddenDependents['preselected_values'][$value->getOptionId()])
+                )
+            ) {
+                $qtyInput .= 'value="' . $optionValueQty . '" disabled';
+            } else {
+                $qty      = $optionValueQty ?: '1';
+                $qtyInput .= 'value="' . $qty . '"';
+            }
+
+            $qtyInput .= ' min="0" style="width: 3em; text-align: center; vertical-align: middle;"' .
                 ' data-parent-selector="options[' . $this->option->getId() . '][' . $value->getOptionTypeId() . ']"' .
                 ' /></div>';
 
@@ -230,16 +300,25 @@ class AdditionalHtml
      */
     protected function getHtmlForSingleSelectionOption()
     {
-        $optionQty = $this->getOptionQty($this->option->getId());
+        $optionQty      = $this->getOptionQty($this->option->getId());
         $optionQtyLabel = $this->getDefaultQtyLabel($this->option->getProduct()->getStoreId());
-        return '<div class="label-qty" style="display: inline-block; padding: 5px;">'
-            . '<b>' . mb_convert_encoding($optionQtyLabel, 'HTML-ENTITIES', 'UTF-8') . '</b>'
+        $qtyInput = '<div class="label-qty" style="display: inline-block; padding: 5px;">'
+            . '<b>' . $this->baseHelper->getConvertEncoding($optionQtyLabel) . '</b>'
             . '<input name="options_qty[' . $this->option->getId() . ']"'
-            . ' id="options_' . $this->option->getId() . '_qty"'
-            . ' class="qty mageworx-option-qty" type="number" value="' . $optionQty . '" min="0" disabled'
-            . ' style="width: 3em; text-align: center; vertical-align: middle;"'
+            . ' id="options_' . $this->option->getId() . '_qty"' .
+            ' class="qty mageworx-option-qty" type="number" ';
+
+        if (empty($this->hiddenDependents['preselected_values'][$this->option->getId()])) {
+            $qtyInput .= 'value="' . $optionQty . '" disabled';
+        } else {
+            $qty      = $optionQty ?: '1';
+            $qtyInput .= 'value="' . $qty . '"';
+        }
+
+        $qtyInput .= ' min="0" style="width: 3em; text-align: center; vertical-align: middle;"'
             . ' data-parent-selector="options[' . $this->option->getId() . ']" />' . '</div>';
 
+        return (string)$qtyInput;
     }
 
     /**
@@ -261,7 +340,7 @@ class AdditionalHtml
      * @param int $storeId
      * @return string
      */
-    protected function getDefaultQtyLabel($storeId)
+    protected function getDefaultQtyLabel($storeId): string
     {
         return htmlspecialchars($this->helper->getDefaultQtyLabel($storeId));
     }

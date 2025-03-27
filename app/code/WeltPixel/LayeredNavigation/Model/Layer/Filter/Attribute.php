@@ -101,7 +101,7 @@ class Attribute extends AbstractFilter
         $this->_wpAttributeOptions = $attributeOptions;
     }
 
-    /**
+     /**
      * @inheritdoc
      */
     public function apply(\Magento\Framework\App\RequestInterface $request)
@@ -114,7 +114,6 @@ class Attribute extends AbstractFilter
 
         if (empty($attributeValue)) {
             $this->_isFilter = false;
-
             return $this;
         }
         $this->_requestParamVal = $this->_requestVar;
@@ -133,7 +132,8 @@ class Attribute extends AbstractFilter
         /** @var \Magento\CatalogSearch\Model\ResourceModel\Fulltext\Collection $productCollection */
         $productCollection = $this->getLayer()->getProductCollection();
         if(!$this->_originalCollection) {
-            $this->_originalCollection = $productCollection->getCollectionClone();
+            $this->_originalCollection = clone $productCollection;
+            $this->_originalCollection->clear();
         }
         if (count($attributeValue) > 1) {
             if ($this->_moduleHelper->isElasticSearchEngine()) {
@@ -177,13 +177,13 @@ class Attribute extends AbstractFilter
         /** @var \WeltPixel\LayeredNavigation\Model\ResourceModel\Fulltext\Collection $productCollection */
         $productCollection = $this->getLayer()->getProductCollection();
 
-        if ($this->_isFilter && ( $this->_layerFilter->isMainFilter($this) || $wpLnAttributeOptions->getIsMultiselect())) {
-            $productCollection = $productCollection->getCollectionClone()
-                ->removeAttributeSearch($attribute->getAttributeCode());
+        if ($this->_isFilter && ($this->_layerFilter->isMainFilter($this) || $wpLnAttributeOptions->getIsMultiselect())) {
+            $productCollection = clone $productCollection;
+            $productCollection->clear();
+            $productCollection->removeAttributeSearch($attribute->getAttributeCode());
         }
 
         $optionsFacetedData = $productCollection->getFacetedData($attribute->getAttributeCode());
-
 
         if (count($optionsFacetedData) === 0
             && $this->getAttributeIsFilterable($attribute) !== static::ATTRIBUTE_OPTIONS_ONLY_WITH_RESULTS
@@ -227,7 +227,6 @@ class Attribute extends AbstractFilter
                 'count' => $count
             ];
         }
-
 
         if ($checkCount) {
             if ($wpLnAttributeOptions->getSortBy() == 2) {

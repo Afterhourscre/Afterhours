@@ -10,49 +10,48 @@ namespace WeltPixel\GoogleTagManager\lib\Google;
 class Collection extends \WeltPixel\GoogleTagManager\lib\Google\Client  implements \Iterator, \Countable
 {
   protected $collection_key = 'items';
-
-  public function rewind()
-  {
-    if (isset($this->modelData[$this->collection_key])
-        && is_array($this->modelData[$this->collection_key])) {
-      reset($this->modelData[$this->collection_key]);
+    public function rewind(): void // Ensure return type matches 'void'
+    {
+        if (isset($this->modelData[$this->collection_key]) && is_array($this->modelData[$this->collection_key])) {
+            reset($this->modelData[$this->collection_key]);
+        }
     }
-  }
 
-  public function current()
-  {
-    $this->coerceType($this->key());
-    if (is_array($this->modelData[$this->collection_key])) {
-      return current($this->modelData[$this->collection_key]);
+    public function current(): mixed // Ensure return type matches 'mixed'
+    {
+        $this->coerceType($this->key());
+        if (is_array($this->modelData[$this->collection_key])) {
+            return current($this->modelData[$this->collection_key]);
+        }
+        return null; // Add a default return if necessary
     }
-  }
 
-  public function key()
-  {
-    if (isset($this->modelData[$this->collection_key])
-        && is_array($this->modelData[$this->collection_key])) {
-      return key($this->modelData[$this->collection_key]);
+   public function key(): mixed // Ensure return type matches 'mixed'
+    {
+        if (isset($this->modelData[$this->collection_key]) && is_array($this->modelData[$this->collection_key])) {
+            return key($this->modelData[$this->collection_key]);
+        }
+        return null; // Add a default return if necessary
     }
-  }
 
-  public function next()
-  {
-    return next($this->modelData[$this->collection_key]);
-  }
-
-  public function valid()
-  {
-    $key = $this->key();
-    return $key !== null && $key !== false;
-  }
-
-  public function count()
-  {
-    if (!isset($this->modelData[$this->collection_key])) {
-      return 0;
+  public function next(): void // Ensure return type matches 'void'
+    {
+        next($this->modelData[$this->collection_key]);
     }
-    return count($this->modelData[$this->collection_key]);
-  }
+
+    public function valid(): bool // Ensure return type matches 'bool'
+    {
+        $key = $this->key();
+        return $key !== null && $key !== false;
+    }
+
+    public function count(): int // Ensure return type matches 'int'
+    {
+        if (!isset($this->modelData[$this->collection_key])) {
+            return 0;
+        }
+        return count($this->modelData[$this->collection_key]);
+    }
 
   public function offsetExists($offset)
   {

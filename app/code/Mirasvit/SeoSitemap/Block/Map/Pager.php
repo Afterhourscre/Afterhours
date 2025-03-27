@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -20,12 +20,13 @@ namespace Mirasvit\SeoSitemap\Block\Map;
 class Pager extends \Magento\Theme\Block\Html\Pager
 {
     /**
-     * @param \Magento\Framework\Data\Collection $collection
-     * @return void
+     * @param object $collection
+     *
+     * @return Pager|void
      */
     public function setCollection($collection)
     {
-        if ((int) $this->getLimit()) {
+        if ((int)$this->getLimit()) {
             $collection->setPageSize($this->getLimit());
         }
         parent::setCollection($collection);

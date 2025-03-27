@@ -34,7 +34,14 @@ class SearchAutoComplete extends \Magento\Framework\View\Element\Template
      */
     public function getItemsCollection()
     {
-        return $this->_dataProvider->getItems();
+        $itemsCollection = $this->_dataProvider->getItems();
+        foreach ($itemsCollection as $id => $item) {
+            if (!isset($item['id'])) {
+                unset($itemsCollection[$id]);
+            }
+        }
+
+        return $itemsCollection;
     }
 
     public function getCategoryCollection()

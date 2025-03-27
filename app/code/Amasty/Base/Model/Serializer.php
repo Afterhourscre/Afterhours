@@ -10,7 +10,7 @@ namespace Amasty\Base\Model;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Framework\Unserialize\Unserialize;
-use Zend\Serializer\Adapter\PhpSerialize;
+use Laminas\Serializer\Adapter\PhpSerialize;
 
 /**
  * Wrapper for Serialize

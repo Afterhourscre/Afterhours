@@ -6,9 +6,12 @@
 
 namespace MageWorx\OptionVisibility\Model\Attribute\Option;
 
+use Magento\Framework\DataObjectFactory;
 use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\Serialize\Serializer\Json as Serializer;
 use MageWorx\OptionVisibility\Helper\Data as Helper;
 use MageWorx\OptionBase\Helper\System as SystemHelper;
+use MageWorx\OptionBase\Helper\Data as BaseHelper;
 use MageWorx\OptionVisibility\Model\OptionStoreView as StoreViewModel;
 use MageWorx\OptionBase\Model\Product\Option\AbstractAttribute;
 
@@ -16,47 +19,38 @@ class AllStoreViews extends AbstractAttribute
 {
     const KEY_ALL_STORE_VIEW = 'is_all_websites';
 
+    protected Helper $helper;
+    protected SystemHelper $systemHelper;
     /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var SystemHelper
-     */
-    protected $systemHelper;
-
-    /**
-     * @var ResourceConnection
-     */
-    protected $resource;
-
-    /**
-     * @var mixed
+     * @var \MageWorx\OptionBase\Model\Entity\Group|\MageWorx\OptionBase\Model\Entity\Product
      */
     protected $entity;
-
-    /**
-     * @var StoreViewModel
-     */
-    protected $storeViewModel;
+    protected StoreViewModel $storeViewModel;
+    protected Serializer $serializer;
 
     /**
      * @param ResourceConnection $resource
      * @param Helper $helper
      * @param SystemHelper $systemHelper
+     * @param BaseHelper $baseHelper
      * @param StoreViewModel $storeViewModel
+     * @param DataObjectFactory $dataObjectFactory
+     * @param Serializer $serializer
      */
     public function __construct(
         ResourceConnection $resource,
         Helper $helper,
         StoreViewModel $storeViewModel,
-        SystemHelper $systemHelper
+        BaseHelper $baseHelper,
+        DataObjectFactory $dataObjectFactory,
+        SystemHelper $systemHelper,
+        Serializer $serializer
     ) {
         $this->helper         = $helper;
         $this->systemHelper   = $systemHelper;
         $this->storeViewModel = $storeViewModel;
-        parent::__construct($resource);
+        $this->serializer     = $serializer;
+        parent::__construct($resource, $baseHelper, $dataObjectFactory);
     }
 
     /**
@@ -130,7 +124,7 @@ class AllStoreViews extends AbstractAttribute
      * @param \Magento\Catalog\Model\Product\Option|\Magento\Catalog\Model\Product\Option\Value|array $data
      * @return string
      */
-    public function prepareDataBeforeSave($data)
+    public function prepareDataBeforeSave($data): string
     {
         if (is_object($data)) {
             $jsonCustomerStoreView = $data->getData('store_view');
@@ -140,7 +134,7 @@ class AllStoreViews extends AbstractAttribute
             return '';
         }
 
-        $decodedJsonData = json_decode($jsonCustomerStoreView, true);
+        $decodedJsonData = $jsonCustomerStoreView ? $this->serializer->unserialize($jsonCustomerStoreView) : null;
 
         if (empty($decodedJsonData) || !is_array($decodedJsonData)) {
             return '1';

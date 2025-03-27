@@ -9,18 +9,18 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
 
 namespace Mirasvit\SeoContent\Plugin\Frontend\Framework\App\Action;
 
+use Magento\Framework\App\Request\Http as HttpRequest;
 use Magento\Framework\View\LayoutInterface;
 use Magento\Framework\View\Page\Config as PageConfig;
 use Mirasvit\SeoContent\Service\ContentService;
-use Mirasvit\SeoContent\Service\StateService;
 
 class ApplyMetaPlugin
 {
@@ -30,7 +30,10 @@ class ApplyMetaPlugin
 
     private $layout;
 
+    private $request;
+
     public function __construct(
+        HttpRequest $request,
         ContentService $contentService,
         PageConfig $pageConfig,
         LayoutInterface $layout
@@ -38,6 +41,7 @@ class ApplyMetaPlugin
         $this->contentService = $contentService;
         $this->pageConfig     = $pageConfig;
         $this->layout         = $layout;
+        $this->request        = $request;
     }
 
     /**
@@ -48,10 +52,9 @@ class ApplyMetaPlugin
      */
     public function afterDispatch($subject, $response)
     {
-        if ($subject->getRequest()->isAjax() || $subject instanceof \Magento\Framework\App\Action\Forward) {
+        if ($this->request->isAjax() || $subject instanceof \Magento\Framework\App\Action\Forward) {
             return $response;
         }
-
         if (!$this->contentService->isProcessablePage()) {
             return $response;
         }
@@ -64,9 +67,10 @@ class ApplyMetaPlugin
 
         # 2.3+
         if ($content->getMetaTitle() && method_exists($this->pageConfig, 'setMetaTitle')) {
-          try{
-            $this->pageConfig->setMetaTitle($content->getMetaTitle());
-          } catch(\Exception $e){}
+            try {
+                $this->pageConfig->setMetaTitle($content->getMetaTitle());
+            } catch (\Exception $e) {
+            }
         }
 
         if ($content->getMetaDescription()) {
@@ -77,11 +81,15 @@ class ApplyMetaPlugin
             $this->pageConfig->setKeywords($content->getMetaKeywords());
         }
 
+        if ($content->getMetaRobots()) {
+            $this->pageConfig->setRobots($content->getMetaRobots());
+        }
+
         if ($content->getTitle()) {
             /** @var \Magento\Theme\Block\Html\Title $titleBlock */
             $titleBlock = $this->layout->getBlock('page.main.title');
 
-            if ($titleBlock) {
+            if ($titleBlock && $titleBlock->getPageHeading() && trim($titleBlock->getPageHeading())) {
                 $titleBlock->setPageTitle($content->getTitle());
             }
         }

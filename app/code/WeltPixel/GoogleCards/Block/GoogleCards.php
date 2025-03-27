@@ -80,12 +80,16 @@ class GoogleCards extends \Magento\Framework\View\Element\Template
      */
     public function getDescription($product)
     {
-        if ($this->_helper->getDescriptionType()) {
-            return nl2br($product->getData('description'));
+        $description = $this->_helper->getDescriptionType() ? $product->getData('description') : $product->getData('short_description');
+
+        // Check if $description is null before passing it to nl2br
+        if ($description !== null) {
+            return nl2br($description);
         } else {
-            return nl2br($product->getData('short_description'));
+            return '';
         }
     }
+
 
 
     /**

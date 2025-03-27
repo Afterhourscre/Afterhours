@@ -14,7 +14,6 @@ class Image extends AbstractExtensibleModel
     const OPTIONTEMPLATES_TABLE_NAME = 'mageworx_optiontemplates_group_option_type_image';
 
     const COLUMN_OPTION_TYPE_IMAGE_ID = 'option_type_image_id';
-    const COLUMN_MAGEWORX_OPTION_TYPE_ID = 'mageworx_option_type_id';
     const COLUMN_OPTION_TYPE_ID = 'option_type_id';
     const COLUMN_MEDIA_TYPE = 'media_type';
     const COLUMN_VALUE = 'value';
@@ -22,7 +21,7 @@ class Image extends AbstractExtensibleModel
     const COLUMN_SORT_ORDER = 'sort_order';
     const COLUMN_BASE_IMAGE = 'base_image';
     const COLUMN_TOOLTIP_IMAGE = 'tooltip_image';
-    const COLUMN_DISPLAY_ON_HOVER = 'display_on_hover';
+    const COLUMN_OVERLAY_IMAGE = 'overlay_image';
     const COLUMN_COLOR = 'color';
     const COLUMN_REPLACE_MAIN_GALLERY_IMAGE = 'replace_main_gallery_image';
     const COLUMN_HIDE_IN_GALLERY = 'disabled';

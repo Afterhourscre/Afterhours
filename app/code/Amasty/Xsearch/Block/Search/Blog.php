@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Block\Search;
 
@@ -12,7 +11,7 @@ use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 
 class Blog extends AbstractSearch
 {
-    const BLOG_BLOCK_PAGE = 'blog';
+    public const BLOG_BLOCK_PAGE = 'blog';
 
     /**
      * @var AbstractCollection
@@ -43,19 +42,32 @@ class Blog extends AbstractSearch
     protected function generateCollection()
     {
         $collection = parent::generateCollection();
+
         foreach ($this->getPostsCollection() as $item) {
             $item->setUrl($item->getUrl());
             $this->addToBlogCollection($item, $collection);
+
+            if ($this->getLimit() && count($collection) >= $this->getLimit()) {
+                return $collection;
+            }
         }
 
         foreach ($this->getCategoriesCollection() as $item) {
             $item->setUrl($item->getUrl());
             $this->addToBlogCollection($item, $collection);
+
+            if ($this->getLimit() && count($collection) >= $this->getLimit()) {
+                return $collection;
+            }
         }
 
         foreach ($this->getTagsCollection() as $item) {
             $item->setUrl($item->getUrl());
             $this->addToBlogCollection($item, $collection);
+
+            if ($this->getLimit() && count($collection) >= $this->getLimit()) {
+                return $collection;
+            }
         }
 
         return $collection;
@@ -80,9 +92,8 @@ class Blog extends AbstractSearch
         if ($this->postsSearchCollection === null) {
             $this->postsSearchCollection = $this->getData('postsCollectionFactory')->create()
                 ->addSearchFilter($this->getQuery()->getQueryText())
-                ->addStoreFilter($this->_storeManager->getStore()->getId())
-                ->addFieldToFilter('status', 2)
-                ->setPageSize($this->getLimit());
+                ->addStoreWithDefault((int)$this->_storeManager->getStore()->getId());
+            $this->postsSearchCollection->addFilterByStatus();
         }
 
         return $this->postsSearchCollection;
@@ -97,8 +108,7 @@ class Blog extends AbstractSearch
             $this->categoriesSearchCollection = $this->getData('categoriesCollectionFactory')->create()
                 ->addSearchFilter($this->getQuery()->getQueryText())
                 ->addStoreWithDefault($this->_storeManager->getStore()->getId())
-                ->addStatusFilter(1)
-                ->setPageSize($this->getLimit());
+                ->addStatusFilter(1);
         }
 
         return $this->categoriesSearchCollection;
@@ -112,8 +122,7 @@ class Blog extends AbstractSearch
         if ($this->tagsSearchCollection === null) {
             $this->tagsSearchCollection = $this->getData('tagsCollectionFactory')->create()
                 ->addSearchFilter($this->getQuery()->getQueryText())
-                ->addStoreWithDefault($this->_storeManager->getStore()->getId())
-                ->setPageSize($this->getLimit());
+                ->addStoreWithDefault($this->_storeManager->getStore()->getId());
         }
 
         return $this->tagsSearchCollection;
@@ -160,8 +169,9 @@ class Blog extends AbstractSearch
     public function getIndexFulltextValues()
     {
         $postValues = $this->postsSearchCollection->getIndexFulltextValues();
-        $categoryValues = $this->categoriesSearchCollection->getIndexFulltextValues();
-        $tagValues = $this->tagsSearchCollection->getIndexFulltextValues();
+        $categoryValues = $this->categoriesSearchCollection
+            ? $this->categoriesSearchCollection->getIndexFulltextValues() : [];
+        $tagValues = $this->tagsSearchCollection ? $this->tagsSearchCollection->getIndexFulltextValues() : [];
 
         return array_merge($postValues, $categoryValues, $tagValues);
     }

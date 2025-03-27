@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoAutolink\Controller\Adminhtml\Link;
 
@@ -22,17 +23,15 @@ use Magento\Framework\Controller\ResultFactory;
 class Save extends \Mirasvit\SeoAutolink\Controller\Adminhtml\Link
 {
     /**
-     *
-     * @return void
      * @SuppressWarnings(PHPMD.UnusedLocalVariable)
      */
-    public function execute()
+    public function execute(): void
     {
         /** @var \Magento\Backend\Model\View\Result\Page $resultPage */
         $resultPage = $this->resultFactory->create(ResultFactory::TYPE_PAGE);
 
         if ($data = $this->getRequest()->getParams()) {
-            $data['keyword'] = trim($data['keyword']);
+            $data['keyword'] = trim((string)$data['keyword']);
             $data = $this->prepareStoreIds($data);
             $model = $this->_initModel();
             $model->setData($data);
@@ -40,7 +39,7 @@ class Save extends \Mirasvit\SeoAutolink\Controller\Adminhtml\Link
             try {
                 $model->save();
 
-                $this->messageManager->addSuccess(__('Link was successfully saved'));
+                $this->messageManager->addSuccess((string)__('Link was successfully saved'));
                 $this->backendSession->setFormData(false);
 
                 if ($this->getRequest()->getParam('back')) {
@@ -59,7 +58,7 @@ class Save extends \Mirasvit\SeoAutolink\Controller\Adminhtml\Link
                 return;
             }
         }
-        $this->messageManager->addError(__('Unable to find link to save'));
+        $this->messageManager->addError((string)__('Unable to find link to save'));
         $this->_redirect('*/*/');
     }
 

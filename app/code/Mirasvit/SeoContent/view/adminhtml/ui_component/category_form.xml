@@ -9,6 +9,9 @@
                     <item name="formElement" xsi:type="string">input</item>
                     <item name="label" xsi:type="string" translate="true">H1 Title</item>
                     <item name="sortOrder" xsi:type="number">115</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-no-html-tags" xsi:type="boolean">true</item>
+                    </item>
                 </item>
             </argument>
         </field>

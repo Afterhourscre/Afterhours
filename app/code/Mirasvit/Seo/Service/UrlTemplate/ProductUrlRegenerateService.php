@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -23,12 +23,27 @@ use Magento\UrlRewrite\Model\UrlPersistInterface;
 
 class ProductUrlRegenerateService
 {
+    /**
+     * @var ProductUrlRewriteGenerator
+     */
     private $productUrlRewriteGenerator;
 
+    /**
+     * @var UrlPersistInterface
+     */
     private $urlPersist;
 
+    /**
+     * @var ProductCollectionFactory
+     */
     private $productCollectionFactory;
 
+    /**
+     * ProductUrlRegenerateService constructor.
+     * @param ProductUrlRewriteGenerator $productUrlRewriteGenerator
+     * @param UrlPersistInterface $urlPersist
+     * @param ProductCollectionFactory $productCollectionFactory
+     */
     public function __construct(
         ProductUrlRewriteGenerator $productUrlRewriteGenerator,
         UrlPersistInterface $urlPersist,
@@ -39,6 +54,10 @@ class ProductUrlRegenerateService
         $this->productCollectionFactory   = $productCollectionFactory;
     }
 
+    /**
+     * @return \Generator
+     * @throws \Magento\UrlRewrite\Model\Exception\UrlAlreadyExistsException
+     */
     public function restore()
     {
         $collection = $this->getProductCollection();
@@ -53,14 +72,16 @@ class ProductUrlRegenerateService
             $collection->setCurPage($currentPage);
 
             foreach ($collection as $product) {
-
                 $product->setStoreId(0);
-                if (!$product->getUrlKey()) {
-                    $product->setUrlKey($product->getId() . '-' . $product->getName());
-                    $product->setStoreId(0)->save();
+                try {
+                    if (!$product->getUrlKey()) {
+                        $product->setUrlKey($product->getId() . '-' . $product->getName());
+                        $product->setStoreId(0)->save();
+                    }
+                    $this->urlPersist->replace($this->productUrlRewriteGenerator->generate($product));
+                } catch (\Exception $e) {
                 }
 
-                $this->urlPersist->replace($this->productUrlRewriteGenerator->generate($product));
             }
 
             $currentPage++;

@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright 2019 aheadWorks. All rights reserved.
-See LICENSE.txt for license details.
+ * See LICENSE.txt for license details.
  */
 
 namespace Aheadworks\OnSale\Plugin\Block\Product;
@@ -65,22 +65,23 @@ class ImageBuilderPlugin
      * Add product object to data of image block
      *
      * @param ImageBuilder $subject
-     * @param Image $imageBlock
+     * @param Image|null $imageBlock
      * @param Product|null $product
      * @param string|null $imageId
-     * @return Image
+     * @return Image|null
      */
     public function afterCreate($subject, $imageBlock, $product = null, $imageId = null)
     {
-        $product = $product ?: $this->product;
-        $imageId = $imageId ?: $this->imageId;
-        if ($product) {
-            $imageBlock->setProduct($product);
-            $imageBlock->setImageId($imageId);
-            $this->product = null;
-            $this->imageId = null;
+        if ($imageBlock) {
+            $product = $product ?: $this->product;
+            $imageId = $imageId ?: $this->imageId;
+            if ($product) {
+                $imageBlock->setProduct($product);
+                $imageBlock->setImageId($imageId);
+                $this->product = null;
+                $this->imageId = null;
+            }
         }
-
         return $imageBlock;
     }
 }

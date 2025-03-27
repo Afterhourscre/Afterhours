@@ -14,26 +14,10 @@ use MageWorx\OptionSkuPolicy\Model\ResourceModel\QuoteItem as ResourceModel;
 
 class ApplyCustomSkuToQuoteItem implements ObserverInterface
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
+    protected Helper $helper;
+    protected BaseHelper $baseHelper;
+    protected ResourceModel $resourceModel;
 
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
-
-    /**
-     * @var ResourceModel
-     */
-    protected $resourceModel;
-
-    /**
-     * @param Helper $helper
-     * @param BaseHelper $baseHelper
-     * @param ResourceModel $resourceModel
-     */
     public function __construct(
         Helper $helper,
         BaseHelper $baseHelper,

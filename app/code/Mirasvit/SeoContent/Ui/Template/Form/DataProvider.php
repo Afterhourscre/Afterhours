@@ -9,14 +9,15 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
 
 namespace Mirasvit\SeoContent\Ui\Template\Form;
 
+use Magento\Framework\App\RequestInterface;
 use Magento\Framework\UrlInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Ui\DataProvider\AbstractDataProvider;
@@ -25,11 +26,31 @@ use Mirasvit\SeoContent\Api\Repository\TemplateRepositoryInterface;
 
 class DataProvider extends AbstractDataProvider
 {
+    /**
+     * @var StoreManagerInterface
+     */
     private $storeManager;
 
+    /**
+     * @var RequestInterface
+     */
+    private $request;
+
+    /**
+     * DataProvider constructor.
+     * @param TemplateRepositoryInterface $templateRepository
+     * @param StoreManagerInterface $storeManager
+     * @param RequestInterface $request
+     * @param string $name
+     * @param string $primaryFieldName
+     * @param string $requestFieldName
+     * @param array $meta
+     * @param array $data
+     */
     public function __construct(
         TemplateRepositoryInterface $templateRepository,
         StoreManagerInterface $storeManager,
+        RequestInterface $request,
         $name,
         $primaryFieldName,
         $requestFieldName,
@@ -38,6 +59,7 @@ class DataProvider extends AbstractDataProvider
     ) {
         $this->collection   = $templateRepository->getCollection();
         $this->storeManager = $storeManager;
+        $this->request = $request;
 
         parent::__construct($name, $primaryFieldName, $requestFieldName, $meta, $data);
     }
@@ -52,9 +74,9 @@ class DataProvider extends AbstractDataProvider
         foreach ($this->collection as $item) {
             $result[$item->getId()] = [
                 TemplateInterface::ID         => $item->getId(),
-                TemplateInterface::RULE_TYPE  => $item->getRuleType(),
+                TemplateInterface::RULE_TYPE  => (string)$item->getRuleType(),
                 TemplateInterface::NAME       => $item->getName(),
-                TemplateInterface::IS_ACTIVE  => $item->isActive(),
+                TemplateInterface::IS_ACTIVE  => $item->isActive() ? '1' : '0',
                 TemplateInterface::SORT_ORDER => $item->getSortOrder(),
                 TemplateInterface::STORE_IDS  => $item->getStoreIds(),
 
@@ -70,9 +92,10 @@ class DataProvider extends AbstractDataProvider
                 TemplateInterface::DESCRIPTION_TEMPLATE => $item->getDescriptionTemplate(),
                 TemplateInterface::CATEGORY_DESCRIPTION => $item->getCategoryDescription(),
 
-                TemplateInterface::STOP_RULE_PROCESSING       => $item->isStopRuleProcessing(),
-                TemplateInterface::APPLY_FOR_CHILD_CATEGORIES => $item->isApplyForChildCategories(),
-                TemplateInterface::APPLY_FOR_HOMEPAGE => $item->isApplyForHomepage(),
+                TemplateInterface::STOP_RULE_PROCESSING       => $item->isStopRuleProcessing() ? '1' : '0',
+                TemplateInterface::APPLY_FOR_CHILD_CATEGORIES => $item->isApplyForChildCategories() ? '1' : '0',
+                TemplateInterface::APPLY_FOR_HOMEPAGE         => $item->isApplyForHomepage() ? '1' : '0',
+                TemplateInterface::APPLY_FOR_ALL_BRANDS_PAGE  => $item->isApplyForAllBrandsPage() ? '1' : '0',
             ];
 
             if ($item->getCategoryImage()) {
@@ -91,6 +114,25 @@ class DataProvider extends AbstractDataProvider
         }
 
         return $result;
+    }
+
+    /**
+     * @return array
+     */
+    public function getMeta(): array
+    {
+        $meta = parent::getMeta();
+        $id = $this->request->getParam('template_id');
+
+        if (isset($id)) {
+            $meta['general']['children']['rule_type']['arguments']['data']['config']['disabled'] = 1;
+            $meta['conditions']['arguments']['data']['config']['visible'] = 1;
+        } else {
+            $meta['general']['children']['rule_type']['arguments']['data']['config']['disabled'] = 0;
+            $meta['conditions']['arguments']['data']['config']['visible'] = 0;
+        }
+
+        return $meta;
     }
     //
     //    /**

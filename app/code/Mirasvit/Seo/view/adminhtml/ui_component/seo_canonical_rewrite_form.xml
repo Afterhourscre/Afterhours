@@ -53,6 +53,10 @@
                     <item name="formElement" xsi:type="string">input</item>
                     <item name="dataScope" xsi:type="string">canonical_rewrite_id</item>
                     <item name="visible" xsi:type="boolean">false</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-number" xsi:type="boolean">true</item>
+                        <item name="validate-zero-or-greater" xsi:type="boolean">true</item>
+                    </item>
                 </item>
             </argument>
         </field>
@@ -80,6 +84,7 @@
                     <item name="formElement" xsi:type="string">input</item>
                     <item name="validation" xsi:type="array">
                         <item name="required-entry" xsi:type="boolean">true</item>
+                        <item name="validate-no-html-tags" xsi:type="boolean">true</item>
                     </item>
                     <item name="additionalClasses" xsi:type="string">admin__field-note</item>
                     <item name="additionalInfo" xsi:type="string"><![CDATA[
@@ -164,6 +169,9 @@
                        If URL of the page matches this expression and other conditions are met, the rule will be applied. <br/>
                        ]]>
                     </item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-no-html-tags" xsi:type="boolean">true</item>
+                    </item>
                 </item>
             </argument>
         </field>
@@ -182,6 +190,10 @@
                     <item name="label" xsi:type="string" translate="true">Sort order</item>
                     <item name="dataType" xsi:type="string">text</item>
                     <item name="formElement" xsi:type="string">input</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-number" xsi:type="boolean">true</item>
+                        <item name="validate-zero-or-greater" xsi:type="boolean">true</item>
+                    </item>
                 </item>
             </argument>
         </field>
@@ -191,6 +203,9 @@
                     <item name="label" xsi:type="string" translate="true">Comments</item>
                     <item name="dataType" xsi:type="string">text</item>
                     <item name="formElement" xsi:type="string">textarea</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-no-html-tags" xsi:type="boolean">true</item>
+                    </item>
                 </item>
             </argument>
         </field>

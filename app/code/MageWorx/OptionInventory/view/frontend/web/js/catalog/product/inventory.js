@@ -4,7 +4,7 @@
  */
 define([
     'jquery',
-    'jquery/ui'
+    'jquery-ui-modules/widget'
 ], function ($) {
     'use strict';
 
@@ -15,16 +15,25 @@ define([
 
         firstRun: function firstRun(optionConfig, productConfig, base, self) {
             base.setOptionValueTitle();
+            var manageStockValues = self.options.manage_stock_values_data;
 
-            $.ajax({
-                url: self.options.stock_message_url,
-                data: {'opConfig': JSON.stringify(optionConfig)},
-                type: 'post',
-                dataType: 'json'
-            })
-                .done(function (response) {
-                    base.setOptionValueTitle(response.result);
+            $.each(manageStockValues, function (optIndex, optElement) {
+                $.each(optElement, function (valIndex, valElement) {
+                    manageStockValues[optIndex][valIndex] = optionConfig[optIndex][valIndex];
                 });
+            });
+
+            if (manageStockValues.length !== 0) {
+                $.ajax({
+                    url: self.options.stock_message_url,
+                    data: {'opConfig': JSON.stringify(manageStockValues)},
+                    type: 'post',
+                    dataType: 'json'
+                })
+                    .done(function (response) {
+                        base.setOptionValueTitle(response.result);
+                    });
+            }
         },
 
         update: function update(option, optionConfig, productConfig, base) {

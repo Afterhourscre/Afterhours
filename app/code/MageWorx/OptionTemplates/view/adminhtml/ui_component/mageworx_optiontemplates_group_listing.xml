@@ -68,18 +68,7 @@
                 </item>
             </argument>
         </component>
-        <filterSearch name="fulltext">
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="provider" xsi:type="string">mageworx_optiontemplates_group_listing.mageworx_optiontemplates_group_listing_data_source</item>
-                    <item name="chipsProvider" xsi:type="string">mageworx_optiontemplates_group_listing.mageworx_optiontemplates_group_listing.listing_top.listing_filters_chips</item>
-                    <item name="storageConfig" xsi:type="array">
-                        <item name="provider" xsi:type="string">mageworx_optiontemplates_group_listing.mageworx_optiontemplates_group_listing.listing_top.bookmarks</item>
-                        <item name="namespace" xsi:type="string">current.search</item>
-                    </item>
-                </item>
-            </argument>
-        </filterSearch>
+        <filterSearch name="fulltext" />
         <filters name="listing_filters">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
@@ -146,6 +135,15 @@
                         <item name="type" xsi:type="string">duplicate</item>
                         <item name="label" xsi:type="string" translate="true">Duplicate</item>
                         <item name="url" xsi:type="url" path="mageworx_optiontemplates/group/duplicate"/>
+                    </item>
+                </argument>
+            </action>
+            <action name="export">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="type" xsi:type="string">export</item>
+                        <item name="label" xsi:type="string" translate="true">Export</item>
+                        <item name="url" xsi:type="url" path="mageworx_optiontemplates/group/export"/>
                     </item>
                 </argument>
             </action>

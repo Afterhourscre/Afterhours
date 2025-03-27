@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -26,9 +26,16 @@ class Store implements OptionSourceInterface
      * @var array
      */
     protected $options;
+    /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
 
-
-    public function __construct( StoreManagerInterface $storeManager)
+    /**
+     * Store constructor.
+     * @param StoreManagerInterface $storeManager
+     */
+    public function __construct(StoreManagerInterface $storeManager)
     {
         $this->storeManager = $storeManager;
     }

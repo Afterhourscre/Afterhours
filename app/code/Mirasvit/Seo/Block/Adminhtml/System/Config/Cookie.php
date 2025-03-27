@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -19,15 +19,21 @@ namespace Mirasvit\Seo\Block\Adminhtml\System\Config;
 
 class Cookie extends \Magento\Config\Block\System\Config\Form\Field
 {
-     /**
+    /**
+     * @var mixed
+     */
+    private $cookieData;
+
+    /**
      * @param \Magento\Backend\Block\Template\Context $context
+     * @param \Magento\Framework\ObjectManagerInterface $objectManager
      * @param array $data
      */
     public function __construct(
         \Magento\Backend\Block\Template\Context $context,
         \Magento\Framework\ObjectManagerInterface $objectManager,
-        array $data = [])
-    {
+        array $data = []
+    ) {
         $this->_localeDate = $context->getLocaleDate();
         $this->_authorization = $context->getAuthorization();
         $this->mathRandom = $context->getMathRandom();
@@ -92,5 +98,4 @@ class Cookie extends \Magento\Config\Block\System\Config\Form\Field
 
         return $this->_toHtml();
     }
-
 }

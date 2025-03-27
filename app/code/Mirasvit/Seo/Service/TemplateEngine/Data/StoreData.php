@@ -9,16 +9,18 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\TemplateEngine\Data;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\UrlInterface;
+use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Directory\Model\RegionFactory;
@@ -52,12 +54,12 @@ class StoreData extends AbstractData
         parent::__construct();
     }
 
-    public function getTitle()
+    public function getTitle(): string
     {
-        return __('Store Data');
+        return (string)__('Store Data');
     }
 
-    public function getVariables()
+    public function getVariables(): array
     {
         return [
             'name',
@@ -72,7 +74,7 @@ class StoreData extends AbstractData
         ];
     }
 
-    public function getValue($attribute, $additionalData = [])
+    public function getValue(string $attribute, array $additionalData = []): ?string
     {
         /** @var \Magento\Store\Model\Store $store */
         $store = $this->storeManager->getStore();
@@ -80,10 +82,10 @@ class StoreData extends AbstractData
         switch ($attribute) {
             case 'name':
                 return $this->getConfigValue('general/store_information/name', $store);
-                
+
             case 'phone':
                 return $this->getConfigValue('general/store_information/phone', $store);
-                
+
             case 'email':
                 return $this->getConfigValue('trans_email/ident_general/email', $store);
 
@@ -103,7 +105,7 @@ class StoreData extends AbstractData
                 $regionId = $this->getConfigValue('general/store_information/region_id', $store);
                 $region = $this->regionFactory->create();
                 $region->load($regionId);
-                return $region->getCode();
+                return (string)$region->getCode();
 
             case 'postcode':
                 return $this->getConfigValue('general/store_information/postcode', $store);
@@ -117,7 +119,7 @@ class StoreData extends AbstractData
                     }
                     if ($country) {
                         $countryName = $country->getFullNameLocale();
-                        return $countryName;
+                        return (string)$countryName;
                     }
                 }
                 break;
@@ -133,20 +135,17 @@ class StoreData extends AbstractData
                 );
         }
 
-        return $store->getDataUsingMethod($attribute);
+        return $store->getDataUsingMethod($attribute) ?: null;
     }
 
-    /**
-     * @param string $streetLineOne
-     * @param string $streetLineTwo
-     * @param string $city
-     * @param string $regionCode
-     * @param string $postcode
-     * @param string $countryName
-     * @return string
-     */
-    private function getAddress($streetLineOne, $streetLineTwo, $city, $regionCode, $postcode, $countryName)
-    {
+    private function getAddress(
+        string $streetLineOne,
+        string $streetLineTwo,
+        string $city,
+        string $regionCode,
+        string $postcode,
+        string $countryName
+    ): string {
         $storeAddress = '';
         $separator = '<br/>';
 
@@ -186,13 +185,8 @@ class StoreData extends AbstractData
         return $storeAddress;
     }
 
-    /**
-     * @param string $key
-     * @param \Magento\Store\Model\Store $store
-     * @return string
-     */
-    private function getConfigValue($key, $store)
+    private function getConfigValue(string $key, StoreInterface $store): ?string
     {
-        return $this->scopeConfig->getValue($key, ScopeInterface::SCOPE_STORE, $store);
+        return $this->scopeConfig->getValue($key, ScopeInterface::SCOPE_STORE, $store) ?: null;
     }
 }

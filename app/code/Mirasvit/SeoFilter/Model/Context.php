@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo-filter
- * @version   1.0.16
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   1.3.22
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoFilter\Model;
 
@@ -26,45 +27,19 @@ use Magento\Store\Model\StoreManagerInterface;
 
 class Context
 {
-    /**
-     * @var ProductResource
-     */
     private $productResource;
 
-    /**
-     * @var StoreManagerInterface
-     */
     private $storeManager;
 
-    /**
-     * @var EntityAttributeOptionCollectionFactory
-     */
     private $attributeOptionCollectionFactory;
 
-    /**
-     * @var UrlInterface
-     */
     private $urlBuilder;
 
-    /**
-     * @var Registry
-     */
     private $registry;
 
-    /**
-     * @var RequestInterface
-     */
+    /** @var \Magento\Framework\App\Request\Http */
     private $request;
 
-    /**
-     * Context constructor.
-     * @param ProductResource $productResource
-     * @param StoreManagerInterface $storeManager
-     * @param EntityAttributeOptionCollectionFactory $entityAttributeOptionCollectionFactory
-     * @param UrlInterface $urlBuilder
-     * @param Registry $registry
-     * @param RequestInterface $request
-     */
     public function __construct(
         ProductResource $productResource,
         StoreManagerInterface $storeManager,
@@ -81,43 +56,28 @@ class Context
         $this->request                          = $request;
     }
 
-    /**
-     * @return int
-     */
-    public function getStoreId()
+
+    public function getStoreId(): int
     {
-        return $this->storeManager->getStore()->getId();
+        return (int)$this->storeManager->getStore()->getId();
     }
 
-    /**
-     * @param int|string $attribute
-     *
-     * @return \Magento\Catalog\Model\ResourceModel\Eav\Attribute|false
-     */
-    public function getAttribute($attribute)
-    {
-        $attr = $this->productResource->getAttribute($attribute);
 
-        return $attr;
+    public function getAttribute(string $code): ?\Magento\Catalog\Model\ResourceModel\Eav\Attribute
+    {
+        $attribute = $this->productResource->getAttribute($code);
+
+        return $attribute ? $attribute : null;
     }
 
-    /**
-     * @param string|int $attribute
-     *
-     * @return bool
-     */
-    public function isDecimalAttribute($attribute)
+    public function isDecimalAttribute(string $attribute): bool
     {
-        return $this->getAttribute($attribute)->getFrontendInput() == 'price';
+        $attr = $this->getAttribute($attribute);
+
+        return $attr && $this->getAttribute($attribute)->getFrontendInput() == 'price';
     }
 
-    /**
-     * @param int $attributeId
-     * @param int $optionId
-     *
-     * @return bool|\Magento\Eav\Model\Entity\Attribute\Option
-     */
-    public function getAttributeOption($attributeId, $optionId)
+    public function getAttributeOption(int $attributeId, int $optionId): ?\Magento\Eav\Model\Entity\Attribute\Option
     {
         /** @var \Magento\Eav\Model\Entity\Attribute\Option $item */
         $item = $this->attributeOptionCollectionFactory->create()
@@ -126,29 +86,22 @@ class Context
             ->setIdFilter($optionId)
             ->getFirstItem();
 
-        return $item->getId() ? $item : false;
+        return $item->getId() ? $item : null;
     }
 
-    /**
-     * @return UrlInterface
-     */
-    public function getUrlBuilder()
+    public function getUrlBuilder(): UrlInterface
     {
         return $this->urlBuilder;
     }
 
-    /**
-     * @return \Magento\Catalog\Model\Category|false
-     */
-    public function getCurrentCategory()
+    public function getCurrentCategory(): ?\Magento\Catalog\Model\Category
     {
-        return $this->registry->registry('current_category');
+        $category = $this->registry->registry('current_category');
+
+        return $category ? $category : null;
     }
 
-    /**
-     * @return \Magento\Framework\App\Request\Http
-     */
-    public function getRequest()
+    public function getRequest(): \Magento\Framework\App\Request\Http
     {
         return $this->request;
     }

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -44,7 +44,7 @@ class Remove extends \Magento\Framework\DataObject
     protected $resource;
 
     /**
-     * @var Magento\Framework\DB\Adapter\Pdo\Mysql
+     * @var \Magento\Framework\DB\Adapter\Pdo\Mysql
      */
     protected $connection;
 
@@ -84,7 +84,7 @@ class Remove extends \Magento\Framework\DataObject
     /**
      * Url path of processed category with suffix
      *
-     * @var int
+     * @var string
      */
     protected $preparedUrlPath;
 
@@ -94,6 +94,10 @@ class Remove extends \Magento\Framework\DataObject
      * @var int
      */
     protected $storeIds;
+    /**
+     * @var string
+     */
+    private $preparedRequestPath;
 
     /**
      * @param \Magento\Framework\Registry                                  $registry
@@ -119,7 +123,7 @@ class Remove extends \Magento\Framework\DataObject
     public function removeParentCategoryPath()
     {
         $this->storeIds = $this->registry->registry('store_ids_for_remove_parent_category_path');
-        if(!$this->storeIds) {
+        if (!$this->storeIds) {
             return 'Something went wrong.';
         }
 
@@ -135,13 +139,13 @@ class Remove extends \Magento\Framework\DataObject
 
             if ($this->table
                 && strpos($this->requestPath, '/') !== false
-                && $this->debugForSpecifiedCategory() ) {
+                && $this->debugForSpecifiedCategory()) {
                     $update = $this->updateCategoryUrlRewrite();
 
-                    if ($update) {
-                        $this->insertCategoryUrlRewriteReirect();
-                        $this->updateCategoryUrlRewriteRedirect();
-                    }
+                if ($update) {
+                    $this->insertCategoryUrlRewriteReirect();
+                    $this->updateCategoryUrlRewriteRedirect();
+                }
             }
         }
 
@@ -156,7 +160,7 @@ class Remove extends \Magento\Framework\DataObject
     protected function debugForSpecifiedCategory()
     {
         $categoryId = null; //for debug set category id instead null
-        if ($categoryId !== null && $this->categoryId == $categoryId ) {
+        if ($categoryId !== null && $this->categoryId == $categoryId) {
             return true;
         } elseif ($categoryId !== null) {
             return false;
@@ -206,7 +210,7 @@ class Remove extends \Magento\Framework\DataObject
     /**
      * Remove parent category path
      *
-     * @return bool
+     * @return string
      */
     protected function getPrepareRequestPath()
     {
@@ -273,7 +277,7 @@ class Remove extends \Magento\Framework\DataObject
     /**
      * Upadate data in url_rewrite table for redirect
      *
-     * @return $this
+     * @return bool
      */
     protected function updateCategoryUrlRewriteRedirect()
     {
@@ -313,5 +317,4 @@ class Remove extends \Magento\Framework\DataObject
     {
         return $this->resource->getTableName($name);
     }
-
 }

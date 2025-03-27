@@ -1,9 +1,13 @@
 <?php
-/** @var \Mirasvit\SeoToolbar\Block\Toolbar $block */
+
+use Mirasvit\SeoToolbar\Api\Data\DataProviderItemInterface;
+use Mirasvit\SeoToolbar\Block\Toolbar;
+
+/** @var Toolbar $block */
 ?>
 <div class="mst-seo-toolbar__toolbar">
     <div class="mst-seo-toolbar__toolbar-header" data-role="header">
-        <i class="fa fa-tachometer"></i> <?= __('SEO Toolbar') ?>
+        <i class="fa fa-tachometer"></i> <?= $block->escapeHtml(__('SEO Toolbar')) ?>
 
         <div class="close" data-role="close">
             <div class="icon-close">×</div>
@@ -13,19 +17,19 @@
     <div class="mst-seo-toolbar__toolbar-content">
         <?php foreach ($block->getSections() as $section => $items): ?>
             <section>
-                <label><?= $section ?></label>
+                <label><?= $block->escapeHtml($section) ?></label>
 
                 <ul>
-                    <?php /** @var \Mirasvit\SeoToolbar\Api\Data\DataProviderItemInterface $item */ ?>
+                    <?php /** @var DataProviderItemInterface $item */ ?>
                     <?php foreach ($items as $item): ?>
                         <li>
-                            <div class="title"><?= $item->getTitle() ?></div>
-                            <div class="status _<?= $item->getStatus() ?>"></div>
-                            <div class="description">
-                                <?= nl2br($block->escapeHtml($item->getDescription())) ?>
-                                <div class="note"><?= nl2br($block->escapeHtml($item->getNote())) ?></div>
+                            <div class="title"><?= $block->escapeHtml($item->getTitle()) ?></div>
+                            <div class="status _<?= $block->escapeHtml($item->getStatus()) ?>"></div>
+                                <div class="description">
+                                    <div class="action"><?= /* @noEscape */ $item->getAction() ?></div>
+                                    <?= /* @noEscape */ nl2br($block->escapeHtml($item->getDescription())) ?>
+                                    <div class="note"><?= /* @noEscape */ nl2br($block->escapeHtml($item->getNote())) ?></div>
                             </div>
-                            <?= $item->getAction() ?>
                         </li>
                     <?php endforeach ?>
                 </ul>
@@ -37,12 +41,12 @@
 <script>
     require([
         'jquery',
-        'jquery/jquery.cookie'
+        'mage/cookies'
     ], function ($) {
         var $toolbar = $('.mst-seo-toolbar__toolbar');
         var cookieName = "mst-seo-toolbar";
 
-        if ($.cookie(cookieName) === 'off') {
+        if ($.mage.cookies.get(cookieName) === 'off') {
             $toolbar.removeClass('_hidden').addClass('_hidden');
         } else {
             $toolbar.removeClass('_hidden');
@@ -51,14 +55,14 @@
         $('[data-role=close]', $toolbar).on('click', function (e) {
             e.preventDefault();
             $toolbar.removeClass('_hidden').addClass('_hidden');
-            $.cookie(cookieName, 'off', {expires: 1, path: '/'});
+            $.mage.cookies.set(cookieName, 'off', {expires: new Date(Date.now() + (24 * 60 * 60)), path: '/'});
         });
 
         $('[data-role=header]', $toolbar).on('click', function (e) {
             if (!$(e.target).hasClass('icon-close')) {
                 e.preventDefault();
                 $toolbar.removeClass('_hidden');
-                $.cookie(cookieName, 'on', {expires: 1, path: '/'});
+                $.mage.cookies.set(cookieName, 'on', {expires: new Date(Date.now() + (24 * 60 * 60)), path: '/'});
             }
         });
     });

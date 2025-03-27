@@ -10,7 +10,7 @@
       label="WeltPixel EnhancedEmail Email Shipment Items List" design_abstraction="custom">
     <update handle="sales_email_order_shipment_renderers"/>
     <body>
-        <block class="WeltPixel\EnhancedEmail\Block\Items\AbstractItems" name="items"
+        <block class="WeltPixel\EnhancedEmail\Block\Items\ShipmentItems" name="items"
                template="WeltPixel_EnhancedEmail::email/shipment/items.phtml">
             <block class="Magento\Framework\View\Element\RendererList" name="sales.email.order.shipment.renderers"
                    as="renderer.list"/>

@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <block name="mst.product.review" class="Mirasvit\Review\Block\Product\Review" template="Mirasvit_Review::review.phtml">
+            <block name="mst.product.review.proscons" as="proscons" class="Mirasvit\Review\Block\Product\Review\ProsCons" template="Mirasvit_Review::review/proscons.phtml" />
+            <block name="mst.product.review.gallery" as="review.gallery" class="Mirasvit\Review\Block\Product\Review\Gallery" template="Mirasvit_Review::review/gallery.phtml" />
+        </block>
+    </body>
+</page>

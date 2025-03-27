@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -19,6 +19,11 @@ namespace Mirasvit\Seo\Helper;
 
 class StringPrepare extends \Magento\Framework\App\Helper\AbstractHelper
 {
+    /**
+     * @var \Magento\Framework\Stdlib\StringUtils
+     */
+    private $string;
+
     /**
      * @param \Magento\Framework\Stdlib\StringUtils  $string
      *

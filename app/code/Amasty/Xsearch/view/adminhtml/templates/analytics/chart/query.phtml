@@ -1,143 +1,60 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 ?>
 <?php
-/** @var Amasty\Xsearch\Block\Adminhtml\Analytics\Chart\Query $block */
+/**
+ * @var Amasty\Xsearch\Block\Adminhtml\Analytics\Chart\Query $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
 ?>
-<div id="search_analytics" class="analytics-chart"></div>
+<div id="search_analytics"
+     class="analytics-chart"
+     data-mage-init='{
+         "amSearchAnalytics": {
+            "popularity": "<?= $escaper->escapeJs($block->getTotal('popularity')) ?>",
+            "unique_query": "<?= $escaper->escapeJs($block->getTotal('unique_query')) ?>",
+            "unique_user": "<?= $escaper->escapeJs($block->getTotal('unique_user')) ?>",
+            "product_click": "<?= $escaper->escapeJs($block->getTotal('product_click')) ?>",
+            "title": "<?= $escaper->escapeJs($block->getTitle()) ?>",
+            "data": <?= $escaper->escapeHtml($block->getAnalyticsData()) ?>
+         }
+     }'>
+</div>
 <div class="amxsearch-legend-wrap">
     <div class="amxsearch-item">
         <div class="amxsearch-total -popularity">
-            <?= $block->getTotal('popularity') ?>
+            <?= $escaper->escapeHtml($block->getTotal('popularity')) ?>
         </div>
         <p class="amxsearch-label">
-            <?= $block->escapeHtml(__('Total Searches')); ?>
+            <?= $escaper->escapeHtml(__('Total Searches')); ?>
         </p>
     </div>
     <div class="amxsearch-item">
         <div class="amxsearch-total -unique_query">
-            <?= $block->getTotal('unique_query') ?>
+            <?= $escaper->escapeHtml($block->getTotal('unique_query')) ?>
         </div>
         <p class="amxsearch-label">
-            <?= $block->escapeHtml(__('Unique Searches')); ?>
+            <?= $escaper->escapeHtml(__('Unique Searches')); ?>
         </p>
     </div>
     <div class="amxsearch-item">
         <div class="amxsearch-total -users">
-            <?= $block->getTotal('unique_user') ?>
+            <?= $escaper->escapeHtml($block->getTotal('unique_user')) ?>
         </div>
         <p class="amxsearch-label">
-            <?= $block->escapeHtml(__('Users')); ?>
+            <?= $escaper->escapeHtml(__('Users')); ?>
         </p>
     </div>
     <div class="amxsearch-item">
         <div class="amxsearch-total -product_click">
-            <?= $block->getTotal('product_click') ?>%
+            <?= $escaper->escapeHtml($block->getTotal('product_click')) ?>%
         </div>
         <p class="amxsearch-label">
-            <?= $block->escapeHtml(__('Engagement')); ?>
+            <?= $escaper->escapeHtml(__('Engagement')); ?>
         </p>
     </div>
 </div>
-<script type="text/javascript">
-    require([
-        'jquery',
-        'Amasty_Xsearch/js/amcharts'
-    ], function ($) {
-        require(['Amasty_Xsearch/js/serial'], function ($) {
-            AmCharts.makeChart("search_analytics",
-                {
-                    "type": "serial",
-                    "categoryField": "created_at",
-                    "startDuration": 0.5,
-                    "fontSize": 14,
-                    "categoryAxis": {
-                        "gridPosition": "start"
-                    },
-                    "trendLines": [],
-                    "graphs": [
-                        {
-                            "balloonText": "[[value]] [[title]]",
-                            "fillAlphas": 1,
-                            "id": "graph-1",
-                            "title": "Total Searches",
-                            "type": "column",
-                            "valueAxis": "axis-1",
-                            "valueField": "popularity",
-                            "legendPeriodValueText": "<?= $block->getTotal('popularity') ?>"
-                        },
-                        {
-                            "balloonText": "[[value]] [[title]]",
-                            "fillAlphas": 1,
-                            "id": "graph-2",
-                            "title": "Unique Searches",
-                            "type": "column",
-                            "valueAxis": "axis-1",
-                            "valueField": "unique_query",
-                            "legendPeriodValueText": "<?= $block->getTotal('unique_query') ?>"
-                        },
-                        {
-                            "balloonText": "[[value]] [[title]]",
-                            "fillAlphas": 1,
-                            "id": "graph-3",
-                            "title": "Users",
-                            "type": "column",
-                            "valueAxis": "axis-1",
-                            "valueField": "unique_user",
-                            "legendPeriodValueText": "<?= $block->getTotal('unique_user') ?>"
-                        },
-                        {
-                            "balloonText": "[[value]] [[title]]",
-                            "fillAlphas": 1,
-                            "id": "graph-4",
-                            "title": "% Engagement",
-                            "type": "column",
-                            "valueAxis": "axis-2",
-                            "valueField": "product_click",
-                            "legendPeriodValueText": "<?= $block->getTotal('product_click') ?>"
-                        }
-                    ],
-                    "guides": [],
-                    "valueAxes": [
-                        {
-                            "id": "axis-1",
-                            "integersOnly": true
-                        },
-                        {
-                            "id": "axis-2",
-                            "unit": "%",
-                            "position": "right"
-                        }
-
-                    ],
-                    "allLabels": [],
-                    "balloon": {},
-                    "legend": {
-                        "enabled": false
-                    },
-                    "titles": [
-                        {
-                            "id": "title-1",
-                            "size": 25,
-                            "bold": false,
-                            "text": "<?= $block->getTitle() ?>"
-                        }
-                    ],
-                    "dataProvider": <?= $block->getAnalyticsData() ?>,
-                    "fontFamily": "'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif",
-                    "colors": [
-                        "#ffa942",
-                        "#5B81CC",
-                        "#2DCA9B",
-                        "#79c5ca"
-                    ],
-                    "startEffect": "easeOutSine"
-                }
-            );
-        });
-    });
-</script>

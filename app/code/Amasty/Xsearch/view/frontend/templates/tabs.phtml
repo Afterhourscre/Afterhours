@@ -1,18 +1,17 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 ?>
 <?php if ($block->isTabsEnabled()): ?>
     <?php
-    /** @var \Amasty\Xsearch\Block\Search\Tab $block */
-    $collection = $block->getTabs();
+        /** @var \Amasty\Xsearch\Block\Search\Tab $block */ $collection = $block->getTabs();
     ?>
     <?php if ($collection): ?>
-        <div id="amsearch-result-tabs"
-             class="product data items"
+        <?php $searchResultHtml = $block->getChildHtml('search.result'); ?>
+        <div class="amsearch-result-tabs product data items"
              data-mage-init='{"tabs":{"openedState":"active"}}'>
             <div class="data item title"
                  data-role="collapsible">
@@ -40,10 +39,10 @@
                 </div>
             <?php endforeach; ?>
 
-            <div class="data item content"
+            <div class="amsearch-products-tab data item content"
                  id="tabs-amasty_search_products_tab"
                  data-role="content">
-                <?= $block->getChildHtml('search.result'); ?>
+                <?= /* @noEscape */ $searchResultHtml ?>
             </div>
             <?php foreach ($collection as $item): ?>
                 <div class="data item content <?= /* @noEscape */ $item['block_name'];?>"

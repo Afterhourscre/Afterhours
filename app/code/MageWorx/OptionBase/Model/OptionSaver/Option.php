@@ -25,25 +25,10 @@ class Option extends \Magento\Catalog\Model\ResourceModel\Product\Option
     const TABLE_NAME_CATALOG_PRODUCT_OPTION_PRICE = 'catalog_product_option_price';
     const TABLE_NAME_CATALOG_PRODUCT_OPTION_TITLE = 'catalog_product_option_title';
 
-    /**
-     * @var OptionValueDataCollector
-     */
-    protected $optionValueDataCollector;
-
-    /**
-     * @var OptionRepository
-     */
-    protected $optionRepository;
-
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
-
-    /**
-     * @var OptionAttributes
-     */
-    protected $optionAttributes;
+    protected Value $optionValueDataCollector;
+    protected OptionRepository $optionRepository;
+    protected BaseHelper $baseHelper;
+    protected OptionAttributes $optionAttributes;
 
     /**
      * Class constructor

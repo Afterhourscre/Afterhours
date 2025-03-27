@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -24,6 +24,10 @@ class LinkSitemapConfig
      */
     protected $scopeConfig;
 
+    /**
+     * LinkSitemapConfig constructor.
+     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+     */
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
     ) {
@@ -36,7 +40,7 @@ class LinkSitemapConfig
      */
     public function getAdditionalLinks($store = null)
     {
-        $conf = $this->scopeConfig->getValue(
+        $conf = (string)$this->scopeConfig->getValue(
             'seositemap/frontend/additional_links',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
             $store
@@ -62,9 +66,9 @@ class LinkSitemapConfig
      */
     public function getExcludeLinks($store = null)
     {
-        $conf = $this->scopeConfig->getValue(
+        $conf = (string)$this->scopeConfig->getValue(
             'seositemap/frontend/exclude_links',
-            \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
             $store
         );
 

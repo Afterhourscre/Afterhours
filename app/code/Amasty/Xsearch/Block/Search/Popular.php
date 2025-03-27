@@ -1,16 +1,15 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Block\Search;
 
 class Popular extends AbstractSearch
 {
-    const CATEGORY_BLOCK_POPULAR = 'popular_searches';
+    public const CATEGORY_BLOCK_POPULAR = 'popular_searches';
 
     public function getBlockType()
     {

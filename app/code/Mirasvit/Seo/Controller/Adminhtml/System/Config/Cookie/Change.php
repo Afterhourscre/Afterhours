@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -27,6 +27,10 @@ class Change extends \Magento\Backend\App\Action
      * @var JsonFactory
      */
     protected $resultJsonFactory;
+    /**
+     * @var \Magento\Backend\App\Action\Context
+     */
+    private $context;
 
     /**
      * @param \Magento\Backend\App\Action\Context $context
@@ -55,6 +59,7 @@ class Change extends \Magento\Backend\App\Action
     public function execute()
     {
         $result = $this->_applyCookie();
+        $resultCookie = "";
         if ($result === true) {
             $resultCookie = Config::COOKIE_DEL_BUTTON;
         } elseif ($result === false) {
@@ -80,5 +85,4 @@ class Change extends \Magento\Backend\App\Action
         return $this->_objectManager->get('Mirasvit\Seo\Model\Cookie\Cookie')
                                     ->applyCookie();
     }
-
 }

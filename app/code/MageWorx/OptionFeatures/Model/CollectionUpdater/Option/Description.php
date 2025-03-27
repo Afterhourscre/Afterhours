@@ -71,8 +71,6 @@ class Description extends AbstractUpdater
         $entityType = $conditions['entity_type'];
         $tableName  = $this->getTableName($entityType);
 
-        $this->resource->getConnection()->query('SET SESSION group_concat_max_len = 100000;');
-
         $selectExpr = "SELECT " . OptionDescription::COLUMN_NAME_OPTION_ID . " as "
             . OptionDescription::FIELD_OPTION_ID_ALIAS . ","
             . " CONCAT('[',"

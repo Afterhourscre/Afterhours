@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo-filter
- * @version   1.0.16
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   1.3.22
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoFilter\Model;
 
@@ -22,84 +23,54 @@ use Mirasvit\SeoFilter\Api\Data\RewriteInterface;
 
 class Rewrite extends AbstractModel implements RewriteInterface
 {
-    /**
-     * @return void
-     */
-    protected function _construct()
+    public function getId(): ?int
     {
-        $this->_init(ResourceModel\Rewrite::class);
+        return $this->getData(self::ID) ? (int)$this->getData(self::ID) : null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getId()
+    public function getAttributeCode(): string
     {
-        return $this->getData(self::ID);
+        return (string)$this->getData(self::ATTRIBUTE_CODE);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getAttributeCode()
-    {
-        return $this->getData(self::ATTRIBUTE_CODE);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setAttributeCode($value)
+    public function setAttributeCode(string $value): RewriteInterface
     {
         return $this->setData(self::ATTRIBUTE_CODE, $value);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getOption()
+    public function getOption(): string
     {
-        return $this->getData(self::OPTION);
+        return (string)$this->getData(self::OPTION);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function setOption($value)
+    public function setOption(string $value): RewriteInterface
     {
         return $this->setData(self::OPTION, $value);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getRewrite()
+    public function getRewrite(): string
     {
-        return $this->getData(self::REWRITE);
+        return (string)$this->getData(self::REWRITE);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function setRewrite($value)
+    public function setRewrite(string $value): RewriteInterface
     {
         return $this->setData(self::REWRITE, $value);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getStoreId()
+    public function getStoreId(): int
     {
-        return $this->getData(self::STORE_ID);
+        return (int)$this->getData(self::STORE_ID);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function setStoreId($value)
+    public function setStoreId(int $value): RewriteInterface
     {
         return $this->setData(self::STORE_ID, $value);
+    }
+
+    protected function _construct()
+    {
+        $this->_init(ResourceModel\Rewrite::class);
     }
 
 }

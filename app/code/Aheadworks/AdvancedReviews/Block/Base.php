@@ -50,6 +50,6 @@ class Base extends Template
             $this->jsLayout = $layoutProcessor->process($this->jsLayout);
         }
 
-        return \Zend_Json::encode($this->jsLayout);
+        return json_encode($this->jsLayout);
     }
 }

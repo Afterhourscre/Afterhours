@@ -1,85 +1,95 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Helper;
 
+use Amasty\Xsearch\Block\Search\Blog;
+use Amasty\Xsearch\Block\Search\Brand;
+use Amasty\Xsearch\Block\Search\BrowsingHistory;
 use Amasty\Xsearch\Block\Search\Category;
+use Amasty\Xsearch\Block\Search\Faq;
+use Amasty\Xsearch\Block\Search\Landing;
 use Amasty\Xsearch\Block\Search\Page;
 use Amasty\Xsearch\Block\Search\Popular;
 use Amasty\Xsearch\Block\Search\Product;
 use Amasty\Xsearch\Block\Search\Recent;
-use Amasty\Xsearch\Block\Search\Landing;
-use Amasty\Xsearch\Block\Search\Brand;
-use Amasty\Xsearch\Block\Search\Blog;
-use Amasty\Xsearch\Block\Search\Faq;
+use Amasty\Xsearch\Model\Config;
+use Magento\Catalog\Model\Config as CatalogConfig;
+use Magento\Catalog\Model\ResourceModel\Product\Attribute\Collection;
 use Magento\CatalogSearch\Model\ResourceModel\EngineProvider;
-use Magento\Store\Model\ScopeInterface;
+use Magento\Customer\Model\SessionFactory;
+use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Filter\StripTags;
 use Magento\Framework\Search\Adapter\Mysql\Query\Builder\Match as QueryMatchBuilder;
+use Magento\Search\Helper\Data as SearchHelper;
+use Magento\Store\Model\ScopeInterface;
 
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
-    const MODULE_NAME = 'amasty_xsearch/';
-    const XML_PATH_TEMPLATE_CATEGORY_POSITION = 'category/position';
-    const XML_PATH_TEMPLATE_PRODUCT_POSITION = 'product/position';
-    const XML_PATH_TEMPLATE_PAGE_POSITION = 'page/position';
-    const XML_PATH_TEMPLATE_POPULAR_SEARCHES_POSITION = 'popular_searches/position';
-    const XML_PATH_TEMPLATE_RECENT_SEARCHES_POSITION = 'recent_searches/position';
-    const XML_PATH_TEMPLATE_LANDING_POSITION = 'landing_page/position';
-    const XML_PATH_TEMPLATE_BRAND_POSITION = 'brand/position';
-    const XML_PATH_TEMPLATE_BLOG_POSITION = 'blog/position';
+    public const MODULE_NAME = 'amasty_xsearch/';
+    public const XML_PATH_TEMPLATE_CATEGORY_POSITION = 'category/position';
+    public const XML_PATH_TEMPLATE_PRODUCT_POSITION = 'product/position';
+    public const XML_PATH_TEMPLATE_PAGE_POSITION = 'page/position';
+    public const XML_PATH_TEMPLATE_LANDING_POSITION = 'landing_page/position';
+    public const XML_PATH_TEMPLATE_BRAND_POSITION = 'brand/position';
+    public const XML_PATH_TEMPLATE_BLOG_POSITION = 'blog/position';
+    public const XML_PATH_TEMPLATE_FAQ_POSITION = 'faq/position';
 
-    const XML_PATH_TEMPLATE_CATEGORY_ENABLED = 'category/enabled';
-    const XML_PATH_TEMPLATE_PRODUCT_ENABLED = 'product/enabled';
-    const XML_PATH_TEMPLATE_PAGE_ENABLED = 'page/enabled';
-    const XML_PATH_TEMPLATE_POPULAR_SEARCHES_ENABLED = 'popular_searches/enabled';
-    const XML_PATH_TEMPLATE_RECENT_SEARCHES_ENABLED = 'recent_searches/enabled';
-    const XML_PATH_TEMPLATE_LANDING_ENABLED = 'landing_page/enabled';
-    const XML_PATH_TEMPLATE_BRAND_ENABLED = 'brand/enabled';
-    const XML_PATH_TEMPLATE_BLOG_ENABLED = 'blog/enabled';
-    const XML_PATH_TEMPLATE_FAQ_ENABLED = 'faq/enabled';
+    public const XML_PATH_TEMPLATE_CATEGORY_ENABLED = 'category/enabled';
+    public const XML_PATH_TEMPLATE_PRODUCT_ENABLED = 'product/enabled';
+    public const XML_PATH_TEMPLATE_PAGE_ENABLED = 'page/enabled';
+    public const XML_PATH_TEMPLATE_LANDING_ENABLED = 'landing_page/enabled';
+    public const XML_PATH_TEMPLATE_BRAND_ENABLED = 'brand/enabled';
+    public const XML_PATH_TEMPLATE_BLOG_ENABLED = 'blog/enabled';
+    public const XML_PATH_TEMPLATE_FAQ_ENABLED = 'faq/enabled';
 
-    const XML_PATH_IS_SINGLE_PRODUCT_REDIRECT = 'product/redirect_single_product';
-    const XML_PATH_IS_SEO_URL_ENABLED = 'general/enable_seo_url';
-    const XML_PATH_SEO_KEY = 'general/seo_key';
-    const XML_PATH_POPUP_INDEX = 'general/enable_popup_index';
+    public const XML_PATH_IS_SINGLE_PRODUCT_REDIRECT = 'product/redirect_single_product';
+    public const XML_PATH_IS_SEO_URL_ENABLED = 'general/enable_seo_url';
+    public const XML_PATH_SEO_KEY = 'general/seo_key';
+    public const XML_PATH_POPUP_INDEX = 'general/enable_popup_index';
 
     /**
-     * @var \Magento\Catalog\Model\Config
+     * @var CatalogConfig
      */
     private $configAttribute;
 
     /**
-     * @var \Magento\Catalog\Model\ResourceModel\Product\Attribute\Collection
+     * @var Collection
      */
     private $collection;
 
     /**
-     * @var \Magento\Search\Helper\Data
+     * @var SearchHelper
      */
     private $searchHelper;
 
     /**
-     * @var \Magento\Framework\Filter\StripTags
+     * @var StripTags
      */
     private $stripTags;
 
     /**
-     * @var \Magento\Customer\Model\SessionFactory
+     * @var SessionFactory
      */
     private $sessionFactory;
 
+    /**
+     * @var Config
+     */
+    private $moduleConfigProvider;
+
     public function __construct(
-        \Magento\Catalog\Model\Config $configAttribute,
-        \Magento\Catalog\Model\ResourceModel\Product\Attribute\Collection $collection,
-        \Magento\Search\Helper\Data $searchHelper,
-        \Magento\Framework\Filter\StripTags $stripTags,
-        \Magento\Framework\App\Helper\Context $context,
-        \Magento\Customer\Model\SessionFactory $sessionFactory
+        CatalogConfig $configAttribute,
+        Collection $collection,
+        SearchHelper $searchHelper,
+        StripTags $stripTags,
+        Context $context,
+        SessionFactory $sessionFactory,
+        Config $moduleConfigProvider
     ) {
         parent::__construct($context);
         $this->configAttribute = $configAttribute;
@@ -87,6 +97,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->searchHelper = $searchHelper;
         $this->stripTags = $stripTags;
         $this->sessionFactory = $sessionFactory;
+        $this->moduleConfigProvider = $moduleConfigProvider;
     }
 
     /**
@@ -121,11 +132,20 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
             if ($matches && isset($matches[0])) {
                 $re = '/(' . implode('|', $matches[0]) . ')/iu';
-                $text = preg_replace($re, '<span class="amsearch-highlight ">$0</span>', $text);
+                $text = preg_replace($re, '<span class="amsearch-highlight">$0</span>', $text);
             }
         }
 
         return $text;
+    }
+
+    /**
+     * @param string $tabType
+     * @return string
+     */
+    public function getTabTitle(string $tabType)
+    {
+        return (string)$this->getModuleConfig($tabType . '/title');
     }
 
     /**
@@ -157,9 +177,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $result = [];
 
-        if ($this->getModuleConfig(self::XML_PATH_TEMPLATE_POPULAR_SEARCHES_ENABLED)) {
+        if ($this->moduleConfigProvider->isPopularSearchesEnabled()) {
             $this->_pushItem(
-                self::XML_PATH_TEMPLATE_POPULAR_SEARCHES_POSITION,
+                Config::XML_PATH_TEMPLATE_POPULAR_SEARCHES_POSITION,
                 $layout->createBlock(Popular::class, 'amasty.xsearch.search.popular'),
                 $result
             );
@@ -167,7 +187,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         if ($this->getModuleConfig(self::XML_PATH_TEMPLATE_PRODUCT_ENABLED)) {
             /** @var Product $productsBlock */
-            $productsBlock = $layout->createBlock(Product::class, 'amasty.xsearch.product');
+            $productsBlock = $layout->createBlock(
+                Product::class,
+                'amasty.xsearch.product',
+                []
+            );
 
             $this->_pushItem(
                 self::XML_PATH_TEMPLATE_PRODUCT_POSITION,
@@ -192,9 +216,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             );
         }
 
-        if ($this->getModuleConfig(self::XML_PATH_TEMPLATE_RECENT_SEARCHES_ENABLED)) {
+        if ($this->moduleConfigProvider->isRecentSearchesEnabled()) {
             $this->_pushItem(
-                self::XML_PATH_TEMPLATE_RECENT_SEARCHES_POSITION,
+                Config::XML_PATH_TEMPLATE_RECENT_SEARCHES_POSITION,
                 $layout->createBlock(Recent::class, 'amasty.xsearch.search.recent'),
                 $result
             );
@@ -234,8 +258,16 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             && $this->_moduleManager->isEnabled('Amasty_Faq')
         ) {
             $this->_pushItem(
-                self::XML_PATH_TEMPLATE_BLOG_POSITION,
+                self::XML_PATH_TEMPLATE_FAQ_POSITION,
                 $layout->createBlock(Faq::class, 'amasty.xsearch.faq.page'),
+                $result
+            );
+        }
+
+        if ($this->moduleConfigProvider->isBrowsingHistoryEnabled()) {
+            $this->_pushItem(
+                Config::XML_PATH_BROWSING_HISTORY_POSITION,
+                $layout->createBlock(BrowsingHistory::class, 'amasty.xsearch.browsing.history'),
                 $result
             );
         }
@@ -311,6 +343,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $queryText = $query->getQueryText();
 
         if (strpos($engine, 'mysql') !== false) {
+            //@phpstan-ignore-next-line
             $replaceSymbols = str_split(QueryMatchBuilder::SPECIAL_CHARACTERS, 1);
             $queryText = trim(str_replace($replaceSymbols, ' ', $queryText));
             $query->setQueryText($queryText);

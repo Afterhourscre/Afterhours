@@ -9,19 +9,26 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\TemplateEngine\Data;
 
+use Magento\Catalog\Api\Data\CategoryInterface;
 use Magento\Framework\Registry;
 use Magento\Store\Model\StoreManagerInterface;
 
 class CategoryData extends AbstractData
 {
+    /**
+     * @var \Magento\Catalog\Model\Category
+     */
+    private $category;
+
     private $registry;
 
     private $storeManager;
@@ -36,12 +43,12 @@ class CategoryData extends AbstractData
         parent::__construct();
     }
 
-    public function getTitle()
+    public function getTitle(): string
     {
-        return __('Category Data');
+        return (string)__('Category Data');
     }
 
-    public function getVariables()
+    public function getVariables(): array
     {
         return [
             'name',
@@ -53,68 +60,84 @@ class CategoryData extends AbstractData
         ];
     }
 
-    public function getValue($attribute, $additionalData = [])
+    public function setCategory(CategoryInterface $category): AbstractData
+    {
+        $this->category = $category;
+
+        return $this;
+    }
+
+    public function getCategory(): ?CategoryInterface
+    {
+        if (!$this->category) {
+            return $this->registry->registry('current_category') ?: null;
+        }
+
+        return $this->category;
+    }
+
+    public function getValue(string $attribute, array $additionalData = []): ?string
     {
         /** @var \Magento\Catalog\Model\Category $category */
-        $category = $this->registry->registry('current_category');
+        $category = $this->getCategory();
 
         if (!$category) {
-            return false;
+            return null;
         }
 
         switch ($attribute) {
             case 'page_title':
-                return $category->getMetaTitle();
+                return (string)$category->getMetaTitle();
 
             case 'parent_name':
             case 'parent_name_1':
                 $parent = $this->getParentCategory($category, 1);
 
-                return $parent ? $parent->getName() : null;
+                return $parent ? (string)$parent->getName() : null;
 
             case 'parent_name_2':
                 $parent = $this->getParentCategory($category, 2);
 
-                return $parent ? $parent->getName() : null;
+                return $parent ? (string)$parent->getName() : null;
 
             case 'parent_name_3':
                 $parent = $this->getParentCategory($category, 3);
 
-                return $parent ? $parent->getName() : null;
+                return $parent ? (string)$parent->getName() : null;
 
             case 'parent_url':
                 $parent = $this->getParentCategory($category);
 
-                return $parent ? $parent->getUrl() : null;
+                return $parent ? (string)$parent->getUrl() : null;
         }
 
-        return $category->getDataUsingMethod($attribute);
+        $data = $category->getDataUsingMethod($attribute);
+
+        return $data ? (string)$data : null;
     }
 
-    /**
-     * @param \Magento\Catalog\Model\Category $category
-     * @param int                             $level
-     *
-     * @return false|\Magento\Catalog\Model\Category
-     */
-    private function getParentCategory($category, $level = 1)
+    private function getParentCategory(CategoryInterface $category, int $level = 1): ?CategoryInterface
     {
         if (!$category) {
-            return false;
+            return null;
         }
 
         /** @var \Magento\Store\Model\Store $store */
         $store = $this->storeManager->getStore();
 
         /** @var \Magento\Catalog\Model\Category $parent */
-        $parent = $category->getParentCategory();
+        try {
+            $parent = $category->getParentCategory();
+        } catch (\Exception $e) {
+            $parent = null;
+        }
 
         if (!$parent) {
-            return false;
+            return null;
         }
 
         if ($store->getRootCategoryId() == $parent->getId()) {
-            return false;
+            return null;
         }
 
         if ($level <= 1) {

@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoAutolink\Model;
 
@@ -21,47 +22,30 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 
 class Config
 {
-    /**
-     * @var ScopeConfigInterface
-     */
     protected $scopeConfig;
 
-    /**
-     * @param ScopeConfigInterface $scopeConfig
-     */
     public function __construct(
         ScopeConfigInterface $scopeConfig
     ) {
         $this->scopeConfig = $scopeConfig;
     }
 
-    /**
-     * @return array
-     */
-    public function getTarget()
+    public function getTarget(): array
     {
-        return explode(',', $this->scopeConfig->getValue('seoautolink/autolink/target'));
+        return explode(',', (string)$this->scopeConfig->getValue('seoautolink/autolink/target'));
     }
 
-    /**
-     * @param string $target
-     * @return bool
-     */
-    public function isAllowedTarget($target)
+    public function isAllowedTarget(string $target): bool
     {
         return in_array($target, $this->getTarget());
     }
 
-    /**
-     * @param int $store
-     * @return array
-     */
-    public function getExcludedTags($store = null)
+    public function getExcludedTags(int $storeId = null): array
     {
-        $conf = $this->scopeConfig->getValue(
+        $conf = (string)$this->scopeConfig->getValue(
             'seoautolink/autolink/excluded_tags',
             ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-            $store
+            $storeId
         );
 
         $tags = explode("\n", trim($conf));
@@ -71,16 +55,12 @@ class Config
         return $tags;
     }
 
-    /**
-     * @param int $store
-     * @return array
-     */
-    public function getSkipLinks($store = null)
+    public function getSkipLinks(int $storeId = null): array
     {
-        $conf = $this->scopeConfig->getValue(
+        $conf = (string)$this->scopeConfig->getValue(
             'seoautolink/autolink/skip_links_for_page',
             ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-            $store
+            $storeId
         );
 
         $links = explode("\n", trim($conf));
@@ -90,22 +70,18 @@ class Config
         return $links;
     }
 
-    /**
-     * @param int $store
-     * @return int
-     */
-    public function getLinksLimitPerPage($store = null)
+    public function getLinksLimitPerPage(int $storeId = null): ?int
     {
         $linksLimit = $this->scopeConfig->getValue(
             'seoautolink/autolink/links_limit_per_page',
             ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-            $store
+            $storeId
         );
 
         if (empty($linksLimit) || (int)$linksLimit == 0) {
-            return false;
+            return null;
         }
 
-        return $linksLimit;
+        return (int)$linksLimit;
     }
 }

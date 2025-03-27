@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -26,6 +26,10 @@ class RemoveFirstPageParamPlugin
      */
     private $request;
 
+    /**
+     * RemoveFirstPageParamPlugin constructor.
+     * @param RequestInterface $request
+     */
     public function __construct(
         RequestInterface $request
     ) {
@@ -43,9 +47,9 @@ class RemoveFirstPageParamPlugin
             // return original url (Sm_ShopBy compatibility)
             return $url;
         }
-        \Magento\Framework\Profiler::start(__METHOD__);
+
         $url = $this->removeFirstPage($url);
-        \Magento\Framework\Profiler::stop(__METHOD__);
+
         return $url;
     }
 

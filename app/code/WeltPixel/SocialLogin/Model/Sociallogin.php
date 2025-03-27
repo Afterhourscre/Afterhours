@@ -253,8 +253,12 @@ class Sociallogin extends \Magento\Framework\Model\AbstractModel
         $this->_init('WeltPixel\SocialLogin\Model\ResourceModel\Sociallogin');
         $this->_websiteId = $this->storeManager->getWebsite()->getId();
         $this->_redirectUri = $this->_helper->getCallback($this->_type);
-        $this->_applicationId = trim($this->_helper->getConfig($this->_helper->getConfigSectionId() . '/' . $this->_type . '/app_id'));
-        $this->_secret = trim($this->_helper->getConfig($this->_helper->getConfigSectionId() . '/' . $this->_type . '/app_secret'));
+        
+        $appId = $this->_helper->getConfig($this->_helper->getConfigSectionId() . '/' . $this->_type . '/app_id');
+        $this->_applicationId = is_null($appId) ? '' : trim($appId);
+        
+        $appSecret = $this->_helper->getConfig($this->_helper->getConfigSectionId() . '/' . $this->_type . '/app_secret');
+        $this->_secret = is_null($appSecret) ? '' : trim($appSecret);
     }
 
     /**

@@ -3,6 +3,7 @@
  * Copyright © 2016 MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
 namespace MageWorx\OptionTemplates\Model\ResourceModel\Group\Option;
 
 use MageWorx\OptionBase\Model\ResourceModel\CollectionUpdaterRegistry;
@@ -23,10 +24,11 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Option\Col
      *
      * @var array
      */
-    protected $_map = ['fields' =>
-        [
-            'group_id'   => 'main_table.group_id'
-        ]
+    protected $_map = [
+        'fields' =>
+            [
+                'group_id' => 'main_table.group_id'
+            ]
     ];
 
     /**
@@ -86,6 +88,8 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Option\Col
      */
     public function addGroupValuesToResult($storeId = null)
     {
+        \Magento\Framework\Profiler::start('optionTemplate-groupOptionCollection-addGroupValuesToResult');
+
         if ($storeId === null) {
             $storeId = $this->_storeManager->getStore()->getId();
         }
@@ -116,16 +120,19 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Option\Col
                 self::SORT_ORDER_ASC
             );
 
-            $valueIds = [];
+            $valueIds              = [];
+            $optionCollectionItems = $this->getItems();
             foreach ($valueCollection as $valueCollectionItem) {
                 if (!$valueCollectionItem->getOptionTypeId()) {
                     continue;
                 }
-                $valueIds[] = $valueCollectionItem->getOptionTypeId();
-                $optionId = $valueCollectionItem->getOptionId();
-                if ($this->getItemById($optionId)) {
-                    $this->getItemById($optionId)->addValue($valueCollectionItem);
-                    $valueCollectionItem->setOption($this->getItemById($optionId));
+                $valueIds[]  = $valueCollectionItem->getOptionTypeId();
+                $optionId    = $valueCollectionItem->getOptionId();
+                $optionModel = $optionCollectionItems[$optionId];
+
+                if ($optionModel) {
+                    $optionModel->addValue($valueCollectionItem);
+                    $valueCollectionItem->setOption($optionModel);
                 }
             }
 
@@ -133,6 +140,27 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Option\Col
                 $this->collectionUpdaterRegistry->setOptionValueIds($valueIds);
             }
         }
+
+        /* Backend Product
+         *
+         * Origin code
+         *
+         * time - 0.224906 (second )
+         * avg - 0.224906   (second )
+         * memory - 733,056   (second )
+         * real memory -
+         *
+         * -------------------------
+         *
+         * Updated code
+         *
+         * time - 0.161064 (second )
+         * avg - 0.161064   (second )
+         * memory - 733,056   (second )
+         * real memory -
+         *
+         */
+        \Magento\Framework\Profiler::stop('optionTemplate-groupOptionCollection-addGroupValuesToResult');
 
         return $this;
     }
@@ -201,18 +229,19 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Option\Col
 
     /**
      * Add product filter
+     *
      * @return $this
      * @internal param int $productId
      */
     public function addProductOptionToResultFilter()
     {
         $this->getSelect()
-            ->join(
-                ['product_option' => $this->getTable('catalog_product_option', true)],
-                'product_option.group_option_id = main_table.option_id',
-                ['product_options' => 'GROUP_CONCAT(product_option.option_id)']
-            )
-            ->group('main_table.group_id');
+             ->join(
+                 ['product_option' => $this->getTable('catalog_product_option', true)],
+                 'product_option.group_option_id = main_table.option_id',
+                 ['product_options' => 'GROUP_CONCAT(product_option.option_id)']
+             )
+             ->group('main_table.group_id');
 
         return $this;
     }

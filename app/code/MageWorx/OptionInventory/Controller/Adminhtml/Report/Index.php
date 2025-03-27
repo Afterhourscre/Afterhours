@@ -11,10 +11,7 @@ namespace MageWorx\OptionInventory\Controller\Adminhtml\Report;
  */
 class Index extends \Magento\Backend\App\Action
 {
-    /**
-     * @var \Magento\Framework\View\Result\PageFactory
-     */
-    protected $resultPageFactory;
+    protected \Magento\Framework\View\Result\PageFactory $resultPageFactory;
 
     public function __construct(
         \Magento\Backend\App\Action\Context $context,

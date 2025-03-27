@@ -9,45 +9,36 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\Alternate;
 
+use Mirasvit\Seo\Api\Service\Alternate\UrlInterface;
+
 class DefaultStrategy implements \Mirasvit\Seo\Api\Service\Alternate\StrategyInterface
 {
-    /**
-     * @var \Mirasvit\Seo\Api\Service\Alternate\UrlInterface
-     */
     protected $url;
 
-    /**
-     * @param \Mirasvit\Seo\Api\Service\Alternate\UrlInterface $url
-     */
     public function __construct(
-        \Mirasvit\Seo\Api\Service\Alternate\UrlInterface $url
+        UrlInterface $url
     ) {
         $this->url = $url;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getStoreUrls()
+    public function getStoreUrls(): array
     {
         $storeUrls = $this->url->getStoresCurrentUrl();
 
         return $storeUrls;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getAlternateUrl($storeUrls) 
+    public function getAlternateUrl(array $storeUrls): array
     {
-
+        return [];
     }
 }

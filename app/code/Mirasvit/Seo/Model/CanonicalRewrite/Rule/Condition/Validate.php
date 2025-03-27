@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -47,7 +47,7 @@ class Validate extends \Magento\Rule\Model\Condition\AbstractCondition
     protected $productFactory;
 
     /**
-     * @var \Magento\Catalog\Model\ ResourceModel\Product\Type\ConfigurableFactory
+     * @var \Magento\ConfigurableProduct\Model\Product\Type\ConfigurableFactory
      */
     protected $productTypeConfigurableFactory;
 
@@ -87,7 +87,7 @@ class Validate extends \Magento\Rule\Model\Condition\AbstractCondition
     protected $customerSession;
 
     /**
-     * @var \Magento\Framework\Model\Context
+     * @var \Magento\Rule\Model\Condition\Context
      */
     protected $context;
 
@@ -95,6 +95,14 @@ class Validate extends \Magento\Rule\Model\Condition\AbstractCondition
      * @var \Magento\Framework\Registry
      */
     protected $registry;
+    /**
+     * @var \Magento\CatalogInventory\Model\StockState
+     */
+    private $stockState;
+    /**
+     * @var \Magento\Framework\Stdlib\DateTime\TimezoneInterface
+     */
+    private $localeDate;
 
     /**
      * @param \Magento\CatalogInventory\Model\Stock\ItemFactory                   $stockItemFactory
@@ -152,7 +160,7 @@ class Validate extends \Magento\Rule\Model\Condition\AbstractCondition
     }
 
     /**
-     * @var null|string|int
+     * @var null|array
      */
     protected $entityAttributeValues = null;
     /**
@@ -161,7 +169,7 @@ class Validate extends \Magento\Rule\Model\Condition\AbstractCondition
     protected $isUsedForRuleProperty = 'is_used_for_promo_rules';
 
     /**
-     * @return false|\Magento\Eav\Model\Entity\Attribute\AbstractAttribute|\Magento\Framework\DataObject
+     * @return \Magento\Catalog\Model\ResourceModel\Eav\Attribute
      */
     public function getAttributeObject()
     {
@@ -178,7 +186,7 @@ class Validate extends \Magento\Rule\Model\Condition\AbstractCondition
     }
 
     /**
-     * @param array &$attributes
+     * @param array $attributes
      *
      * @return void
      */
@@ -186,8 +194,8 @@ class Validate extends \Magento\Rule\Model\Condition\AbstractCondition
     {
         $attributes['attribute_set_id'] = __('Attribute Set');
         $attributes['category_ids'] = __('Category');
-        $attributes['created_at'] = __('Created At (days ago)');
-        $attributes['updated_at'] = __('Updated At (days ago)');
+        $attributes['created_at'] = __('Created (days ago)');
+        $attributes['updated_at'] = __('Updated (days ago)');
         $attributes['qty'] = __('Quantity');
         $attributes['price_diff'] = __('Price - Final Price');
         $attributes['percent_discount'] = __('Percent Discount');
@@ -252,7 +260,9 @@ class Validate extends \Magento\Rule\Model\Condition\AbstractCondition
                 } else {
                     $addEmptyOption = true;
                 }
-                $selectOptions = $attributeObject->getSource()->getAllOptions($addEmptyOption);
+                /** @var mixed $source */
+                $source = $attributeObject->getSource();
+                $selectOptions = $source->getAllOptions($addEmptyOption);
             }
         }
 
@@ -331,7 +341,7 @@ class Validate extends \Magento\Rule\Model\Condition\AbstractCondition
     /**
      * Retrieve attribute element.
      *
-     * @return Varien_Form_Element_Abstract
+     * @return \Magento\Rule\Model\Condition\AbstractCondition
      */
     public function getAttributeElement()
     {
@@ -342,7 +352,7 @@ class Validate extends \Magento\Rule\Model\Condition\AbstractCondition
     }
 
     /**
-     * @param string $productCollection
+     * @param mixed $productCollection
      *
      * @return $this
      */
@@ -356,7 +366,7 @@ class Validate extends \Magento\Rule\Model\Condition\AbstractCondition
                 $attributes[$attribute] = true;
                 $this->getRule()->setCollectedAttributes($attributes);
                 $productCollection->addAttributeToSelect($attribute);
-            } elseif (method_exists($productCollection,'getAllAttributeValues')) {
+            } elseif (method_exists($productCollection, 'getAllAttributeValues')) {
                 $this->entityAttributeValues = $productCollection->getAllAttributeValues($attribute);
             }
         } elseif (($attribute == 'price_diff')
@@ -517,6 +527,7 @@ class Validate extends \Magento\Rule\Model\Condition\AbstractCondition
 
         switch ($attrCode) {
             case 'category_ids':
+                /** @var \Magento\Catalog\Model\Category $object */
                 return $this->validateCategory($object);
 
             case 'attribute_set_id':
@@ -525,6 +536,7 @@ class Validate extends \Magento\Rule\Model\Condition\AbstractCondition
                 return $this->validateAttribute($attrId);
 
             case 'qty':
+                /** @var \Magento\Catalog\Model\Product $object */
                 return $this->validateQty($object);
 
             default:
@@ -533,7 +545,7 @@ class Validate extends \Magento\Rule\Model\Condition\AbstractCondition
     }
 
     /**
-     * @param string $object
+     * @param \Magento\Framework\Model\AbstractModel $object
      *
      * @return bool
      *
@@ -551,7 +563,7 @@ class Validate extends \Magento\Rule\Model\Condition\AbstractCondition
         $op = $this->getOperatorForValidate();
         if ((($op == '==') || ($op == '!=')) && is_array($categoryIds)) {
             $value = $this->getValueParsed();
-            $value = preg_split('#\s*[,;]\s*#', $value, null, PREG_SPLIT_NO_EMPTY);
+            $value = preg_split('#\s*[,;]\s*#', $value, 0, PREG_SPLIT_NO_EMPTY);
             $findElemInArray = array_intersect($categoryIds, $value);
             if (count($findElemInArray) > 0) {
                 if ($op == '==') {
@@ -578,7 +590,7 @@ class Validate extends \Magento\Rule\Model\Condition\AbstractCondition
     /**
      * @param array $categoryIds
      * @param boolean $isCategory
-     * @param \Magento\Catalog\Model\Category $object
+     * @param \Magento\Catalog\Model\Category|\Magento\Framework\Model\AbstractModel $object
      *
      * @return array
      *
@@ -604,7 +616,7 @@ class Validate extends \Magento\Rule\Model\Condition\AbstractCondition
     }
 
     /**
-     * @param string $object
+     * @param \Magento\Framework\Model\AbstractModel $object
      * @param string $attrCode
      *
      * @return bool
@@ -664,7 +676,7 @@ class Validate extends \Magento\Rule\Model\Condition\AbstractCondition
     }
 
     /**
-     * @param string $object
+     * @param \Magento\Catalog\Model\Product $object
      *
      * @return bool
      */

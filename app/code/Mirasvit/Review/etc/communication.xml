@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Communication/etc/communication.xsd">
+    <topic name="mirasvit.review.notify_new" is_synchronous="false" request="int">
+        <handler name="mirasvit.review.notify_new" type="Mirasvit\Review\Service\Email\NotificationService" method="notifyPendingReview"/>
+    </topic>
+</config>

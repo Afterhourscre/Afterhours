@@ -8,10 +8,12 @@ namespace MageWorx\OptionBase\Ui\DataProvider\Product\Form\Modifier;
 
 use Magento\Catalog\Ui\DataProvider\Product\Form\Modifier\AbstractModifier;
 use Magento\Catalog\Ui\DataProvider\Product\Form\Modifier\CustomOptions;
+use Magento\Framework\Serialize\Serializer\Json as Serializer;
 use Magento\Ui\Component\Form\Element\DataType\Number;
 use Magento\Ui\Component\Form\Element\Input;
 use Magento\Ui\Component\Form\Element\DataType\Text;
 use Magento\Framework\App\Request\Http;
+use MageWorx\OptionBase\Helper\Data as BaseHelper;
 use MageWorx\OptionBase\Model\OptionTitle;
 use Magento\Ui\Component\Modal;
 use Magento\Ui\Component\Container;
@@ -33,41 +35,32 @@ class Title extends AbstractModifier implements ModifierInterface
     const MODAL_CONTENT  = 'content';
     const MODAL_FIELDSET = 'fieldset';
 
-    /**
-     * @var Http
-     */
-    protected $request;
+    protected Http $request;
+    protected array $meta = [];
+    protected string $form = 'product_form';
+    protected StoreManagerInterface $storeManager;
+    protected BaseHelper $baseHelper;
+    protected array $storeIds = [];
+    protected Serializer $serializer;
 
     /**
-     * @var array
-     */
-    protected $meta = [];
-
-    /**
-     * @var string
-     */
-    protected $form = 'product_form';
-
-    /**
-     * @var StoreManagerInterface
-     */
-    protected $storeManager;
-
-    /**
-     * @var array
-     */
-    protected $storeIds = [];
-
-    /**
-     * @param Http $request
+     * Title constructor.
+     *
      * @param StoreManagerInterface $storeManager
+     * @param Http $request
+     * @param BaseHelper $baseHelper
+     * @param Serializer $serializer
      */
     public function __construct(
         StoreManagerInterface $storeManager,
-        Http $request
+        Http $request,
+        BaseHelper $baseHelper,
+        Serializer $serializer
     ) {
         $this->storeManager = $storeManager;
         $this->request      = $request;
+        $this->baseHelper   = $baseHelper;
+        $this->serializer   = $serializer;
     }
 
     /**
@@ -348,6 +341,33 @@ class Title extends AbstractModifier implements ModifierInterface
      */
     protected function getTitleButtonConfig($sortOrder, $additionalForGroup = false)
     {
+        $storeIds     = $this->storeIds;
+        $storeIdsJson = $storeIds ? $this->serializer->serialize($storeIds) : null;
+
+        $params = [
+            'provider'           => '${ $.provider }',
+            'dataScope'          => '${ $.dataScope }',
+            'formName'           => $this->form,
+            'buttonName'         => '${ $.name }',
+            'storeIds'           => $storeIdsJson,
+            'pathGroupContainer' => self::PATH_GROUP_CONTAINER,
+            'pathTitle'          => self::PATH_TITLE,
+            'pathUseGlobal'      => self::PATH_USE_GLOBAL,
+            'fieldName'          => OptionTitle::KEY_MAGEWORX_OPTION_TITLE,
+            'currentStoreId'     => $this->isTemplatePage()
+                ? 0
+                : $this->storeManager->getStore()->getStoreId()
+        ];
+
+        if ($this->baseHelper->checkModuleVersion('104.0.0')) {
+            $params['__disableTmpl'] =
+            [
+                'provider'   => false,
+                'dataScope'  => false,
+                'buttonName' => false
+            ];
+        }
+
         $field[static::TITLE_BUTTON_NAME] = [
             'arguments' => [
                 'data' => [
@@ -384,20 +404,7 @@ class Title extends AbstractModifier implements ModifierInterface
                                     . static::TITLE_MODAL_INDEX,
                                 'actionName' => 'reloadModal',
                                 'params'     => [
-                                    [
-                                        'provider'           => '${ $.provider }',
-                                        'dataScope'          => '${ $.dataScope }',
-                                        'formName'           => $this->form,
-                                        'buttonName'         => '${ $.name }',
-                                        'storeIds'           => json_encode($this->storeIds),
-                                        'pathGroupContainer' => self::PATH_GROUP_CONTAINER,
-                                        'pathTitle'          => self::PATH_TITLE,
-                                        'pathUseGlobal'      => self::PATH_USE_GLOBAL,
-                                        'fieldName'          => OptionTitle::KEY_MAGEWORX_OPTION_TITLE,
-                                        'currentStoreId'     => $this->isTemplatePage()
-                                            ? 0
-                                            : $this->storeManager->getStore()->getStoreId()
-                                    ],
+                                    $params
                                 ],
                             ],
                         ],
@@ -418,7 +425,13 @@ class Title extends AbstractModifier implements ModifierInterface
     {
         $attributes = [];
 
-        $attributes[] = '${ $.dataScope }' . '.' . 'title';
+        $attributes['title'] = '${ $.dataScope }' . '.' . 'title';
+
+        if ($this->baseHelper->checkModuleVersion('104.0.0')) {
+            $attributes['__disableTmpl'] = [
+                'title' => false
+            ];
+        }
 
         return $attributes;
     }

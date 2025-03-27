@@ -1,8 +1,10 @@
 <?php
 /**
- * Copyright © 2016 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+declare(strict_types=1);
+
 namespace MageWorx\OptionInventory\Ui\Component\Listing\Column;
 
 use MageWorx\OptionInventory\Helper\Stock as HelperStock;
@@ -13,19 +15,14 @@ use \Magento\Backend\Helper\Data as BackendHelper;
 
 /**
  * Class Qty
+ *
  * @package MageWorx\OptionInventory\Ui\Component\Listing\Column
  */
 class Qty extends Column
 {
-    /**
-     * @var PriceCurrencyInterface
-     */
-    protected $backendHelper;
-
-    /**
-     * @var HelperStock
-     */
-    protected $helperStock;
+    // TODO unused ?
+    protected BackendHelper $backendHelper;
+    protected HelperStock $helperStock;
 
     /**
      * Qty constructor.
@@ -45,7 +42,7 @@ class Qty extends Column
         array $components = [],
         array $data = []
     ) {
-        $this->helperStock = $helperStock;
+        $this->helperStock   = $helperStock;
         $this->backendHelper = $backendHelper;
         parent::__construct($context, $uiComponentFactory, $components, $data);
     }
@@ -56,16 +53,18 @@ class Qty extends Column
      * @param array $dataSource
      * @return array
      */
-    public function prepareDataSource(array $dataSource)
+    public function prepareDataSource(array $dataSource): array
     {
         if (isset($dataSource['data']['items'])) {
             foreach ($dataSource['data']['items'] as & $item) {
-                $qty = isset($item['qty']) ? $item['qty'] : null;
-                $productId = isset($item['product_id']) ? $item['product_id'] : null;
+                $qty       = $item['qty'] ?? null;
+                $productId = $item['product_id'] ?? null;
                 if (!$qty || !$productId) {
                     continue;
                 }
-                $item[$this->getData('name')] = $this->helperStock->floatingQty($qty, $productId);
+                $formattedQty = $this->helperStock->isfloatingQty((int)$productId) ? (float)$qty : (int)$qty;
+
+                $item[$this->getData('name')] = $formattedQty;
             }
         }
 

@@ -9,15 +9,17 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoContent\Model;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 
 class Config
@@ -35,59 +37,73 @@ class Config
         $this->scopeConfig = $scopeConfig;
     }
 
-    public function useProductMetaTags()
+    public function useProductMetaTags(): bool
     {
-        return $this->scopeConfig->getValue(
+        return (bool)$this->scopeConfig->getValue(
             'seo/seo_content/meta/is_product_meta_tags_used',
             ScopeInterface::SCOPE_STORE
         );
     }
 
-    public function useCategoryMetaTags()
+    public function useCategoryMetaTags(): bool
     {
-        return $this->scopeConfig->getValue(
+        return (bool)$this->scopeConfig->getValue(
             'seo/seo_content/meta/is_category_meta_tags_used',
             ScopeInterface::SCOPE_STORE
         );
     }
 
-    public function addPrefixSuffixToMetaTitle()
+    public function useCmsMetaTags(): bool
     {
-        return $this->scopeConfig->getValue(
+        return (bool)$this->scopeConfig->getValue(
+            'seo/seo_content/meta/is_cms_meta_tags_used',
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    public function useBlogMetaTags(): bool
+    {
+        return (bool)$this->scopeConfig->getValue(
+            'seo/seo_content/meta/is_blog_meta_tags_used',
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    public function useBrandMetaTags(): bool
+    {
+        return (bool)$this->scopeConfig->getValue(
+            'seo/seo_content/meta/is_brand_meta_tags_used',
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    public function addPrefixSuffixToMetaTitle(): bool
+    {
+        return (bool)$this->scopeConfig->getValue(
             'seo/seo_content/meta/is_add_prefix_suffix',
             ScopeInterface::SCOPE_STORE
         );
     }
 
-    /**
-     * @param object $store
-     *
-     * @return int
-     */
-    public function getMetaTitlePageNumber($store)
+    public function getMetaTitlePageNumber(StoreInterface $store): int
     {
-        return $this->scopeConfig->getValue(
+        return (int)$this->scopeConfig->getValue(
             'seo/seo_content/pagination/meta_title_page_number',
             ScopeInterface::SCOPE_STORE,
             $store
         );
     }
 
-    /**
-     * @param object $store
-     *
-     * @return int
-     */
-    public function getMetaDescriptionPageNumber($store)
+    public function getMetaDescriptionPageNumber(StoreInterface $store): int
     {
-        return $this->scopeConfig->getValue(
+        return (int)$this->scopeConfig->getValue(
             'seo/seo_content/pagination/meta_description_page_number',
             ScopeInterface::SCOPE_STORE,
             $store
         );
     }
 
-    public function getMetaTitleLength($store)
+    public function getMetaTitleLength(StoreInterface $store): int
     {
         $value = (int)$this->scopeConfig->getValue(
             'seo/seo_content/limiter/meta_title_max_length',
@@ -98,7 +114,7 @@ class Config
         return $value && $value < 25 ? 55 : $value;
     }
 
-    public function getMetaDescriptionLength($store)
+    public function getMetaDescriptionLength(StoreInterface $store): int
     {
         $value = (int)$this->scopeConfig->getValue(
             'seo/seo_content/limiter/meta_description_max_length',
@@ -109,7 +125,7 @@ class Config
         return $value && $value < 25 ? 150 : $value;
     }
 
-    public function getProductNameLength($store)
+    public function getProductNameLength(StoreInterface $store): int
     {
         $value = (int)$this->scopeConfig->getValue(
             'seo/seo_content/limiter/product_name_max_length',
@@ -120,7 +136,7 @@ class Config
         return $value && $value < 10 ? 25 : $value;
     }
 
-    public function getProductShortDescriptionLength($store)
+    public function getProductShortDescriptionLength(StoreInterface $store): int
     {
         $value = (int)$this->scopeConfig->getValue(
             'seo/seo_content/limiter/product_short_description_max_length',

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -53,6 +53,8 @@ class Strings
             '&amp;Ccedil;',
             '&amp;ccedil;',
             '&amp;ecirc;',
+            '&amp;auml;',
+            '&amp;uuml;'
         ];
 
         $replaceTamp = [
@@ -79,6 +81,8 @@ class Strings
             'Ç',
             'ç',
             'ê',
+            'ä',
+            'ü'
         ];
 
         $searchT = [
@@ -104,6 +108,8 @@ class Strings
             '&ugrave;',
             '&Ccedil;',
             '&ccedil;',
+            '&auml;',
+            '&uuml;'
         ];
 
         $replaceT = [
@@ -129,10 +135,13 @@ class Strings
             'ù',
             'Ç',
             'ç',
+            'ä',
+            'ü'
         ];
 
         $source = str_replace($searchTamp, $replaceTamp, $source);
         $source = str_replace($searchT, $replaceT, $source);
+        $source = str_replace(['&lt;', '&gt;'], ['<', '>'], $source);
 
         return $source;
     }

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -27,10 +27,47 @@ use Magento\Rule\Model\AbstractModel;
 use Magento\Rule\Model\Action\CollectionFactory;
 use Mirasvit\Seo\Api\Data\CanonicalRewriteInterface;
 use Mirasvit\Seo\Model\CanonicalRewrite\Rule\Condition\CombineFactory;
-use Mirasvit\Seo\Helper\Serializer;
+use Mirasvit\Core\Service\SerializeService;
 
 class CanonicalRewrite extends AbstractModel implements CanonicalRewriteInterface
 {
+    /**
+     * @var CollectionFactory
+     */
+    private $ruleActionCollectionFactory;
+    /**
+     * @var CombineFactory
+     */
+    private $ruleConditionCombineFactory;
+    /**
+     * @var Collection
+     */
+    private $resourceCollection;
+    /**
+     * @var CanonicalRewriteResource
+     */
+    private $resource;
+    /**
+     * @var Registry
+     */
+    private $registry;
+    /**
+     * @var Context
+     */
+    private $context;
+
+    /**
+     * CanonicalRewrite constructor.
+     * @param CombineFactory $ruleConditionCombineFactory
+     * @param CollectionFactory $ruleActionCollectionFactory
+     * @param Context $context
+     * @param Registry $registry
+     * @param FormFactory $formFactory
+     * @param TimezoneInterface $localeDate
+     * @param CanonicalRewriteResource|null $resource
+     * @param Collection|null $resourceCollection
+     * @param array $data
+     */
     public function __construct(
         CombineFactory $ruleConditionCombineFactory,
         CollectionFactory $ruleActionCollectionFactory,
@@ -40,7 +77,6 @@ class CanonicalRewrite extends AbstractModel implements CanonicalRewriteInterfac
         TimezoneInterface $localeDate,
         CanonicalRewriteResource $resource = null,
         Collection $resourceCollection = null,
-        Serializer $serializer,
         array $data = []
     ) {
         $this->ruleConditionCombineFactory = $ruleConditionCombineFactory;
@@ -49,8 +85,7 @@ class CanonicalRewrite extends AbstractModel implements CanonicalRewriteInterfac
         $this->registry                    = $registry;
         $this->resource                    = $resource;
         $this->resourceCollection          = $resourceCollection;
-        $this->serializer                  = $serializer;
-        
+
         parent::__construct($context, $registry, $formFactory, $localeDate, $resource, $resourceCollection, $data);
     }
 
@@ -211,7 +246,7 @@ class CanonicalRewrite extends AbstractModel implements CanonicalRewriteInterfac
         if ($this->hasConditionsSerialized()) {
             $conditions = $this->getConditionsSerialized();
             if (!empty($conditions)) {
-                $conditions = $this->serializer->unserialize($conditions);
+                $conditions = SerializeService::decode($conditions);
                 if (is_array($conditions) && !empty($conditions)) {
                     $this->_conditions->loadArray($conditions);
                 }

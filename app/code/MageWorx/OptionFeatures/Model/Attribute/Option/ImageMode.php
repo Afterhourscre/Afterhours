@@ -3,31 +3,15 @@
  * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
 namespace MageWorx\OptionFeatures\Model\Attribute\Option;
 
-use Magento\Framework\App\ResourceConnection;
 use MageWorx\OptionFeatures\Helper\Data as Helper;
-use MageWorx\OptionBase\Api\AttributeInterface;
 use MageWorx\OptionBase\Model\Product\Option\AbstractAttribute;
 
-class ImageMode extends AbstractAttribute implements AttributeInterface
+class ImageMode extends AbstractAttribute
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @param ResourceConnection $resource
-     * @param Helper $helper
-     */
-    public function __construct(
-        ResourceConnection $resource,
-        Helper $helper
-    ) {
-        $this->helper = $helper;
-        parent::__construct($resource);
-    }
+    const FIELD_MAGE_ONE_OPTIONS_IMPORT = '_custom_option_image_mode';
 
     /**
      * {@inheritdoc}
@@ -42,21 +26,46 @@ class ImageMode extends AbstractAttribute implements AttributeInterface
      */
     public function importTemplateMageOne($data)
     {
-        if (isset($data['image_mode']) && $this->isM1ModeRelatedToReplace($data['image_mode'])) {
-            return 1;
+        if (isset($data['image_mode'])) {
+            return $this->mapImageMode($data['image_mode']);
         }
         return 0;
     }
 
     /**
-     * Check if MageOne image mode related to replace mode in MageTwo:
-     * Replace Product Gallery, Append to Product Gallery, Overlay
+     * Map MageOne image mode to mode in MageTwo:
+     * Temporary replace "Append" method to "Replace"
      *
      * @param string
-     * @return bool
+     * @return int
      */
-    public function isM1ModeRelatedToReplace($mode)
+    public function mapImageMode($mode)
     {
-        return in_array($mode, ['2','3','4']);
+        if (in_array($mode, ['2', '3'])) {
+            return 1;
+        } elseif ($mode == 4) {
+            return 3;
+        }
+        return 0;
+    }
+
+    /**
+     * Prepare data from Magento 1 product csv for future import
+     *
+     * @param array $systemData
+     * @param array $productData
+     * @param array $optionData
+     * @param array $preparedOptionData
+     * @param array $valueData
+     * @param array $preparedValueData
+     * @return void
+     */
+    public function prepareOptionsMageOne($systemData, $productData, $optionData, &$preparedOptionData, $valueData = [], &$preparedValueData = [])
+    {
+        if (!isset($optionData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT])) {
+            return;
+        }
+        $preparedOptionData[static::getName()] =
+            $this->mapImageMode($optionData[static::FIELD_MAGE_ONE_OPTIONS_IMPORT]);
     }
 }

@@ -1,0 +1,55 @@
+{
+    "mst_seo_content_template": {
+        "column": {
+            "template_id": true,
+            "name": true,
+            "is_active": true,
+            "rule_type": true,
+            "store_ids": true,
+            "sort_order": true,
+            "meta_title": true,
+            "meta_keywords": true,
+            "meta_description": true,
+            "title": true,
+            "description": true,
+            "short_description": true,
+            "full_description": true,
+            "description_position": true,
+            "description_template": true,
+            "category_description": true,
+            "category_image": true,
+            "conditions_serialized": true,
+            "stop_rules_processing": true,
+            "apply_for_child_categories": true,
+            "apply_for_homepage": true
+            "apply_for_all_brands_page": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    },
+    "mst_seo_content_rewrite": {
+        "column": {
+            "rewrite_id": true,
+            "url": true,
+            "is_active": true,
+            "store_ids": true,
+            "sort_order": true,
+            "meta_title": true,
+            "meta_keywords": true,
+            "meta_description": true,
+            "title": true,
+            "description": true,
+            "description_position": true,
+            "description_template": true,
+            "meta_robots": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    },
+    "mst_seo_template": [],
+    "mst_seo_template_store": [],
+    "mst_seo_rewrite": [],
+    "mst_seo_rewrite_store": []
+}

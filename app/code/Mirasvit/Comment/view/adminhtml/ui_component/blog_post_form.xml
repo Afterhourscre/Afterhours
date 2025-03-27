@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <container name="main">
+        <fieldset name="comments">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="label" xsi:type="string">Comments</item>
+                    <item name="collapsible" xsi:type="boolean">true</item>
+                    <item name="opened" xsi:type="boolean">false</item>
+                    <item name="area" xsi:type="string">main</item>
+                </item>
+            </argument>
+
+            <htmlContent name="comments_html_content">
+                <block name="comments_html_block" class="Mirasvit\Comment\Block\Adminhtml\Comment\Container"/>
+            </htmlContent>
+        </fieldset>
+    </container>
+</form>

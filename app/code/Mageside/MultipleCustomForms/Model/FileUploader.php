@@ -223,10 +223,10 @@ class FileUploader
         }
 
         // Directory listing and hotlink secure
-        $path = $this->getBasePath() . '/.htaccess';
-        if (!$this->mediaDirectory->isFile($path)) {
-            $this->mediaDirectory->writeFile($path, "Order deny,allow\nDeny from all");
-        }
+        // $path = $this->getBasePath() . '/.htaccess';
+        // if (!$this->mediaDirectory->isFile($path)) {
+        //     $this->mediaDirectory->writeFile($path, "Order deny,allow\nDeny from all");
+        // }
     }
 
     /**

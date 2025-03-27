@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -23,10 +23,21 @@ use Mirasvit\SeoSitemap\Model\Config;
 
 class Store extends Template
 {
+    /**
+     * @var Config
+     */
     private $config;
 
+    /**
+     * @var Context
+     */
     private $context;
 
+    /**
+     * Store constructor.
+     * @param Config $config
+     * @param Context $context
+     */
     public function __construct(
         Config $config,
         Context $context
@@ -37,16 +48,25 @@ class Store extends Template
         parent::_construct();
     }
 
+    /**
+     * @return \Magento\Framework\Phrase
+     */
     public function getTitle()
     {
         return __('Stores');
     }
 
+    /**
+     * @return \Magento\Store\Api\Data\StoreInterface[]
+     */
     public function getStores()
     {
         return $this->context->getStoreManager()->getStores();
     }
 
+    /**
+     * @return bool|int
+     */
     public function canShowStores()
     {
         return $this->config->getIsShowStores();

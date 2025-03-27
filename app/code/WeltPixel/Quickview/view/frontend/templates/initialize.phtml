@@ -16,5 +16,5 @@
             });
         });
 
-    window.weltpixel_quickview = <?php /* @escapeNotVerified */ echo \Zend_Json::encode($block->getConfig()); ?>;
+    window.weltpixel_quickview = <?php /* @escapeNotVerified */ echo json_encode($block->getConfig()); ?>;
 </script>

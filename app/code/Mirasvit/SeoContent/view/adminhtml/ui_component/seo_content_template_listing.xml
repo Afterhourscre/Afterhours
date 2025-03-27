@@ -49,6 +49,20 @@
     </listingToolbar>
 
     <columns name="seo_content_template_columns">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="childDefaults" xsi:type="array">
+                    <item name="fieldAction" xsi:type="array">
+                        <item name="provider" xsi:type="string">seo_content_template_listing.seo_content_template_listing.seo_content_template_columns.actions</item>
+                        <item name="target" xsi:type="string">applyAction</item>
+                        <item name="params" xsi:type="array">
+                            <item name="0" xsi:type="string">edit</item>
+                            <item name="1" xsi:type="string">${ $.$data.rowIndex }</item>
+                        </item>
+                    </item>
+                </item>
+            </item>
+        </argument>
         <column name="template_id">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
@@ -69,7 +83,7 @@
             </argument>
         </column>
 
-        <column name="template" class="Mirasvit\SeoContent\Ui\Template\Listing\Column\TemplateColumn">
+        <column name="template" class="Mirasvit\SeoContent\Ui\Template\Listing\Columns\TemplateColumn">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
                     <item name="bodyTmpl" xsi:type="string">ui/grid/cells/html</item>
@@ -127,7 +141,7 @@
             </argument>
         </column>
 
-        <actionsColumn name="actions" class="Mirasvit\SeoContent\Ui\Template\Listing\Column\ActionsColumn">
+        <actionsColumn name="actions" class="Mirasvit\SeoContent\Ui\Template\Listing\Columns\ActionsColumn">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
                     <item name="indexField" xsi:type="string">template_id</item>

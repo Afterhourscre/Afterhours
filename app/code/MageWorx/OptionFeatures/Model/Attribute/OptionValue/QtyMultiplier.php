@@ -34,4 +34,18 @@ class QtyMultiplier extends AbstractAttribute
     {
         $preparedValueData[static::getName()] = 0;
     }
+
+    /**
+     * Prepare data for attributes, which do NOT have own database tables, for Magento2 product import
+     *
+     * @param array $data
+     * @param string $type
+     * @return mixed
+     */
+    public function prepareImportDataMageTwo($data, $type)
+    {
+        return empty($data['custom_option_row_' . $this->getName()])
+            ? 0
+            : $data['custom_option_row_' . $this->getName()];
+    }
 }

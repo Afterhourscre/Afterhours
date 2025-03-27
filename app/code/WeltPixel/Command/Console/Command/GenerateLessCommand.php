@@ -27,16 +27,15 @@ class GenerateLessCommand extends Command
 
     /**
      * GenerateLessCommand constructor.
-     * @param array $generationContainer
      * @param ObjectManagerInterface $objectManager
      * @param \Magento\Framework\App\State $state
+     * @param array $generationContainer
      */
     public function __construct(
-        array $generationContainer = [],
         ObjectManagerInterface $objectManager,
-        \Magento\Framework\App\State $state
-    )
-    {
+        \Magento\Framework\App\State $state,
+        array $generationContainer = []
+    ) {
         $this->state = $state;
         try {
             $area = $this->state->getAreaCode();
@@ -44,7 +43,7 @@ class GenerateLessCommand extends Command
                 $this->state->setAreaCode(\Magento\Framework\App\Area::AREA_ADMINHTML);
             }
         } catch (\Exception $ex) {
-
+            // Handle exception if needed
         }
         $this->generationContainer = $generationContainer;
         $this->objectManager = $objectManager;

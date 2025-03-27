@@ -9,41 +9,70 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoContent\Model\Template\Rule\Condition;
 
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Module\Manager;
 use Mirasvit\SeoContent\Api\Data\TemplateInterface;
-use Mirasvit\SeoContent\Model\Config;
 use Magento\Rule\Model\Condition\Context;
 
 class Combine extends \Magento\Rule\Model\Condition\Combine
 {
     private $categoryCondition;
 
+    private $pageCondition;
+
     private $productCondition;
 
+    private $blogCondition;
+
+    private $brandCondition;
+
+    private $request;
+
+    private $moduleManager;
+
+    /**
+     * @var int|string|null
+     */
     private $ruleType;
 
     public function __construct(
         CategoryCondition $categoryCondition,
+        PageCondition $pageCondition,
         ProductCondition $productCondition,
+        BlogCondition $blogCondition,
+        BrandCondition $brandCondition,
+        RequestInterface $request,
+        Manager $moduleManager,
         Context $context,
         array $data = []
     ) {
         parent::__construct($context, $data);
 
         $this->categoryCondition = $categoryCondition;
-        $this->productCondition = $productCondition;
+        $this->pageCondition     = $pageCondition;
+        $this->productCondition  = $productCondition;
+        $this->blogCondition     = $blogCondition;
+        $this->brandCondition    = $brandCondition;
+        $this->request           = $request;
+        $this->moduleManager     = $moduleManager;
 
         $this->setData('type', self::class);
     }
 
-    public function setRuleType($type)
+    /**
+     * @param int|string|null $type
+     * @return $this
+     */
+    public function setRuleType($type): Combine
     {
         $this->ruleType = $type;
 
@@ -52,40 +81,82 @@ class Combine extends \Magento\Rule\Model\Condition\Combine
 
     /**
      * @return array
+     *
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public function getNewChildSelectOptions()
+    public function getNewChildSelectOptions(): array
     {
-        $productAttributes = $this->productCondition->loadAttributeOptions()->getData('attribute_option');
+        $productAttributes  = $this->productCondition->loadAttributeOptions()->getData('attribute_option');
         $categoryAttributes = $this->categoryCondition->loadAttributeOptions()->getData('attribute_option');
+        $pageAttributes     = $this->pageCondition->loadAttributeOptions()->getData('attribute_option');
+        $blogAttributes     = $this->blogCondition->loadAttributeOptions()->getData('attribute_option');
+        $brandAttributes    = $this->brandCondition->loadAttributeOptions()->getData('attribute_option');
 
         $attributes = [];
 
         foreach ($productAttributes as $code => $label) {
             $attributes['product'][] = [
                 'value' => ProductCondition::class . '|' . $code,
-                'label' => $label,
+                'label' => $label
             ];
         }
 
         foreach ($categoryAttributes as $code => $label) {
             $attributes['category'][] = [
                 'value' => CategoryCondition::class . '|' . $code,
-                'label' => $label,
+                'label' => $label
             ];
         }
 
-        $conditions = parent::getNewChildSelectOptions();
-        $conditions = array_merge_recursive($conditions, [
-            [
-                'value' => self::class,
-                'label' => __('Conditions Combination'),
-            ],
-        ]);
+        foreach ($pageAttributes as $code => $label) {
+            $attributes['page'][] = [
+                'value' => PageCondition::class . '|' . $code,
+                'label' => $label
+            ];
+        }
 
-        if (in_array(
-            $this->ruleType,
-            [null, TemplateInterface::RULE_TYPE_CATEGORY, TemplateInterface::RULE_TYPE_NAVIGATION]
-        )) {
+        if ($this->moduleManager->isEnabled('Mirasvit_BlogMx')) {
+            foreach ($blogAttributes as $code => $label) {
+                $attributes['blog'][] = [
+                    'value' => BlogCondition::class . '|' . $code,
+                    'label' => $label
+                ];
+            }
+        }
+
+        if ($this->moduleManager->isEnabled('Mirasvit_Brand')) {
+            foreach ($brandAttributes as $code => $label) {
+                $attributes['brand'][] = [
+                    'value' => BrandCondition::class . '|' . $code,
+                    'label' => $label
+                ];
+            }
+        }
+
+        $conditions = parent::getNewChildSelectOptions();
+        $ruleType   = $this->ruleType ? (int)$this->ruleType : (int)$this->request->getParam('rule_type');
+
+        if ($ruleType) {
+            $conditions = array_merge_recursive($conditions, [
+                [
+                    'value' => self::class,
+                    'label' => __('Conditions Combination'),
+                ],
+            ]);
+        }
+
+        if ($ruleType === TemplateInterface::RULE_TYPE_NAVIGATION) {
+            $conditions = array_merge_recursive($conditions, [
+                [
+                    'value' => Filter::class,
+                    'label' => __('Filter Subselection')
+                ],
+            ]);
+        }
+
+        if (in_array($ruleType, [TemplateInterface::RULE_TYPE_CATEGORY, TemplateInterface::RULE_TYPE_NAVIGATION])) {
             $conditions = array_merge_recursive($conditions, [
                 [
                     'label' => __('Category Attributes'),
@@ -94,7 +165,7 @@ class Combine extends \Magento\Rule\Model\Condition\Combine
             ]);
         }
 
-        if (in_array($this->ruleType, [null, TemplateInterface::RULE_TYPE_PRODUCT])) {
+        if (in_array($ruleType, [TemplateInterface::RULE_TYPE_PRODUCT, TemplateInterface::RULE_TYPE_NAVIGATION])) {
             $conditions = array_merge_recursive($conditions, [
                 [
                     'label' => __('Product Attributes'),
@@ -103,15 +174,46 @@ class Combine extends \Magento\Rule\Model\Condition\Combine
             ]);
         }
 
+        if ($ruleType === TemplateInterface::RULE_TYPE_PAGE) {
+            $conditions = [
+                [
+                    'label' => __('Page Attributes'),
+                    'value' => $attributes['page'],
+                ],
+            ];
+        }
+
+        if ($this->moduleManager->isEnabled('Mirasvit_BlogMx')) {
+            if ($ruleType === TemplateInterface::RULE_TYPE_BLOG) {
+                $conditions = [
+                    [
+                        'label' => __('Blog Attributes'),
+                        'value' => $attributes['blog'],
+                    ],
+                ];
+            }
+        }
+
+        if ($this->moduleManager->isEnabled('Mirasvit_Brand')) {
+            if ($ruleType === TemplateInterface::RULE_TYPE_BRAND) {
+                $conditions = [
+                    [
+                        'label' => __('Brand Attributes'),
+                        'value' => $attributes['brand'],
+                    ],
+                ];
+            }
+        }
+
         return $conditions;
     }
 
     /**
-     * @param string $productCollection
+     * @param mixed $productCollection
      *
      * @return $this
      */
-    public function collectValidatedAttributes($productCollection)
+    public function collectValidatedAttributes($productCollection): Combine
     {
         foreach ($this->getConditions() as $condition) {
             $condition->collectValidatedAttributes($productCollection);

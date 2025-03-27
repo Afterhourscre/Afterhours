@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Model\Indexer\Category\Fulltext\Action;
 
@@ -88,7 +87,7 @@ class IndexIterator implements \Iterator
     /**
      * {@inheritDoc}
      */
-    public function current()
+    public function current(): ?array
     {
         return $this->current;
     }
@@ -96,7 +95,7 @@ class IndexIterator implements \Iterator
     /**
      * {@inheritDoc}
      */
-    public function next()
+    public function next(): void
     {
         \next($this->categories);
         if (\key($this->categories) === null) {
@@ -145,22 +144,23 @@ class IndexIterator implements \Iterator
             return;
         }
 
+        unset($categoryAttr[$this->isActive->getId()]);
+
         $categoryIndex = [$categoryData['entity_id'] => $categoryAttr];
 
         $index = $this->dataProvider->prepareCategoryIndex(
             $categoryIndex,
-            $categoryData,
             $this->storeId
         );
 
         $this->current = $index;
-        $this->key = $categoryData['entity_id'];
+        $this->key = (int)$categoryData['entity_id'];
     }
 
     /**
      * {@inheritDoc}
      */
-    public function key()
+    public function key(): ?int
     {
         return $this->key;
     }
@@ -168,7 +168,7 @@ class IndexIterator implements \Iterator
     /**
      * {@inheritDoc}
      */
-    public function valid()
+    public function valid(): bool
     {
         return $this->isValid;
     }
@@ -176,7 +176,7 @@ class IndexIterator implements \Iterator
     /**
      * {@inheritDoc}
      */
-    public function rewind()
+    public function rewind(): void
     {
         $this->lastCategoryId = 0;
         $this->key = null;

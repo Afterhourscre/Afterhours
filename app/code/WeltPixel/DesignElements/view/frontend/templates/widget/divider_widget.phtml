@@ -1,8 +1,8 @@
 <?php
 $style = $this->getData('style');
 $icon = $this->getData('icon');
-$customClass = trim($this->getData('custom_class'));
-$customCss = trim($this->getData('custom_css'));
+$customClass = trim($this->getData('custom_class') ?? '');
+$customCss = trim($this->getData('custom_css') ?? '');
 //TODO: for later use like icon size, padding, etc.
 $customStyle = '';
 ?>

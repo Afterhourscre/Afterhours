@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -21,6 +21,9 @@ use Magento\Sitemap\Model\Sitemap;
 
 class Markup extends \Magento\Framework\App\Helper\AbstractHelper
 {
+    /**
+     * @return array
+     */
     public function getTagsData()
     {
         return [Sitemap::TYPE_INDEX => [
@@ -41,7 +44,13 @@ class Markup extends \Magento\Framework\App\Helper\AbstractHelper
             ],
         ];
     }
-    
+
+    /**
+     * @param string $url
+     * @param string $title
+     * @param string $caption
+     * @return string
+     */
     public function getImageMarkup($url, $title, $caption)
     {
         if (!$caption) {
@@ -55,6 +64,12 @@ class Markup extends \Magento\Framework\App\Helper\AbstractHelper
         return $imageMarkup;
     }
 
+    /**
+     * @param string $title
+     * @param string $url
+     * @param string $alt
+     * @return string
+     */
     public function afterGetImageMarkup($title, $url, $alt)
     {
         return '<PageMap xmlns="http://www.google.com/schemas/sitemap-pagemap/1.0"><DataObject type="thumbnail">

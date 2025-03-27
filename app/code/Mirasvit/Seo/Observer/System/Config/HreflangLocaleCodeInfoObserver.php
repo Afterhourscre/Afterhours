@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -38,7 +38,7 @@ class HreflangLocaleCodeInfoObserver implements ObserverInterface
     /**
      * Info about Hreflang locale code.
      *
-     * @param string $e
+     * @param \Magento\Framework\Event\Observer $e
      * @return $this|void
      */
     public function hreflangLocaleCodeInfo($e)
@@ -106,7 +106,7 @@ class HreflangLocaleCodeInfoObserver implements ObserverInterface
             if ($localeCodeValue && !in_array($localeCodeValue, $localeCodes)
                     && !in_array(strtoupper($localeCodeValue), $localeCodes)) {
                 $this->messageManager->addWarning(__('Wrong Hreflang locale code value: "'.$localeCodeValue.'".'
-                        .' Need to use the <a target="_blank" href="http://en.wikipedia.org/wiki/ISO_3166-1_alpha-2">
+                        .' Must use the <a target="_blank" href="http://en.wikipedia.org/wiki/ISO_3166-1_alpha-2">
                             ISO 3166-1 Alpha 2 format
                             </a>'));
             }

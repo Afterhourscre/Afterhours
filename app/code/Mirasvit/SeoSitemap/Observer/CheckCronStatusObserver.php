@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -64,14 +64,15 @@ class CheckCronStatusObserver implements ObserverInterface
         if ($this->request
             && $this->request->getParam('section') == 'seositemap') {
             $cronStatus = $this->cronHelper->checkCronStatus(
-                false,
+                "",
                 false,
                 'Cron job is required for sitemap automatical generate. Automatical generate can be configured in
                 System->Configuration->Catalog->Google Sitemap->Generation Settings. Cron for magento is not running.
                  To setup a cron job follow the link.'
             );
             if ($cronStatus !== true) {
-                $this->backendSession->addError($cronStatus);
+                //@fixme
+//                $this->backendSession->addError($cronStatus);
             }
         };
     }

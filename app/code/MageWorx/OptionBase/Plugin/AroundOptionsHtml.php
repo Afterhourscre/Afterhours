@@ -8,7 +8,8 @@ namespace MageWorx\OptionBase\Plugin;
 
 use \Magento\Catalog\Block\Product\View\Options;
 use \Magento\Catalog\Model\Product\Option;
-use \Zend\Stdlib\StringWrapper\MbString;
+use Magento\Framework\App\Area;
+use Magento\Framework\App\State;
 use MageWorx\OptionBase\Model\Product\Option\AdditionalHtmlData;
 
 /**
@@ -16,15 +17,7 @@ use MageWorx\OptionBase\Model\Product\Option\AdditionalHtmlData;
  */
 class AroundOptionsHtml
 {
-    /**
-     * @var MbString
-     */
-    protected $mbString;
-
-    /**
-     * @var AdditionalHtmlData
-     */
-    protected $additionalHtmlData;
+    protected AdditionalHtmlData $additionalHtmlData;
 
     /**
      * These nodes should be found and filled
@@ -32,28 +25,27 @@ class AroundOptionsHtml
      *
      * @var array
      */
-    protected $voidNodes = [
+    protected array $voidNodes = [
         'textarea'
     ];
+    protected State $state;
 
-    /**
-     * @param MbString $mbString
-     * @param AdditionalHtmlData $additionalHtmlData
-     */
     public function __construct(
-        MbString $mbString,
-        AdditionalHtmlData $additionalHtmlData
+        AdditionalHtmlData $additionalHtmlData,
+        State $state
 
     ) {
-        $this->mbString           = $mbString;
         $this->additionalHtmlData = $additionalHtmlData;
+        $this->state              = $state;
     }
 
 
     /**
      * @param Options $subject
      * @param \Closure $proceed
-     * @return string
+     * @param Option $option
+     * @return mixed
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function aroundGetOptionHtml(Options $subject, \Closure $proceed, Option $option)
     {
@@ -61,8 +53,7 @@ class AroundOptionsHtml
         $dom                     = new \DOMDocument();
         $dom->preserveWhiteSpace = false;
 
-        $this->mbString->setEncoding('UTF-8', 'html-entities');
-        $result = $this->mbString->convert($result);
+        $result = mb_encode_numericentity($result, [0x80, 0x10FFFF, 0, ~0], 'UTF-8');
 
         libxml_use_internal_errors(true);
         $dom->loadHTML($result);
@@ -81,14 +72,28 @@ class AroundOptionsHtml
             }
         }
 
+        $fileScript = '';
+        if ($option->getType() == Option::OPTION_TYPE_FILE &&
+            $this->state->getAreaCode() == Area::AREA_ADMINHTML) {
+            $fileScriptNodeValue = $xpath->query('//script')->item(0)->nodeValue;
+            $fileScript          = '<script>' . $fileScriptNodeValue . '</script>';
+            $fileScript          = $this->cDataReplacer($fileScript);
+        }
         $xpath->query('//div')->item(0)->setAttribute("data-option_id", $option->getOptionId());
+
+        if ($option->getHideProductPageValuePrice()) {
+            foreach ($xpath->query('//span[contains(attribute::class, "price-notice")]') as $priceElement) {
+                $priceElement->parentNode->removeChild($priceElement);
+            }
+        }
 
         foreach ($this->additionalHtmlData->getData() as $additionalHtmlItem) {
             $additionalHtmlItem->getAdditionalHtml($dom, $option);
         }
 
         $resultBody = $dom->getElementsByTagName('body')->item(0);
-        $result     = $this->getInnerHtml($resultBody, $option);
+        $result     = $fileScript . $this->getInnerHtml($resultBody, $option);
+
         return str_replace('<!--NOT_VOID-->', '', $result);
     }
 
@@ -112,22 +117,29 @@ class AroundOptionsHtml
                 );
                 if ($option->getType() == Option::OPTION_TYPE_DATE ||
                     $option->getType() == Option::OPTION_TYPE_DATE_TIME ||
-                    $option->getType() == Option::OPTION_TYPE_TIME
+                    $option->getType() == Option::OPTION_TYPE_TIME ||
+                    $option->getType() == Option::OPTION_TYPE_FILE
                 ) {
-                    $innerHTML = str_replace(
-                        ['<![CDATA['],
-                        [''],
-                        $innerHTML
-                    );
-                    $innerHTML = str_replace(
-                        [']]>'],
-                        [''],
-                        $innerHTML
-                    );
+                    $innerHTML = $this->cDataReplacer($innerHTML);
                 }
             }
         }
 
         return $innerHTML;
     }
+
+    /**
+     * @param $subject
+     * @return mixed
+     */
+    protected function cDataReplacer($subject)
+    {
+        $searchParams = [
+            '<![CDATA[',
+            ']]>'
+        ];
+
+        return str_replace($searchParams, '', $subject);
+    }
+
 }

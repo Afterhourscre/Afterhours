@@ -9,9 +9,9 @@
 namespace Amasty\Base\Helper;
 
 use SimpleXMLElement;
-use Zend\Http\Client\Adapter\Curl as CurlClient;
-use Zend\Http\Response as HttpResponse;
-use Zend\Uri\Http as HttpUri;
+use Laminas\Http\Client\Adapter\Curl as CurlClient;
+use Laminas\Http\Response as HttpResponse;
+use Laminas\Uri\Http as HttpUri;
 use Magento\Framework\Json\DecoderInterface;
 
 class Module

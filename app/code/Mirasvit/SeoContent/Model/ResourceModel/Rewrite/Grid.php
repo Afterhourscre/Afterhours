@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -26,8 +26,21 @@ use Mirasvit\SeoContent\Api\Data\RewriteInterface;
 
 class Grid extends SearchResult
 {
+    /**
+     * @var string
+     */
     protected $document = \Mirasvit\SeoContent\Model\Rewrite::class;
 
+    /**
+     * Grid constructor.
+     * @param EntityFactory $entityFactory
+     * @param Logger $logger
+     * @param FetchStrategy $fetchStrategy
+     * @param EventManager $eventManager
+     * @param string $mainTable
+     * @param string $resourceModel
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
     public function __construct(
         EntityFactory $entityFactory,
         Logger $logger,

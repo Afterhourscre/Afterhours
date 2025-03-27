@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -25,16 +25,39 @@ use Mirasvit\Seo\Service\TemplateEngineService;
 
 class SetMainImagePlugin
 {
+    /**
+     * @var ImageConfig
+     */
     private $imageConfig;
 
+    /**
+     * @var TemplateEngineService
+     */
     private $templateEngineService;
 
+    /**
+     * @var FilterManager
+     */
     private $filterManager;
 
+    /**
+     * @var MediaConfig
+     */
     private $mediaConfig;
 
+    /**
+     * @var DirectoryList
+     */
     private $directoryList;
 
+    /**
+     * SetMainImagePlugin constructor.
+     * @param ImageConfig $imageConfig
+     * @param TemplateEngineService $templateEngineService
+     * @param FilterManager $filterManager
+     * @param MediaConfig $mediaConfig
+     * @param DirectoryList $directoryList
+     */
     public function __construct(
         ImageConfig $imageConfig,
         TemplateEngineService $templateEngineService,
@@ -49,20 +72,38 @@ class SetMainImagePlugin
         $this->directoryList         = $directoryList;
     }
 
+    /**
+     * @param mixed $subject
+     * @param \Closure $closure
+     * @param mixed $image
+     * @return bool|mixed
+     * @throws \Magento\Framework\Exception\FileSystemException
+     */
     public function aroundIsMainImage($subject, \Closure $closure, $image)
     {
-        if ($this->imageConfig->isFriendlyUrlEnabled()) {
+        if ($this->imageConfig->isFriendlyUrlEnabled() && $subject->getProduct()->getImage()) {
             \Magento\Framework\Profiler::start(__METHOD__);
-            $productImage = $this->getFriendlyImageName($subject->getProduct(), $subject->getProduct()->getImage());
+            $productImage = $this->getFriendlyImageName($subject->getProduct(), (string)$subject->getProduct()->getImage());
             \Magento\Framework\Profiler::stop(__METHOD__);
+
             return $image->getFile() == $productImage;
         } else {
             return $closure($image);
         }
     }
 
+    /**
+     * @param \Magento\Catalog\Model\Product $product
+     * @param string $fileName
+     * @return string
+     * @throws \Magento\Framework\Exception\FileSystemException
+     */
     private function getFriendlyImageName($product, $fileName)
     {
+        if (preg_match('@/image/\d[^/]*/@', $fileName)) {
+            return $fileName; // the image is already user-friendly
+        }
+
         $newFile = DIRECTORY_SEPARATOR . 'image' . DIRECTORY_SEPARATOR . $this->generateName($product, $fileName);
 
         $absPath = $this->directoryList->getPath('media')
@@ -99,7 +140,7 @@ class SetMainImagePlugin
         $imageName = $this->filterManager->translitUrl($label);
         $suffix    = preg_replace('/(.*)(\\.)/', '.', $fileName);
 
-        $imagePath = $product->getId() . substr(hash('sha256',$fileName), 4, 4);
+        $imagePath = $product->getId() . substr(hash('sha256', $fileName), 4, 4);
 
         return $imagePath . '/' . $imageName . $suffix;
     }

@@ -9,14 +9,26 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
+
 namespace Mirasvit\SeoMarkup\Model;
 
-class Config
-{
+use Magento\Framework\App\Config\ScopeConfigInterface;
 
+abstract class Config
+{
+    public const HTTP_SCHEMA_ORG = 'https://schema.org';
+
+    protected $scopeConfig;
+
+    public function __construct(
+        ScopeConfigInterface $scopeConfig
+    ) {
+        $this->scopeConfig = $scopeConfig;
+    }
 }

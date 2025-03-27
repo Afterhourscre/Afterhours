@@ -9,287 +9,212 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoMarkup\Model\Config;
 
-use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface;
+use Mirasvit\SeoMarkup\Model\Config;
 
-class OrganizationConfig
+class OrganizationConfig extends Config
 {
-    private $scopeConfig;
-
-    private $socialLinkConfigs = [ 
-                    'seo/seo_markup/organization/youtube_link',
-                    'seo/seo_markup/organization/facebook_link',
-                    'seo/seo_markup/organization/linkedin_link',
-                    'seo/seo_markup/organization/instagram_link',
-                    'seo/seo_markup/organization/pinterest_link',
-                    'seo/seo_markup/organization/tumblr_link',
-                    'seo/seo_markup/organization/twitter_link',
-                    ]; 
-
-    public function __construct(
-        ScopeConfigInterface $scopeConfig
-    ) {
-        $this->scopeConfig = $scopeConfig;
-    }
-
     /**
-     * @param string $store
-     * @return bool
+     * @var array
      */
-    public function isRsEnabled($store)
+    private $socialLinkConfigs
+        = [
+            'seo/seo_markup/organization/youtube_link',
+            'seo/seo_markup/organization/facebook_link',
+            'seo/seo_markup/organization/linkedin_link',
+            'seo/seo_markup/organization/instagram_link',
+            'seo/seo_markup/organization/pinterest_link',
+            'seo/seo_markup/organization/tumblr_link',
+            'seo/seo_markup/organization/twitter_link',
+        ];
+
+    public function isRsEnabled(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue(
+        return $this->scopeConfig->isSetFlag(
             'seo/seo_markup/organization/is_rs_enabled',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         );
     }
 
-    /**
-     * @param string $store
-     * @return bool
-     */
-    public function isCustomName($store)
+    public function isCustomName(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue(
+        return $this->scopeConfig->isSetFlag(
             'seo/seo_markup/organization/is_custom_name',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         );
     }
 
-    /**
-     * @param string $store
-     * @return string
-     */
-    public function getCustomName($store)
+    public function getCustomName(?int $storeId = null): string
     {
-        return trim($this->scopeConfig->getValue(
+        return trim((string)$this->scopeConfig->getValue(
             'seo/seo_markup/organization/custom_name',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         ));
     }
 
-    /**
-     * @param string $store
-     * @return bool
-     */
-    public function isCustomAddressCountry($store)
+
+    public function isCustomAddressCountry(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue(
+        return $this->scopeConfig->isSetFlag(
             'seo/seo_markup/organization/is_custom_address_country',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         );
     }
 
-    /**
-     * @param string $store
-     * @return string
-     */
-    public function getCustomAddressCountry($store)
+    public function getCustomAddressCountry(?int $storeId = null): string
     {
-        return trim($this->scopeConfig->getValue(
+        return trim((string)$this->scopeConfig->getValue(
             'seo/seo_markup/organization/custom_address_country',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         ));
     }
 
-    /**
-     * @param string $store
-     * @return bool
-     */
-    public function isCustomAddressLocality($store)
+    public function isCustomAddressLocality(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue(
+        return $this->scopeConfig->isSetFlag(
             'seo/seo_markup/organization/is_custom_address_locality',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         );
     }
 
-    /**
-     * @param string $store
-     * @return string
-     */
-    public function getCustomAddressLocality($store)
+    public function getCustomAddressLocality(?int $storeId = null): string
     {
-        return trim($this->scopeConfig->getValue(
+        return trim((string)$this->scopeConfig->getValue(
             'seo/seo_markup/organization/address_locality',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         ));
     }
 
-    /**
-     * @param string $store
-     * @return bool
-     */
-    public function isCustomAddressRegion($store)
+    public function isCustomAddressRegion(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue(
+        return $this->scopeConfig->isSetFlag(
             'seo/seo_markup/organization/is_custom_address_region',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         );
     }
 
-    /**
-     * @param string $store
-     * @return string
-     */
-    public function getCustomAddressRegion($store)
+    public function getCustomAddressRegion(?int $storeId = null): string
     {
-        return trim($this->scopeConfig->getValue(
+        return trim((string)$this->scopeConfig->getValue(
             'seo/seo_markup/organization/custom_address_region',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         ));
     }
 
-    /**
-     * @param string $store
-     * @return bool
-     */
-    public function isCustomPostalCode($store)
+    public function isCustomPostalCode(?int $storeId = null): bool
     {
-        return trim($this->scopeConfig->getValue(
+        return $this->scopeConfig->isSetFlag(
             'seo/seo_markup/organization/is_custom_postal_code',
             ScopeInterface::SCOPE_STORE,
-            $store
-        ));
+            $storeId
+        );
     }
 
-    /**
-     * @param string $store
-     * @return string
-     */
-    public function getCustomPostalCode($store)
+    public function getCustomPostalCode(?int $storeId = null): string
     {
-        return trim($this->scopeConfig->getValue(
+        return trim((string)$this->scopeConfig->getValue(
             'seo/seo_markup/organization/custom_postal_code',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         ));
     }
 
-    /**
-     * @param string $store
-     * @return bool
-     */
-    public function isCustomStreetAddress($store)
+    public function isCustomStreetAddress(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue(
+        return $this->scopeConfig->isSetFlag(
             'seo/seo_markup/organization/is_custom_street_address',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         );
     }
 
-    /**
-     * @param string $store
-     * @return string
-     */
-    public function getCustomStreetAddress($store)
+    public function getCustomStreetAddress(?int $storeId = null): string
     {
-        return trim($this->scopeConfig->getValue(
+        return trim((string)$this->scopeConfig->getValue(
             'seo/seo_markup/organization/custom_street_address',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         ));
     }
 
-    /**
-     * @param string $store
-     * @return bool
-     */
-    public function isCustomTelephone($store)
+    public function isCustomTelephone(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue(
+        return $this->scopeConfig->isSetFlag(
             'seo/seo_markup/organization/is_custom_telephone',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         );
     }
 
-    /**
-     * @param string $store
-     * @return bool
-     */
-    public function getCustomTelephone($store)
+    public function getCustomTelephone(?int $storeId = null): string
     {
-        return trim($this->scopeConfig->getValue(
+        return trim((string)$this->scopeConfig->getValue(
             'seo/seo_markup/organization/custom_telephone',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         ));
     }
 
-    /**
-     * @param string $store
-     * @return string
-     */
-    public function getCustomFaxNumber($store)
+    public function getCustomFaxNumber(?int $storeId = null): string
     {
-        return trim($this->scopeConfig->getValue(
+        return trim((string)$this->scopeConfig->getValue(
             'seo/seo_markup/organization/custom_fax_number',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         ));
     }
 
-    /**
-     * @param string $store
-     * @return bool
-     */
-    public function isCustomEmail($store)
+    public function isCustomEmail(?int $storeId = null): bool
     {
-        return $this->scopeConfig->getValue(
+        return $this->scopeConfig->isSetFlag(
             'seo/seo_markup/organization/is_custom_email',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         );
     }
 
-    /**
-     * @param string $store
-     * @return int
-     */
-    public function getCustomEmail($store)
+    public function getCustomEmail(?int $storeId = null): ?string
     {
         return $this->scopeConfig->getValue(
             'seo/seo_markup/organization/custom_email',
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         );
     }
 
-    public function getSocialLinks($store)
+    public function getSocialLinks(?int $storeId = null): array
     {
         $socialLinks = [];
         foreach ($this->socialLinkConfigs as $socialLinkConfig) {
             $socialLink = $this->scopeConfig->getValue(
-                                $socialLinkConfig,
-                                ScopeInterface::SCOPE_STORE,
-                                $store
+                $socialLinkConfig,
+                ScopeInterface::SCOPE_STORE,
+                $storeId
             );
-            
+
             if (isset($socialLink)) {
                 $socialLinks[] = $socialLink;
             }
         }
 
         return $socialLinks;
-
     }
 }

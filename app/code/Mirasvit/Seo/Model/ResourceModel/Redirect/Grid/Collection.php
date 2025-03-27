@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -22,6 +22,11 @@ use Mirasvit\Seo\Model\ResourceModel\Redirect\Collection as RedirectCollection;
 
 class Collection extends RedirectCollection implements SearchResultInterface
 {
+    /**
+     * @var \Magento\Framework\Api\Search\AggregationInterface
+     */
+    private $aggregations;
+
     /**
      * {@inheritdoc}
      */
@@ -81,7 +86,7 @@ class Collection extends RedirectCollection implements SearchResultInterface
     /**
      * {@inheritdoc}
      */
-    protected function _renderFiltersBefore() 
+    protected function _renderFiltersBefore()
     {
         $this->addStoreColumn();
         parent::_renderFiltersBefore();

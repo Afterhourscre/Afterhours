@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -22,6 +22,10 @@ use Mirasvit\Core\Block\Adminhtml\AbstractMenu;
 
 class Menu extends AbstractMenu
 {
+    /**
+     * Menu constructor.
+     * @param Context $context
+     */
     public function __construct(
         Context $context
     ) {
@@ -44,7 +48,7 @@ class Menu extends AbstractMenu
             'title'    => __('Rewrite Manager'),
             'url'      => $this->urlBuilder->getUrl('seo_content/rewrite'),
         ])->addItem([
-            'resource' => 'Mirasvit_SeoContent::config_seo',
+            'resource' => 'Mirasvit_Seo::seo_settings',
             'title'    => __('Settings'),
             'url'      => $this->urlBuilder->getUrl('adminhtml/system_config/edit/section/seo'),
         ]);

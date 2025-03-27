@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoContent\Service\Content\Modifier;
 
@@ -21,9 +22,5 @@ use Mirasvit\SeoContent\Api\Data\ContentInterface;
 
 interface ModifierInterface
 {
-    /**
-     * @param ContentInterface $content
-     * @return ContentInterface
-     */
-    public function modify(ContentInterface $content);
+    public function modify(ContentInterface $content, ?string $forceApplyTo = null): ContentInterface;
 }

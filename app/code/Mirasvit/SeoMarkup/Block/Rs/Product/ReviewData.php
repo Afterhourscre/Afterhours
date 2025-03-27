@@ -9,44 +9,55 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoMarkup\Block\Rs\Product;
 
+use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Review\Model\Rating;
 use Magento\Review\Model\ResourceModel\Review\CollectionFactory as ReviewCollectionFactory;
 use Magento\Review\Model\Review;
+use Magento\Store\Api\Data\StoreInterface;
+use Mirasvit\SeoMarkup\Model\Config;
 use Mirasvit\SeoMarkup\Model\Config\ProductConfig;
 
 class ReviewData
 {
-    /** @var \Magento\Catalog\Model\Product */
+    /**
+     * @var ProductInterface
+     */
     private $product;
 
-    /** @var \Magento\Store\Model\Store */
+    /**
+     * @var StoreInterface
+     */
     private $store;
 
     private $productConfig;
 
     private $reviewCollectionFactory;
 
+    private $rating;
+
     public function __construct(
-        ProductConfig $productConfig,
-        ReviewCollectionFactory $reviewCollectionFactory
+        ProductConfig           $productConfig,
+        ReviewCollectionFactory $reviewCollectionFactory,
+        Rating                  $rating
     ) {
         $this->productConfig           = $productConfig;
         $this->reviewCollectionFactory = $reviewCollectionFactory;
+        $this->rating                  = $rating;
     }
 
     /**
-     * @param object $product
-     * @param object $store
      * @return array|false
      */
-    public function getData($product, $store)
+    public function getData(ProductInterface $product, StoreInterface $store)
     {
         $this->product = $product;
         $this->store   = $store;
@@ -56,14 +67,10 @@ class ReviewData
         }
         $data = $this->getJsonData();
 
-        return $data ? $data : false;
+        return $data ? : false;
     }
 
-
-    /**
-     * @return bool|array
-     */
-    public function getJsonData()
+    public function getJsonData(): ?array
     {
         if (!$this->product) {
             return null;
@@ -72,7 +79,7 @@ class ReviewData
         $collection = $this->reviewCollectionFactory->create()
             ->addStatusFilter(Review::STATUS_APPROVED)
             ->addEntityFilter('product', $this->product->getId())
-            ->addFieldToFilter('store_id', $this->store->getStoreId())
+            ->addStoreFilter($this->store->getStoreId())
             ->setDateOrder();
 
 
@@ -81,8 +88,8 @@ class ReviewData
         if (count($collection)) {
             /** @var Review $review */
             foreach ($collection as $review) {
-                $data[] = [
-                    '@context'      => 'http://schema.org/',
+                $reviewData = [
+                    '@context'      => Config::HTTP_SCHEMA_ORG,
                     '@type'         => 'Review',
                     'name'          => $review->getData('title'),
                     'datePublished' => $review->getCreatedAt(),
@@ -100,6 +107,19 @@ class ReviewData
                         'name'  => $this->store->getFrontendName(),
                     ],
                 ];
+
+                $summary = $this->rating->getReviewSummary($review->getId());
+
+                if ($summary->getSum()) {
+                    $ratingValue = number_format($summary->getSum() / $summary->getCount() / 20, 2);
+
+                    $reviewData['reviewRating'] = [
+                        '@type'       => 'Rating',
+                        'ratingValue' => $ratingValue,
+                    ];
+                }
+
+                $data[] = $reviewData;
             }
         }
 

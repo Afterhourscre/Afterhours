@@ -11,10 +11,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const ACTIVE_PLACEHOLDER = 'WeltPixel_Multistore::images/active_placeholder.svg';
     const INACTIVE_PLACEHOLDER = 'WeltPixel_Multistore::images/inactive_placeholder.svg';
 
-	/**
-	 * @var array
-	 */
-	protected $_multistoreOptions;
+    /**
+     * @var array
+     */
+    protected $_multistoreOptions;
 
     /**
      * @var \Magento\Store\Model\StoreManagerInterface
@@ -26,31 +26,30 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     protected $_currentStore;
 
-
     /**
-     * @var \Magento\Framework\View\Asset\Repository;
+     * @var \Magento\Framework\View\Asset\Repository
      */
     protected $_assetRepo;
 
-	/**
-	 * Constructor
-	 *
-	 * @param \Magento\Framework\App\Helper\Context $context
+    /**
+     * Constructor
+     *
+     * @param \Magento\Framework\App\Helper\Context $context
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \use Magento\Framework\View\Asset\Repository $assetRepo;
-	 */
-	public function __construct(
-			\Magento\Framework\App\Helper\Context $context,
-            \Magento\Store\Model\StoreManagerInterface $storeManager,
-            \Magento\Framework\View\Asset\Repository $assetRepo
-	) {
-		parent::__construct($context);
+     * @param \Magento\Framework\View\Asset\Repository $assetRepo
+     */
+    public function __construct(
+        \Magento\Framework\App\Helper\Context $context,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Framework\View\Asset\Repository $assetRepo
+    ) {
+        parent::__construct($context);
 
         $this->_storeManager = $storeManager;
         $this->_currentStore = $storeManager->getStore();
-		$this->_multistoreOptions = $this->scopeConfig->getValue('weltpixel_multistore', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-		$this->_assetRepo = $assetRepo;
-	}
+        $this->_multistoreOptions = $this->scopeConfig->getValue('weltpixel_multistore', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $this->_assetRepo = $assetRepo;
+    }
 
     /**
      * @param int $storeId
@@ -64,17 +63,17 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-	/**
-	 * @param int $storeId
-	 * @return mixed
-	 */
-	public function getStoreImage($storeId = 0) {
-		if ($storeId) {
-			return $this->scopeConfig->getValue('weltpixel_multistore/general/store_image', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId);
-		} else {
-			return $this->_multistoreOptions['general']['store_image'];
-		}
-	}
+    /**
+     * @param int $storeId
+     * @return mixed
+     */
+    public function getStoreImage($storeId = 0) {
+        if ($storeId) {
+            return $this->scopeConfig->getValue('weltpixel_multistore/general/store_image', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId);
+        } else {
+            return $this->_multistoreOptions['general']['store_image'];
+        }
+    }
 
     /**
      * @param int $storeId
@@ -92,7 +91,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param $storeId
      * @return string
      */
-	public function getImageUrl($storeId) {
+    public function getImageUrl($storeId) {
         $image = $this->getStoreImage($storeId);
 
         if ($image) {
@@ -240,12 +239,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * @param string $storeCode
      * @param int $storeId
-     * @param $storeCode
      * @return bool
      */
-    public function canStoreBeDisplayed($storeId = 0, $storeCode) {
-
+    public function canStoreBeDisplayed($storeCode, $storeId = 0) {
         $isVisible = $this->isStoreVisible($storeId);
         if (!$isVisible) {
             return false;

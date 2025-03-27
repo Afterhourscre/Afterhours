@@ -4,8 +4,9 @@
  * See MS-LICENSE.txt for license details.
  */
 namespace Mageside\MultipleCustomForms\Model\CustomForm\Field\Validator;
-
-class Url extends \Zend_Validate_Abstract implements \Magento\Framework\Validator\ValidatorInterface
+use Laminas\Validator\AbstractValidator;
+use Magento\Framework\Validator\ValidatorInterface;
+class Url extends AbstractValidator implements ValidatorInterface
 {
     const INVALID = 'urlInvalid';
 

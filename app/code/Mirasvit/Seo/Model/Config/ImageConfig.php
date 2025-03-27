@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -22,10 +22,20 @@ use Magento\Store\Model\ScopeInterface as ScopeInterface;
 
 class ImageConfig
 {
+    /**
+     * @var ScopeConfigInterface
+     */
     private $scopeConfig;
 
+    /**
+     * @var array
+     */
     private $cache = [];
 
+    /**
+     * ImageConfig constructor.
+     * @param ScopeConfigInterface $scopeConfig
+     */
     public function __construct(
         ScopeConfigInterface $scopeConfig
     ) {
@@ -81,7 +91,6 @@ class ImageConfig
         return $imageUrlTemplate;
     }
 
-
     /**
      * @return string
      */
@@ -91,5 +100,22 @@ class ImageConfig
             'seo/image/image_alt_template',
             ScopeInterface::SCOPE_STORE
         );
+    }
+
+    /**
+     * @return string
+     */
+    public function getTitleTemplate()
+    {
+        $title = $this->scopeConfig->getValue(
+            'seo/image/image_title_template',
+            ScopeInterface::SCOPE_STORE
+        );
+
+        if (!$title) {
+            $title = $this->getAltTemplate();
+        }
+
+        return $title;
     }
 }

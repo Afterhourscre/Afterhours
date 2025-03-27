@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -25,10 +25,21 @@ use Mirasvit\SeoToolbar\Api\Service\DataProviderInterface;
 
 class DataProvider implements DataProviderInterface
 {
+    /**
+     * @var ContentService
+     */
     private $contentService;
 
+    /**
+     * @var StateServiceInterface
+     */
     private $stateService;
 
+    /**
+     * DataProvider constructor.
+     * @param ContentService $contentService
+     * @param StateServiceInterface $stateService
+     */
     public function __construct(
         ContentService $contentService,
         StateServiceInterface $stateService
@@ -37,11 +48,17 @@ class DataProvider implements DataProviderInterface
         $this->stateService   = $stateService;
     }
 
+    /**
+     * @return \Magento\Framework\Phrase|string
+     */
     public function getTitle()
     {
         return __('SEO Content');
     }
 
+    /**
+     * @return array|\Mirasvit\SeoToolbar\Api\Data\DataProviderItemInterface
+     */
     public function getItems()
     {
         return [
@@ -51,6 +68,9 @@ class DataProvider implements DataProviderInterface
         ];
     }
 
+    /**
+     * @return DataObject
+     */
     private function getStateItem()
     {
         $state = [
@@ -58,6 +78,8 @@ class DataProvider implements DataProviderInterface
             __('Is Navigation Page — %1', $this->stateService->isNavigationPage() ? 'Yes' : 'No'),
             __('Is Product Page — %1', $this->stateService->isProductPage() ? 'Yes' : 'No'),
             __('Is CMS Page — %1', $this->stateService->isCmsPage() ? 'Yes' : 'No'),
+            __('Is Blog Page — %1', $this->stateService->isBlogPage() ? 'Yes' : 'No'),
+            __('Is Brand Page — %1', $this->stateService->isBlogPage() ? 'Yes' : 'No'),
         ];
 
         return new DataObject([
@@ -66,6 +88,9 @@ class DataProvider implements DataProviderInterface
         ]);
     }
 
+    /**
+     * @return DataObject
+     */
     private function getContentItem()
     {
         $content = $this->contentService->getCurrentContent();
@@ -84,6 +109,9 @@ class DataProvider implements DataProviderInterface
         ]);
     }
 
+    /**
+     * @return DataObject
+     */
     private function getContentSourceItem()
     {
         $content = $this->contentService->getCurrentContent();

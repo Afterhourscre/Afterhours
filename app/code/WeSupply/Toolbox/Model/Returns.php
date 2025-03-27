@@ -274,7 +274,7 @@ class Returns implements ReturnsInterface
      * @param int $storeCreditAmount
      * @return bool
      */
-    private function createCreditMemo($returnId, $orderId, $doOffline = 0, $shippingAmount = 0, $adjustmentPositive = 0, $adjustmentNegative = 0, $customerComments = '', $sendEmail = 0, $items, $storeCreditAmount = 0, $giftCardAmount = 0)
+    private function createCreditMemo($returnId, $orderId, $items, $shippingAmount = 0, $adjustmentPositive = 0, $adjustmentNegative = 0, $customerComments = '', $sendEmail = 0,  $doOffline = 0, $storeCreditAmount = 0, $giftCardAmount = 0)
     {
 
         $this->registry->unregister('current_creditmemo');

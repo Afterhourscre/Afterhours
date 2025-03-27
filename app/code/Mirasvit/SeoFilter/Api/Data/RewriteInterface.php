@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo-filter
- * @version   1.0.16
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   1.3.22
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoFilter\Api\Data;
 
@@ -27,56 +28,21 @@ interface RewriteInterface
     const REWRITE        = 'rewrite';
     const STORE_ID       = 'store_id';
 
-    /**
-     * @return int
-     */
-    public function getId();
+    public function getId(): ?int;
 
-    /**
-     * @return string
-     */
-    public function getAttributeCode();
+    public function getAttributeCode(): string;
 
-    /**
-     * @param string $value
-     *
-     * @return $this
-     */
-    public function setAttributeCode($value);
+    public function setAttributeCode(string $value): self;
 
-    /**
-     * @return string
-     */
-    public function getOption();
+    public function getOption(): string;
 
-    /**
-     * @param string $value
-     *
-     * @return $this
-     */
-    public function setOption($value);
+    public function setOption(string $value): self;
 
-    /**
-     * @return string
-     */
-    public function getRewrite();
+    public function getRewrite(): string;
 
-    /**
-     * @param string $value
-     *
-     * @return $this
-     */
-    public function setRewrite($value);
+    public function setRewrite(string $value): self;
 
-    /**
-     * @return int
-     */
-    public function getStoreId();
+    public function getStoreId(): int;
 
-    /**
-     * @param int $value
-     *
-     * @return $this
-     */
-    public function setStoreId($value);
+    public function setStoreId(int $value): self;
 }

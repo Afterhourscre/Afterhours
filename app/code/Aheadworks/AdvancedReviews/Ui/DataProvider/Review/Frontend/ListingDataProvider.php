@@ -103,7 +103,8 @@ class ListingDataProvider extends UiAbstractDataProvider
         $data = $this->getCollection()->toArray();
         $data['items'] = $this->extendDataWithProductData($data['items']);
         $data['items'] = $this->prepareData($data['items']);
-        $data['imageByPages'] = $this->getCollection()->getImageCountByPages();
+
+        $data['imageByPages'] = [];
         return $data;
     }
 

@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright 2019 aheadWorks. All rights reserved.
-See LICENSE.txt for license details.
+ * See LICENSE.txt for license details.
  */
 
 namespace Aheadworks\AdvancedReviews\Model\Review\Validator;
@@ -9,6 +9,8 @@ namespace Aheadworks\AdvancedReviews\Model\Review\Validator;
 use Magento\Framework\Validator\AbstractValidator;
 use Aheadworks\AdvancedReviews\Model\Review;
 use Magento\Store\Model\Store;
+use Laminas\Validator\NotEmpty;
+use Laminas\Validator\Digits;
 
 /**
  * Class Common
@@ -22,47 +24,48 @@ class Common extends AbstractValidator
      *
      * @param Review $review
      * @return bool
-     * @throws \Zend_Validate_Exception
      */
     public function isValid($review)
     {
         $errors = [];
+        $notEmptyValidator = new NotEmpty();
+        $digitsValidator = new Digits();
 
-        if (!\Zend_Validate::is($review->getCreatedAt(), 'NotEmpty')) {
+        if (!$notEmptyValidator->isValid($review->getCreatedAt())) {
             $errors[] = __('Created At can\'t be empty.');
         }
-        if (!\Zend_Validate::is($review->getRating(), 'NotEmpty')) {
+        if (!$notEmptyValidator->isValid($review->getRating())) {
             $errors[] = __('Rating can\'t be empty.');
         }
-        if (!\Zend_Validate::is($review->getNickname(), 'NotEmpty')) {
+        if (!$notEmptyValidator->isValid($review->getNickname())) {
             $errors[] = __('Nickname can\'t be empty.');
         }
-        if (!\Zend_Validate::is($review->getContent(), 'NotEmpty')) {
+        if (!$notEmptyValidator->isValid($review->getContent())) {
             $errors[] = __('Content can\'t be empty.');
         }
-        if (!\Zend_Validate::is($review->getStoreId(), 'NotEmpty')) {
+        if (!$notEmptyValidator->isValid($review->getStoreId())) {
             $errors[] = __('Store ID can\'t be empty.');
         }
-        if (!\Zend_Validate::is($review->getProductId(), 'NotEmpty')) {
+        if (!$notEmptyValidator->isValid($review->getProductId())) {
             $errors[] = __('Product ID can\'t be empty.');
         }
-        if (!\Zend_Validate::is($review->getStatus(), 'NotEmpty')) {
+        if (!$notEmptyValidator->isValid($review->getStatus())) {
             $errors[] = __('Status can\'t be empty.');
         }
-        if (!\Zend_Validate::is($review->getAuthorType(), 'NotEmpty')) {
+        if (!$notEmptyValidator->isValid($review->getAuthorType())) {
             $errors[] = __('Author Type can\'t be empty.');
         }
-        if ($review->getVotesPositive() && !\Zend_Validate::is($review->getVotesPositive(), 'Digits')) {
+        if ($review->getVotesPositive() && !$digitsValidator->isValid($review->getVotesPositive())) {
             $errors[] = __('Votes Positive must contain only digits.');
         }
-        if ($review->getVotesNegative() && !\Zend_Validate::is($review->getVotesNegative(), 'Digits')) {
+        if ($review->getVotesNegative() && !$digitsValidator->isValid($review->getVotesNegative())) {
             $errors[] = __('Votes Negative must contain only digits.');
         }
-        if (!\Zend_Validate::is($review->getAuthorType(), 'NotEmpty')) {
+        if (!$notEmptyValidator->isValid($review->getAuthorType())) {
             $errors[] = __('Author Type can\'t be empty.');
         }
         if ($review->getStoreId() == Store::DEFAULT_STORE_ID
-            && !\Zend_Validate::is($review->getSharedStoreIds(), 'NotEmpty')) {
+            && !$notEmptyValidator->isValid($review->getSharedStoreIds())) {
             $errors[] = __('You need to select at least one store view to publish it on frontend.');
         }
         $this->_addMessages($errors);

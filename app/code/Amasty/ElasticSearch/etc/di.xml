@@ -30,11 +30,11 @@
                 type="Amasty\ElasticSearch\Model\Indexer\Structure\IndexBuilder" />
 
 
-    <virtualType name="stockedProductsFilterPluginFix" type="Amasty\ElasticSearch\PluginFix\EmptyPlugin">
+    <!-- <virtualType name="stockedProductsFilterPluginFix" type="Amasty\ElasticSearch\PluginFix\EmptyPlugin">
         <arguments>
             <argument name="instanceFactory" xsi:type="object">StockedProductsFilterPluginFactory</argument>
         </arguments>
-    </virtualType>
+    </virtualType> -->
 
     <virtualType name="StockedProductsFilterPluginFactory" type="Amasty\ElasticSearch\PluginFix\PluginFactory">
         <arguments>
@@ -42,9 +42,9 @@
         </arguments>
     </virtualType>
 
-    <type name="Magento\CatalogSearch\Model\Indexer\Fulltext\Action\DataProvider">
+    <!-- <type name="Magento\CatalogSearch\Model\Indexer\Fulltext\Action\DataProvider">
         <plugin name="stockedProductsFilterPlugin" type="stockedProductsFilterPluginFix"/>
-    </type>
+    </type> -->
 
     <type name="Amasty\ElasticSearch\Model\Config\QuerySettings">
         <arguments>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2016 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
 
@@ -8,7 +8,8 @@ namespace MageWorx\OptionInventory\Observer;
 
 use \Magento\Framework\Event\ObserverInterface;
 use \Magento\Framework\Event\Observer as EventObserver;
-use \Magento\Quote\Model\Quote\Item as QuoteItem;
+use MageWorx\OptionInventory\Helper\Data;
+use MageWorx\OptionInventory\Model\StockProvider;
 
 /**
  * Class UpdateOptionsMessages.
@@ -16,35 +17,38 @@ use \Magento\Quote\Model\Quote\Item as QuoteItem;
  */
 class UpdateOptionsMessages implements ObserverInterface
 {
-    /**
-     * @var \MageWorx\OptionInventory\Model\StockProvider|null
-     */
-    protected $stockProvider = null;
+    protected ?StockProvider $stockProvider = null;
+    protected Data $helperData;
 
     /**
      * UpdateOptionsMessages constructor.
      *
-     * @param \MageWorx\OptionInventory\Model\StockProvider $stockProvider
+     * @param StockProvider $stockProvider
      */
     public function __construct(
-        \MageWorx\OptionInventory\Model\StockProvider $stockProvider
+        StockProvider $stockProvider,
+        Data $helperData
     ) {
         $this->stockProvider = $stockProvider;
+        $this->helperData    = $helperData;
     }
 
     /**
      * @param EventObserver $observer
-     * @return mixed
+     * @return void
      */
     public function execute(EventObserver $observer)
     {
-        $configObj = $observer->getEvent()->getData('configObj');
-        $options = $configObj->getData('config');
+        if ($this->helperData->isEnabledOptionInventory()) {
+            $configObj = $observer->getEvent()->getData('configObj');
+            $options   = $configObj->getData('config');
 
-        $options = $this->stockProvider->updateOptionsStockMessage($options);
+            if (isset($options['bundleId'])) {
+                return;
+            }
 
-        $configObj->setData('config', $options);
-
-        return $configObj;
+            $options = $this->stockProvider->updateOptionsStockMessage($options);
+            $configObj->setData('config', $options);
+        }
     }
 }

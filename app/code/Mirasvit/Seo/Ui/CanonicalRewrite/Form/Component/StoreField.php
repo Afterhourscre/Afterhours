@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -24,11 +24,17 @@ use Mirasvit\Seo\Api\Data\CanonicalRewriteStoreInterface;
 class StoreField extends Field
 {
     /**
+     * @var StoreCheck
+     */
+    private $storeCheck;
+
+    /**
      * Constructor
      *
      * @param ContextInterface $context
      * @param UiComponentFactory $uiComponentFactory
-     * @param UiComponentInterface[] $components
+     * @param StoreCheck $storeCheck
+     * @param array $components
      * @param array $data
      */
     public function __construct(

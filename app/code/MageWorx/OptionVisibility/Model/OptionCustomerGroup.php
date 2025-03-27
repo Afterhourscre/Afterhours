@@ -14,7 +14,6 @@ class OptionCustomerGroup extends AbstractModel
     const OPTIONTEMPLATES_TABLE_NAME = 'mageworx_optiontemplates_group_option_customer_group';
 
     const COLUMN_NAME_VISIBILITY_CUSTOMER_GROUP_ID = 'visibility_customer_group_id';
-    const COLUMN_NAME_MAGEWORX_OPTION_ID           = 'mageworx_option_id';
     const COLUMN_NAME_OPTION_ID                    = 'option_id';
     const COLUMN_NAME_GROUP_ID                     = 'customer_group_id';
 

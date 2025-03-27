@@ -7,10 +7,7 @@ namespace MageWorx\OptionBase\Model\Product\Option\Value;
 
 class AdditionalHtmlData
 {
-    /**
-     * @var array
-     */
-    private $data = [];
+    private array $data = [];
 
     /**
      * Attributes constructor.

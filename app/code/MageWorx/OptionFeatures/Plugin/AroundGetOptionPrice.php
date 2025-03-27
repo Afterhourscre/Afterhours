@@ -3,8 +3,12 @@
  * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
 namespace MageWorx\OptionFeatures\Plugin;
 
+use Magento\Catalog\Model\Product\Option;
+use Magento\Catalog\Model\Product\Option\Value;
+use Magento\Catalog\Model\Product\Configuration\Item\Option\OptionInterface;
 use MageWorx\OptionFeatures\Helper\Data as Helper;
 use MageWorx\OptionBase\Helper\Data as BaseHelper;
 use MageWorx\OptionBase\Helper\Price as BasePriceHelper;
@@ -15,40 +19,13 @@ use MageWorx\OptionFeatures\Model\Price as AdvancedPricingPrice;
 
 class AroundGetOptionPrice
 {
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var BaseHelper
-     */
-    protected $baseHelper;
-
-    /**
-     * @var BasePriceHelper
-     */
-    protected $basePriceHelper;
-
-    /**
-     * @var TaxHelper
-     */
-    protected $taxHelper;
-
-    /**
-     * @var StoreManager
-     */
-    protected $storeManager;
-
-    /**
-     * @var PricingHelper
-     */
-    protected $pricingHelper;
-
-    /**
-     * @var AdvancedPricingPrice
-     */
-    protected $advancedPricingPrice;
+    protected Helper $helper;
+    protected BaseHelper $baseHelper;
+    protected BasePriceHelper $basePriceHelper;
+    protected TaxHelper $taxHelper;
+    protected StoreManager $storeManager;
+    protected PricingHelper $pricingHelper;
+    protected AdvancedPricingPrice $advancedPricingPrice;
 
     /**
      * @param Helper $helper
@@ -85,10 +62,14 @@ class AroundGetOptionPrice
      * @param string $optionValue Prepared for cart option value
      * @return string
      */
-    public function aroundGetEditableOptionValue($subject, $proceed, $optionValue)
+    public function aroundGetEditableOptionValue($subject, $proceed, $optionValue): string
     {
         $option = $subject->getOption();
         $result = '';
+
+        if (!$subject['configuration_item_option']) {
+            return $proceed($optionValue);
+        }
 
         $optionsQty = $this->getBuyRequestOptionsQty($subject);
 
@@ -123,11 +104,13 @@ class AroundGetOptionPrice
         } else {
             $result = $optionValue;
         }
-        return $result;
+
+        return (string)$result;
     }
 
     /**
      * Return Price for selected option
+     *
      * @param \Magento\Catalog\Model\Product\Option\Type\DefaultType $subject
      * @param callable $proceed
      * @param string $optionValue Prepared for cart option value
@@ -136,6 +119,13 @@ class AroundGetOptionPrice
      */
     public function aroundGetOptionPrice($subject, $proceed, $optionValue, $basePrice)
     {
+        if (
+            !$subject['configuration_item_option'] ||
+            !($subject['configuration_item_option'] instanceof OptionInterface)
+        ) {
+            return $proceed($optionValue, $basePrice);
+        }
+
         $option = $subject->getOption();
         $result = 0;
 
@@ -146,7 +136,7 @@ class AroundGetOptionPrice
                 $qty = $this->getOptionQty($optionsQty, $option, $value);
                 $_result = $option->getValueById($value);
                 if ($_result) {
-                    $result += $this->getChargableOptionPrice(
+                    $result += $this->getChargeableOptionPrice(
                         $this->advancedPricingPrice->getPrice($option, $_result),
                         $qty
                     );
@@ -161,7 +151,7 @@ class AroundGetOptionPrice
             $qty = $this->getOptionQty($optionsQty, $option, $optionValue);
             $_result = $option->getValueById($optionValue);
             if ($_result) {
-                $result = $this->getChargableOptionPrice(
+                $result = $this->getChargeableOptionPrice(
                     $this->advancedPricingPrice->getPrice($option, $_result),
                     $qty
                 );
@@ -178,7 +168,7 @@ class AroundGetOptionPrice
     protected function getBuyRequestOptionsQty($subject)
     {
         $optionsQty = [];
-        $configurationItemOption = $subject->getConfigurationItemOption();
+        $configurationItemOption = $subject->getData('configuration_item_option');
         if ($configurationItemOption) {
             $quoteItem = $configurationItemOption->getItem();
             if ($quoteItem) {
@@ -188,6 +178,7 @@ class AroundGetOptionPrice
                 }
             }
         }
+
         return $optionsQty;
     }
 
@@ -203,6 +194,7 @@ class AroundGetOptionPrice
                 }
             }
         }
+
         return $qty;
     }
 
@@ -214,6 +206,8 @@ class AroundGetOptionPrice
         } else {
             $titleQty = $optionQty * $productQty;
         }
+        $this->advancedPricingPrice->setProductQty($productQty);
+
         return $titleQty;
     }
 
@@ -225,18 +219,19 @@ class AroundGetOptionPrice
      * @param bool $isSingleSelection
      * @return string
      */
-    protected function setTitle($model, $qty, $isSingleSelection)
+    protected function setTitle($model, $qty, $isSingleSelection): string
     {
         $title = '';
         if ($qty > 1) {
-            $title .= $qty .' x ';
+            $title .= $qty . ' x ';
         }
         $title .= $model->getTitle();
         $title .= $this->getOptionPriceAsString($model, $qty);
         if (!$isSingleSelection) {
-            $title .=  ', ';
+            $title .= ', ';
         }
-        return $title;
+
+        return (string)$title;
     }
 
     /**
@@ -246,9 +241,10 @@ class AroundGetOptionPrice
      * @param integer $qty
      * @return string
      */
-    protected function getOptionPriceAsString($model, $qty)
+    protected function getOptionPriceAsString($model, $qty): string
     {
         $actualPrice = null;
+
         if ($model instanceof \Magento\Catalog\Model\Product\Option\Value) {
             $product = $model->getOption()->getProduct();
             $actualPrice = $this->advancedPricingPrice->getPrice(
@@ -262,17 +258,19 @@ class AroundGetOptionPrice
         }
 
         if ($actualPrice !== null) {
-            $price = $actualPrice;
+            $price = (float)$actualPrice;
         } else {
-            $price = $model->getPriceType() == 'percent' ?
+            $price = (float)$model->getPriceType() == 'percent' ?
                 $price = $product->getPriceModel()->getBasePrice($product, $qty) * $model->getPrice() / 100 :
                 $model->getPrice();
         }
-        $price *= $qty;
 
         if (!$price) {
             return '';
         }
+
+        $price *= $qty;
+
         $hasNegativeSign = $price < 0;
 
         $store = $product->getStore();
@@ -306,6 +304,7 @@ class AroundGetOptionPrice
                 $this->getPriceSign($hasNegativeSign) .
                 $this->pricingHelper->currencyByStore($priceInclTax, $store, true, false);
         }
+
         return '';
     }
 
@@ -316,7 +315,7 @@ class AroundGetOptionPrice
      */
     protected function getCurrencySymbol()
     {
-        return $this->storeManager->getStore()->getBaseCurrency()->getCurrencySymbol();
+        return (string)$this->storeManager->getStore()->getBaseCurrency()->getCurrencySymbol();
     }
 
     /**
@@ -330,6 +329,7 @@ class AroundGetOptionPrice
             \Magento\Catalog\Model\Product\Option::OPTION_TYPE_DROP_DOWN,
             \Magento\Catalog\Model\Product\Option::OPTION_TYPE_RADIO,
         ];
+
         return in_array($option->getType(), $single);
     }
 
@@ -340,9 +340,9 @@ class AroundGetOptionPrice
      * @param float $qty Option/option value quantity
      * @return float
      */
-    protected function getChargableOptionPrice($price, $qty)
+    protected function getChargeableOptionPrice($price, $qty)
     {
-        return $price * $qty;
+        return (float)$price * $qty;
     }
 
     /**

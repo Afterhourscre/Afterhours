@@ -11,48 +11,52 @@ class Collection extends \WeltPixel\SocialLogin\lib\Google\Client  implements \I
 {
   protected $collection_key = 'items';
 
-  public function rewind()
-  {
-    if (isset($this->modelData[$this->collection_key])
-        && is_array($this->modelData[$this->collection_key])) {
-      reset($this->modelData[$this->collection_key]);
+  public function rewind(): void
+{
+    if (isset($this->modelData[$this->collection_key]) && is_array($this->modelData[$this->collection_key])) {
+        reset($this->modelData[$this->collection_key]);
     }
-  }
+}
 
-  public function current()
-  {
+
+ public function current(): mixed
+{
     $this->coerceType($this->key());
     if (is_array($this->modelData[$this->collection_key])) {
-      return current($this->modelData[$this->collection_key]);
+        return current($this->modelData[$this->collection_key]);
     }
-  }
+    return null; // Ensure a value is always returned
+}
 
-  public function key()
-  {
-    if (isset($this->modelData[$this->collection_key])
-        && is_array($this->modelData[$this->collection_key])) {
-      return key($this->modelData[$this->collection_key]);
+  public function key(): mixed
+{
+    if (isset($this->modelData[$this->collection_key]) && is_array($this->modelData[$this->collection_key])) {
+        return key($this->modelData[$this->collection_key]);
     }
-  }
+    return null; // Ensure a value is always returned
+}
 
-  public function next()
-  {
-    return next($this->modelData[$this->collection_key]);
-  }
 
-  public function valid()
-  {
+ public function next(): void
+{
+    next($this->modelData[$this->collection_key]);
+}
+
+
+  public function valid(): bool
+{
     $key = $this->key();
     return $key !== null && $key !== false;
-  }
+}
 
-  public function count()
-  {
+public function count(): int
+{
     if (!isset($this->modelData[$this->collection_key])) {
-      return 0;
+        return 0;
     }
     return count($this->modelData[$this->collection_key]);
-  }
+}
+
 
   public function offsetExists($offset)
   {

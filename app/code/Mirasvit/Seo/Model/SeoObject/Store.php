@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -46,6 +46,15 @@ class Store extends \Magento\Framework\DataObject
      */
     protected $countryInformation;
 
+    /**
+     * Store constructor.
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+     * @param \Magento\Framework\UrlInterface $urlManager
+     * @param \Magento\Directory\Api\CountryInformationAcquirerInterface $countryInformation
+     * @param RegionFactory $regionFactory
+     * @param array $data
+     */
     public function __construct(
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
@@ -162,7 +171,7 @@ class Store extends \Magento\Framework\DataObject
 
     /**
      * @param string $key
-     * @param Magento\Store\Model\Store\Interceptor &$store
+     * @param \Magento\Store\Model\Store $store
      * @return string
      */
     protected function getConfigValue($key, &$store)

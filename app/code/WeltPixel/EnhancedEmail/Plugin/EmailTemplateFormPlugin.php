@@ -2,8 +2,6 @@
 /**
  * @category    WeltPixel
  * @package     WeltPixel_EnhancedEmail
- * @copyright   Copyright (c) 2018 Weltpixel
- * @author      Weltpixel TEAM
  */
 
 namespace WeltPixel\EnhancedEmail\Plugin;
@@ -42,6 +40,11 @@ class EmailTemplateFormPlugin
     {
         $emailTemplate = $this->_coreRegistry->registry('current_email_template');
 
+        if (!$emailTemplate) {
+            // Handle the case where the email template is not set
+            return $proceed();
+        }
+
         $form = $subject->getForm();
         if (is_object($form)) {
             $fieldset = $form->getElement('base_fieldset');
@@ -60,12 +63,9 @@ class EmailTemplateFormPlugin
                 'template_subject'
             );
 
-
             $subject->setForm($form);
         }
 
         return $proceed();
     }
-
-
 }

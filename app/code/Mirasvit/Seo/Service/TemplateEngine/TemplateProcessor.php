@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\TemplateEngine;
 
@@ -43,14 +44,13 @@ class TemplateProcessor
     ) {
         $this->dataPool      = $dataPool;
         $this->catalogHelper = $catalogHelper;
-
-        $this->storeManager = $storeManager;
+        $this->storeManager  = $storeManager;
     }
 
     /**
      * @return Data\AbstractData[]
      */
-    public function getData()
+    public function getData(): array
     {
         return $this->dataPool;
     }
@@ -61,17 +61,16 @@ class TemplateProcessor
      *
      * @return string
      */
-    public function process($content, array $additionalData = [])
+    public function process(string $content, array $additionalData = []): string
     {
-        if (trim($content) == '') {
+        if (trim((string)$content) == '') {
             return $content;
         }
 
         $emptyValue = "EMPTY";
 
         $content = $this->parseWidget($content);
-
-        $vars = $this->getVars($content);
+        $vars    = $this->getVars($content);
 
         # iteration 1: replace variables {...} [...]
         foreach ($vars as $placeholder => $var) {
@@ -83,11 +82,11 @@ class TemplateProcessor
 
             $value = null;
             if (isset($this->dataPool[$objectCode])) {
-                $value = $this->dataPool[$objectCode]->getValue($attributeCode, $additionalData);
+                $value = (string)$this->dataPool[$objectCode]->getValue($attributeCode, $additionalData);
                 $value = trim($value);
             }
 
-            if (!$value) {
+            if (!$value && $value !== '0') {
                 $value = $emptyValue;
             } else {
                 $value = $this->applyFilters($value);
@@ -115,12 +114,7 @@ class TemplateProcessor
         return $content;
     }
 
-    /**
-     * @param string $content
-     *
-     * @return array
-     */
-    private function getVars($content)
+    private function getVars(string $content): array
     {
         $bAOpen  = '[ZZZZZ';
         $bAClose = 'ZZZZZ]';
@@ -136,7 +130,7 @@ class TemplateProcessor
         $content = str_replace('{', $bBOpen, $content);
         $content = str_replace('}', $bBClose, $content);
 
-        $pattern = '/\[Z{5}[^Z{5}\]W{5}]*Z{5}\]|{W{5}[^W{5}}]*W{5}}/';#deepest variable
+        $pattern = '/(\{|\[)+(Z{5}([^ZW])+Z{5}|W{5}([^ZW])+W{5})*(\}|\])+/';#deepest variable
 
         preg_match_all($pattern, $content, $matches, PREG_SET_ORDER);
 
@@ -162,12 +156,7 @@ class TemplateProcessor
         return $vars;
     }
 
-    /**
-     * @param string $content
-     *
-     * @return string
-     */
-    private function parseWidget($content)
+    private function parseWidget(string $content): string
     {
         if (preg_match_all(
             \Magento\Framework\Filter\Template::CONSTRUCTION_PATTERN,
@@ -188,12 +177,7 @@ class TemplateProcessor
         return $content;
     }
 
-    /**
-     * @param string $content
-     *
-     * @return string
-     */
-    private function restoreWidgetBlocks($content)
+    private function restoreWidgetBlocks(string $content): string
     {
         if ($this->constructions) {
             foreach ($this->constructions as $key => $construction) {
@@ -209,12 +193,7 @@ class TemplateProcessor
         return $content;
     }
 
-    /**
-     * @param string $content
-     *
-     * @return string
-     */
-    private function applyFilters($content)
+    private function applyFilters(string $content): string
     {
         return $this->catalogHelper->getPageTemplateProcessor()->filter($content);
     }

@@ -13,30 +13,17 @@ use MageWorx\OptionBase\Model\Product\Option\AbstractUpdater;
 use MageWorx\OptionVisibility\Model\OptionCustomerGroup as CustomerGroupModel;
 use MageWorx\OptionVisibility\Helper\Data as VisibilityHelper;
 use MageWorx\OptionBase\Helper\CustomerVisibility as CustomerHelper;
+use MageWorx\OptionBase\Helper\Data as BaseHelper;
 
 class CustomerGroup extends AbstractUpdater
 {
     const ALIAS_TABLE_CUSTOMER_GROUP = 'option_customer_group';
 
-    /**
-     * @var VisibilityHelper
-     */
-    protected $visibilityHelper;
-
-    /**
-     * @var CustomerHelper
-     */
-    protected $customerHelper;
-
-    /**
-     * @var bool
-     */
-    protected $isVisibilityFilterRequired;
-
-    /**
-     * @var bool
-     */
-    protected $isVisibilityCustomerGroup;
+    protected VisibilityHelper $visibilityHelper;
+    protected CustomerHelper   $customerHelper;
+    protected bool             $isVisibilityFilterRequired;
+    protected bool             $isVisibilityCustomerGroup;
+    protected BaseHelper       $baseHelper;
 
     /**
      * CustomerGroup constructor.
@@ -50,15 +37,17 @@ class CustomerGroup extends AbstractUpdater
      */
     public function __construct(
         ResourceConnection $resource,
-        Helper $helper,
-        SystemHelper $systemHelper,
-        VisibilityHelper $visibilityHelper,
-        CustomerHelper $customerHelper
+        Helper             $helper,
+        SystemHelper       $systemHelper,
+        VisibilityHelper   $visibilityHelper,
+        CustomerHelper     $customerHelper,
+        BaseHelper         $baseHelper
     ) {
         $this->visibilityHelper           = $visibilityHelper;
         $this->customerHelper             = $customerHelper;
         $this->isVisibilityFilterRequired = $this->customerHelper->isVisibilityFilterRequired();
         $this->isVisibilityCustomerGroup  = $this->visibilityHelper->isVisibilityCustomerGroupEnabled();
+        $this->baseHelper                 = $baseHelper;
 
         parent::__construct($resource, $helper, $systemHelper);
     }
@@ -87,13 +76,13 @@ class CustomerGroup extends AbstractUpdater
      * @param string $entityType
      * @return string
      */
-    public function getTableName($entityType)
+    public function getTableName($entityType): string
     {
         if ($entityType == 'group') {
-            return $this->resource->getTableName(CustomerGroupModel::OPTIONTEMPLATES_TABLE_NAME);
+            return (string)$this->resource->getTableName(CustomerGroupModel::OPTIONTEMPLATES_TABLE_NAME);
         }
 
-        return $this->resource->getTableName(CustomerGroupModel::TABLE_NAME);
+        return (string)$this->resource->getTableName(CustomerGroupModel::TABLE_NAME);
     }
 
     /**
@@ -109,7 +98,7 @@ class CustomerGroup extends AbstractUpdater
                 . ' = ' . $this->getTableAlias() . '.' . CustomerGroupModel::FIELD_OPTION_ID_ALIAS
                 . " AND " . $this->getTableAlias() . "." . CustomerGroupModel::COLUMN_NAME_GROUP_ID
                 . " = '" . $customerGroupId . "'";
-            return $conditions;
+            return (string)$conditions;
         }
 
         return 'main_table.' . CustomerGroupModel::COLUMN_NAME_OPTION_ID . ' = '
@@ -137,8 +126,7 @@ class CustomerGroup extends AbstractUpdater
         }
 
         return [
-            CustomerGroupModel::KEY_CUSTOMER_GROUP => $this->getTableAlias(
-                ) . '.' . CustomerGroupModel::KEY_CUSTOMER_GROUP
+            CustomerGroupModel::KEY_CUSTOMER_GROUP => $this->getTableAlias() . '.' . CustomerGroupModel::KEY_CUSTOMER_GROUP
         ];
     }
 
@@ -149,7 +137,7 @@ class CustomerGroup extends AbstractUpdater
      */
     public function getTableAlias()
     {
-        return $this->resource->getConnection()->getTableName(self::ALIAS_TABLE_CUSTOMER_GROUP);
+        return (string)$this->resource->getConnection()->getTableName(self::ALIAS_TABLE_CUSTOMER_GROUP);
     }
 
     /**
@@ -160,8 +148,6 @@ class CustomerGroup extends AbstractUpdater
     {
         $entityType = $conditions['entity_type'];
         $tableName  = $this->getTableName($entityType);
-
-        $this->resource->getConnection()->query('SET SESSION group_concat_max_len = 100000;');
 
         $selectExpr = "SELECT " . CustomerGroupModel::COLUMN_NAME_OPTION_ID . " as "
             . CustomerGroupModel::FIELD_OPTION_ID_ALIAS . ","
@@ -199,5 +185,13 @@ class CustomerGroup extends AbstractUpdater
             . " FROM " . $tableName;
 
         return new \Zend_Db_Expr('(' . $selectExpr . ')');
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function determineJoinNecessity(): bool
+    {
+        return $this->isVisibilityFilterRequired && $this->baseHelper->isEnabledVisibilityPerCustomerGroup();
     }
 }

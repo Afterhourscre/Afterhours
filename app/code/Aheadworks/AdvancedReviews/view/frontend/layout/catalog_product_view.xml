@@ -108,6 +108,17 @@ See LICENSE.txt for license details.
                                                 </item>
                                                 <item name="sortOrder" xsi:type="number">20</item>
                                             </item>
+                                            <item name="email" xsi:type="array">
+                                                <item name="component" xsi:type="string">Magento_Ui/js/form/element/abstract</item>
+                                                <item name="dataScope" xsi:type="string">email</item>
+                                                <item name="provider" xsi:type="string">awArReviewFormProvider</item>
+                                                <item name="template" xsi:type="string">ui/form/field</item>
+                                                <item name="label" xsi:type="string" translate="true">Email</item>
+                                                <item name="validation" xsi:type="array">
+                                                    <item name="required-entry" xsi:type="boolean">true</item>
+                                                </item>
+                                                <item name="sortOrder" xsi:type="number">21</item>
+                                            </item>
                                             <item name="rating" xsi:type="array">
                                                 <item name="component" xsi:type="string">Aheadworks_AdvancedReviews/js/review/rating</item>
                                                 <item name="dataScope" xsi:type="string">rating</item>

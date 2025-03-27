@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -27,10 +27,21 @@ use Mirasvit\SeoAutolink\Service\TextProcessorService;
 class AddLinksPlugin
 {
 
+    /**
+     * @var Config
+     */
     private $config;
 
+    /**
+     * @var TextProcessorService
+     */
     private $textProcessorService;
 
+    /**
+     * AddLinksPlugin constructor.
+     * @param Config $config
+     * @param TextProcessorService $textProcessorService
+     */
     public function __construct(
         Config $config,
         TextProcessorService $textProcessorService
@@ -47,11 +58,28 @@ class AddLinksPlugin
      */
     public function afterProcessCurrentContent($subject, $content)
     {
-        $description = $content->getDescription();
-
         if ($this->config->isAllowedTarget(Target::SEO_DESCRIPTION)) {
+            $description = $content->getDescription();
             $description = $this->textProcessorService->addLinks($description);
             $content->setDescription($description);
+        }
+
+        if ($this->config->isAllowedTarget(Target::PRODUCT_SHORT_DESCRIPTION)) {
+            $description = $content->getShortDescription();
+            $description = $this->textProcessorService->addLinks($description);
+            $content->setShortDescription($description);
+        }
+
+        if ($this->config->isAllowedTarget(Target::PRODUCT_FULL_DESCRIPTION)) {
+            $description = $content->getFullDescription();
+            $description = $this->textProcessorService->addLinks($description);
+            $content->setFullDescription($description);
+        }
+
+        if ($this->config->isAllowedTarget(Target::CATEGORY_DESCRIPTION)) {
+            $description = $content->getCategoryDescription();
+            $description = $this->textProcessorService->addLinks($description);
+            $content->setCategoryDescription($description);
         }
 
         return $content;

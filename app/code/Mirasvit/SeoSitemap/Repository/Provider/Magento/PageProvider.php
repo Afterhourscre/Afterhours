@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -26,14 +26,33 @@ use Mirasvit\SeoSitemap\Model\Config\LinkSitemapConfig;
 
 class PageProvider implements ProviderInterface
 {
+    /**
+     * @var PageFactory
+     */
     private $cmsFactory;
 
+    /**
+     * @var DataHelper
+     */
     private $dataHelper;
 
+    /**
+     * @var CmsSitemapConfig
+     */
     private $cmsSitemapConfig;
 
+    /**
+     * @var LinkSitemapConfig
+     */
     private $linkSitemapConfig;
 
+    /**
+     * PageProvider constructor.
+     * @param CmsSitemapConfig $cmsSitemapConfig
+     * @param LinkSitemapConfig $linkSitemapConfig
+     * @param DataHelper $dataHelper
+     * @param PageFactory $cmsFactory
+     */
     public function __construct(
         CmsSitemapConfig $cmsSitemapConfig,
         LinkSitemapConfig $linkSitemapConfig,
@@ -44,24 +63,36 @@ class PageProvider implements ProviderInterface
         $this->cmsFactory        = $cmsFactory;
         $this->cmsSitemapConfig  = $cmsSitemapConfig;
         $this->linkSitemapConfig = $linkSitemapConfig;
-
     }
 
+    /**
+     * @return string
+     */
     public function getModuleName()
     {
         return 'Magento_Cms';
     }
 
+    /**
+     * @return bool
+     */
     public function isApplicable()
     {
         return true;
     }
 
+    /**
+     * @return \Magento\Framework\Phrase|string
+     */
     public function getTitle()
     {
         return __('Pages');
     }
 
+    /**
+     * @param int $storeId
+     * @return array|DataObject
+     */
     public function initSitemapItem($storeId)
     {
         return new DataObject([
@@ -71,6 +102,10 @@ class PageProvider implements ProviderInterface
         ]);
     }
 
+    /**
+     * @param int $storeId
+     * @return array
+     */
     private function getCmsPages($storeId)
     {
         $ignore   = $this->cmsSitemapConfig->getIgnoreCmsPages();
@@ -78,7 +113,7 @@ class PageProvider implements ProviderInterface
         $cmsPages = $this->cmsFactory->create()->getCollection($storeId);
 
         foreach ($cmsPages as $cmsKey => $cms) {
-            if (in_array($cms->getUrl(), $ignore)) {
+            if (in_array($cms->getId(), $ignore)) {
                 unset($cmsPages[$cmsKey]);
             }
 
@@ -94,6 +129,10 @@ class PageProvider implements ProviderInterface
         return $cmsPages;
     }
 
+    /**
+     * @param int $storeId
+     * @return array
+     */
     public function getItems($storeId)
     {
         return [];

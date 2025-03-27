@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoAutolink\Service\Config;
 
@@ -21,25 +22,15 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 
 class Autolink implements \Mirasvit\SeoAutolink\Api\Config\AutolinkInterface
 {
-    /**
-     * @var ScopeConfigInterface
-     */
     protected $scopeConfig;
 
-    /**
-     * @param ScopeConfigInterface $scopeConfig
-     */
     public function __construct(
         ScopeConfigInterface $scopeConfig
     ) {
         $this->scopeConfig = $scopeConfig;
     }
 
-    /**
-     * @param int|null $store
-     * @return array
-     */
-    public function getTemplates($store = null)
+    public function getTemplates(int $store = null): array
     {
         $conf = $this->scopeConfig->getValue(
             'seoautolink/autolink/add_links_inside_templates',
@@ -47,7 +38,7 @@ class Autolink implements \Mirasvit\SeoAutolink\Api\Config\AutolinkInterface
             $store
         );
 
-        $template = explode("\n", trim($conf));
+        $template = explode("\n", trim((string)$conf));
         $template = array_map('trim', $template);
         $template = array_diff($template, [0, null]);
 

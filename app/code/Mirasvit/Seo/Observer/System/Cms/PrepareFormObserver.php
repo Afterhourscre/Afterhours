@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -27,22 +27,35 @@ class PrepareFormObserver implements ObserverInterface
     protected $registry;
 
     /**
+     * @var \Magento\Framework\App\Request\Http
+     */
+    protected $request;
+
+    /**
      * @param \Magento\Framework\Registry $registry
      */
     public function __construct(
-        \Magento\Framework\Registry $registry
+        \Magento\Framework\Registry $registry,
+        \Magento\Framework\App\Request\Http $request
     ) {
         $this->registry = $registry;
+        $this->request = $request;
+
     }
 
     /**
-     * @param string $observer
+     * @param \Magento\Framework\Event\Observer $observer
      *
      * @return void
      */
     public function prepareForm($observer)
     {
         $model = $this->registry->registry('cms_page');
+
+        if (!$model) {
+            return; // some custom CMS page editors not adding CMS page to registry
+        }
+
         $form = $observer->getForm();
         $fieldset = $form->addFieldset(
             'seo_alternate_fieldset',
@@ -78,6 +91,14 @@ class PrepareFormObserver implements ObserverInterface
      */
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
-        $this->prepareForm($observer);
+        /**
+         * bannerslideradmin_banner_edit - action of Plazathemes Banner Slider.
+         * When action was not excluded, the visits of "Create New Banner" page fails
+         * with "$model->getAlternateGroup() on null error"
+         * ticket id: 2398234
+         */
+        if(strpos($this->request->getFullActionName(), 'bannerslideradmin') === false) {
+            $this->prepareForm($observer);
+        }
     }
 }

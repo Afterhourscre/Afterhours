@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -26,41 +26,69 @@ class Rewrite extends Content implements RewriteInterface
         $this->_init(ResourceModel\Rewrite::class);
     }
 
+    /**
+     * @param string $value
+     * @return \Magento\Framework\Model\AbstractModel|\Mirasvit\SeoContent\Api\Data\ContentInterface|RewriteInterface
+     */
     public function setUrl($value)
     {
         return $this->setData(self::URL, $value);
     }
 
+    /**
+     * @return Rewrite|string
+     */
     public function getUrl()
     {
         return $this->getData(self::URL);
     }
 
+    /**
+     * @param bool $value
+     * @return \Magento\Framework\Model\AbstractModel|\Mirasvit\SeoContent\Api\Data\ContentInterface|RewriteInterface
+     */
     public function setIsActive($value)
     {
         return $this->setData(self::IS_ACTIVE, $value);
     }
 
+    /**
+     * @return bool|Rewrite
+     */
     public function isActive()
     {
         return $this->getData(self::IS_ACTIVE);
     }
 
+    /**
+     * @param string $value
+     * @return \Magento\Framework\Model\AbstractModel|\Mirasvit\SeoContent\Api\Data\ContentInterface|RewriteInterface
+     */
     public function setSortOrder($value)
     {
         return $this->setData(self::SORT_ORDER, $value);
     }
 
+    /**
+     * @return Rewrite|string
+     */
     public function getSortOrder()
     {
         return $this->getData(self::SORT_ORDER);
     }
 
+    /**
+     * @param array $value
+     * @return \Magento\Framework\Model\AbstractModel|\Mirasvit\SeoContent\Api\Data\ContentInterface|RewriteInterface
+     */
     public function setStoreIds(array $value)
     {
         return $this->setData(self::STORE_IDS, implode(',', $value));
     }
 
+    /**
+     * @return array
+     */
     public function getStoreIds()
     {
         return explode(',', $this->getData(self::STORE_IDS));

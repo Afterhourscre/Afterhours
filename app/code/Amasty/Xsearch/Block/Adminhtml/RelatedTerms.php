@@ -1,16 +1,12 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Block\Adminhtml;
 
-/**
- * Class RelatedTerms
- */
 class RelatedTerms extends \Magento\Backend\Block\Template
 {
     /**
@@ -52,6 +48,7 @@ class RelatedTerms extends \Magento\Backend\Block\Template
                 'search.terms.related.grid'
             );
         }
+
         return $this->blockGrid;
     }
 
@@ -73,6 +70,7 @@ class RelatedTerms extends \Magento\Backend\Block\Template
         if (!empty($terms)) {
             return $this->jsonEncoder->serialize($terms);
         }
+
         return '{}';
     }
 

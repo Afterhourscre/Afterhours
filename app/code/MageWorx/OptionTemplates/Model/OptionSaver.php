@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2016 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
 
@@ -12,6 +12,7 @@ use Magento\ConfigurableProduct\Model\Product\ReadHandler;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductCustomOptionRepositoryInterface as OptionRepository;
+use MageWorx\OptionBase\Model\ValidationResolver as ValidationResolver;
 use MageWorx\OptionTemplates\Helper\Data as Helper;
 use MageWorx\OptionBase\Helper\Data as BaseHelper;
 use Magento\Framework\Event\ManagerInterface;
@@ -20,6 +21,10 @@ use MageWorx\OptionBase\Model\ResourceModel\CollectionUpdaterRegistry;
 use MageWorx\OptionTemplates\Model\ResourceModel\Product as ResourceModelProduct;
 use MageWorx\OptionBase\Model\AttributeSaver;
 use MageWorx\OptionBase\Model\ResourceModel\DataSaver;
+use MageWorx\OptionBase\Model\ResourceModel\Option as MageworxOptionResource;
+use MageWorx\OptionBase\Model\OptionSaver\Option as OptionDataCollector;
+use Magento\Store\Model\StoreManagerInterface as StoreManager;
+use MageWorx\OptionBase\Model\OptionHandler as OptionHandler;
 
 class OptionSaver
 {
@@ -31,9 +36,16 @@ class OptionSaver
     const KEY_DEL_PRODUCT = 'del';
 
     /**
+     * @var StoreManager
+     */
+    protected $storeManager;
+
+    /**
      * @var ManagerInterface
      */
     protected $eventManager;
+    protected \MageWorx\OptionBase\Model\Entity\Product $productEntity;
+    protected \MageWorx\OptionBase\Model\Entity\Group $groupEntity;
 
     /**
      * @var ReadHandler
@@ -177,9 +189,14 @@ class OptionSaver
     protected $attributeSaver;
 
     /**
-     * @var \MageWorx\OptionTemplates\Model\OptionSaver\Option
+     * @var OptionDataCollector
      */
     protected $optionDataCollector;
+
+    /**
+     * @var MageworxOptionResource
+     */
+    protected $mageworxOptionResource;
 
     /**
      * @var DataSaver
@@ -204,7 +221,12 @@ class OptionSaver
     /**
      * @var array
      */
-    protected $productsWithOptions = [];
+    protected $productsHasNoRequiredOptions = [];
+
+    /**
+     * @var array
+     */
+    protected $productsWithRequiredOptions = [];
 
     /**
      * @var array
@@ -215,6 +237,26 @@ class OptionSaver
      * @var bool
      */
     protected $isTemplateSave = true;
+
+    /**
+     * @var array
+     */
+    protected $productsHasNoOptions = [];
+
+    /**
+     * @var array
+     */
+    protected $productsWithMageWorxIsRequire = [];
+
+    /**
+     * @var array
+     */
+    protected $optionHandler = [];
+
+    /**
+     * @var ValidationResolver
+     */
+    protected $validationResolver;
 
     /**
      *
@@ -229,9 +271,13 @@ class OptionSaver
      * @param ResourceConnection $resource
      * @param CollectionUpdaterRegistry $collectionUpdaterRegistry
      * @param ResourceModelProduct $resourceModelProduct
-     * @param \MageWorx\OptionTemplates\Model\OptionSaver\Option $optionDataCollector
+     * @param OptionDataCollector $optionDataCollector
      * @param AttributeSaver $attributeSaver
      * @param DataSaver $dataSaver
+     * @param MageworxOptionResource $mageworxOptionResource
+     * @param StoreManager $storeManager
+     * @param ValidationResolver $validationResolver
+     * @param OptionHandler $optionHandler
      */
     public function __construct(
         ReadHandler $readHandler,
@@ -251,9 +297,13 @@ class OptionSaver
         CollectionUpdaterRegistry $collectionUpdaterRegistry,
         ResourceConnection $resource,
         ResourceModelProduct $resourceModelProduct,
-        \MageWorx\OptionTemplates\Model\OptionSaver\Option $optionDataCollector,
+        OptionDataCollector $optionDataCollector,
         AttributeSaver $attributeSaver,
-        DataSaver $dataSaver
+        MageworxOptionResource $mageworxOptionResource,
+        DataSaver $dataSaver,
+        StoreManager $storeManager,
+        OptionHandler $optionHandler,
+        ValidationResolver $validationResolver
     ) {
         $this->readHandler               = $readHandler;
         $this->productOptionConfig       = $productOptionConfig;
@@ -275,6 +325,10 @@ class OptionSaver
         $this->optionDataCollector       = $optionDataCollector;
         $this->attributeSaver            = $attributeSaver;
         $this->dataSaver                 = $dataSaver;
+        $this->mageworxOptionResource    = $mageworxOptionResource;
+        $this->storeManager              = $storeManager;
+        $this->optionHandler             = $optionHandler;
+        $this->validationResolver        = $validationResolver;
     }
 
     /**
@@ -289,6 +343,8 @@ class OptionSaver
      */
     public function saveProductOptions(Group $group, $oldGroupCustomOptions, $saveMode)
     {
+        $this->baseHelper->resetOptionIdsCache();
+
         $this->products[self::KEY_NEW_PRODUCT] = $group->getNewProductIds();
         $this->products[self::KEY_UPD_PRODUCT] = $group->getUpdProductIds();
         $this->products[self::KEY_DEL_PRODUCT] = $group->getDelProductIds();
@@ -298,7 +354,7 @@ class OptionSaver
         $limit    = 50;
 
         for ($offset = 0; $offset < $totalIds; $offset += $limit) {
-            $ids = array_slice($allProductIds, $offset, $limit);
+            $ids        = array_slice($allProductIds, $offset, $limit);
             $collection = $this->getAffectedProductsCollection($ids);
 
             if (empty($collection->getItems())) {
@@ -317,8 +373,15 @@ class OptionSaver
 
             $this->processIncrementIds();
             $this->processProducts($collection, $saveMode);
-            $this->updateHasOptionsStatus();
+            $this->optionHandler->prepareProductStatusToUpdate(
+                $this->productsHasNoRequiredOptions,
+                $this->productsWithRequiredOptions,
+                $this->productsWithMageWorxIsRequire,
+                $this->productsHasNoOptions
+            );
         }
+
+        $this->eventManager->dispatch('mw_optiontemplates_product_options_save_after', ['group' => $group]);
 
         return;
     }
@@ -345,8 +408,12 @@ class OptionSaver
                 $this->dataSaver->insertMultipleData($tableName, $dataItem);
             }
 
-            $this->linkField           = $this->baseHelper->getLinkField(ProductInterface::class);
-            $this->productsWithOptions = [];
+            $this->linkField                     = $this->baseHelper->getLinkField(ProductInterface::class);
+            $this->productsHasNoRequiredOptions  = [];
+            $this->productsWithRequiredOptions   = [];
+            $this->productsWithMageWorxIsRequire = [];
+            $this->productsHasNoOptions          = [];
+
             foreach ($products as $productItem) {
                 $this->updateProductData($productItem);
                 $this->doProductRelationAction($productItem->getId());
@@ -381,11 +448,16 @@ class OptionSaver
         /** @var \Magento\Catalog\Model\ResourceModel\Product\Collection $collection */
         $collection = $this->productCollectionFactory->create();
         $this->collectionUpdaterRegistry->setCurrentEntityType('product');
-        $this->collectionUpdaterRegistry->setCurrentEntityId(0);
+        $this->collectionUpdaterRegistry->setCurrentEntityIds([]);
+        $this->collectionUpdaterRegistry->setOptionIds([]);
+        $this->collectionUpdaterRegistry->setOptionValueIds([]);
+        $this->baseHelper->resetOptionIdsCache();
+        $this->storeManager->setCurrentStore(0);
         $collection->addStoreFilter(0)
                    ->setStoreId(0)
                    ->addFieldToFilter('entity_id', ['in' => $ids])
                    ->addOptionsToResult();
+
         return $collection;
     }
 
@@ -405,15 +477,55 @@ class OptionSaver
         $this->intersectedOptions         = $this->getGroupIntersectedOptions();
         $groupNewModifiedOptions          = $this->getGroupNewModifiedOptions();
         $groupLastModifiedOptions         = $this->getGroupLastModifiedOptions();
-        $modifiedDownGroupOptions         = $this->arrayDiffRecursive(
+
+        $this->filterOptionsDiff($groupLastModifiedOptions);
+        $this->filterOptionsDiff($groupNewModifiedOptions);
+
+        $modifiedDownGroupOptions   = $this->arrayDiffRecursive(
             $groupLastModifiedOptions,
             $groupNewModifiedOptions
         );
-        $modifiedUpGroupOptions           = $this->arrayDiffRecursive(
+        $modifiedUpGroupOptions     = $this->arrayDiffRecursive(
             $groupNewModifiedOptions,
             $groupLastModifiedOptions
         );
-        $this->modifiedGroupOptions       = $modifiedDownGroupOptions + $modifiedUpGroupOptions;
+        $this->modifiedGroupOptions = $modifiedDownGroupOptions + $modifiedUpGroupOptions;
+    }
+
+    /**
+     * Filter options diff from repeated data
+     *
+     * @param array $options
+     * @return void
+     */
+    protected function filterOptionsDiff(&$options)
+    {
+        if (empty($options)) {
+            return;
+        }
+        foreach ($options as $optionKey => $option) {
+            if (!isset($option['values'])) {
+                continue;
+            }
+
+            foreach ($option['values'] as $valueKey => $optionValue) {
+                if (empty($optionValue['images_data'])) {
+                    continue;
+                }
+
+                $modifiedImagesData = $this->baseHelper->jsonDecode($optionValue['images_data']);
+                if (!$modifiedImagesData) {
+                    continue;
+                }
+
+                foreach ($modifiedImagesData as $key => $imageData) {
+                    unset($modifiedImagesData[$key]['option_type_image_id']);
+                }
+                $options[$optionKey]['values'][$valueKey]['images_data'] = $this->baseHelper->jsonEncode(
+                    $modifiedImagesData
+                );
+            }
+        }
     }
 
     /**
@@ -513,7 +625,6 @@ class OptionSaver
                         $this->optionsToDelete
                     );
                 }
-
             } catch (\Magento\Framework\Exception\LocalizedException $e) {
                 $this->logger->critical($e->getLogMessage());
                 throw $e;
@@ -547,6 +658,7 @@ class OptionSaver
                 $values[$valueKey] = $value;
             }
         }
+
         return $values;
     }
 
@@ -569,9 +681,47 @@ class OptionSaver
         }
 
         $product->addData($groupData);
-        if ($product->getOptions()) {
-            $this->productsWithOptions[] = $product->getData($this->linkField);
-            $product->setHasOptions(1);
+        $options                     = $product->getOptions();
+        $hasOptions                  = false;
+        $optionRequireStatus         = false;
+        $mageWorxOptionRequireStatus = false;
+        if ($options && is_array($options)) {
+            $productId = $product->getData($this->linkField);
+            foreach ($options as $option) {
+                if (!$option->getData('is_delete')) {
+                    $hasOptions = true;
+
+                    if ($option->getIsRequire()) {
+                        $optionRequireStatus = true;
+                    }
+                    if ($optionRequireStatus) {
+                        $mageWorxOptionRequireStatus = true;
+                        /* @var $validatorItem \MageWorx\OptionBase\Api\ValidatorInterface */
+                        foreach ($this->validationResolver->getValidators() as $key => $validatorItem) {
+                            if (!$validatorItem->canValidateCartCheckout($product, $option)) {
+                                $mageWorxOptionRequireStatus = false;
+                                break;
+                            }
+                        }
+                        if ($mageWorxOptionRequireStatus) {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!$hasOptions) {
+                $this->productsHasNoOptions[] = $productId;
+            } elseif (!$optionRequireStatus) {
+                $this->productsHasNoRequiredOptions[] = $productId;
+            } elseif ($optionRequireStatus && !$mageWorxOptionRequireStatus) {
+                $this->productsWithRequiredOptions[] = $productId;
+            } else {
+                $this->productsWithMageWorxIsRequire[] = $productId;
+            }
+            $product->setHasOptions($hasOptions);
+            $product->setRequiredOptions($optionRequireStatus);
+            $product->setMageworxIsRequired($mageWorxOptionRequireStatus);
         }
 
         $product->setIsAfterTemplateSave(true);
@@ -580,25 +730,6 @@ class OptionSaver
             'mageworx_attributes_save_trigger',
             ['product' => $product, 'is_after_template' => true]
         );
-    }
-
-    /**
-     * Update has_options flag in products
-     *
-     * @return void
-     */
-    protected function updateHasOptionsStatus()
-    {
-        if (empty($this->productsWithOptions)) {
-            return;
-        }
-        $connection = $this->resource->getConnection();
-        $tableName  = $this->resource->getTableName('catalog_product_entity');
-        $data       = [
-            'has_options' => 1,
-        ];
-        $sql        = $this->linkField . " IN (" . implode(',', $this->productsWithOptions) . ")";
-        $connection->update($tableName, $data, $sql);
     }
 
     /**
@@ -737,21 +868,21 @@ class OptionSaver
     protected function getPreparedProductOptions($product, $saveMode)
     {
         $productOptions = $this->productEntity->getOptionsAsArray($product);
+        $productSku     = $product->getSku();
 
         if ($saveMode == static::SAVE_MODE_UPDATE) {
-
             if ($this->isNewProduct($product->getId())) {
-                $productOptions = $this->addNewOptionProcess($productOptions);
+                $productOptions = $this->addNewOptionProcess($productOptions, $productSku);
             } elseif ($this->isUpdProduct($product->getId())) {
                 $productOptions = $this->deleteOptionProcess($productOptions, $this->group, true);
-                $productOptions = $this->addNewOptionProcess($productOptions);
-                $productOptions = $this->modifyOptionProcess($productOptions);
+                $productOptions = $this->addNewOptionProcess($productOptions, $productSku);
+                $productOptions = $this->modifyOptionProcess($productOptions, $productSku);
             } elseif ($this->isDelProduct($product->getId())) {
                 $productOptions = $this->deleteOptionProcess($productOptions, $this->group);
             }
         } else {
             if ($this->isNewProduct($product->getId())) {
-                $productOptions = $this->addNewOptionProcess($productOptions, $this->group);
+                $productOptions = $this->addNewOptionProcess($productOptions, $productSku, $this->group);
             } elseif ($this->isDelProduct($product->getId())) {
                 $productOptions = $this->deleteOptionProcess($productOptions, $this->group);
             }
@@ -783,8 +914,35 @@ class OptionSaver
                 $productOptions[$optionIndex] = $productOption;
             }
         }
+        /* temporary fix, see APO issues 1076 */
+        $this->deleteOptionDependencyData($productOptions);
 
         return $productOptions;
+    }
+
+    /**
+     * Delete dependency data for deleted temaplte options
+     *
+     */
+    public function deleteOptionDependencyData(array $productOptions): void
+    {
+        $data     = [];
+        $optionId = 'option_id';
+        foreach ($productOptions as $productOption) {
+            if (isset($productOption['is_delete'])) {
+                $data['delete'][] = [$optionId => $productOption[$optionId]];
+            }
+        }
+
+        if (empty($data)) {
+            return;
+        }
+
+        $this->attributeSaver->deleteOptionAttributesProcess(
+            $this->resource->getTableName('mageworx_option_dependency'),
+            'product',
+            $data
+        );
     }
 
     /**
@@ -836,9 +994,10 @@ class OptionSaver
      * Modify options that were modified in group
      *
      * @param array $productOptions
+     * @param $productSku
      * @return array
      */
-    protected function modifyOptionProcess(array $productOptions)
+    protected function modifyOptionProcess(array $productOptions, $productSku)
     {
         foreach ($productOptions as &$productOption) {
             $productOptionId = $productOption['option_id'];
@@ -855,6 +1014,7 @@ class OptionSaver
             if (isset($productOption['values'])) {
                 $productOptionValues = $productOption['values'];
             }
+
             $productOption                               = $groupOption;
             $productOption['group_option_id']            = $groupOptionId;
             $productOption['option_id']                  = $productOptionId;
@@ -882,6 +1042,11 @@ class OptionSaver
                 if ($groupOptionValueId) {
                     $processedGroupValues[$groupOptionValueId] = $groupOptionValueId;
                     if (isset($groupOption['values'][$groupOptionValueId])) {
+                        $isDeafult = $this->baseHelper->setIsDefaultAttrForLLPLogic(
+                            $productSku,
+                            $groupOption['values'][$groupOptionValueId]
+                        );
+
                         $productOptionValueId                             = $productOptionValue['option_type_id'];
                         $productOptionValue                               = $groupOption['values'][$groupOptionValueId];
                         $productOptionValue['group_option_value_id']      = $groupOptionValueId;
@@ -889,6 +1054,7 @@ class OptionSaver
                         $productOptionValue['option_type_id']             = $productOptionValueId;
                         $productOptionValue['option_id']                  = $productOptionId;
                         $productOptionValue['need_to_process_dependency'] = true;
+                        $productOptionValue['is_default']                 = $isDeafult;
                     } else {
                         $this->markToDeleteOptionValue($productOptionValue);
                     }
@@ -908,6 +1074,10 @@ class OptionSaver
                 $value['option_id']                                = $productOptionId;
                 $value['need_to_process_dependency']               = true;
                 $this->currentIncrementIds['value']                += 1;
+                $value['is_default']                               = $this->baseHelper->setIsDefaultAttrForLLPLogic(
+                    $productSku,
+                    $groupOptionValue
+                );
                 $additionalProductValues[$value['option_type_id']] = $value;
             }
 
@@ -921,10 +1091,11 @@ class OptionSaver
      * Add new options that were added in group
      *
      * @param array $productOptions
-     * @param Group|null
+     * @param $productSku
+     * @param null $group
      * @return array
      */
-    public function addNewOptionProcess(array $productOptions, $group = null)
+    public function addNewOptionProcess(array $productOptions, $productSku, $group = null)
     {
         if ($group === null) {
             $groupOptions = $this->groupOptions;
@@ -956,6 +1127,12 @@ class OptionSaver
 
                 foreach ($productOption['values'] as &$productOptionValue) {
                     foreach ($groupOption['values'] as $groupOptionValue) {
+                        if (!empty($groupOptionValue['load_linked_product'])) {
+                            $productOptionValue['is_default'] = $this->baseHelper->setIsDefaultAttrForLLPLogic(
+                                $productSku,
+                                $productOptionValue
+                            );
+                        }
                         if (empty($productOptionValue['group_option_value_id'])
                             || $productOptionValue['group_option_value_id'] !== $groupOptionValue['option_type_id']
                             || !isset($groupOptionValue['dependency'])
@@ -964,6 +1141,7 @@ class OptionSaver
                         }
                         $productOptionValue['dependency']                 = $groupOptionValue['dependency'];
                         $productOptionValue['need_to_process_dependency'] = true;
+
                         $this->attributeSaver->addNewGroupOptionIds($groupOption['option_id']);
                     }
                 }
@@ -972,15 +1150,24 @@ class OptionSaver
             if (!$issetGroupOptionInProduct) {
                 $groupOption['group_option_id'] = $groupOption['id'];
                 if ($this->getIsTemplateSave()) {
-                    $groupOption['id']                   = $this->currentIncrementIds['option'];
-                    $groupOption['option_id']            = $groupOption['id'];
-                    $this->currentIncrementIds['option'] += 1;
+                    $groupOption['id']        = $this->currentIncrementIds['option'];
+                    $groupOption['option_id'] = $groupOption['id'];
+                    ++$this->currentIncrementIds['option'];
                 } else {
                     $groupOption['id']        = null;
                     $groupOption['option_id'] = null;
                 }
                 $this->attributeSaver->addNewGroupOptionIds($groupOption['group_option_id']);
                 $groupOption['need_to_process_dependency'] = true;
+
+                if (!empty($groupOption['values'])) {
+                    foreach ($groupOption['values'] as &$groupValue) {
+                        $groupValue['is_default'] = $this->baseHelper->setIsDefaultAttrForLLPLogic(
+                            $productSku,
+                            $groupValue
+                        );
+                    }
+                }
 
                 $groupOption                      = $this->convertGroupToProductOptionValues($groupOption);
                 $productOptions[]                 = $groupOption;
@@ -990,6 +1177,7 @@ class OptionSaver
 
         return $productOptions;
     }
+
 
     /**
      * Unassign options from template
@@ -1032,9 +1220,9 @@ class OptionSaver
             foreach ($option['values'] as $valueKey => $value) {
                 $value['group_option_value_id'] = $value['option_type_id'];
                 if ($this->getIsTemplateSave()) {
-                    $value['id']                        = $this->currentIncrementIds['value'];
-                    $value['option_type_id']            = $value['id'];
-                    $this->currentIncrementIds['value'] += 1;
+                    $value['id']             = $this->currentIncrementIds['value'];
+                    $value['option_type_id'] = $value['id'];
+                    ++$this->currentIncrementIds['value'];
                 } else {
                     $value['id']             = null;
                     $value['option_type_id'] = null;

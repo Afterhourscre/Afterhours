@@ -3,35 +3,35 @@
         position: relative;
 
         &:after {
-            position: absolute;
-            right: 1px;
-            top: 1px;
-            color: #adadad;
-            content: 'f';
-            font-style: italic;
+            position:    absolute;
+            right:       1px;
+            top:         1px;
+            color:       #adadad;
+            content:     "f";
+            font-style:  italic;
             font-family: "Nimbus Roman No9 L", "Times New Roman", Times, serif;
-            display: block;
-            text-align: center;
+            display:     block;
+            text-align:  center;
             font-weight: bold;
-            padding: .5rem 1.5rem;
+            padding:     .5rem 1.5rem;
             line-height: 2rem;
-            font-size: 2rem;
+            font-size:   2rem;
         }
     }
 }
 
 .mst-seo-content__component-template-syntax {
-    background: #fff;
-    font-size: 1.2rem;
-    padding: 1rem 1rem;
-    position: fixed;
-    top: 0;
-    right: -25rem;
-    z-index: 10000000;
-    width: 25rem;
-    max-width: 25rem;
-    height: 100%;
-    overflow: scroll;
+    background: #ffffff;
+    font-size:  1.2rem;
+    padding:    1rem 1rem;
+    position:   fixed;
+    bottom:     0;
+    right:      -23vw;
+    z-index:    10000000;
+    width:      23vw;
+    max-width:  23vw;
+    height:     80vh;
+    overflow:   auto;
     transition: all .5s ease;
     box-shadow: 0 0 12px 2px rgba(0, 0, 0, 0.25);
 
@@ -40,16 +40,22 @@
     }
 
     h4 {
-        font-size: 1.6rem;
+        font-size:     1.6rem;
+        margin-bottom: 0;
+    }
+
+    small {
+        margin-bottom: 2rem;
+        color:         #666666;
     }
 
     .close {
-        position: absolute;
-        right: 1rem;
-        top: 1rem;
-        font-size: 2rem;
+        position:    absolute;
+        right:       1rem;
+        top:         1rem;
+        font-size:   2rem;
         line-height: 2rem;
-        cursor: pointer;
+        cursor:      pointer;
     }
 
     ol {
@@ -57,17 +63,17 @@
 
         li {
             strong {
-                display: block;
+                display:    block;
                 //margin-top: 1rem;
                 background: #f8f8f8;
-                margin: 1rem -1rem .5rem -1rem;
-                padding: .5rem 1rem;
+                margin:     1rem -1rem .5rem -1rem;
+                padding:    .5rem 1rem;
             }
 
             ul {
                 list-style: none;
-                display: flex;
-                flex-wrap: wrap;
+                display:    flex;
+                flex-wrap:  wrap;
 
                 li {
                     //padding: .2rem .3rem;
@@ -77,4 +83,9 @@
             }
         }
     }
+}
+
+.mst-seo-content__component-template-syntax-wrapper {
+    position: relative;
+    z-index:  1000;
 }

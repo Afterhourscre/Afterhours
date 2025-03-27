@@ -5,14 +5,13 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use \Magento\Store\Model\StoreManagerInterface;
-use \Magento\Framework\File\Csv;
-use \Magento\Framework\ObjectManagerInterface;
-use \Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Framework\File\Csv;
+use Magento\Framework\ObjectManagerInterface;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 
 class ExportConfigurationsCommand extends Command
 {
-
     const ARGUMENT_STORE = 'store';
 
     /**
@@ -42,20 +41,19 @@ class ExportConfigurationsCommand extends Command
 
     /**
      * ExportConfigurationsCommand constructor.
-     * @param array $sectionContainer
      * @param StoreManagerInterface $storeManager
      * @param Csv $csvFile
      * @param ObjectManagerInterface $objectManager
      * @param ScopeConfigInterface $scopeConfig
+     * @param array $sectionContainer
      */
     public function __construct(
-        array $sectionContainer = [],
         StoreManagerInterface $storeManager,
         Csv $csvFile,
         ObjectManagerInterface $objectManager,
-        ScopeConfigInterface $scopeConfig
-    )
-    {
+        ScopeConfigInterface $scopeConfig,
+        array $sectionContainer = []
+    ) {
         $this->storeManager = $storeManager;
         $this->csvFile = $csvFile;
         $this->objectManager = $objectManager;
@@ -132,6 +130,5 @@ class ExportConfigurationsCommand extends Command
         $exportCsvFileName = 'weltpixel_configurations_' . $storeCode . '.csv';
         $this->csvFile->saveData($exportCsvFileName, $csvData);
         $output->writeln($exportCsvFileName . ' generated successfully.');
-
     }
 }

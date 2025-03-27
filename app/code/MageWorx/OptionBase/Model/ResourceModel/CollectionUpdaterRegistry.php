@@ -1,8 +1,9 @@
 <?php
 /**
- * Copyright © 2018 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
 namespace MageWorx\OptionBase\Model\ResourceModel;
 
 class CollectionUpdaterRegistry
@@ -12,92 +13,99 @@ class CollectionUpdaterRegistry
      *
      * @var string
      */
-    protected $currentEntityType;
+    protected string $currentEntityType;
 
     /**
-     * Current product/group Id
+     * Current product/group Ids
      *
-     * @var int
+     * @var array
      */
-    protected $currentEntityId;
+    protected array $currentEntityIds;
 
     /**
-     * Current product row id (actual only if Magento EE)
+     * Current product row ids (actual only if Magento EE)
      *
-     * @var int
+     * @var array
      */
-    protected $currentRowId;
+    protected array $currentRowIds = [];
 
     /**
      * Array of product/group option's IDs
      *
      * @var array
      */
-    protected $optionIds;
+    protected array $optionIds;
 
     /**
      * Array of product/group option value's IDs
      *
      * @var array
      */
-    protected $optionValueIds;
+    protected array $optionValueIds;
+
+    /**
+     * Is applied group concat variable flag
+     *
+     * @var bool
+     */
+    protected bool $isAppliedGroupConcat = false;
 
     /**
      * @param string $currentEntityType
-     * @param int $currentEntityId
+     * @param array $currentEntityIds
      * @param array $optionIds
      * @param array $optionValueIds
      */
     public function __construct(
         $currentEntityType = '',
-        $currentEntityId = 0,
+        $currentEntityIds = [],
         $optionIds = [],
         $optionValueIds = []
     ) {
         $this->currentEntityType = $currentEntityType;
-        $this->currentEntityId = $currentEntityId;
-        $this->optionIds = $optionIds;
-        $this->optionValueIds = $optionValueIds;
+        $this->currentEntityIds  = $currentEntityIds;
+        $this->optionIds         = $optionIds;
+        $this->optionValueIds    = $optionValueIds;
     }
 
     /**
      * Set current product or group entity id
      *
-     * @param int $entityId
+     * @param array $entityIds
      */
-    public function setCurrentEntityId($entityId)
+    public function setCurrentEntityIds($entityIds)
     {
-        $this->currentEntityId = $entityId;
+        $this->currentEntityIds = $entityIds;
     }
 
     /**
      * Get current product or group entity id
      *
-     * @return int
+     * @return array
      */
-    public function getCurrentEntityId()
+    public function getCurrentEntityIds()
     {
-        return $this->currentEntityId;
+        return $this->currentEntityIds;
     }
 
     /**
      * Set current product row id
      *
-     * @param int $entityId
+     * @param array $entityIds
      */
-    public function setCurrentRowId($entityId)
+    public function setCurrentRowIds($entityIds)
     {
-        $this->currentRowId = $entityId;
+        $this->currentRowIds = $entityIds;
     }
 
     /**
      * Get current product row id
      *
-     * @return int
+     * @return array
      */
-    public function getCurrentRowId()
+    public function getCurrentRowIds()
     {
-        return $this->currentRowId;
+        return $this->currentRowIds;
     }
 
     /**
@@ -158,5 +166,25 @@ class CollectionUpdaterRegistry
     public function getOptionValueIds()
     {
         return $this->optionValueIds;
+    }
+
+    /**
+     * Set isAppliedGroupConcat flag
+     *
+     * @param bool $value
+     */
+    public function setIsAppliedGroupConcat($value)
+    {
+        $this->isAppliedGroupConcat = (bool)$value;
+    }
+
+    /**
+     * Get isAppliedGroupConcat flag
+     *
+     * @return bool
+     */
+    public function getIsAppliedGroupConcat()
+    {
+        return $this->isAppliedGroupConcat;
     }
 }

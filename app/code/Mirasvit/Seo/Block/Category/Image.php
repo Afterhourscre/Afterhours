@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -27,6 +27,25 @@ use Mirasvit\Seo\Helper\Data;
 
 class Image extends View
 {
+    /**
+     * @var Data
+     */
+    private $seoData;
+    /**
+     * @var ImageServiceInterface
+     */
+    private $imageService;
+
+    /**
+     * Image constructor.
+     * @param Context $context
+     * @param Resolver $layerResolver
+     * @param Registry $registry
+     * @param Category $categoryHelper
+     * @param ImageServiceInterface $imageService
+     * @param Data $seoData
+     * @param array $data
+     */
     public function __construct(
         Context $context,
         Resolver $layerResolver,

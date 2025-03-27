@@ -12,26 +12,10 @@ use MageWorx\OptionBase\Helper\System as SystemHelper;
 
 abstract class AbstractUpdater implements CollectionUpdaterInterface
 {
-    /**
-     * @var SystemHelper
-     */
-    protected $systemHelper;
+    protected SystemHelper $systemHelper;
+    protected Helper $helper;
+    protected ResourceConnection $resource;
 
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var ResourceConnection
-     */
-    protected $resource;
-
-    /**
-     * @param ResourceConnection $resource
-     * @param Helper $helper
-     * @param SystemHelper $systemHelper
-     */
     public function __construct(
         ResourceConnection $resource,
         Helper $helper,
@@ -92,5 +76,19 @@ abstract class AbstractUpdater implements CollectionUpdaterInterface
     public function getTableAlias()
     {
         return '';
+    }
+
+    /**
+     * Determines whether a join is necessary.
+     *
+     * This method utilizes the original old logic to determine if a join is necessary.
+     * By default, it always returns true.
+     * Allows you to exclude unnecessary joins from certain updaters.
+     *
+     * @return bool Returns true if a join is necessary, otherwise false.
+     */
+    public function determineJoinNecessity(): bool
+    {
+        return true;
     }
 }

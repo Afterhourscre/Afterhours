@@ -1,7 +1,6 @@
 define([
 	'jquery',
 	'mage/mage',
-	'mage/ie-class-fixer',
 	'mage/gallery/gallery'
 ], function (jQuery) {
 	"use strict";

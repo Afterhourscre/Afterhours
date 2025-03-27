@@ -9,14 +9,16 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoContent\Ui\Component;
 
+use Magento\Backend\Model\UrlInterface;
 use Magento\Framework\View\Element\UiComponent\ContextInterface;
 use Magento\Ui\Component\AbstractComponent;
 use Mirasvit\Seo\Api\Service\TemplateEngineServiceInterface;
@@ -27,33 +29,41 @@ class TemplateSyntaxComponent extends AbstractComponent
 
     public function __construct(
         TemplateEngineServiceInterface $templateEngineService,
-        ContextInterface $context,
-        $components = [],
-        array $data = []
+        ContextInterface               $context,
+        UrlInterface                   $url,
+        array                          $components = [],
+        array                          $data = []
     ) {
         $this->templateEngineService = $templateEngineService;
 
-        $data['config']['component'] = 'Mirasvit_SeoContent/js/component/template-syntax';
+        $data['config']['component']  = 'Mirasvit_SeoContent/js/component/template-syntax';
+        $data['config']['suggestUrl'] = $url->getUrl('seo_content/template/suggest');
 
         parent::__construct($context, $components, $data);
     }
 
-    public function getComponentName()
+    public function getComponentName(): string
     {
         return 'template_syntax';
     }
 
-    public function prepare()
+    public function prepare(): void
     {
         parent::prepare();
 
         $config = $this->getData('config');
 
         foreach ($this->templateEngineService->getData() as $scope => $dataObject) {
+            $variables = $dataObject->getVariables();
+
+            if (empty($variables)) {
+                continue;
+            }
+
             $scopeData = [
-                'label' => $dataObject->getTitle(),
+                'label' => (string)$dataObject->getTitle(),
             ];
-            foreach ($dataObject->getVariables() as $var) {
+            foreach ($variables as $var) {
                 $scopeData['vars'][] = $scope . '_' . $var;
             }
 

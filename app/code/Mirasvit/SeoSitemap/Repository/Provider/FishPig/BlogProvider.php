@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -24,10 +24,21 @@ use Mirasvit\SeoSitemap\Api\Repository\ProviderInterface;
 
 class BlogProvider implements ProviderInterface
 {
+    /**
+     * @var ObjectManagerInterface
+     */
     private $objectManager;
 
+    /**
+     * @var DataHelper
+     */
     private $dataHelper;
 
+    /**
+     * BlogProvider constructor.
+     * @param ObjectManagerInterface $objectManager
+     * @param DataHelper $dataHelper
+     */
     public function __construct(
         ObjectManagerInterface $objectManager,
         DataHelper $dataHelper
@@ -36,21 +47,34 @@ class BlogProvider implements ProviderInterface
         $this->dataHelper    = $dataHelper;
     }
 
+    /**
+     * @return string
+     */
     public function getModuleName()
     {
         return 'FishPig_WordPress';
     }
 
+    /**
+     * @return bool
+     */
     public function isApplicable()
     {
         return true;
     }
 
+    /**
+     * @return \Magento\Framework\Phrase|string
+     */
     public function getTitle()
     {
         return __('Blog');
     }
 
+    /**
+     * @param int $storeId
+     * @return array
+     */
     public function initSitemapItem($storeId)
     {
         $result = [];
@@ -64,6 +88,10 @@ class BlogProvider implements ProviderInterface
         return $result;
     }
 
+    /**
+     * @param int $storeId
+     * @return array
+     */
     public function getItems($storeId)
     {
         $items = [];
@@ -71,8 +99,14 @@ class BlogProvider implements ProviderInterface
             $emulation = $this->objectManager->create('Magento\Store\Model\App\Emulation');
             $emulation->startEnvironmentEmulation($storeId, 'frontend', true);
 
-            $collection = $this->objectManager->get('FishPig\WordPress\Model\ResourceModel\Post\Collection');
+            $postTypeRepository = $this->objectManager->get('FishPig\WordPress\Model\PostTypeRepository');
+            $collection         = $this->objectManager->get('FishPig\WordPress\Model\ResourceModel\Post\Collection');
+
             $collection->addIsViewableFilter();
+
+            if (method_exists($postTypeRepository, 'getPublic')) {
+                $collection->addPostTypeFilter(array_keys($postTypeRepository->getPublic()));
+            }
 
             $emulation->stopEnvironmentEmulation();
 

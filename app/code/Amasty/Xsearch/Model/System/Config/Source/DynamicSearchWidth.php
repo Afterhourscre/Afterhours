@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Model\System\Config\Source;
 
@@ -12,8 +11,8 @@ use \Magento\Framework\Option\ArrayInterface;
 
 class DynamicSearchWidth implements ArrayInterface
 {
-    const DEFAULT_WIDTH = 0;
-    const DYNAMIC_WIDTH = 1;
+    public const DEFAULT_WIDTH = 0;
+    public const DYNAMIC_WIDTH = 1;
 
     /**
      * @return array

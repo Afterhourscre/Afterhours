@@ -3,6 +3,6 @@
 ?>
 <?php if($seoDesription = $block->getDescription($block->getDescriptionPosition())): ?>
     <div class="seo__description">
-        <?=$seoDesription ?>
+        <?= /* @noEscape */ $seoDesription ?>
     </div>
 <?php endif ?>

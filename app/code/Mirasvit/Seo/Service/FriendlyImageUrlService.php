@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -18,63 +18,49 @@
 namespace Mirasvit\Seo\Service;
 
 use Mirasvit\Seo\Api\Service\FriendlyImageUrlServiceInterface;
-use Mirasvit\Seo\Service\TemplateEngine\TemplateProcessor;
 use Mirasvit\Seo\Model\Config\ImageConfig;
 use Magento\Framework\Filter\FilterManager;
-use Mirasvit\Seo\Helper\Serializer;
 use Magento\Catalog\Model\Product\Media\Config as MediaConfig;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Mirasvit\Seo\Service\TemplateEngineService;
 
 class FriendlyImageUrlService implements FriendlyImageUrlServiceInterface
 {
-    /**
-     * @var SerializerInterface
-     */
-    private $serializer;
-
-    /**
-     * @var ImageConfig
-     */
     private $imageConfig;
 
-    /**
-     * @var TemplateEngineService
-     */
     private $templateEngineService;
 
-    /**
-     * @var FilterManager
-     */
     private $filterManager;
 
-    /**
-     * @var MediaConfig
-     */
     private $mediaConfig;
 
-    /**
-     * @var DirectoryList
-     */
     private $directoryList;
 
     private $cache = [];
+
     private $cacheAlt = [];
 
+    private $cacheTitle = [];
+
+    /**
+     * FriendlyImageUrlService constructor.
+     * @param ImageConfig $imageConfig
+     * @param TemplateEngineService $templateEngineService
+     * @param FilterManager $filterManager
+     * @param MediaConfig $mediaConfig
+     * @param DirectoryList $directoryList
+     */
     public function __construct(
         ImageConfig $imageConfig,
         TemplateEngineService $templateEngineService,
         FilterManager $filterManager,
         MediaConfig $mediaConfig, //can't use MediaConfigInterface, because of magento tests error in M2.1
-        DirectoryList $directoryList,
-        Serializer $serializer
+        DirectoryList $directoryList
     ) {
         $this->imageConfig           = $imageConfig;
         $this->templateEngineService = $templateEngineService;
         $this->filterManager         = $filterManager;
         $this->mediaConfig           = $mediaConfig;
         $this->directoryList         = $directoryList;
-        $this->serializer            = $serializer;
     }
 
     /**
@@ -89,6 +75,17 @@ class FriendlyImageUrlService implements FriendlyImageUrlServiceInterface
         } else {
             $this->cache[$product->getId()] = [];
         }
+
+        if (!$fileName) {
+            return $fileName;
+        }
+
+        // swatch images fix (processed already)
+        if (strpos($fileName, DIRECTORY_SEPARATOR . 'image' . DIRECTORY_SEPARATOR) !== false) {
+            $this->cache[$product->getId()][$fileName] = $fileName;
+            return $fileName;
+        }
+
         \Magento\Framework\Profiler::start(__METHOD__);
         $newFile = DIRECTORY_SEPARATOR . 'image' . DIRECTORY_SEPARATOR . $this->generateName($product, $fileName);
 
@@ -100,9 +97,15 @@ class FriendlyImageUrlService implements FriendlyImageUrlServiceInterface
             . DIRECTORY_SEPARATOR . $this->mediaConfig->getBaseMediaPath()
             . DIRECTORY_SEPARATOR . ltrim($newFile, DIRECTORY_SEPARATOR);
         try {
-            if (file_exists($absPath) && !file_exists($absNewPath)) {
-                mkdir(dirname($absNewPath), 0777, true);
-                copy($absPath, $absNewPath);
+            if (file_exists($absPath)) {
+                if (!file_exists($absNewPath)) {
+                    if (!is_dir(dirname($absNewPath))) {
+                        mkdir(dirname($absNewPath), 0777, true);
+                    }
+                    copy($absPath, $absNewPath);
+                }
+            } else { // use old file name of the image does not exist (swatches issue)
+                $newFile = $fileName;
             }
         } catch (\Exception $e) {
             $this->cache[$product->getId()][$fileName] = $fileName;
@@ -115,21 +118,61 @@ class FriendlyImageUrlService implements FriendlyImageUrlServiceInterface
 
     /**
      * @param \Magento\Catalog\Model\Product $product
+     * @param int|null $storeId
      *
      * @return string
      */
-    public function getFriendlyImageAlt($product)
+    public function getFriendlyImageAlt($product, $storeId = null)
     {
-        if (isset($this->cacheAlt[$product->getId()])) {
-            return $this->cacheAlt[$product->getId()];
+        $altKey = 'alt_' . $product->getId();
+
+        $storeId = $storeId ?: $product->getStoreId();
+
+        if ($storeId) {
+            $altKey .= '_' . $storeId;
+        }
+
+        if (isset($this->cacheAlt[$altKey])) {
+            return $this->cacheAlt[$altKey];
         }
 
         \Magento\Framework\Profiler::start(__METHOD__);
         $template = $this->imageConfig->getAltTemplate();
 
         $res = $this->templateEngineService->render($template, ['product' => $product]);
-        $this->cacheAlt[$product->getId()]  = $res;
+        $this->cacheAlt[$altKey] = $res;
         \Magento\Framework\Profiler::stop(__METHOD__);
+
+        return $res;
+    }
+
+    /**
+     * @param \Magento\Catalog\Model\Product $product
+     * @param int|null $storeId
+     *
+     * @return string
+     */
+    public function getFriendlyImageTitle($product, $storeId = null)
+    {
+        $titleKey = 'title_' . $product->getId();
+
+        $storeId = $storeId ?: $product->getStoreId();
+
+        if ($storeId) {
+            $titleKey .= '_' . $storeId;
+        }
+
+        if (isset($this->cacheTitle[$titleKey])) {
+            return $this->cacheTitle[$titleKey];
+        }
+
+        \Magento\Framework\Profiler::start(__METHOD__);
+        $template = $this->imageConfig->getTitleTemplate();
+
+        $res = $this->templateEngineService->render($template, ['product' => $product]);
+        $this->cacheTitle[$titleKey] = $res;
+        \Magento\Framework\Profiler::stop(__METHOD__);
+
         return $res;
     }
 
@@ -148,7 +191,7 @@ class FriendlyImageUrlService implements FriendlyImageUrlServiceInterface
         $imageName = $this->filterManager->translitUrl($label);
         $suffix    = preg_replace('/(.*)(\\.)/', '.', $fileName);
 
-        $imagePath = $product->getId() . substr(hash('sha256',$fileName), 4, 4);
+        $imagePath = $product->getId() . substr(hash('sha256', $fileName), 4, 4);
 
         return $imagePath . '/' . $imageName . $suffix;
     }

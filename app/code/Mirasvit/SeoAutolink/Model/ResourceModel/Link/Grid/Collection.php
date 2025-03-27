@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -20,12 +20,27 @@ namespace Mirasvit\SeoAutolink\Model\ResourceModel\Link\Grid;
 use Magento\Framework\Api\Search\SearchResultInterface;
 use Mirasvit\SeoAutolink\Model\ResourceModel\Link\Collection as LinkCollection;
 
-
 class Collection extends LinkCollection implements SearchResultInterface
 {
+    /**
+     * @var \Magento\Framework\Api\Search\AggregationInterface
+     */
+    private $aggregations;
 
     /**
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \Magento\Framework\Data\Collection\EntityFactoryInterface $entityFactory
+     * @param \Psr\Log\LoggerInterface $logger
+     * @param \Magento\Framework\Data\Collection\Db\FetchStrategyInterface $fetchStrategy
+     * @param \Magento\Framework\Event\ManagerInterface $eventManager
+     * @param \Magento\Framework\DB\Adapter\AdapterInterface|null $connection
+     * @param \Magento\Framework\Model\ResourceModel\Db\AbstractDb|null $resource
+     * @param string $mainTable
+     * @param string $eventPrefix
+     * @param string $eventObject
+     * @param string $resourceModel
+     * @param string $model
      */
     public function __construct(
         \Magento\Store\Model\StoreManagerInterface $storeManager,

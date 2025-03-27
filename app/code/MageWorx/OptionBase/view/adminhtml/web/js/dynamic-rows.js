@@ -4,10 +4,8 @@
  */
 
 define([
-    'MageWorx_OptionBase/dynamicRows21x',
-    'MageWorx_OptionBase/dynamicRows22x',
-    'MageWorx_OptionBase/versionResolver'
-], function (dynamicRows21x, dynamicRows22x, versionResolver) {
+    'MageWorx_OptionBase/dynamicRows22x'
+], function (dynamicRows22x) {
     'use strict';
     
     if (!Array.prototype.last) {
@@ -16,9 +14,5 @@ define([
         }
     }
 
-    if (versionResolver.isSince22x() != -1) {
-        return dynamicRows22x;
-    } else {
-        return dynamicRows21x;
-    }
+    return dynamicRows22x;
 });

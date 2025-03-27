@@ -19,9 +19,10 @@ class BodyClass extends \Magento\Backend\Block\AbstractBlock {
      * @param array $data
      * @param \Magento\Framework\View\Page\Config $page
      */
-    public function __construct(\Magento\Backend\Block\Context $context, array $data = [],
+    public function __construct(\Magento\Backend\Block\Context $context,
         \Magento\Framework\View\Page\Config $page,
-        \Magento\Store\Model\StoreManagerInterface $storeManager)
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+         array $data = [])
     {
         parent::__construct($context, $data);
         $this->_page = $page;

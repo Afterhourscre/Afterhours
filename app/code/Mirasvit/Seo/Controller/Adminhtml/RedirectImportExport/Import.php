@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -31,7 +31,7 @@ class Import extends \Mirasvit\Seo\Controller\Adminhtml\RedirectImportExport
             $existingStoreIds[] = $store->getId();
         }
 
-        /** @var $uploader \Magento\MediaStorage\Model\File\Uploader */
+        /** @var \Magento\MediaStorage\Model\File\Uploader $uploader */
         $uploader = $this->fileUploaderFactory->create(['fileId' => 'import_redirect_file']);
         $uploader->setAllowedExtensions(['csv']);
         $uploader->setAllowRenameFiles(true);
@@ -77,43 +77,28 @@ class Import extends \Mirasvit\Seo\Controller\Adminhtml\RedirectImportExport
                 $item = new \Magento\Framework\DataObject($item);
                 $query
                       = "REPLACE {$table} SET
-                    url_from = '" . addslashes($item->getUrlFrom()) . "',
-                    url_to = '" . addslashes($item->getUrlTo()) . "',
-                    redirect_type = '" . addslashes($item->getRedirectType()) . "',
-                    is_redirect_only_error_page = '" . addslashes($item->getIsRedirectOnlyErrorPage()) . "',
-                    comments = '" . addslashes($item->getComments()) . "',
-                    is_active = '" . addslashes($item->getIsActive()) . "';
+                    redirect_id = '" . $item->getRedirectId() . "',  
+                    url_from = '" . addslashes((string)$item->getUrlFrom()) . "',
+                    url_to = '" . addslashes((string)$item->getUrlTo()) . "',
+                    redirect_type = '" . addslashes((string)$item->getRedirectType()) . "',
+                    is_redirect_only_error_page = '" . addslashes((string)$item->getIsRedirectOnlyErrorPage()) . "',
+                    comments = '" . addslashes((string)$item->getComments()) . "',
+                    is_active = '" . addslashes((string)$item->getIsActive()) . "';
                      ";
-
+                /** @var \Zend_Db_Adapter_Mysqli  $writeConnection*/
                 $writeConnection->query($query);
-                $lastInsertId = $writeConnection->lastInsertId();
-                $storeId      = ($item->getStoreId()) ? $item->getStoreId() : 0;
-                if (strpos($storeId, '/') !== false) { //we can use more than one store 1/2/3 etc.
-                    $storeIds = [];
-                    $storeIds = explode('/', $storeId);
-                    $storeIds = array_intersect($storeIds, $existingStoreIds);
-                }
-                if ((!isset($storeIds) && !in_array($storeId, $existingStoreIds))
-                    || (isset($storeIds) && !$storeIds)
-                    || (isset($storeIds) && in_array(0, $storeIds))) {
-                    $storeId  = 0;
-                    $storeIds = false;
-                }
-                if (isset($storeIds) && $storeIds) {
-                    foreach ($storeIds as $storeId) {
-                        $query
-                            = "REPLACE {$tableB} SET
+
+                $lastInsertId = $item->getRedirectId() ?: $writeConnection->lastInsertId();
+                $storeIds     = ($item->getStoreId()) ? explode('/', (string)$item->getStoreId()) : [0];
+                $storeIds     = array_intersect($storeIds, $existingStoreIds);
+
+                foreach ($storeIds as $storeId) {
+                    $query = "REPLACE {$tableB} SET
                         store_id = " . $storeId . ",
                         redirect_id = " . $lastInsertId . ";";
                         $writeConnection->query($query);
-                    }
-                } else {
-                    $query
-                        = "REPLACE {$tableB} SET
-                        store_id = " . $storeId . ",
-                        redirect_id = LAST_INSERT_ID();";
-                    $writeConnection->query($query);
                 }
+
                 ++$i;
             }
 

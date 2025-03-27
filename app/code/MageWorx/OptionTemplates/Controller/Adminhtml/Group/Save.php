@@ -11,6 +11,7 @@ use Magento\Backend\Helper\Js as JsHelper;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
 use Magento\Framework\Registry;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Serialize\Serializer\Json as Serializer;
 use MageWorx\OptionBase\Model\Product\Attributes as ProductAttributes;
 use MageWorx\OptionTemplates\Controller\Adminhtml\Group as GroupController;
 use MageWorx\OptionTemplates\Model\Group\Source\AssignType;
@@ -74,6 +75,11 @@ class Save extends GroupController
     protected $formData = [];
 
     /**
+     * @var Serializer
+     */
+    protected $serializer;
+
+    /**
      * @param ProductCollectionFactory $productCollectionFactory
      * @param OptionSaver $optionSaver
      * @param JsHelper $jsHelper
@@ -85,6 +91,7 @@ class Save extends GroupController
      * @param Context $context
      * @param Copier $groupCopier
      * @param Registry $registry
+     * @param Serializer $serializer
      */
     public function __construct(
         ProductCollectionFactory $productCollectionFactory,
@@ -97,7 +104,8 @@ class Save extends GroupController
         ProductAttributes $productAttributes,
         Context $context,
         Copier $groupCopier,
-        Registry $registry
+        Registry $registry,
+        Serializer $serializer
     ) {
         $this->optionSaver              = $optionSaver;
         $this->jsHelper                 = $jsHelper;
@@ -108,6 +116,7 @@ class Save extends GroupController
         $this->groupOptionFactory       = $groupOptionFactory;
         $this->productAttributes        = $productAttributes;
         $this->groupCopier              = $groupCopier;
+        $this->serializer               = $serializer;
         parent::__construct($groupBuilder, $context);
     }
 
@@ -127,6 +136,7 @@ class Save extends GroupController
         if (!$data) {
             $this->registry->unregister('mageworx_optiontemplates_group_save');
             $resultRedirect->setPath('mageworx_optiontemplates/*/');
+
             return $resultRedirect;
         }
 
@@ -306,23 +316,16 @@ class Save extends GroupController
      */
     protected function isGroupAttributesChanged($originalGroup)
     {
-        $keys                  = [];
-        $productAttributesKeys = [];
-        $attributes            = $this->productAttributes->getData();
+        $attributes = $this->productAttributes->getData();
         /** @var $attribute \MageWorx\OptionBase\Api\ProductAttributeInterface */
         foreach ($attributes as $attribute) {
-            $productAttributesKeys[] = $attribute->getKeys();
-        }
-        foreach ($productAttributesKeys as $productAttributesKeyItems) {
-            foreach ($productAttributesKeyItems as $productAttributesKey) {
-                $keys[] = $productAttributesKey;
-            }
-        }
-        foreach ($keys as $key) {
-            if (isset($this->formData[$key]) && $originalGroup->getData($key) != $this->formData[$key]) {
+            if (isset($this->formData[$attribute->getName()])
+                && $originalGroup->getData($attribute->getName()) != $this->formData[$attribute->getName()]
+            ) {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -372,6 +375,7 @@ class Save extends GroupController
                 }
             }
         }
+
         return false;
     }
 
@@ -386,6 +390,7 @@ class Save extends GroupController
         if (!isset($option['option_id'])) {
             return true;
         }
+
         return false;
     }
 
@@ -400,6 +405,7 @@ class Save extends GroupController
         if (isset($data['is_delete']) && $data['is_delete'] = 1) {
             return true;
         }
+
         return false;
     }
 
@@ -443,6 +449,7 @@ class Save extends GroupController
                 }
             }
         }
+
         return false;
     }
 
@@ -457,6 +464,7 @@ class Save extends GroupController
         if (!isset($value['option_type_id'])) {
             return true;
         }
+
         return false;
     }
 
@@ -477,6 +485,7 @@ class Save extends GroupController
         if ($this->isGroupAttributesChanged($originalGroup)) {
             return true;
         }
+
         return $this->isOptionsChanged($originalGroup->getOptions());
     }
 
@@ -586,7 +595,7 @@ class Save extends GroupController
     protected function getProductIds($data)
     {
         if (!empty($data)) {
-            $productIds = json_decode($data, true);
+            $productIds = $this->serializer->unserialize($data);
         } else {
             $productIds = [];
         }
@@ -630,7 +639,7 @@ class Save extends GroupController
      */
     protected function convertMultiStringToArray($string, $finalFunction = null)
     {
-        if (!trim($string)) {
+        if (!trim((string)$string)) {
             return [];
         }
 
@@ -678,19 +687,16 @@ class Save extends GroupController
                     continue;
                 }
 
-                $values = $option['values'];
-                foreach ($option['values'] as $valueKey => $value) {
-                    if (!isset($value['option_type_id'])) {
-                        continue;
-                    }
-                    unset($updatedOptions[$optionId]['values'][$valueKey]);
-                }
+                $values                              = $option['values'];
+                $updatedOptions[$optionId]['values'] = [];
                 foreach ($values as $valueKey => $value) {
                     if (!isset($value['option_type_id'])) {
-                        continue;
+                        $valueId                                       = $value['record_id'] . '_';
+                        $updatedOptions[$optionId]['values'][$valueId] = $value;
+                    } else {
+                        $valueId                                       = $value['option_type_id'];
+                        $updatedOptions[$optionId]['values'][$valueId] = $value;
                     }
-                    $valueId                                       = $value['option_type_id'];
-                    $updatedOptions[$optionId]['values'][$valueId] = $value;
                 }
             }
 

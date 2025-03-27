@@ -8,7 +8,7 @@ See LICENSE.txt for license details.
 namespace Aheadworks\Coupongenerator\Ui\Component\MassAction\GenerateSend;
 
 use Magento\Framework\UrlInterface;
-use Zend\Stdlib\JsonSerializable;
+use JsonSerializable;
 use Aheadworks\Coupongenerator\Model\ResourceModel\Salesrule\CollectionFactory;
 
 /**
@@ -80,7 +80,7 @@ class Options implements JsonSerializable
      *
      * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         if ($this->options === null) {
             $options = $this->collectionFactory->create()

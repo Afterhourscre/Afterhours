@@ -10,10 +10,7 @@ class ActionMode
 {
     const ACTION_IMPORT = 'import';
 
-    /**
-     * @var string
-     */
-    protected $actionMode = '';
+    protected string $actionMode = '';
 
     /**
      * Set current action mode

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -19,7 +19,6 @@ namespace Mirasvit\Seo\Controller\Adminhtml\CanonicalRewrite;
 
 class MassDisable extends MassActions
 {
-
     /**
      * {@inheritdoc}
      */

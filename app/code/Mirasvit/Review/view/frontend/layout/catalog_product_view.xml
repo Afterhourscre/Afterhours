@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <update handle="review_product_form_component"/>
+    <update handle="review_gallery"/>
+    <body>
+        <referenceBlock name="product.info.details">
+            <referenceBlock class="Mirasvit\Review\Block\Form" name="product.review.form" template="Mirasvit_Review::form.phtml">
+                <container name="product.review.form.fields.before" as="form_fields_before" label="Review Form Fields Before"/>
+                <block name="mst.product.review.upload" as="review.image" class="Mirasvit\Review\Block\Product\Review\Uploader" template="Mirasvit_Review::review/image-uploader.phtml" />
+            </referenceBlock>
+        </referenceBlock>
+    </body>
+</page>

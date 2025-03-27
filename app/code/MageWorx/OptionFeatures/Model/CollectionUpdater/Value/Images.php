@@ -66,8 +66,6 @@ class Images extends AbstractUpdater
         $entityType = $conditions['entity_type'];
         $tableName = $this->getTableName($entityType);
 
-        $this->resource->getConnection()->query('SET SESSION group_concat_max_len = 100000;');
-
         $selectImagesExpr = "SELECT option_type_id,";
         $selectImagesExpr .= " concat('[',";
         $selectImagesExpr .= " group_concat(concat(";
@@ -80,6 +78,7 @@ class Images extends AbstractUpdater
         $selectImagesExpr .= "'\"custom_media_type\"',':\"',media_type,'\",',";
         $selectImagesExpr .= "'\"color\"',':\"',IFNULL(color,''),'\",',";
         $selectImagesExpr .= "'\"disabled\"',':\"',disabled,'\",',";
+        $selectImagesExpr .= "'\"overlay_image\"',':\"',overlay_image,'\",',";
         $selectImagesExpr .= "'\"tooltip_image\"',':\"',tooltip_image,'\"}'";
         $selectImagesExpr .= ")),";
         $selectImagesExpr .= "']')";

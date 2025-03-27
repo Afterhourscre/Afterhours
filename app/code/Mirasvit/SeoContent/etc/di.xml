@@ -49,10 +49,10 @@
     <type name="Mirasvit\SeoContent\Service\ContentService">
         <arguments>
             <argument name="modifierPool" xsi:type="array">
+                <item name="restore" xsi:type="object">Mirasvit\SeoContent\Service\Content\Modifier\RestoreMetaModifier</item>
                 <item name="cleanup" xsi:type="object">Mirasvit\SeoContent\Service\Content\Modifier\CleanupModifier</item>
                 <item name="length" xsi:type="object">Mirasvit\SeoContent\Service\Content\Modifier\MaxLengthModifier</item>
                 <item name="pager" xsi:type="object">Mirasvit\SeoContent\Service\Content\Modifier\PagerModifier</item>
-                <item name="restore" xsi:type="object">Mirasvit\SeoContent\Service\Content\Modifier\RestoreMetaModifier</item>
                 <item name="prefixSuffix" xsi:type="object">Mirasvit\SeoContent\Service\Content\Modifier\PrefixSuffixModifier</item>
             </argument>
         </arguments>

@@ -17,8 +17,8 @@ use Aheadworks\AdvancedReviews\Model\Review\Comment\Processor as CommentProcesso
 use Aheadworks\AdvancedReviews\Model\Review\NotificationManager as ReviewNotificationManager;
 use Aheadworks\AdvancedReviews\Model\Review\ProcessorInterface;
 use Magento\Framework\Exception\LocalizedException;
-use Zend_Validate_Interface;
-use Zend_Validate_Exception;
+use Laminas\Validator\ValidatorInterface;
+use Laminas\Validator\Exception;
 use Magento\Framework\Phrase;
 
 /**
@@ -72,7 +72,7 @@ class ReviewService implements ReviewManagementInterface
         CommentProcessor $commentProcessor,
         ReviewNotificationManager $reviewNotificationManager,
         ProcessorInterface $creationProcessor,
-        Zend_Validate_Interface $creationValidator
+        ValidatorInterface $creationValidator
     ) {
         $this->reviewRepository = $reviewRepository;
         $this->dataObjectHelper = $dataObjectHelper;

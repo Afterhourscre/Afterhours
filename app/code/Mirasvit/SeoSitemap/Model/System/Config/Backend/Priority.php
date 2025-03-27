@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -25,7 +25,7 @@ class Priority extends \Magento\Framework\Config\Data
      */
     public function beforeSave()
     {
-        $value = trim($this->getValue());
+        $value = trim((string)$this->getValue());
         $value = (float)$value;
         if ($value < 0 || $value > 1) {
             throw new \Exception(__('Priority must be between 0 and 1'));

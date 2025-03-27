@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2016 MageWorx. All rights reserved.
+ * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
 
@@ -21,7 +21,7 @@ class AfterToHtml
      *
      * @var Container
      */
-    protected $container;
+    protected Container $container;
 
     /**
      * AfterToHtml constructor.
@@ -31,7 +31,7 @@ class AfterToHtml
     public function __construct(
         Container $container
     ) {
-    
+
         $this->container = $container;
     }
 

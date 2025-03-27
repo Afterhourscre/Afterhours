@@ -80,17 +80,23 @@ class Settings extends \Magento\Framework\App\Helper\AbstractHelper
         );
     }
 
-	public function getExtraFiletypes()
-	{
-      $filetypes = array();
-      $settings = json_decode($this->getConfigValue(self::CONFIG_PATH_FILETYPES));
-      if ($settings) {
-          foreach($settings as $setting){
-              $filetypes[] =  $setting->extension;
-          }
-      }
-      $defaultFiletypes = array('doc','docm','docx','csv','xml','xls','xlsx','pdf','zip','tar');
-      return array_merge($filetypes,$defaultFiletypes);
-	}
+    public function getExtraFiletypes()
+    {
+        $filetypes = array();
+        $configValue = $this->getConfigValue(self::CONFIG_PATH_FILETYPES);
+        
+        if (!empty($configValue)) {
+            $settings = json_decode($configValue);
+            if ($settings) {
+                foreach ($settings as $setting) {
+                    $filetypes[] = $setting->extension;
+                }
+            }
+        }
+        
+        $defaultFiletypes = array('doc','docm','docx','csv','xml','xls','xlsx','pdf','zip','tar');
+        return array_merge($filetypes, $defaultFiletypes);
+    }
+
 
 }

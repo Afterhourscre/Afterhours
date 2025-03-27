@@ -3,6 +3,7 @@
  * Copyright © MageWorx. All rights reserved.
  * See LICENSE.txt for license details.
  */
+
 namespace MageWorx\OptionBase\Observer;
 
 use Magento\Framework\Event\Observer;
@@ -14,6 +15,7 @@ use \MageWorx\OptionBase\Model\Product\Option\Value\Attributes as OptionValueAtt
 use \MageWorx\OptionBase\Model\Entity\Group as GroupEntity;
 use \Magento\Framework\Model\AbstractModel as Group;
 use \MageWorx\OptionBase\Helper\Data as Helper;
+use MageWorx\OptionBase\Model\ProductAttributes as ProductAttributesEntity;
 use MageWorx\OptionBase\Model\AttributeSaver;
 use Magento\Framework\App\ResourceConnection;
 use Psr\Log\LoggerInterface as Logger;
@@ -23,100 +25,34 @@ use Magento\Framework\Registry;
 
 class ApplyAttributesOnGroup implements ObserverInterface
 {
-    /**
-     * @var OptionValueCollection
-     */
-    protected $optionValueCollection;
-
-    /**
-     * @var ProductAttributes
-     */
-    protected $productAttributes;
-
-    /**
-     * @var OptionAttributes
-     */
-    protected $optionAttributes;
-
-    /**
-     * @var OptionValueAttributes
-     */
-    protected $optionValueAttributes;
-
-    /**
-     * @var GroupEntity
-     */
-    protected $groupEntity;
-
-    /**
-     * @var Group
-     */
-    protected $groupModel;
-
-    /**
-     * @var Helper
-     */
-    protected $helper;
-
-    /**
-     * @var AttributeSaver
-     */
-    protected $attributeSaver;
-
-    /**
-     * @var ResourceConnection
-     */
-    protected $resource;
-
-    /**
-     * @var MessageManager
-     */
-    protected $messageManager;
-
-    /**
-     * @var Logger
-     */
-    protected $logger;
-
-    /**
-     * @var DataSaver
-     */
-    protected $dataSaver;
-
-    /**
-     * @var Registry
-     */
-    protected $registry;
+    protected OptionValueCollection $optionValueCollection;
+    protected ProductAttributes $productAttributes;
+    protected OptionAttributes $optionAttributes;
+    protected OptionValueAttributes $optionValueAttributes;
+    protected GroupEntity $groupEntity;
+    protected Group $groupModel;
+    protected Helper $helper;
+    protected AttributeSaver $attributeSaver;
+    protected ResourceConnection $resource;
+    protected MessageManager $messageManager;
+    protected Logger $logger;
+    protected DataSaver $dataSaver;
+    protected Registry $registry;
 
     /**
      * Group options
      *
      * @var array
      */
-    protected $options = [];
+    protected array $options = [];
 
     /**
      * Group ID
      *
-     * @var integer|null
+     * @var int|null
      */
     protected $groupId = null;
 
-    /**
-     * @param OptionValueCollection $optionValueCollection
-     * @param ProductAttributes $productAttributes
-     * @param OptionAttributes $optionAttributes
-     * @param OptionValueAttributes $optionValueAttributes
-     * @param Group $groupModel
-     * @param GroupEntity $groupEntity
-     * @param Helper $helper
-     * @param ResourceConnection $resource
-     * @param Logger $logger
-     * @param MessageManager $messageManager
-     * @param AttributeSaver $attributeSaver
-     * @param DataSaver $dataSaver
-     * @param Registry $registry
-     */
     public function __construct(
         OptionValueCollection $optionValueCollection,
         ProductAttributes $productAttributes,
@@ -133,18 +69,18 @@ class ApplyAttributesOnGroup implements ObserverInterface
         Registry $registry
     ) {
         $this->optionValueCollection = $optionValueCollection;
-        $this->productAttributes = $productAttributes;
-        $this->optionAttributes = $optionAttributes;
+        $this->productAttributes     = $productAttributes;
+        $this->optionAttributes      = $optionAttributes;
         $this->optionValueAttributes = $optionValueAttributes;
-        $this->groupEntity = $groupEntity;
-        $this->groupModel = $groupModel;
-        $this->helper = $helper;
-        $this->resource = $resource;
-        $this->logger = $logger;
-        $this->messageManager = $messageManager;
-        $this->attributeSaver = $attributeSaver;
-        $this->dataSaver = $dataSaver;
-        $this->registry = $registry;
+        $this->groupEntity           = $groupEntity;
+        $this->groupModel            = $groupModel;
+        $this->helper                = $helper;
+        $this->resource              = $resource;
+        $this->logger                = $logger;
+        $this->messageManager        = $messageManager;
+        $this->attributeSaver        = $attributeSaver;
+        $this->dataSaver             = $dataSaver;
+        $this->registry              = $registry;
     }
 
     /**
@@ -159,22 +95,14 @@ class ApplyAttributesOnGroup implements ObserverInterface
         $this->initOptions($observer);
 
         $group = $observer->getObject();
-        $options = $group->getData('options');
-        if (empty($options)) {
-            return $this;
-        }
-
         $this->groupEntity->setDataObject($group);
-
-        $attributes = $this->productAttributes->getData();
-        foreach ($attributes as $attribute) {
-            $attribute->applyData($this->groupEntity);
-        }
 
         $optionValueAttributes = $this->optionValueAttributes->getData();
         $this->collectAttributeData($optionValueAttributes);
         $optionAttributes = $this->optionAttributes->getData();
         $this->collectAttributeData($optionAttributes);
+
+        $this->collectGroupAttributeData();
 
         $this->resource->getConnection()->beginTransaction();
         try {
@@ -199,6 +127,51 @@ class ApplyAttributesOnGroup implements ObserverInterface
         $this->attributeSaver->clearAttributeData();
 
         return $this;
+    }
+
+    /**
+     * Apply product attributes
+     *
+     * @return void
+     */
+    protected function collectGroupAttributeData()
+    {
+        $productAttributes = $this->productAttributes->getData();
+        if (!$productAttributes || !is_array($productAttributes)) {
+            return;
+        }
+
+        $data = [];
+        foreach ($productAttributes as $productAttribute) {
+            $attributeData = $productAttribute->collectData($this->groupEntity);
+            if (!$attributeData) {
+                continue;
+            }
+
+            if (!empty($attributeData['delete'])) {
+                foreach ($attributeData['delete'] as $attributeDatum) {
+                    $data['delete'][] = $attributeDatum;
+                }
+            }
+
+            if (empty($attributeData['save'])) {
+                continue;
+            }
+            foreach ($attributeData['save'] as $attributeDatum) {
+                if (!isset($data['save'][$this->groupId])) {
+                    $data['save'][$this->groupId] = $attributeDatum;
+                } else {
+                    $data['save'][$this->groupId] = array_merge(
+                        $data['save'][$this->groupId],
+                        $attributeDatum
+                    );
+                }
+            }
+            $data['save'][$this->groupId]['group_id'] = $this->groupId;
+        }
+
+        $tableName = $this->resource->getTableName(ProductAttributesEntity::OPTIONTEMPLATES_TABLE_NAME);
+        $this->attributeSaver->addAttributeData($tableName, $data);
     }
 
     /**
@@ -235,8 +208,8 @@ class ApplyAttributesOnGroup implements ObserverInterface
     }
 
     /**
-     * @param Observer $observer
-     * @return $this
+     * @param $observer
+     * @return void
      */
     protected function initGroupId($observer)
     {
@@ -246,18 +219,18 @@ class ApplyAttributesOnGroup implements ObserverInterface
     }
 
     /**
-     * @param Observer $observer
-     * @return $this
+     * @param $observer
+     * @return void
      */
     protected function initOptions($observer)
     {
         $currentOptions = $observer->getObject()->getData('options');
-        $savedOptions = $this->groupModel->load($this->groupId)
-                                         ->resetOptionInitialization()
-                                         ->getOptions();
+        $savedOptions   = $this->groupModel->load($this->groupId)
+                                           ->resetOptionInitialization()
+                                           ->getOptions();
 
         $currentOptions = $this->helper->beatifyOptions($currentOptions);
-        $savedOptions = $this->helper->beatifyOptions($savedOptions);
+        $savedOptions   = $this->helper->beatifyOptions($savedOptions);
 
         $this->options = $this->mergeArrays($currentOptions, $savedOptions);
     }
@@ -276,10 +249,10 @@ class ApplyAttributesOnGroup implements ObserverInterface
                 continue;
             }
             $currentOptionSortOrder = $currentOption['sort_order'];
-            $currentOptionRecordId = $currentOption['record_id'];
+            $currentOptionRecordId  = $currentOption['record_id'];
 
             $currentOptionAttributes = [];
-            $optionAttributes = $this->optionAttributes->getData();
+            $optionAttributes        = $this->optionAttributes->getData();
             foreach ($optionAttributes as $optionAttribute) {
                 $currentOptionAttributes[] = $optionAttribute->getName();
             }
@@ -297,13 +270,13 @@ class ApplyAttributesOnGroup implements ObserverInterface
                 $saved[$savedOptionKey][$currentOptionAttribute] = $currentOption[$currentOptionAttribute];
             }
 
-            $currentValues = isset($currentOption['values']) ? $currentOption['values'] : [];
+            $currentValues = $currentOption['values'] ?? [];
             foreach ($currentValues as $currentValue) {
                 $currentValueSortOrder = $currentValue['sort_order'];
-                $currentValueRecordId = $currentValue['record_id'];
+                $currentValueRecordId  = $currentValue['record_id'];
 
                 $currentValueAttributes = [];
-                $valueAttributes = $this->optionValueAttributes->getData();
+                $valueAttributes        = $this->optionValueAttributes->getData();
                 foreach ($valueAttributes as $valueAttribute) {
                     $currentValueAttributes[] = $valueAttribute->getName();
                 }

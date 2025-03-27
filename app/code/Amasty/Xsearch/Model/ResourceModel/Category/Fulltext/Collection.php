@@ -1,22 +1,20 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Model\ResourceModel\Category\Fulltext;
 
-use Magento\Framework\Search\Adapter\Mysql\TemporaryStorage;
 use Magento\Framework\Search\Response\QueryResponse;
 
 class Collection extends \Magento\Catalog\Model\ResourceModel\Category\Collection
 {
     /**
-     * @var QueryResponse
+     * @var int[]
      */
-    protected $queryResponse;
+    private $attributeIdByCode = [];
 
     /**
      * @var string
@@ -24,60 +22,9 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Category\Collectio
     private $queryText;
 
     /**
-     * @var \Magento\Framework\Search\Request\Builder
+     * @var array
      */
-    private $requestBuilder;
-
-    /**
-     * @var \Magento\Framework\Search\Adapter\Mysql\TemporaryStorageFactory
-     */
-    private $temporaryStorageFactory;
-
-    /** @var string */
-    private $searchRequestName;
-
-    /**
-     * @var \Magento\Framework\Search\Adapter\Mysql\Adapter
-     */
-    private $mysqlAdapter;
-
-    public function __construct(
-        \Magento\Framework\Data\Collection\EntityFactory $entityFactory,
-        \Psr\Log\LoggerInterface $logger,
-        \Magento\Framework\Data\Collection\Db\FetchStrategyInterface $fetchStrategy,
-        \Magento\Framework\Event\ManagerInterface $eventManager,
-        \Magento\Eav\Model\Config $eavConfig,
-        \Magento\Framework\App\ResourceConnection $resource,
-        \Magento\Eav\Model\EntityFactory $eavEntityFactory,
-        \Magento\Eav\Model\ResourceModel\Helper $resourceHelper,
-        \Magento\Framework\Validator\UniversalFactory $universalFactory,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Framework\Search\Request\Builder $requestBuilder,
-        \Magento\Framework\Search\Adapter\Mysql\Adapter $mysqlAdapter,
-        \Magento\Framework\Search\Adapter\Mysql\TemporaryStorageFactory $temporaryStorageFactory,
-        \Magento\Framework\DB\Adapter\AdapterInterface $connection = null,
-        $searchRequestName = 'amasty_xsearch_category'
-    ) {
-
-        parent::__construct(
-            $entityFactory,
-            $logger,
-            $fetchStrategy,
-            $eventManager,
-            $eavConfig,
-            $resource,
-            $eavEntityFactory,
-            $resourceHelper,
-            $universalFactory,
-            $storeManager,
-            $connection
-        );
-
-        $this->requestBuilder = $requestBuilder;
-        $this->searchRequestName = $searchRequestName;
-        $this->temporaryStorageFactory = $temporaryStorageFactory;
-        $this->mysqlAdapter = $mysqlAdapter;
-    }
+    private $fullTextSpecialChars = ['$', '@', '*', '<', '>', '(', ')', '-', '+', '~', '"', '.'];
 
     /**
      * @param string $query
@@ -85,36 +32,84 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Category\Collectio
      */
     public function addSearchFilter($query)
     {
+        $query = str_replace($this->fullTextSpecialChars, ' ', $query);
         $this->queryText = trim($this->queryText . ' ' . $query);
         return $this;
     }
 
-    /**
-     * @inheritdoc
-     */
     protected function _renderFiltersBefore()
     {
         if ($this->queryText) {
-            $this->requestBuilder->bindDimension('scope', $this->getStoreId());
-            $this->requestBuilder->bind('search_term', $this->queryText);
-            $this->requestBuilder->setRequestName($this->searchRequestName);
-            $queryRequest = $this->requestBuilder->create();
-            $this->queryResponse = $this->mysqlAdapter->query($queryRequest);
-            $temporaryStorage = $this->temporaryStorageFactory->create();
-            $table = $temporaryStorage->storeDocuments($this->queryResponse->getIterator());
-            $this->getSelect()->joinInner(
-                [
-                    'search_result' => $table->getName(),
-                ],
-                'e.entity_id = search_result.' . TemporaryStorage::FIELD_ENTITY_ID,
+            $select = $this->getSelect();
+            $select->joinInner(
+                ['index_table' => $this->getSearchSelect()],
+                'index_table.entity_id = e.entity_id',
                 []
             );
-            $this->getSelect()
-                ->order('search_result.' . TemporaryStorage::FIELD_SCORE . ' DESC')
-                ->order("e.entity_id ASC");
+
+            $select->group('e.entity_id');
+            $select->order('SUM(index_table.score) DESC');
         }
 
         parent::_renderFiltersBefore();
+    }
+
+    /**
+     * Get search query with score expression.
+     *
+     * Results with full word match have bigger score than whildcart result.
+     * Attributes may have different search weight.
+     */
+    public function getSearchSelect(): \Magento\Framework\DB\Select
+    {
+        $connection = $this->getConnection();
+        $select = $connection->select()
+            ->from(['index_table' => $this->resolveIndexTable()], ['index_table.entity_id']);
+
+        $whildcartQuery = sprintf(
+            'MATCH(index_table.data_index) AGAINST (%s IN BOOLEAN MODE)',
+            $connection->quote($this->queryText . '*')
+        );
+        $matchQuery = sprintf(
+            'MATCH(index_table.data_index) AGAINST (%s)',
+            $connection->quote($this->queryText)
+        );
+
+        $scoreExpression = new \Zend_Db_Expr(sprintf(
+            '(%s + %s) * (%s)',
+            $matchQuery,
+            $whildcartQuery,
+            $this->getAttributeWightExpression()
+        ));
+        $select->columns(['score' => $scoreExpression]);
+        $select->where($whildcartQuery);
+
+        return $select;
+    }
+
+    /**
+     * Case rules for attribute weight.
+     *
+     * Category name have slightly bigger weight, because it is only who is visible on frontend.
+     */
+    public function getAttributeWightExpression(): \Zend_Db_Expr
+    {
+        $connection = $this->getConnection();
+        $cases = [
+            $connection->quote($this->getAttributeIdByCode('name')) => 8,
+            $connection->quote($this->getAttributeIdByCode('meta_title')) => 2,
+        ];
+        
+        return $connection->getCaseSql('attribute_id', $cases, 1);
+    }
+
+    private function getAttributeIdByCode(string $code): int
+    {
+        if (!isset($this->attributeIdByCode[$code])) {
+            $this->attributeIdByCode[$code] = (int) $this->getEntity()->getAttribute($code)->getAttributeId();
+        }
+
+        return $this->attributeIdByCode[$code];
     }
 
     /**
@@ -140,5 +135,13 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Category\Collectio
         }
 
         return $result;
+    }
+
+    /**
+     * @return string
+     */
+    private function resolveIndexTable()
+    {
+        return $this->getTable('amasty_xsearch_category_fulltext_scope') . $this->getStoreId();
     }
 }

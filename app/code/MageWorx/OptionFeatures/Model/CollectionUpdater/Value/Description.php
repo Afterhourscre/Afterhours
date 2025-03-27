@@ -61,6 +61,7 @@ class Description extends AbstractUpdater
     }
 
     /**
+     * Deprecated, using Model/Attribute/OptionValue/Description -> getValueAttributesData()
      * Get table for from conditions
      *
      * @param array $conditions
@@ -70,8 +71,6 @@ class Description extends AbstractUpdater
     {
         $entityType = $conditions['entity_type'];
         $tableName  = $this->getTableName($entityType);
-
-        $this->resource->getConnection()->query('SET SESSION group_concat_max_len = 100000;');
 
         $selectExpr = "SELECT " . OptionTypeDescription::COLUMN_NAME_OPTION_TYPE_ID . " as "
             . OptionTypeDescription::FIELD_OPTION_TYPE_ID_ALIAS . ","

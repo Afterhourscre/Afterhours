@@ -157,10 +157,11 @@ class Data extends AbstractData
      *
      * @return mixed
      */
-    public function getDisableCartByGroupConfig($storeId = null)
-    {
-        return array_filter(explode(',', $this->getModuleConfig('disable_default_function/disable_cart_by_group', $storeId)), 'strlen');
-    }
+   public function getDisableCartByGroupConfig($storeId = null)
+{
+    $configValue = $this->getModuleConfig('disable_default_function/disable_cart_by_group', $storeId);
+    return array_filter(explode(',', $configValue ?? ''), 'strlen');
+}
 
     /**
      * @param null $storeId
@@ -168,10 +169,10 @@ class Data extends AbstractData
      * @return mixed
      */
     public function getDisableCheckoutByGroupConfig($storeId = null)
-    {
-        return array_filter(explode(',', $this->getModuleConfig('disable_default_function/disable_checkout_by_group', $storeId)), 'strlen');
-    }
-
+{
+    $configValue = $this->getModuleConfig('disable_default_function/disable_checkout_by_group', $storeId);
+    return array_filter(explode(',', $configValue ?? ''), 'strlen');
+}
     /**
      * @param null $storeId
      *

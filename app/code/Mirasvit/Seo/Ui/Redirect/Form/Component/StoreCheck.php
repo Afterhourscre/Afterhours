@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -23,10 +23,24 @@ use Magento\Store\Model\StoreManagerInterface;
 class StoreCheck
 {
     /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
+    /**
+     * @var RedirectCollection
+     */
+    private $redirectCollection;
+    /**
+     * @var RequestInterface
+     */
+    private $request;
+
+    /**
      * Constructor
      *
      * @param RequestInterface $request
-     * @param LinkCollection $linkCollection
+     * @param RedirectCollection $redirectCollection
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         RequestInterface $request,

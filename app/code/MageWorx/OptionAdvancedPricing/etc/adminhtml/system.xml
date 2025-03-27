@@ -20,11 +20,12 @@
                     <label><![CDATA[Enable Special Price]]></label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="option_special_price_display_template" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="option_special_price_display_template" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label><![CDATA[Option Special Price Display Template]]></label>
-                    <depends>
-                        <field id="mageworx_apo/option_advanced_pricing/enable_special_price">1</field>
-                    </depends>
+                    <comment>
+                        <![CDATA[Possible variables: {special_price}, {special_price_excl_tax}, {price}, {price_excl_tax}, {special_price_comment}<br /><br />
+                        For "Including and Excluding Tax" price display mode (Sales -> Tax -> Price Display Settings -> Display Product Prices In Catalog -> "Including and Excluding Tax"), we recommend to use template "+{special_price} (Excl. tax: {special_price_excl_tax}) (Regular Price: {price}. {special_price_comment})".]]>
+                    </comment>
                 </field>
                 <field id="enable_tier_price" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label><![CDATA[Enable Tier Price]]></label>

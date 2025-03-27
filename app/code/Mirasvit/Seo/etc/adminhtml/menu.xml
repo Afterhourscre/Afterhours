@@ -6,18 +6,18 @@
              resource="Mirasvit_Seo::seo" parent="Magento_Backend::marketing"/>
 
         <add id="Mirasvit_Seo::seo_redirect" title="Redirects" module="Mirasvit_Seo" sortOrder="20"
-             action="seo/redirect" resource="Mirasvit_Seo::seo" parent="Mirasvit_Seo::seo"/>
+             action="seo/redirect" resource="Mirasvit_Seo::seo_redirect_node" parent="Mirasvit_Seo::seo"/>
 
         <add id="Mirasvit_Seo::seo_canonicalRewrite" title="Canonical Rewrite" module="Mirasvit_Seo" sortOrder="40"
-             action="seo/canonicalRewrite" resource="Mirasvit_Seo::seo" parent="Mirasvit_Seo::seo"/>
-
-        <add id="Mirasvit_Seo::seoautolink_link" title="Autolinks" module="Mirasvit_Seo" sortOrder="50"
-             action="seoautolink/link" resource="Mirasvit_Seo::seo" parent="Mirasvit_Seo::seo"/>
+             action="seo/canonicalRewrite" resource="Mirasvit_Seo::seo_canonicalRewrite" parent="Mirasvit_Seo::seo"/>
 
         <remove id="Magento_Sitemap::catalog_sitemap" />
         <add id="Mirasvit_Seo::catalog_sitemap" title="Site Map" module="Mirasvit_Seo" sortOrder="60" parent="Mirasvit_Seo::seo" action="adminhtml/sitemap/" resource="Magento_Sitemap::sitemap"/>
 
-        <add id="Mirasvit_Seo::seo_settings" title="Settings" module="Mirasvit_Seo" sortOrder="70"
-             action="adminhtml/system_config/edit/section/seo" resource="Mirasvit_Seo::seo" parent="Mirasvit_Seo::seo"/>
+<!--        <add id="Mirasvit_Seo::seo_checklist" title="SEO Checklist" module="Mirasvit_Seo" sortOrder="70"-->
+<!--             action="seo/checklist" resource="Mirasvit_Seo::seo" parent="Mirasvit_Seo::seo"/>-->
+
+        <add id="Mirasvit_Seo::seo_settings" title="Settings" module="Mirasvit_Seo" sortOrder="1000"
+             action="adminhtml/system_config/edit/section/seo" resource="Mirasvit_Seo::seo_settings" parent="Mirasvit_Seo::seo"/>
     </menu>
 </config>

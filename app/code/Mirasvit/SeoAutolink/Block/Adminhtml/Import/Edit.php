@@ -9,49 +9,36 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoAutolink\Block\Adminhtml\Import;
 
-class Edit extends \Magento\Backend\Block\Widget\Form\Container
+use Magento\Backend\Block\Template\Context;
+use Magento\Backend\Block\Widget;
+
+class Edit extends Widget
 {
     /**
-     * @return $this
+     * @var string
      */
-    protected function _construct()
-    {
-        parent::_construct();
+    protected $_template = 'autolink/import_export.phtml';
 
-        $this->_objectId = 'import';
-        $this->_controller = 'adminhtml_import';
-        $this->_blockGroup = 'Mirasvit_SeoAutolink';
-        $this->buttonList->remove('back');
-        $this->buttonList->remove('reset');
-        $this->buttonList->remove('save');
+    public function __construct(
+        Context $context,
+        array   $data = []
+    ) {
+        parent::__construct($context, $data);
 
-        $this->addButton(
-            'save',
-            [
-                'label' => __('Run Import'),
-                'class' => 'save primary',
-                'data_attribute' => [
-                    'mage-init' => ['button' => ['event' => 'save', 'target' => '#edit_form']],
-                ]
-            ],
-            1
-        );
-        return $this;
+        $this->setUseContainer(true);
     }
 
-    /**
-     * @return \Magento\Framework\Phrase
-     */
-    public function getHeaderText()
+    public function getDownloadUrl(): string
     {
-        return __('Import Auto Links');
+        return $this->getUrl('*/*/download', ['file' => 'seo_autolink_example']);
     }
 }

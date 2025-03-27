@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -25,12 +25,31 @@ use Mirasvit\SeoContent\Service\ContentService;
 
 abstract class Rewrite extends Action
 {
+    /**
+     * @var RewriteRepositoryInterface
+     */
     protected $rewriteRepository;
 
+    /**
+     * @var Context
+     */
     private $context;
 
+    /**
+     * @var \Magento\Framework\Controller\ResultFactory
+     */
     protected $resultFactory;
+    /**
+     * @var ContentService
+     */
+    protected $contentService;
 
+    /**
+     * Rewrite constructor.
+     * @param RewriteRepositoryInterface $rewriteRepository
+     * @param ContentService $contentService
+     * @param Context $context
+     */
     public function __construct(
         RewriteRepositoryInterface $rewriteRepository,
         ContentService $contentService,

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -24,10 +24,21 @@ use Mirasvit\SeoSitemap\Api\Repository\ProviderInterface;
 
 class CategoryProvider implements ProviderInterface
 {
+    /**
+     * @var DataHelper
+     */
     private $dataHelper;
 
+    /**
+     * @var CategoryFactory
+     */
     private $categoryFactory;
 
+    /**
+     * CategoryProvider constructor.
+     * @param DataHelper $dataHelper
+     * @param CategoryFactory $categoryFactory
+     */
     public function __construct(
         DataHelper $dataHelper,
         CategoryFactory $categoryFactory
@@ -36,21 +47,34 @@ class CategoryProvider implements ProviderInterface
         $this->categoryFactory = $categoryFactory;
     }
 
+    /**
+     * @return string
+     */
     public function getModuleName()
     {
         return "Magento_Catalog";
     }
 
+    /**
+     * @return bool
+     */
     public function isApplicable()
     {
         return true;
     }
 
+    /**
+     * @return \Magento\Framework\Phrase|string
+     */
     public function getTitle()
     {
         return __('Categories');
     }
 
+    /**
+     * @param int $storeId
+     * @return array|DataObject
+     */
     public function initSitemapItem($storeId)
     {
         return new DataObject([
@@ -60,6 +84,10 @@ class CategoryProvider implements ProviderInterface
         ]);
     }
 
+    /**
+     * @param int $storeId
+     * @return array
+     */
     public function getItems($storeId)
     {
         return [];

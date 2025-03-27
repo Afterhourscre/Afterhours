@@ -1,10 +1,9 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Model\Indexer;
 
@@ -12,7 +11,7 @@ use Amasty\Xsearch\Controller\RegistryConstants;
 
 class ElasticSearchProductDataMapper
 {
-    const POPUP_DATA_BATCH_SIZE = 500;
+    public const POPUP_DATA_BATCH_SIZE = 500;
 
     /**
      * @var \Magento\Store\Model\App\Emulation

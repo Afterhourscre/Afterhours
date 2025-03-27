@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -78,10 +78,12 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
      */
     protected function _prepareCollection()
     {
-        $collection = $this->urlRewriteCategory;
+        $col = $this->urlRewriteCategory;
+        
+        $collection = clone $col;
 
         $duplicate = [];
-        foreach ($collection as $categoryRewrite) {
+        foreach ($col as $categoryRewrite) {
             $categoryId = $categoryRewrite->getEntityId();
             $requestPath = $categoryRewrite->getRequestPath();
             $storeId = $categoryRewrite->getStoreId();

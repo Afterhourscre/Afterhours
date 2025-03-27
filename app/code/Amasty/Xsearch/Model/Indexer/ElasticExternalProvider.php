@@ -1,20 +1,23 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
+declare(strict_types=1);
 
 namespace Amasty\Xsearch\Model\Indexer;
 
 use Amasty\Xsearch\Block\Search\AbstractSearch;
 use Amasty\Xsearch\Helper\Data;
+use Magento\Framework\Url;
+use Magento\Store\Model\StoreManagerInterface as StoreManager;
 
 class ElasticExternalProvider
 {
-    const FULLTEXT_INDEX_FIELD = 'fulltext_index';
-    const BLOCK_TYPE_FIELD = 'block_type';
+    public const FULLTEXT_INDEX_FIELD = 'fulltext_index';
+    public const BLOCK_TYPE_FIELD = 'block_type';
 
     /**
      * @var \Magento\Store\Model\App\Emulation
@@ -31,6 +34,16 @@ class ElasticExternalProvider
      */
     private $helper;
 
+    /**
+     * @var Url
+     */
+    private $urlBuilder;
+
+    /**
+     * @var StoreManager
+     */
+    private $storeManager;
+
     public function __construct(
         \Magento\Store\Model\App\Emulation $appEmulation,
         \Amasty\Xsearch\Block\Search\LandingFactory $landingFactory,
@@ -40,6 +53,8 @@ class ElasticExternalProvider
         \Amasty\Xsearch\Block\Search\BlogFactory $blogFactory,
         \Amasty\Xsearch\Block\Search\FaqFactory $faqFactory,
         Data $helper,
+        Url $urlBuilder,
+        StoreManager $storeManager,
         array $sources = []
     ) {
         $this->appEmulation = $appEmulation;
@@ -55,25 +70,24 @@ class ElasticExternalProvider
             $sources
         );
         $this->helper = $helper;
+        $this->urlBuilder = $urlBuilder;
+        $this->storeManager = $storeManager;
     }
 
     /**
      * @param int $storeId
-     * @param int $pageNum
-     * @param int $batchSize
      * @return array
      */
-    public function get($storeId, $pageNum, $batchSize)
+    public function get(int $storeId): array
     {
         $this->appEmulation->startEnvironmentEmulation($storeId, \Magento\Framework\App\Area::AREA_FRONTEND, true);
-
+        $this->urlBuilder->setScope($this->storeManager->getStore());
         $result = [];
         foreach ($this->sources as $source) {
             $block = $source->create();
             /** @var AbstractSearch $block */
             if ($block instanceof AbstractSearch && $this->helper->isIndexEnable($block)) {
-                $block->setLimit($batchSize);
-                $block->setPageNum($pageNum);
+                $block->setLimit(0);
                 $block->setIndexMode(true);
                 $result = $this->setDocument($block, $result);
             }

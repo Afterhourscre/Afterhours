@@ -9,14 +9,17 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Helper;
 
+use Magento\Catalog\Api\Data\CategoryInterface;
+use Magento\Catalog\Api\Data\ProductInterface;
 use Mirasvit\Seo\Api\Config\AlternateConfigInterface as AlternateConfig;
 use Mirasvit\Seo\Model\Config as Config;
 
@@ -27,150 +30,71 @@ use Mirasvit\Seo\Model\Config as Config;
  */
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
-    /**
-     * @var \Mirasvit\Seo\Model\SeoObject\StoreFactory
-     */
     protected $objectStoreFactory;
 
-    /**
-     * @var \Mirasvit\Seo\Model\SeoObject\PagerFactory
-     */
     protected $objectPagerFactory;
 
-    /**
-     * @var \Mirasvit\Seo\Model\SeoObject\Wrapper\FilterFactory
-     */
     protected $objectWrapperFilterFactory;
 
-    /**
-     * @var \Mirasvit\Seo\Model\TemplateFactory
-     */
     protected $templateFactory;
 
-    /**
-     * @var \Magento\Catalog\Model\CategoryFactory
-     */
     protected $categoryFactory;
 
-    /**
-     * @var \Magento\Bundle\Model\Product\TypeFactory
-     */
     protected $productTypeFactory;
 
-    /**
-     * @var \Magento\Directory\Model\CurrencyFactory
-     */
     protected $currencyFactory;
 
-    /**
-     * @var \Mirasvit\Seo\Model\ResourceModel\Template\CollectionFactory
-     */
     protected $templateCollectionFactory;
 
-    /**
-     * @var \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory
-     */
     protected $categoryCollectionFactory;
 
-    /**
-     * @var \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory
-     */
     protected $productCollectionFactory;
 
-    /**
-     * @var \Mirasvit\Core\Model\Url
-     */
-    protected $url;
-
-    /**
-     * @var \Mirasvit\Seo\Helper\Parse
-     */
     protected $seoParse;
 
-    /**
-     * @var \Mirasvit\Core\Helper\String
-     */
     protected $coreString;
 
-    /**
-     * @var \Magento\Tax\Helper\Data
-     */
     protected $taxData;
 
-    /**
-     * @var \Magento\Framework\App\Helper\Context
-     */
     protected $context;
 
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
     protected $storeManager;
 
-    /**
-     * @var \Magento\Framework\Registry
-     */
     protected $registry;
 
-    /**
-     * @var \Magento\Framework\App\RequestInterface
-     */
     protected $request;
 
-    /**
-     * @var \Mirasvit\Seo\Model\SeoDataFactory
-     */
     protected $seoDataFactory;
 
-    /**
-     * @var \Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable
-     */
     protected $productTypeConfigurable;
 
-    /**
-     * @var \Magento\Catalog\Api\ProductRepositoryInterface
-     */
     protected $productRepository;
 
-    /**
-     * @var \Magento\Catalog\Model\Product
-     */
     protected $product;
 
-    /**
-     * @var \Magento\Catalog\Model\Category
-     */
     protected $category;
 
-    /**
-     * @var \Mirasvit\Seo\Helper\StringPrepare
-     */
     protected $stringPrepare;
 
-    /**
-     * @var array
-     */
     protected $parseObjects = [];
 
-    /**
-     * @var array
-     */
     protected $additional = [];
 
-    /**
-     * @var int
-     */
     protected $storeId = null;
 
-    /**
-     * @var bool
-     */
     protected $titlePage = true;
 
-    /**
-     * @var bool
-     */
     protected $descriptionPage = true;
+
+    private $logo;
+
+    private $config;
+
+    private $objectManager;
+
+    private $string;
+
+    private $layerResolver;
 
     public function __construct(
         \Mirasvit\Seo\Model\Config $config,
@@ -223,13 +147,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->objectManager              = $objectManager;
     }
 
-    /**
-     * @return mixed|string
-     */
-    public function getBaseUri()
+    public function getBaseUri(): ?string
     {
         if (!isset($_SERVER['REQUEST_URI'])) {
-            return false;
+            return null;
         }
 
         $baseStoreUri = parse_url($this->context->getUrlBuilder()->getUrl(), PHP_URL_PATH);
@@ -248,14 +169,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-
-    /**
-     * @param string $objectName
-     * @param string $variableName
-     * @param string $value
-     * @return void
-     */
-    protected function setAdditionalVariable($objectName, $variableName, $value)
+    protected function setAdditionalVariable(string $objectName, string $variableName, string $value): void
     {
         $this->additional[$objectName][$variableName] = $value;
         if (isset($this->parseObjects['product'])) {
@@ -269,10 +183,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * @return void
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    protected function _addParseObjects($product = false)
+    protected function _addParseObjects(ProductInterface $product = null): void
     {
         if ($this->parseObjects && $this->storeId !== null && !$product) {
             return;
@@ -342,179 +255,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return;
     }
 
-    /**
-     * @param string $productId
-     * @param string $categoryId
-     * @param string $item
-     * @return bool
-     * @SuppressWarnings(PHPMD.BooleanGetMethodName)
-     */
-    protected function _getElementApplied(
-        $productId,
-        $categoryId,
-        $item,
-        $productIdsMap = false
-    ) {
-        if ($productId) {
-            if ($productIdsMap && isset($productIdsMap[$item->getTemplateId()])
-                && is_array($productIdsMap[$item->getTemplateId()])
-                && in_array($productId, $productIdsMap[$item->getTemplateId()])) {
-                return true;
-            } elseif ($productIdsMap) {
-                return false;
-            }
-            $isElementApplied = $this->templateFactory
-                ->create()
-                ->getRule($item->getTemplateId())
-                ->isProductApplied($productId);
-        } else {
-            $isElementApplied = $this->templateFactory
-                ->create()
-                ->getRule($item->getTemplateId())
-                ->isCategoryApplied($categoryId);
-        }
-
-        return $isElementApplied;
-    }
-
-    /**
-     * @param string $collection
-     * @param string $productId
-     * @param string $categoryId
-     * @param string $info
-     * @return array
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     */
-    protected function _getTempalateRule($collection, $productId, $categoryId, $info, $productIdsMap = false)
-    {
-        $seoTemplateRule              = [];
-        $sortOrderAppliedId           = false;
-        $stopRulesProcessingAppliedId = false;
-
-        foreach ($collection as $item) {
-            if ($this->_getElementApplied($productId, $categoryId, $item, $productIdsMap)) {
-                $seoTemplateRule[$item->getId()] = $item;
-                if ($item->getStopRulesProcessing() && !$stopRulesProcessingAppliedId) {
-                    $stopRulesProcessingAppliedId = $item->getId();
-                }
-                if ($item->getSortOrder() && !$stopRulesProcessingAppliedId) {
-                    $sortOrderAppliedId = $item->getId();
-                }
-            }
-        }
-
-        if ($info) {
-            if ($stopRulesProcessingAppliedId) {
-                $seoTemplateRule['applied']               = $stopRulesProcessingAppliedId; // stop rules processing
-                $seoTemplateRule['stop_rules_processing'] = true;
-            } elseif ($sortOrderAppliedId) {
-                $seoTemplateRule['applied']    = $sortOrderAppliedId; // sort order
-                $seoTemplateRule['sort_order'] = true;
-            } elseif ($seoTemplateRule) {
-                $seoTemplateRule['applied'] = key(array_slice($seoTemplateRule, -1, 1, true)); // maximal ID
-            }
-
-            return $seoTemplateRule;
-        }
-
-        if ($stopRulesProcessingAppliedId) {
-            $seoTemplateRule = $seoTemplateRule[$stopRulesProcessingAppliedId]; // stop rules processing
-        } elseif ($sortOrderAppliedId) {
-            $seoTemplateRule = $seoTemplateRule[$sortOrderAppliedId]; // sort order
-        } else {
-            $seoTemplateRule = array_pop($seoTemplateRule); // maximal ID
-        }
-
-        return $seoTemplateRule;
-    }
-
-
-    /**
-     * Crop Meta Title, Meta Description, Product Name, Product Short Description
-     * @param int                                  $storeId
-     * @param Mirasvit\Seo\Model\SeoObject\Product $seo
-     * @param int                                  $page
-     * @return bool
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
-     */
-    protected function _applyMaxLenth($storeId, $seo, $page)
-    {
-        if ($metaTitleMaxLength = $this->config->getMetaTitleMaxLength($storeId)) {
-            $metaTitleMaxLength = (int)$metaTitleMaxLength;
-            if ($metaTitleMaxLength < Config::META_TITLE_INCORRECT_LENGTH) {
-                $metaTitleMaxLength = Config::META_TITLE_MAX_LENGTH; //recommended length
-            }
-
-            $seo->setMetaTitle($this->stringPrepare
-                ->getTruncatedString($seo->getMetaTitle(), $metaTitleMaxLength, $page));
-        }
-
-        if ($metaDescriptionMaxLength = $this->config->getMetaDescriptionMaxLength($storeId)) {
-            $metaDescriptionMaxLength = (int)$metaDescriptionMaxLength;
-            if ($metaDescriptionMaxLength < Config::META_DESCRIPTION_INCORRECT_LENGTH) {
-                $metaDescriptionMaxLength = Config::META_DESCRIPTION_MAX_LENGTH; //recommended length
-            }
-            $seo->setMetaDescription($this->stringPrepare->getTruncatedString(
-                $seo->getMetaDescription(),
-                $metaDescriptionMaxLength,
-                $page
-            ));
-        }
-
-        $isProductPage = ($this->getFullActionCode() == 'catalog_product_view') ? true : false;
-
-        if ($isProductPage && $productNameMaxLength = $this->config->getProductNameMaxLength($storeId)) {
-            $productNameMaxLength = (int)$productNameMaxLength;
-            if ($productNameMaxLength < Config::RODUCT_NAME_INCORRECT_LENGTH) {
-                $productNameMaxLength = Config::PRODUCT_NAME_MAX_LENGTH; //recommended length
-            }
-            $seo->setTitle($this->stringPrepare->getTruncatedString(
-                $seo->getTitle(),
-                $productNameMaxLength,
-                $page
-            ));
-        }
-
-        if ($isProductPage
-            && $productShortDescriptionMaxLength = $this->config->getProductShortDescriptionMaxLength($storeId)) {
-            $productShortDescriptionMaxLength = (int)$productShortDescriptionMaxLength;
-            if ($productShortDescriptionMaxLength < Config::PRODUCT_SHORT_DESCRIPTION_INCORRECT_LENGTH) {
-                $productShortDescriptionMaxLength = Config::PRODUCT_SHORT_DESCRIPTION_MAX_LENGTH; //recommended length
-            }
-            $seo->setShortDescription($this->stringPrepare->getTruncatedString(
-                $seo->getShortDescription(),
-                $productShortDescriptionMaxLength,
-                $page
-            ));
-        }
-
-        return $seo;
-    }
-
-    /**
-     * @param string $templateKey
-     * @return bool
-     */
-    protected function _isSeoTempalateUsed($templateKey)
-    {
-        $templateKeyApplied = ['meta_title', 'meta_keywords', 'meta_keyword', 'meta_description'];
-        if (in_array($templateKey, $templateKeyApplied)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Get SeoShortDescription for Sphinx Search.
-     * @param string $product
-     * @return bool|string
-     */
-    public function getCurrentSeoShortDescriptionForSearch($product)
+    public function getCurrentSeoShortDescriptionForSearch(ProductInterface $product): ?string
     {
         if ($this->storeManager->getStore()->getCode() == 'admin') {
-            return false;
+            return null;
         }
 
         $categoryIds    = $product->getCategoryIds();
@@ -522,7 +266,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         array_unshift($categoryIds, $rootCategoryId);
         $categoryIds         = array_reverse($categoryIds);
         $storeId             = $this->storeManager->getStore()->getStoreId();
-        $seoShortDescription = false;
+        $seoShortDescription = null;
         foreach ($categoryIds as $categoryId) {
             $category = $this->categoryFactory->create()->setStoreId($storeId)->load($categoryId);
             if ($seoShortDescription = $category->getProductShortDescriptionTpl()) {
@@ -544,14 +288,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * @param string     $string
-     * @param string     $pattern
-     * @param bool|false $caseSensative
-     * @return bool
      * @SuppressWarnings(PHPMD.CyclomaticComplexity) 
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
-    public function checkPattern($string, $pattern, $caseSensative = false)
+    public function checkPattern(string $string, string $pattern, bool $caseSensative = false): bool
     {
         if (!$caseSensative) {
             $string  = strtolower($string);
@@ -603,11 +343,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return true;
     }
 
-    /**
-     * @param string $tag
-     * @return string
-     */
-    public function cleanMetaTag($tag)
+    public function cleanMetaTag(string $tag): string
     {
         $tag = strip_tags($tag);
         $tag = preg_replace('/\s{2,}/', ' ', $tag); //remove unnecessary spaces
@@ -617,11 +353,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $tag;
     }
 
-    /**
-     * @param string $code
-     * @return string
-     */
-    public function getMetaRobotsByCode($code)
+    public function getMetaRobotsByCode(int $code = null): ?string
     {
         switch ($code) {
             case Config::NOINDEX_NOFOLLOW:
@@ -630,14 +362,12 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 return 'NOINDEX,FOLLOW';
             case Config::INDEX_NOFOLLOW:
                 return 'INDEX,NOFOLLOW';
+            default:
+                return null;
         };
     }
 
-    /**
-     * @param string $product
-     * @return \Magento\Catalog\Model\Category
-     */
-    public function getProductSeoCategory($product)
+    public function getProductSeoCategory(ProductInterface $product): CategoryInterface
     {
         $categoryId = $product->getSeoCategory();
         $category   = $this->registry->registry('current_category');
@@ -666,10 +396,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $category;
     }
 
-    /**
-     * @return array
-     */
-    public function getInactiveCategories()
+    public function getInactiveCategories(): array
     {
         $inactiveCategories = $this->categoryFactory->create()
             ->getCollection()
@@ -684,40 +411,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $inactiveCat;
     }
 
-    /**
-     * @param string $params
-     * @return bool|string
-     */
-    public function getTagProductListUrl($params)
-    {
-        $request        = $this->request;
-        $fullActionCode = $request->getModuleName() . '_' . $request->getControllerName()
-            . '_' . $request->getActionName();
-        if ($fullActionCode == 'tag_product_list') {
-            $urlParams = [];
-            if (isset($params['p']) && $params['p'] == 1) {
-                unset($params['p']);
-            }
-            $urlParams['_query'] = $params;
-            $urlKeysArray        = [
-                '_nosid' => true,
-                '_type'  => 'direct_link',
-            ];
-
-            $urlParams = array_merge($urlParams, $urlKeysArray);
-            $path      = $this->url->parseUrl($this->context->getUrlBuilder()->getCurrentUrl())->getPath();
-            $path      = (substr($path, 0, 1) == '/') ? substr($path, 1) : $path;
-
-            return $this->context->getUrlBuilder()->getUrl($path, $urlParams);
-        }
-
-        return false;
-    }
-
-    /**
-     * @return string
-     */
-    public function getFullActionCode()
+    public function getFullActionCode(): string
     {
         $result = strtolower($this->request->getModuleName() . '_' . $this->request->getControllerName()
             . '_' . $this->request->getActionName());
@@ -725,21 +419,15 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $result;
     }
 
-    /**
-     * @return bool
-     */
-    public function isOnLandingPage()
+    public function isOnLandingPage(): bool
     {
-        return $this->request->getParam('am_landing');
+        return (bool)$this->request->getParam('am_landing');
     }
 
     /**
-     * @param string     $product
-     * @param bool|false $noSymbol
-     * @return bool|float
      * @SuppressWarnings(PHPMD.UnusedLocalVariable)
      */
-    public function getCurrentProductFinalPrice($product, $noSymbol = false)
+    public function getCurrentProductFinalPrice(ProductInterface $product, bool $noSymbol = false): ?float
     {
         $productFinalPrice = false;
         $currencyCode      = $this->storeManager->getStore()->getCurrentCurrencyCode();
@@ -762,14 +450,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             return $productFinalPrice;
         }
 
-        return false;
+        return null;
     }
 
-    /**
-     * @param string $product
-     * @return bool|string
-     */
-    public function getCurrentProductFinalPriceRange($product)
+    public function getCurrentProductFinalPriceRange(ProductInterface $product): ?string
     {
         $productFinalPrice = false;
         $currencyCode      = $this->storeManager->getStore()->getCurrentCurrencyCode();
@@ -792,22 +476,23 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             return $productFinalPrice;
         }
 
-        return false;
+        return null;
     }
 
     /**
      * @param string    $price
      * @param bool|true $noSymbol
-     * @return bool
+     * @return bool|float
      */
-    protected function _formatPrice($price, $noSymbol = true)
+    protected function _formatPrice(string $price, bool $noSymbol = true): ?bool
     {
-        $displaySymbol = $noSymbol ? [
-            'display' => \Zend_Currency::NO_SYMBOL,
-        ] : ['display' => \Zend_Currency::USE_SYMBOL];
+        $displaySymbol = $noSymbol
+            ? ['display' => 1]
+            : ['display' => 2];
+
         if (intval($price)) {
             $price = $this->currencyFactory->create()->format(
-                $price,
+                (float)$price,
                 $displaySymbol,
                 false
             );
@@ -815,32 +500,26 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             return $price;
         }
 
-        return false;
+        return null;
     }
 
-    /**
-     * @param string $product
-     * @return float
-     */
-    protected function _getGroupedMinimalPrice($product)
+    protected function _getGroupedMinimalPrice(ProductInterface $product): float
     {
         $product = $this->productCollectionFactory->create()
             ->addMinimalPrice()
             ->addFieldToFilter('entity_id', $product->getId())
             ->getFirstItem();
 
-        return $product->getMinimalPrice();
+        return (float)$product->getMinimalPrice();
     }
 
     /**
-     * @param string $product
-     * @return bool|string
      * @SuppressWarnings(PHPMD.CyclomaticComplexity) 
      */
-    protected function _getGroupedPriceRange($product)
+    protected function _getGroupedPriceRange(ProductInterface $product): ?string
     {
         $groupedPrices      = [];
-        $typeInstance       = $product->getTypeInstance(true);
+        $typeInstance       = $product->getTypeInstance();
         $associatedProducts = $typeInstance->setStoreFilter($product->getStore(), $product)
             ->getAssociatedProducts($product);
 
@@ -864,12 +543,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * @param string $product
-     * @return bool|string
      * @SuppressWarnings(PHPMD.CyclomaticComplexity) 
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
-    protected function _getConfigurablePriceRange($product)
+    protected function _getConfigurablePriceRange(ProductInterface $product): ?string
     {
         $price           = [];
         $childProductIds = $this->productTypeConfigurable->getChildrenIds($product->getId());
@@ -894,36 +571,29 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         if (!isset($priceRange)) {
-            $priceRange = false;
+            $priceRange = null;
         }
 
         return $priceRange;
     }
 
-    /**
-     * @return string
-     */
-    public function getLogoUrl()
+    public function getLogoUrl(): string
     {
-        return $this->logo->getLogoSrc();
+        return (string)$this->logo->getLogoSrc();
     }
 
-    /**
-     * @return string
-     */
-    public function getLogoAlt()
+    public function getLogoAlt(): string
     {
-        return $this->logo->getLogoAlt();
+        return (string)$this->logo->getLogoAlt();
     }
 
     /**
      * Ignored actions for controller_action_postdispatch and controller_front_send_response_before.
-     * @return bool
      */
-    public function isIgnoredActions()
+    public function isIgnoredActions(): bool
     {
         //@todo add all account pages
-        $ignoredActions = ['review_product_listajax', 'customer_address_form', 'customer_address_index'];
+        $ignoredActions = ['review_product_listajax', 'customer_address_form', 'customer_address_index', 'returns_attachment_download'];
         if (in_array($this->getFullActionCode(), $ignoredActions)) {
             return true;
         }
@@ -941,9 +611,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * Cancel ignored actions (other extension use plugin for isIgnoredActions function)
-     * @return bool
      */
-    public function cancelIgnoredActions()
+    public function cancelIgnoredActions(): bool
     {
         $cancelIgnoredActions = [AlternateConfig::AMASTY_XLANDING];
         if (in_array($this->getFullActionCode(), $cancelIgnoredActions)) {
@@ -955,9 +624,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * Ignored urls.
-     * @return bool
      */
-    public function isIgnoredUrls()
+    public function isIgnoredUrls(): bool
     {
         $ignoredUrlParts = ['checkout/', 'onestepcheckout'];
         $currentUrl      = $this->context->getUrlBuilder()->getCurrentUrl();

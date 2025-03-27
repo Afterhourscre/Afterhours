@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -63,6 +63,20 @@ class Version extends AbstractHelper
     public function isEe()
     {
         if ($this->getEdition() == 'Enterprise') {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if B2B
+     *
+     * @return bool
+     */
+    public function isB2b()
+    {
+        if ($this->getEdition() == 'B2B') {
             return true;
         }
 

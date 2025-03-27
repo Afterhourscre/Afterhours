@@ -9,11 +9,12 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\Seo\Service\TemplateEngine\Data;
 
@@ -31,12 +32,12 @@ class PageData extends AbstractData
         parent::__construct();
     }
 
-    public function getTitle()
+    public function getTitle(): string
     {
-        return __('Current Page Data');
+        return (string)__('Current Page Data');
     }
 
-    public function getVariables()
+    public function getVariables(): array
     {
         return [
             'title',
@@ -45,19 +46,19 @@ class PageData extends AbstractData
         ];
     }
 
-    public function getValue($attribute, $additionalData = [])
+    public function getValue(string $attribute, array $additionalData = []): ?string
     {
         switch ($attribute) {
             case 'title':
-                return $this->pageConfig->getTitle()->getShortHeading();
+                return (string)$this->pageConfig->getTitle()->getShortHeading();
 
             case 'meta_description':
-                return $this->pageConfig->getDescription();
+                return (string)$this->pageConfig->getDescription();
 
             case 'meta_keywords':
-                return $this->pageConfig->getKeywords();
+                return (string)$this->pageConfig->getKeywords();
         }
 
-        return false;
+        return null;
     }
 }

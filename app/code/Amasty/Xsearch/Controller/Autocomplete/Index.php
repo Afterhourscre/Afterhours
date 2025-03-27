@@ -1,13 +1,13 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Controller\Autocomplete;
 
+use Amasty\Xsearch\Block\MultipleWishlist\Behavior;
 use Magento\Catalog\Model\Layer\Resolver;
 use Magento\Framework\App\Action\Context;
 use Magento\Store\Model\StoreManagerInterface;
@@ -73,6 +73,16 @@ class Index extends \Magento\Framework\App\Action\Action
      */
     private $scopeConfig;
 
+    /**
+     * @var \Magento\Framework\Data\Form\FormKey\Validator
+     */
+    private $formKeyValidator;
+
+    /**
+     * @var Behavior
+     */
+    private $behavior;
+
     public function __construct(
         Context $context,
         StoreManagerInterface $storeManager,
@@ -85,7 +95,9 @@ class Index extends \Magento\Framework\App\Action\Action
         \Magento\Framework\Url\DecoderInterface $urlDecoder,
         \Magento\Framework\Url\Helper\Data $urlHelper,
         \Magento\CatalogSearch\Helper\Data $searchHelper,
-        ScopeConfigInterface $scopeConfig
+        ScopeConfigInterface $scopeConfig,
+        \Magento\Framework\Data\Form\FormKey\Validator $formKeyValidator,
+        Behavior $behavior
     ) {
         parent::__construct($context);
         $this->helper = $helper;
@@ -99,11 +111,13 @@ class Index extends \Magento\Framework\App\Action\Action
         $this->layoutFactory = $layoutFactory;
         $this->searchHelper = $searchHelper;
         $this->scopeConfig = $scopeConfig;
+        $this->formKeyValidator = $formKeyValidator;
+        $this->behavior = $behavior;
     }
 
     public function execute()
     {
-        if (!$this->getRequest()->isAjax()) {
+        if (!$this->getRequest()->isAjax() || !$this->formKeyValidator->validate($this->getRequest())) {
             $this->getResponse()->setStatusHeader(403, '1.1', 'Forbidden');
             return null;
         }
@@ -133,8 +147,19 @@ class Index extends \Magento\Framework\App\Action\Action
         $beforeUrl = $this->getRequest()->getParam(self::PARAM_NAME_URL_ENCODED);
 
         $blocks = $this->helper->getBlocksHtml($layout);
+        if ($beforeUrl && is_string($beforeUrl)) {
+            $blocks = $this->replaceRelatedUrl($blocks, $beforeUrl);
+        }
+
+        $blocks['behavior'] = $this->behavior->toHtml();
+
+        return $resultJson->setData($blocks);
+    }
+
+    private function replaceRelatedUrl(array $blocks, string $beforeUrl): array
+    {
         foreach ($blocks as $key => $data) {
-            if (is_array($data) && $beforeUrl && array_key_exists('html', $data)) {
+            if (is_array($data) && array_key_exists('html', $data)) {
                 /**
                  * by xss protection
                  */
@@ -144,6 +169,6 @@ class Index extends \Magento\Framework\App\Action\Action
             }
         }
 
-        return $resultJson->setData($blocks);
+        return $blocks;
     }
 }

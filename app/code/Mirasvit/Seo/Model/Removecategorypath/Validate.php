@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -52,10 +52,10 @@ class Validate extends \Magento\Framework\DataObject
     protected $urlRewriteCategory;
 
      /**
-     * Core store config
-     *
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface
-     */
+      * Core store config
+      *
+      * @var \Magento\Framework\App\Config\ScopeConfigInterface
+      */
     protected $scopeConfig;
 
     /**
@@ -68,7 +68,7 @@ class Validate extends \Magento\Framework\DataObject
     /**
      * Store Ids for which will do validation
      *
-     * @var int
+     * @var array
      */
     protected $storeIds;
 
@@ -116,7 +116,7 @@ class Validate extends \Magento\Framework\DataObject
 
         $this->setStoreIds($currentStoreId, $currentWebsiteId);
 
-        if(!$this->storeIds) {
+        if (!$this->storeIds) {
             return 'Something went wrong.';
         }
 
@@ -153,12 +153,13 @@ class Validate extends \Magento\Framework\DataObject
      * @param int $websiteId
      * @return bool
      */
-    protected function isEnabledRemoveParentCategoryPath($storeId, $websiteId) {
+    protected function isEnabledRemoveParentCategoryPath($storeId, $websiteId)
+    {
         if ($storeId) {
-            $result = $this->config->isEnabledRemoveParentCategoryPath($storeId);
+            $result = $this->config->isEnabledRemoveParentCategoryPath((int)$storeId);
         } elseif ($websiteId) {
-            $result = $this->config->isEnabledRemoveParentCategoryPath(null, $websiteId);
-        } elseif($storeId == 0 && $websiteId == 0) {
+            $result = $this->config->isEnabledRemoveParentCategoryPath(null, (int)$websiteId);
+        } elseif ($storeId == 0 && $websiteId == 0) {
             $result = $this->config->isEnabledRemoveParentCategoryPath();
         }
 
@@ -171,7 +172,8 @@ class Validate extends \Magento\Framework\DataObject
      *
      * @return bool|string
      */
-    protected function getUseCategoriesPathStoresInfo() {
+    protected function getUseCategoriesPathStoresInfo()
+    {
         $stores = [];
         foreach ($this->storeManager->getStores() as $store) {
             $storeId = $store->getId();
@@ -195,21 +197,22 @@ class Validate extends \Magento\Framework\DataObject
      * @param int $websiteId
      * @return void
      */
-    protected function setStoreIds($storeId, $websiteId) {
+    protected function setStoreIds($storeId, $websiteId)
+    {
         if ($storeId) {
             $this->storeIds = [$storeId];
         } elseif ($websiteId) {
                 $this->storeIds = $this->storeManager->getWebsite($websiteId)->getStoreIds();
-        } elseif($storeId == 0 && $websiteId == 0) {
+        } elseif ($storeId == 0 && $websiteId == 0) {
             foreach ($this->storeManager->getStores() as $store) {
                 $this->storeIds[] = $store->getId();
             }
         }
 
         foreach ($this->storeIds as $key => $storeId) {
-             if (!$this->config->isEnabledRemoveParentCategoryPath($storeId)) {
+            if (!$this->config->isEnabledRemoveParentCategoryPath((int)$storeId)) {
                 unset($this->storeIds[$key]);
-             }
+            }
         }
 
         $this->registry->register('store_ids_for_remove_parent_category_path', $this->storeIds);
@@ -221,12 +224,13 @@ class Validate extends \Magento\Framework\DataObject
      * @param int $storeId
      * @return bool
      */
-    protected function isProductLongUrlEnabled($storeId) {
+    protected function isProductLongUrlEnabled($storeId)
+    {
         return $this->scopeConfig->getValue(
-                   \Magento\Catalog\Helper\Product::XML_PATH_PRODUCT_URL_USE_CATEGORY,
-                   \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
-                   $storeId
-               );
+            \Magento\Catalog\Helper\Product::XML_PATH_PRODUCT_URL_USE_CATEGORY,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
     /**
@@ -236,10 +240,12 @@ class Validate extends \Magento\Framework\DataObject
      * @param bool $getResult
      * @return array|string|bool
      */
-    public function getDuplicateUrls($categoryData, $getResult = false) {
+    public function getDuplicateUrls($categoryData, $getResult = false)
+    {
         $info = false;
         $preparedCategoryUrl = [];
         foreach ($categoryData as $categoryId => $categoryUrl) {
+            $categoryUrl  = rtrim($categoryUrl, '/');
             $categoryPath = explode('/', $categoryUrl);
             $preparedCategoryUrl[$categoryId] = $categoryPath[count($categoryPath) - 1];
         }
@@ -263,7 +269,8 @@ class Validate extends \Magento\Framework\DataObject
      *
      * @return string
      */
-    protected function getDuplicateInfo() {
+    protected function getDuplicateInfo()
+    {
         $url = $this->urlBuilder->getUrl('seo/duplicateinfo/index');
 
         return '<div style="color:#ce4400;">Parent Category Path is not removed <br/>

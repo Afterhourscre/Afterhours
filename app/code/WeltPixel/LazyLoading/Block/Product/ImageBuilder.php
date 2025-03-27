@@ -2,7 +2,7 @@
 namespace WeltPixel\LazyLoading\Block\Product;
 
 use Magento\Catalog\Helper\ImageFactory as HelperFactory;
-
+use Magento\Catalog\Model\Product;
 class ImageBuilder extends \Magento\Catalog\Block\Product\ImageBuilder
 {
     /**
@@ -30,36 +30,37 @@ class ImageBuilder extends \Magento\Catalog\Block\Product\ImageBuilder
      *
      * @return \Magento\Catalog\Block\Product\Image
      */
-    public function create()
-    {
-        /** Check if module is enabled */
-        if (!$this->_helperCustom->isEnabled()) {
-            return parent::create();
-        }
-
-        $helper = $this->helperFactory->create()
-            ->init($this->product, $this->imageId);
-
-        $template = $helper->getFrame()
-            ? 'WeltPixel_LazyLoading::product/image.phtml'
-            : 'WeltPixel_LazyLoading::product/image_with_borders.phtml';
-
-        $imagesize = $helper->getResizedImageInfo();
-
-        $data = [
-            'data' => [
-                'template' => $template,
-                'image_url' => $helper->getUrl(),
-                'width' => $helper->getWidth(),
-                'height' => $helper->getHeight(),
-                'label' => $helper->getLabel(),
-                'ratio' =>  $this->getRatio($helper),
-                'custom_attributes' => $this->getCustomAttributes(),
-                'resized_image_width' => !empty($imagesize[0]) ? $imagesize[0] : $helper->getWidth(),
-                'resized_image_height' => !empty($imagesize[1]) ? $imagesize[1] : $helper->getHeight(),
-            ],
-        ];
-
-        return $this->imageFactory->create($data);
+   public function create(Product $product = null, string $imageId = null, array $attributes = null)
+{
+    /** Check if module is enabled */
+    if (!$this->_helperCustom->isEnabled()) {
+        return parent::create($product, $imageId, $attributes);
     }
+
+    $helper = $this->helperFactory->create()
+        ->init($product, $imageId);
+
+    $template = $helper->getFrame()
+        ? 'WeltPixel_LazyLoading::product/image.phtml'
+        : 'WeltPixel_LazyLoading::product/image_with_borders.phtml';
+
+    $imagesize = $helper->getResizedImageInfo();
+
+    $data = [
+        'data' => [
+            'template' => $template,
+            'image_url' => $helper->getUrl(),
+            'width' => $helper->getWidth(),
+            'height' => $helper->getHeight(),
+            'label' => $helper->getLabel(),
+            'ratio' =>  $this->getRatio($helper),
+            'custom_attributes' => $this->getCustomAttributes(),
+            'resized_image_width' => !empty($imagesize[0]) ? $imagesize[0] : $helper->getWidth(),
+            'resized_image_height' => !empty($imagesize[1]) ? $imagesize[1] : $helper->getHeight(),
+        ],
+    ];
+
+    return $this->imageFactory->create($data);
+}
+
 }

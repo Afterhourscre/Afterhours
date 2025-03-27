@@ -1,13 +1,14 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
-
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 
 namespace Amasty\Xsearch\Plugin\CatalogSearch\Controller\Result;
 
+use Magento\Framework\Escaper;
+use Magento\Framework\UrlInterface;
 use Magento\Search\Model\QueryFactory;
 
 class Index
@@ -27,26 +28,33 @@ class Index
     private $request;
 
     /**
-     * @var \Zend\Escaper\Escaper
+     * @var Escaper
      */
     private $escaper;
+
+    /**
+     * @var UrlInterface
+     */
+    private $urlBuilder;
 
     public function __construct(
         \Amasty\Xsearch\Helper\Data $helper,
         \Magento\Search\Helper\Data $searchHelper,
         \Magento\Framework\App\RequestInterface $request,
-        \Zend\Escaper\Escaper $escaper
+        Escaper $escaper,
+        UrlInterface $urlBuilder
     ) {
         $this->helper = $helper;
         $this->searchHelper = $searchHelper;
         $this->request = $request;
         $this->escaper = $escaper;
+        $this->urlBuilder = $urlBuilder;
     }
 
     /**
      * @param $subject
      * @param \Closure $proceed
-     * @return mixed
+     * @return mixed|void
      */
     public function aroundExecute(
         $subject,
@@ -63,8 +71,8 @@ class Index
             && $seoKey
             && $seoKey != $identifier
             && $query
-            && $query == $this->escaper->escapeUrl($query)
         ) {
+            $query = $this->escaper->escapeUrl($query);
             // redirect to seo url
             $url = $this->searchHelper->getResultUrl($query);
             $subject->getResponse()->setRedirect($url);

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -30,6 +30,14 @@ class Actions extends Column
      */
     private $urlBuilder;
 
+    /**
+     * Actions constructor.
+     * @param UrlInterface $urlBuilder
+     * @param ContextInterface $context
+     * @param UiComponentFactory $uiComponentFactory
+     * @param array $components
+     * @param array $data
+     */
     public function __construct(
         UrlInterface $urlBuilder,
         ContextInterface $context,

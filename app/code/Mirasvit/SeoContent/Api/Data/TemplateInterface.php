@@ -9,13 +9,16 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
+declare(strict_types=1);
 
 namespace Mirasvit\SeoContent\Api\Data;
+
+use Mirasvit\SeoContent\Model\Template\Rule;
 
 interface TemplateInterface extends ContentInterface
 {
@@ -23,137 +26,66 @@ interface TemplateInterface extends ContentInterface
     const RULE_TYPE_CATEGORY   = 2;
     const RULE_TYPE_NAVIGATION = 3;
     const RULE_TYPE_PAGE       = 4;
+    const RULE_TYPE_BLOG       = 5;
+    const RULE_TYPE_BRAND      = 6;
 
     const TABLE_NAME = 'mst_seo_content_template';
 
-    const ID = 'template_id';
-
-    const RULE_TYPE = 'rule_type';
-
-    const NAME       = 'name';
-    const IS_ACTIVE  = 'is_active';
-    const SORT_ORDER = 'sort_order';
-
-    const CONDITIONS_SERIALIZED = 'conditions_serialized';
-    const ACTIONS_SERIALIZED    = 'actions_serialized';
-    const STOP_RULE_PROCESSING  = 'stop_rules_processing';
-
+    const ID                         = 'template_id';
+    const RULE_TYPE                  = 'rule_type';
+    const NAME                       = 'name';
+    const IS_ACTIVE                  = 'is_active';
+    const SORT_ORDER                 = 'sort_order';
+    const CONDITIONS_SERIALIZED      = 'conditions_serialized';
+    const ACTIONS_SERIALIZED         = 'actions_serialized';
+    const STOP_RULE_PROCESSING       = 'stop_rules_processing';
     const APPLY_FOR_CHILD_CATEGORIES = 'apply_for_child_categories';
-    const APPLY_FOR_HOMEPAGE = 'apply_for_homepage';
-
-    const STORE_IDS = 'store_ids';
+    const APPLY_FOR_HOMEPAGE         = 'apply_for_homepage';
+    const STORE_IDS                  = 'store_ids';
+    const APPLY_FOR_ALL_BRANDS_PAGE  = 'apply_for_all_brands_page';
 
     /**
      * @return int
      */
     public function getId();
 
-    /**
-     * @param int $value
-     *
-     * @return $this
-     */
-    public function setRuleType($value);
+    public function setRuleType(int $value): self;
 
-    /**
-     * @return int
-     */
-    public function getRuleType();
+    public function getRuleType(): ?int;
 
-    /**
-     * @param string $value
-     *
-     * @return $this
-     */
-    public function setName($value);
+    public function setName(string $value): self;
 
-    /**
-     * @return string
-     */
-    public function getName();
+    public function getName(): string;
 
-    /**
-     * @param bool $value
-     *
-     * @return $this
-     */
-    public function setIsActive($value);
+    public function setIsActive(bool $value): self;
 
-    /**
-     * @return bool
-     */
-    public function isActive();
+    public function isActive(): bool;
 
-    /**
-     * @param int $value
-     *
-     * @return $this
-     */
-    public function setSortOrder($value);
+    public function setSortOrder(int $value): self;
 
-    /**
-     * @return int
-     */
-    public function getSortOrder();
+    public function getSortOrder(): int;
 
+    public function setStopRuleProcessing(bool $value): self;
 
-    /**
-     * @param bool $value
-     *
-     * @return $this
-     */
-    public function setStopRuleProcessing($value);
+    public function isStopRuleProcessing(): bool;
 
-    /**
-     * @return bool
-     */
-    public function isStopRuleProcessing();
+    public function setApplyForChildCategories(bool $value): self;
 
-    /**
-     * @param bool $value
-     *
-     * @return $this
-     */
-    public function setApplyForChildCategories($value);
+    public function isApplyForChildCategories(): bool;
 
-    /**
-     * @return bool
-     */
-    public function isApplyForChildCategories();
+    public function setConditionsSerialized(string $value): self;
 
-    /**
-     * @param string $value
-     *
-     * @return $this
-     */
-    public function setConditionsSerialized($value);
+    public function setStoreIds(array $value): self;
 
-    /**
-     * @param array $value
-     *
-     * @return $this
-     */
-    public function setStoreIds(array $value);
+    public function getStoreIds(): array;
 
-    /**
-     * @return array
-     */
-    public function getStoreIds();
+    public function getRule(): Rule;
 
-    /**
-     * @return \Mirasvit\SeoContent\Model\Template\Rule
-     */
-    public function getRule();
+    public function setApplyForHomepage(bool $value): self;
 
-    /**
-     * @param bool $value
-     *
-     * @return $this
-     */
-    public function setApplyForHomepage($value);
+    public function isApplyForHomepage(): bool;
 
-    /**
-     * @return bool
-     */
-    public function isApplyForHomepage();
+    public function setApplyForAllBrandsPage(bool $value): self;
+
+    public function isApplyForAllBrandsPage(): bool;
 }

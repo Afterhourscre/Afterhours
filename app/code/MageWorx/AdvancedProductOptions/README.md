@@ -44,7 +44,7 @@
     
 3. Enable the extensions:
     ```
-    php bin/magento module:enable MageWorx_OptionBase MageWorx_OptionTemplates MageWorx_OptionDependency MageWorx_OptionSwatches MageWorx_OptionFeatures MageWorx_OptionInventory
+    php bin/magento module:enable MageWorx_OptionBase MageWorx_OptionTemplates MageWorx_OptionFeatures MageWorx_OptionAdvancedPricing MageWorx_OptionDependency MageWorx_OptionInventory MageWorx_OptionLink MageWorx_OptionSkuPolicy MageWorx_OptionSwatches MageWorx_OptionVisibility MageWorx_OptionImportExport MageWorx_DynamicOptionsBase MageWorx_Info MageWorx_OptionHealthChecker 
 
     ```
     

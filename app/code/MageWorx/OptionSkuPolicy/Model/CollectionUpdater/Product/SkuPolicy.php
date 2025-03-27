@@ -7,7 +7,7 @@ namespace MageWorx\OptionSkuPolicy\Model\CollectionUpdater\Product;
 
 use MageWorx\OptionBase\Model\Product\AbstractProductUpdater;
 use MageWorx\OptionSkuPolicy\Helper\Data as Helper;
-use MageWorx\OptionFeatures\Model\ProductAttributes;
+use MageWorx\OptionBase\Model\ProductAttributes;
 
 class SkuPolicy extends AbstractProductUpdater
 {

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -87,11 +87,12 @@ class Collection extends DataObject
     }
 
     /**
+     * @param int $displacement
      * @return int
      */
     public function getCurPage($displacement = 0)
     {
-        if ($displacement == 0){
+        if ($displacement == 0) {
             return $this->currentPage;
         }
         if ($this->currentPage + $displacement < 1) {

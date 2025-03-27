@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -26,6 +26,40 @@ use Mirasvit\SeoSitemap\Model\Config;
 
 class SeoSitemapUrlService
 {
+    /**
+     * @var int
+     */
+    private $storeId;
+    /**
+     * @var Registry
+     */
+    private $registry;
+    /**
+     * @var Config
+     */
+    private $config;
+    /**
+     * @var MagentoUrlInterface
+     */
+    private $urlManager;
+    /**
+     * @var ScopeConfigInterface
+     */
+    private $scopeConfig;
+    /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
+
+    /**
+     * SeoSitemapUrlService constructor.
+     * @param StoreManagerInterface $storeManager
+     * @param ScopeConfigInterface $scopeConfig
+     * @param MagentoUrlInterface $urlManager
+     * @param Config $config
+     * @param Registry $registry
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
     public function __construct(
         StoreManagerInterface $storeManager,
         ScopeConfigInterface $scopeConfig,
@@ -68,7 +102,8 @@ class SeoSitemapUrlService
     }
 
     /**
-     * {@inheritdoc}
+     * @param string $pathInfo
+     * @return bool|DataObject
      */
     public function match($pathInfo)
     {

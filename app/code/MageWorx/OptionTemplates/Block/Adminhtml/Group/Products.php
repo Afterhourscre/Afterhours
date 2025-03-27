@@ -108,4 +108,14 @@ class Products extends \Magento\Backend\Block\Template
     {
         return 'in_group_products';
     }
+
+    /**
+     * Get block name
+     *
+     * @return string
+     */
+    public function getNameInLayout()
+    {
+        return $this->_nameInLayout === null ? '' : $this->_nameInLayout;
+    }
 }

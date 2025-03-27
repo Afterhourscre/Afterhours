@@ -1,29 +1,32 @@
 <?php
 /**
- * @author Amasty Team
- * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
- * @package Amasty_Xsearch
- */
+* @author Amasty Team
+* @copyright Copyright (c) 2022 Amasty (https://www.amasty.com)
+* @package Advanced Search Base for Magento 2
+*/
 ?>
 <?php
-/** @var Amasty\Xsearch\Block\Adminhtml\Analytics\Wanted\QueryList $block */
+/**
+ * @var Amasty\Xsearch\Block\Adminhtml\Analytics\Wanted\QueryList $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
 ?>
 <div class="amxsearch-2column">
-    <p class="amxsearch-title"><?= $block->escapeHtml(__('Most Wanted Search Terms')); ?></p>
+    <p class="amxsearch-title"><?= $escaper->escapeHtml(__('Most Wanted Search Terms')); ?></p>
 
     <table class="amxsearch-table">
         <thead class="amxsearch-thead">
         <tr>
-            <th class="amxsearch-cell"><?= $block->escapeHtml(__('Search Query')); ?></th>
-            <th class="amxsearch-cell"><?= $block->escapeHtml(__('Total Searches')); ?></th>
-            <th class="amxsearch-cell"><?= $block->escapeHtml(__('Users')); ?></th>
-            <th class="amxsearch-cell"><?= $block->escapeHtml(__('Engagement')); ?></th>
+            <th class="amxsearch-cell"><?= $escaper->escapeHtml(__('Search Query')); ?></th>
+            <th class="amxsearch-cell"><?= $escaper->escapeHtml(__('Total Searches')); ?></th>
+            <th class="amxsearch-cell"><?= $escaper->escapeHtml(__('Users')); ?></th>
+            <th class="amxsearch-cell"><?= $escaper->escapeHtml(__('Engagement')); ?></th>
         </tr>
         </thead>
         <tbody>
-        <?php foreach ($block->getWantedQueries() as $query) : ?>
+        <?php foreach ($block->getWantedQueries() as $query): ?>
             <tr class="amxsearch-row">
-                <td class="amxsearch-cell"><?= $block->escapeHtml($query->getQueryText()); ?></td>
+                <td class="amxsearch-cell"><?= $escaper->escapeHtml($query->getQueryText()); ?></td>
                 <td class="amxsearch-cell"><?= (int)$query->getTotalSearches(); ?></td>
                 <td class="amxsearch-cell"><?= (int)$query->getUserKey(); ?></td>
                 <td class="amxsearch-cell"><?= (float)$query->getProductClick(); ?>%</td>
@@ -31,8 +34,8 @@
         <?php endforeach; ?>
         </tbody>
     </table>
-    <a href="<?= $block->getMoreUrl() ?>"
+    <a href="<?= $escaper->escapeUrl($block->getMoreUrl()) ?>"
        class="amxsearch-more-link"
-       title="<?= $block->escapeHtml(__("View more")); ?>"
-       target="_blank"><?= $block->escapeHtml(__("View more")); ?></a>
+       title="<?= $block->escapeHtml(__('View more')); ?>"
+       target="_blank"><?= $block->escapeHtml(__('View more')); ?></a>
 </div>

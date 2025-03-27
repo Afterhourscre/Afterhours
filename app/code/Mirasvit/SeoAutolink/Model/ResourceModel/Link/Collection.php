@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -118,13 +118,13 @@ class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\Ab
      */
     public function addActiveFilter()
     {
-        $date = new \Zend_Date();
+        $date = date('Y-m-d H:i:s');
         $activeFrom = [];
-        $activeFrom[] = ['date' => true, 'to' => $date->toString('YYYY-MM-dd H:mm:ss')];
+        $activeFrom[] = ['date' => true, 'to' => $date];
         $activeFrom[] = ['date' => true, 'null' => true];
 
         $activeTo = [];
-        $activeTo[] = ['date' => true, 'from' => $date->toString('YYYY-MM-dd H:mm:ss')];
+        $activeTo[] = ['date' => true, 'from' => $date];
         $activeTo[] = ['date' => true, 'null' => true];
 
         $this->addFieldToFilter('active_from', $activeFrom)

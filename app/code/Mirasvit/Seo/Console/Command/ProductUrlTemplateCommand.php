@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -24,18 +24,38 @@ use Mirasvit\Seo\Service\UrlTemplate\ProductUrlTemplateServiceFactory;
 use PhpCsFixer\Console\Command\HelpCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class ProductUrlTemplateCommand extends Command
 {
+    /**
+     * @var State
+     */
     private $appState;
 
+    /**
+     * @var UrlRewriteCollection
+     */
     private $urlRewriteCollection;
 
+    /**
+     * @var ProductUrlTemplateServiceFactory
+     */
     private $productUrlTemplateServiceFactory;
 
+    /**
+     * @var ProductUrlRegenerateServiceFactory
+     */
     private $productUrlRegenerateServiceFactory;
 
+    /**
+     * ProductUrlTemplateCommand constructor.
+     * @param State $appState
+     * @param ProductUrlTemplateServiceFactory $productUrlTemplateServiceFactory
+     * @param ProductUrlRegenerateServiceFactory $productUrlRegenerateServiceFactory
+     * @param UrlRewriteCollection $urlRewriteCollection
+     */
     public function __construct(
         State $appState,
         ProductUrlTemplateServiceFactory $productUrlTemplateServiceFactory,
@@ -73,6 +93,20 @@ class ProductUrlTemplateCommand extends Command
         );
 
         $this->addOption(
+            'store-id',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'Apply or restore product url key only for a specific store'
+        );
+
+        $this->addOption(
+            'product-id',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'Apply or restore product url key only for a specific product'
+        );
+
+        $this->addOption(
             'dry-run',
             null,
             null,
@@ -96,7 +130,9 @@ class ProductUrlTemplateCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         if (!$this->appState->isAreaCodeEmulated()) {
-            $this->appState->setAreaCode('frontend');
+            try {
+                $this->appState->setAreaCode('frontend');
+            } catch (\Exception $e) {}
         }
 
         if ($input->getOption('apply') || $input->getOption('restore')) {
@@ -115,10 +151,23 @@ class ProductUrlTemplateCommand extends Command
                 ->addFieldToFilter('redirect_type', 0)
                 ->addFieldToFilter('metadata', ['null' => true]);
 
+            $inputStoreId   = $input->getOption('store-id');
+            $inputProductId = $input->getOption('product-id');
+
+            if ($inputStoreId) {
+                $rewriteCollection->addFieldToFilter('store_id', $inputStoreId);
+            }
+
+            if ($inputProductId) {
+                $rewriteCollection->addFieldToFilter('entity_id', $inputProductId);
+            }
+
             foreach ($urlTemplateService->processUrlRewriteCollection(
                 $rewriteCollection,
                 $urlKeyTemplates,
-                $input->getOption('dry-run')
+                $input->getOption('dry-run'),
+                $inputStoreId,
+                $inputProductId
             ) as $result) {
                 $output->writeln($result);
             }
@@ -126,7 +175,6 @@ class ProductUrlTemplateCommand extends Command
             if (!$input->getOption('dry-run')) {
                 $output->writeln('Please clear magento cache');
             }
-
         } elseif ($input->getOption('regenerate')) {
             $urlRegenerateService = $this->productUrlRegenerateServiceFactory->create();
 
@@ -142,7 +190,9 @@ class ProductUrlTemplateCommand extends Command
             $output->writeln('  mirasvit:seo:product-url-template --restore --dry-run  This will simulate the restoring for original values');
             $output->writeln('');
 
-            return $help->run($input, $output);
+            $help->run($input, $output);
         }
+
+        return 0;
     }
 }

@@ -9,8 +9,8 @@
  *
  * @category  Mirasvit
  * @package   mirasvit/module-seo
- * @version   2.0.169
- * @copyright Copyright (C) 2020 Mirasvit (https://mirasvit.com/)
+ * @version   2.9.6
+ * @copyright Copyright (C) 2024 Mirasvit (https://mirasvit.com/)
  */
 
 
@@ -45,6 +45,21 @@ interface StateServiceInterface
     public function isHomePage();
 
     /**
+     * @return bool
+     */
+    public function isBlogPage();
+
+    /**
+     * @return bool
+     */
+    public function isBrandPage();
+
+    /**
+     * @return bool
+     */
+    public function isAllBrandsPage();
+
+    /**
      * @return false|\Magento\Catalog\Model\Category
      */
     public function getCategory();
@@ -55,7 +70,22 @@ interface StateServiceInterface
     public function getProduct();
 
     /**
+     * @return \Magento\Cms\Api\Data\PageInterface|null
+     */
+    public function getCmsPage();
+
+    /**
      * @return false|\Magento\Framework\DataObject
      */
     public function getFilters();
+
+    /**
+     * @return mixed
+     */
+    public function getBlogPage();
+
+    /**
+     * @return mixed
+     */
+    public function getBrandPage();
 }

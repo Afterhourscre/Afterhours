@@ -15,7 +15,8 @@
         "elasticsearch/elasticsearch": "~7.17.0",
         "laminas/laminas-serializer": "^2.8",
         "magefan/module-login-as-customer": "2.3.4",
-        "cweagans/composer-patches": "^1.7"
+        "cweagans/composer-patches": "^1.7",
+        "mageplaza/module-barclaycard": "^4.0"
     },
     "require-dev": {
         "allure-framework/allure-phpunit": "^2",
@@ -62,12 +63,16 @@
         }
     },
     "minimum-stability": "stable",
-    "repositories": [
-        {
+    "repositories": {
+        "mageplaza": {
+            "type": "composer",
+            "url": "https://repo.mageplaza.com"
+        },
+        "0": {
             "type": "composer",
             "url": "https://repo.magento.com/"
         }
-    ],
+    },
     "extra": {
         "magento-force": "override",
         "patches": {
@@ -84,13 +89,10 @@
                 "APSB24-40": "patches/composer/magento/VULN-27015-2.4.7x_v2.composer.patch"
             },
             "magento/module-jwt-user-token": {
-                "APSB24-40": "patches/composer/magento/VULN-27015-2.4.7x_v2.composer.patch"
+                "CVE-2024-34102": "patches/composer/magento/module-jwt-user-token/Model/AC-12485_Hotfix.composer.patch"
             },
             "magento/framework/Webapi": {
                 "APSB24-40": "patches/composer/magento/VULN-27015-2.4.7x_v2.composer.patch"
-            },
-            "magento/module-jwt-user-token": {
-                "CVE-2024-34102": "patches/composer/magento/module-jwt-user-token/Model/AC-12485_Hotfix.composer.patch"
             }
         }
     },
@@ -100,7 +102,8 @@
             "magento/inventory-composer-installer": true,
             "magento/composer-dependency-version-audit-plugin": true,
             "dealerdirect/phpcodesniffer-composer-installer": true,
-            "cweagans/composer-patches": true
+            "cweagans/composer-patches": true,
+            "php-http/discovery": true
         }
     }
 }
